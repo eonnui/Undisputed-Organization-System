@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     const app = document.getElementById('app');
     let currentForm = 'login';
+    let registrationSuccessMessage = '';
 
     function renderLoginForm() {
         return `
             <div class="wrapper">
                 <h1>LOGIN</h1>
+                ${registrationSuccessMessage ? `<div class="success-message" style="color: #A7D1A9; text-align: center; margin-bottom: 10px; font-family: 'DM Sans'; font-weight: bold;">${registrationSuccessMessage}</div>` : ''}
                 <form class="form" id="login-form">
                     <div class="input-group">
                         <label for="student-number">Student Number</label>
@@ -18,9 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <button type="submit" class="login-button">Login</button>
-                    
+
                     <button type="button" class="forgot-password">Forgot Password?</button>
-                    
+
                     <div class="form-switch">
                         <p>Don't have an account?</p>
                         <button type="button" class="link-button" id="toggle-to-signup">
@@ -74,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <button type="submit">Sign Up</button>
-                    
+
                     <div class="form-switch">
                         <p>Already have an account?</p>
                         <button type="button" class="link-button" id="toggle-to-login">
@@ -88,51 +90,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function render() {
         app.innerHTML = currentForm === 'login' ? renderLoginForm() : renderSignupForm();
-        
+
         // Add event listeners after rendering
         if (currentForm === 'login') {
             document.getElementById('toggle-to-signup')?.addEventListener('click', () => {
                 currentForm = 'signup';
                 render();
             });
-            
+
             document.getElementById('login-form')?.addEventListener('submit', handleLogin);
         } else {
             document.getElementById('toggle-to-login')?.addEventListener('click', () => {
                 currentForm = 'login';
                 render();
             });
-            
+
             document.getElementById('signup-form')?.addEventListener('submit', handleSignup);
         }
     }
 
     async function handleLogin(e) {
         e.preventDefault();
-    
+
         const studentNumber = document.getElementById('login-student-number').value;
         const password = document.getElementById('login-password').value;
-    
+
         // Clear previous errors
         displayError('login-student-number', '');
         displayError('login-password', '');
-    
+
         let isValid = true;
-    
+
         if (!studentNumber) {
             displayError('login-student-number', 'Student number is required.');
             isValid = false;
         }
-    
+
         if (!password) {
             displayError('login-password', 'Password is required.');
             isValid = false;
         }
-    
+
         if (!isValid) {
             return; // Stop the login process if any validation fails
         }
-    
+
         try {
             const response = await fetch('/api/login/', {
                 method: 'POST',
@@ -144,9 +146,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     password: password,
                 }),
             });
-    
+
             const data = await response.json();
-    
+
             if (!response.ok) {
                 if (data.detail) {
                     displayError('login-password', data.detail); // Display error detail from server
@@ -155,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return; // Stop the login process if the server returns an error.
             }
-    
+
             alert('Login successful!');
             // Redirect or do something after successful login
         } catch (error) {
@@ -165,14 +167,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleSignup(e) {
         e.preventDefault();
-    
+
         const studentNumber = document.getElementById('signup-student-number').value;
         const email = document.getElementById('signup-email').value;
         const organization = document.getElementById('signup-organization').value;
         const firstName = document.getElementById('signup-first-name').value;
         const lastName = document.getElementById('signup-last-name').value;
         const password = document.getElementById('signup-password').value;
-    
+
         // Clear previous errors
         displayError('signup-student-number', '');
         displayError('signup-email', '');
@@ -180,10 +182,10 @@ document.addEventListener('DOMContentLoaded', function() {
         displayError('signup-first-name', '');
         displayError('signup-last-name', '');
         displayError('signup-password', '');
-    
+
         // Validation checks
         let isValid = true;
-    
+
         if (isNaN(studentNumber) || studentNumber === "") {
             displayError('signup-student-number', 'Student number must be a number.');
             isValid = false;
@@ -193,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
 
-    
         if (!email) {
             displayError('signup-email', 'Email is required.');
             isValid = false;
@@ -201,31 +202,31 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-email', 'Invalid email format.');
             isValid = false;
         }
-    
+
         if (!organization) {
             displayError('signup-organization', 'Please select an organization.');
             isValid = false;
         }
-    
+
         if (!firstName) {
             displayError('signup-first-name', 'First name is required.');
             isValid = false;
         }
-    
+
         if (!lastName) {
             displayError('signup-last-name', 'Last name is required.');
             isValid = false;
         }
-    
+
         if (password.length < 8) {
             displayError('signup-password', 'Password must be at least 8 characters long.');
             isValid = false;
         }
-    
+
         if (!isValid) {
             return; // Stop the signup process if any validation fails
         }
-    
+
         const userData = {
             student_number: studentNumber,
             email: email,
@@ -234,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
             last_name: lastName,
             password: password
         };
-        
+
         try {
             const response = await fetch('/api/signup/', {
                 method: 'POST',
@@ -243,38 +244,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(userData)
             });
-    
+
             const data = await response.json();
-    
+
             if (!response.ok) {
                 throw new Error(data.detail || 'Signup failed');
             }
-    
-            // Success Message
-            const signupForm = document.getElementById('signup-form');
-            const successMessage = document.createElement('div');
-            successMessage.textContent = 'Signup successful! Redirecting to login...';
-            successMessage.style.color = '#ffffff';
-            successMessage.style.textAlign = 'center';
-            successMessage.style.marginTop = '6px';
-            successMessage.style.fontFamily = 'DM Sans';
-            signupForm.appendChild(successMessage);
-    
+
+            // Success Message for Login Form
+            registrationSuccessMessage = 'Registration successful! Please log in.';
+
             // Redirect to Login
-            setTimeout(() => {
-                currentForm = 'login';
-                render();
-            }, 2000); // Redirect after 2 seconds
-    
+            currentForm = 'login';
+            render();
+
         } catch (error) {
-            alert(error.message); // Or displayError
+            // Removed the alert here
+            console.error("Signup error:", error); // It's good practice to log errors for debugging
+            // Optionally, you could display a generic error message to the user
+            // displayError('signup-form', 'An error occurred during signup. Please try again.');
         }
     }
 
     function displayError(elementId, errorMessage) {
         const inputGroup = document.getElementById(elementId).closest('.input-group'); // Find the parent input group
         let errorElement = inputGroup.querySelector('.error-message'); // Check if error message is already there
-    
+
         if (errorMessage) {
             if (!errorElement) {
                 errorElement = document.createElement('div');
@@ -290,9 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
 
-   
 
     // Initial render
     render();
