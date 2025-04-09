@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const app = document.getElementById('app');
     let currentForm = 'login';
     let registrationSuccessMessage = '';
+    let forgotPasswordIdentifier = ''; // Store student number or email for code verification
 
     function renderLoginForm() {
         return `
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     <button type="submit" class="login-button">Login</button>
 
-                    <button type="button" class="forgot-password">Forgot Password?</button>
+                    <button type="button" class="forgot-password" id="toggle-to-forgot-password">Forgot Password?</button>
 
                     <div class="form-switch">
                         <p>Don't have an account?</p>
@@ -88,24 +89,94 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    function render() {
-        app.innerHTML = currentForm === 'login' ? renderLoginForm() : renderSignupForm();
+    function renderForgotPasswordForm() {
+        return `
+            <div class="wrapper">
+                <h1>FORGOT PASSWORD</h1>
+                <form class="form" id="forgot-password-form">
+                    <div class="input-group">
+                        <label for="forgot-password-identifier">Student Number or Email</label>
+                        <input type="text" id="forgot-password-identifier" placeholder="Enter your student number or email" required />
+                    </div>
 
-        // Add event listeners after rendering
+                    <button type="submit">Send Reset Code</button>
+
+                    <div class="form-switch">
+                        <button type="button" class="link-button" id="toggle-to-login-from-forgot">
+                            Back to Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    function renderResetPasswordCodeForm() {
+        return `
+            <div class="wrapper">
+                <h1>RESET PASSWORD</h1>
+                <p style="text-align: center; margin-bottom: 15px; font-family: 'DM Sans'; font-size: 0.9em; color: #6c757d;">Enter the verification code sent to your email.</p>
+                <form class="form" id="reset-password-code-form">
+                    <div class="input-group">
+                        <label for="reset-code">Verification Code</label>
+                        <input type="text" id="reset-code" placeholder="Enter the code" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-password">New Password</label>
+                        <input type="password" id="new-password" placeholder="Enter new password" required />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="confirm-new-password">Confirm New Password</label>
+                        <input type="password" id="confirm-new-password" placeholder="Confirm new password" required />
+                    </div>
+
+                    <button type="submit">Reset Password</button>
+
+                    <div class="form-switch">
+                        <button type="button" class="link-button" id="toggle-to-login-from-reset">
+                            Back to Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+    }
+
+    function render() {
         if (currentForm === 'login') {
+            app.innerHTML = renderLoginForm();
             document.getElementById('toggle-to-signup')?.addEventListener('click', () => {
                 currentForm = 'signup';
                 render();
             });
-
+            document.getElementById('toggle-to-forgot-password')?.addEventListener('click', () => {
+                currentForm = 'forgot-password';
+                render();
+            });
             document.getElementById('login-form')?.addEventListener('submit', handleLogin);
-        } else {
+        } else if (currentForm === 'signup') {
+            app.innerHTML = renderSignupForm();
             document.getElementById('toggle-to-login')?.addEventListener('click', () => {
                 currentForm = 'login';
                 render();
             });
-
             document.getElementById('signup-form')?.addEventListener('submit', handleSignup);
+        } else if (currentForm === 'forgot-password') {
+            app.innerHTML = renderForgotPasswordForm();
+            document.getElementById('toggle-to-login-from-forgot')?.addEventListener('click', () => {
+                currentForm = 'login';
+                render();
+            });
+            document.getElementById('forgot-password-form')?.addEventListener('submit', handleForgotPassword);
+        } else if (currentForm === 'reset-password-code') {
+            app.innerHTML = renderResetPasswordCodeForm();
+            document.getElementById('toggle-to-login-from-reset')?.addEventListener('click', () => {
+                currentForm = 'login';
+                render();
+            });
+            document.getElementById('reset-password-code-form')?.addEventListener('submit', handleResetPasswordCode);
         }
     }
 
@@ -266,9 +337,97 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function handleForgotPassword(e) {
+        e.preventDefault();
+        const identifier = document.getElementById('forgot-password-identifier').value;
+
+        // Basic client-side validation
+        if (!identifier) {
+            displayError('forgot-password-identifier', 'Please enter your student number or email.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/forgot-password/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ identifier: identifier }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                displayError('forgot-password-identifier', data.detail || 'Failed to send reset code. Please try again.');
+                return;
+            }
+
+            alert('A reset code has been sent to your email if the account exists.'); // Modern websites often give this feedback for security
+            forgotPasswordIdentifier = identifier; // Store for the next step
+            currentForm = 'reset-password-code';
+            render();
+
+        } catch (error) {
+            alert('An unexpected error occurred. Please try again.');
+            console.error("Forgot password error:", error);
+        }
+    }
+
+    async function handleResetPasswordCode(e) {
+        e.preventDefault();
+        const resetCode = document.getElementById('reset-code').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+        // Basic client-side validation
+        if (!resetCode) {
+            displayError('reset-code', 'Please enter the verification code.');
+            return;
+        }
+        if (newPassword.length < 8) {
+            displayError('new-password', 'New password must be at least 8 characters long.');
+            return;
+        }
+        if (newPassword !== confirmNewPassword) {
+            displayError('confirm-new-password', 'Passwords do not match.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reset-password/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    identifier: forgotPasswordIdentifier,
+                    code: resetCode,
+                    new_password: newPassword,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                displayError('reset-code', data.detail || 'Invalid reset code or request. Please try again.');
+                return;
+            }
+
+            alert('Password reset successfully! You can now log in with your new password.');
+            currentForm = 'login';
+            registrationSuccessMessage = 'Password reset successfully. Please log in.';
+            render();
+
+        } catch (error) {
+            alert('An unexpected error occurred. Please try again.');
+            console.error("Reset password error:", error);
+        }
+    }
+
     function displayError(elementId, errorMessage) {
-        const inputGroup = document.getElementById(elementId).closest('.input-group'); // Find the parent input group
-        let errorElement = inputGroup.querySelector('.error-message'); // Check if error message is already there
+        const inputGroup = document.getElementById(elementId).closest('.input-group');
+        let errorElement = inputGroup.querySelector('.error-message');
 
         if (errorMessage) {
             if (!errorElement) {
@@ -276,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorElement.classList.add('error-message');
                 errorElement.style.color = '#FFC107';
                 errorElement.style.fontSize = '12px';
-                inputGroup.appendChild(errorElement); // Append to the input group
+                inputGroup.appendChild(errorElement);
             }
             errorElement.textContent = errorMessage;
         } else {
@@ -285,7 +444,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
 
     // Initial render
     render();
