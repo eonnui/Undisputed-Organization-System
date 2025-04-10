@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} Organization System - Home {% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Poppins:wght@700&display=swap" rel="stylesheet">
     {% block head %}
     {% endblock %}
 </head>
 <body>
     <header>
-        <div class="logo">
+        <!-- <div class="logo">
             <a href="{{ url_for('home') }}">
                 <img src="{{ url_for('static', path='images/patrick_logo.jpg') }}" alt="Your Logo">
             </a>
-        </div>
+        </div> -->
         <nav>
             <ul>
                 <li><a href="{{ url_for('home') }}">Home</a></li>
@@ -31,9 +32,11 @@
             {% endblock %}
     </main>
 
+    <!--
     <footer>
         <p>&copy; {{ year }} Organization System</p>
     </footer>
+    -->
 
     <script src="{{ url_for('static', path='js/scripts.js') }}"></script>
     {% block scripts %}

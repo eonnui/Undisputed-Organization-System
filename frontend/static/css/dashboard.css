@@ -1,0 +1,97 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg-color: #FFFFFF;
+    --login-bg: #8F87F1;
+    --button-bg: #1E1E1E;
+    --button-text: #FFFFFF;
+    --hover-effect: #B5A9F3;
+
+    /* Secondary Colors */
+    --accent-light: #A9A3F4;
+    --accent-dark: #7B73D9;
+    --highlight: #F5F3FF;
+    
+    /* Text Colors */
+    --text-primary: #1E1E1E;
+    --text-secondary: #666666;
+    --text-inverse: #FFFFFF;
+    
+    /* State Colors */
+    --hover-dark: #333333;
+    --hover-accent: #7870C2;
+    --focus-border: rgba(143, 135, 241, 0.5);
+    
+    /* Utility Colors */
+    --success: #4CAF50;
+    --error: #F44336;
+    --warning: #FFC107;
+    --info: #2196F3;
+    
+    /* Backgrounds */
+    --bg-secondary: #F5F5F5;
+    --bg-dark: #1E1E1E;
+    
+    /* Borders */
+    --border-light: #E0E0E0;
+    --border-medium: #CCCCCC;
+}
+
+body {
+    height: 100vh;
+    background-color: var(--bg-color);
+    font-family: "DM Sans", sans-serif;
+    display: flex;
+}
+
+header nav {
+    display: flex;
+    justify-content: flex-start; /* Align container to the left */
+    align-items: center; /* Vertically align items */
+    padding: 10px 0;
+}
+
+header nav .nav-container {
+    display: flex;
+    align-items: center;
+    /* No specific width set, will take necessary space */
+}
+
+header nav .logo {
+    /* Center the logo visually within its space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 20px; /* Adjust spacing as needed */
+    width: 10px;
+}
+
+header nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+header nav ul li:first-child {
+    margin-left: 0;
+}
+
+header nav a {
+    text-decoration: none;
+    color: #333; /* Adjust color as needed */
+}
+
+/* footer {
+    position: fixed;
+    text-align: center;
+    padding: 10px 0;
+    background-color: var(--bg-secondary);
+} 
+*/
