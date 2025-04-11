@@ -33,7 +33,10 @@
     --nav-item-hover-bg: var(--hover-accent); /* Hover background */
     --nav-item-text: var(--text-inverse); /* Text color for nav items */
     --nav-item-selected-bg: var(--accent-dark); /* Background for selected item */
-    --top-bar-bg: var(--bg-secondary); /* Background for top bar */
+    --top-bar-bg: var(--bg-color); /* Background for top bar */
+    --dropdown-bg: var(--bg-color);
+    --dropdown-border: var(--border-light);
+    --dropdown-item-hover-bg: var(--bg-secondary);
 }
 
 body {
@@ -134,13 +137,21 @@ body {
     align-items: center;
 }
 
+.top-bar .user-actions > div {
+    position: relative;
+    margin-left: 15px;
+}
+
+.top-bar .user-actions > div:first-child {
+    margin-left: 0;
+}
+
 .top-bar .user-actions button {
     background: none;
     border: none;
     color: var(--text-primary);
     cursor: pointer;
     padding: 8px 12px; /* Add horizontal padding */
-    margin-left: 3px;
     font-size: 1em;
     display: flex;
     align-items: center;
@@ -154,17 +165,51 @@ body {
     background-color: var(--bg-secondary); /* Subtle hover background */
 }
 
-
-.top-bar .user-actions button:first-child {
-    margin-left: 0; /* No margin for the first button (notifications) */
-}
-
 .top-bar .user-actions .material-symbols-outlined {
     font-size: 1.8em;
 }
 
 .top-bar .user-actions .profile-btn .material-symbols-outlined {
     font-size: 2em; /* Slightly larger profile icon */
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--dropdown-bg);
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border: 1px solid var(--dropdown-border);
+    border-radius: 5px;
+    top: 100%;
+    right: 0; /* Align to the right of the button */
+    margin-top: 5px;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.dropdown-content a, .dropdown-content .notification-item {
+    color: var(--text-primary);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+    transition: background-color 0.3s ease;
+}
+
+.dropdown-content a:hover, .dropdown-content .notification-item:hover {
+    background-color: var(--dropdown-item-hover-bg);
+}
+
+.dropdown-content .notification-item {
+    border-bottom: 1px solid var(--dropdown-border);
+}
+
+.dropdown-content .notification-item:last-child {
+    border-bottom: none;
 }
 
 .content {
