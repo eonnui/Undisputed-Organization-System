@@ -33,17 +33,17 @@
         <div class="top-bar">
             <div class="user-actions">
                 <div class="notification-container">
-                    <button class="notification-btn">
+                    <button class="notification-btn" aria-haspopup="true" aria-expanded="false" aria-controls="notifications-dropdown">
                         <span class="material-symbols-outlined">notifications</span>
                     </button>
                     <div id="notifications-dropdown" class="dropdown-content">
                         <div class="notification-item">New event scheduled!</div>
                         <div class="notification-item">Membership payment due soon.</div>
                         <div class="notification-item">Important announcement on the bulletin board.</div>
-                        </div>
+                    </div>
                 </div>
                 <div class="profile-container">
-                    <button class="profile-btn">
+                    <button class="profile-btn" aria-haspopup="true" aria-expanded="false" aria-controls="profile-dropdown">
                         <span class="material-symbols-outlined">account_circle</span>
                         Profile
                     </button>
@@ -65,39 +65,82 @@
     <script src="{{ url_for('static', path='js/scripts.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const profileBtn = document.querySelector('.profile-btn');
-            const profileDropdown = document.getElementById('profile-dropdown');
-            const notificationBtn = document.querySelector('.notification-btn');
-            const notificationsDropdown = document.getElementById('notifications-dropdown');
+          // Function to handle dropdown toggle and accessibility
+          function setupDropdown(buttonSelector, dropdownId) {
+            const button = document.querySelector(buttonSelector);
+            const dropdown = document.getElementById(dropdownId);
 
-            function toggleDropdown(dropdown) {
-                dropdown.classList.toggle('show');
+            if (!button || !dropdown) {
+              console.error(`Dropdown elements not found for button: ${buttonSelector}, dropdown: ${dropdownId}`);
+              return;
             }
 
-            profileBtn.addEventListener('click', function() {
-                toggleDropdown(profileDropdown);
-            });
-
-            notificationBtn.addEventListener('click', function() {
-                toggleDropdown(notificationsDropdown);
-            });
-
-            // Close dropdown when clicking outside
-            window.addEventListener('click', function(event) {
-                if (!event.target.matches('.profile-btn') && !event.target.closest('#profile-dropdown')) {
-                    if (profileDropdown.classList.contains('show')) {
-                        profileDropdown.classList.remove('show');
-                    }
+            // Toggle dropdown visibility and update aria attributes
+            function toggleDropdown() {
+              const isExpanded = dropdown.classList.toggle('show');
+              button.setAttribute('aria-expanded', isExpanded);
+              if (isExpanded) {
+                // Focus the first interactive element in the dropdown
+                const firstInteractive = dropdown.querySelector('a, button');
+                if (firstInteractive) {
+                  firstInteractive.focus();
                 }
-                if (!event.target.matches('.notification-btn') && !event.target.closest('#notifications-dropdown')) {
-                    if (notificationsDropdown.classList.contains('show')) {
-                        notificationsDropdown.classList.remove('show');
-                    }
+              } else {
+                button.focus(); // Return focus to the button
+              }
+            }
+
+            // Handle keyboard navigation for accessibility
+            function handleKeyboardNavigation(event) {
+              if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                toggleDropdown();
+              } else if (event.key === 'Escape' && dropdown.classList.contains('show')) {
+                toggleDropdown();
+              } else if (event.key === 'Tab' && dropdown.classList.contains('show')) {
+                const focusableElements = dropdown.querySelectorAll('a, button');
+                if (focusableElements.length > 0) {
+                  const firstFocusable = focusableElements[0];
+                  const lastFocusable = focusableElements[focusableElements.length - 1];
+                  const currentFocus = document.activeElement;
+
+                  if (event.shiftKey && currentFocus === firstFocusable) {
+                    event.preventDefault();
+                    lastFocusable.focus();
+                  } else if (!event.shiftKey && currentFocus === lastFocusable) {
+                    event.preventDefault();
+                    firstFocusable.focus();
+                  }
                 }
+              }
+            }
+
+            // Event listeners
+            button.setAttribute('aria-haspopup', 'true');
+            button.setAttribute('aria-expanded', 'false');
+            button.addEventListener('click', toggleDropdown);
+            button.addEventListener('keydown', handleKeyboardNavigation);
+          }
+
+          // Setup dropdown for the profile menu
+          setupDropdown('.profile-btn', 'profile-dropdown');
+
+          // Setup dropdown for the notifications menu
+          setupDropdown('.notification-btn', 'notifications-dropdown');
+
+          // Close dropdowns when clicking outside
+          window.addEventListener('click', function(event) {
+            document.querySelectorAll('.dropdown-content.show').forEach(openDropdown => {
+              const relatedButton = document.querySelector(`[aria-controls="${openDropdown.id}"]`);
+              if (relatedButton && !event.target.matches(relatedButton) && !openDropdown.contains(event.target)) {
+                openDropdown.classList.remove('show');
+                relatedButton.setAttribute('aria-expanded', 'false');
+              }
             });
+          });
         });
-    </script>
-    {% block scripts %}
-    {% endblock %}
+      </script>
+      {% block scripts %}
+      {% endblock %}
 </body>
 </html>
