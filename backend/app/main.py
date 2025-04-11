@@ -55,8 +55,14 @@ async def bulletin_board(request: Request, db: Session = Depends(get_db)):
     )
 
 @app.get("/Events", response_class=HTMLResponse, name="events")
-async def events(request: Request):
-    return templates.TemplateResponse("student_dashboard/events.html", {"request": request, "year": "2025"})
+async def events(request: Request, db: Session = Depends(get_db)):
+    events_list = db.query(models.Event).order_by(models.Event.date).all()
+    # Assuming you have a way to get the current user's ID
+    current_user_id = 1  # Replace with actual user identification logic
+    return templates.TemplateResponse(
+        "student_dashboard/events.html",
+        {"request": request, "year": "2025", "events": events_list, "current_user_id": current_user_id}
+    )
 
 @app.get("/Payments", response_class=HTMLResponse, name="payments")
 async def payments(request: Request):
@@ -111,3 +117,22 @@ async def heart_post(post_id: int, request: Request, db: Session = Depends(get_d
     db.commit()
     db.refresh(post)
     return {"heart_count": post.heart_count}
+
+@app.post("/Events/join/{event_id}")
+async def join_event(event_id: int, request: Request, db: Session = Depends(get_db)):
+    # Assuming you have a way to identify the current user (e.g., from session)
+    current_user_id = 1  # Replace with actual user identification logic
+
+    event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    user = db.query(models.User).filter(models.User.id == current_user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user in event.participants:
+        raise HTTPException(status_code=400, detail="You are already joined in this event.")
+
+    if event.joined_count() >= event.max_participants:
+        raise HTTPException(status_code=400, detail="This event is full.")
