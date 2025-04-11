@@ -37,6 +37,7 @@
         background-color: #f9f9f9;
         border-left: 4px solid #2ecc71;
         transition: all 0.3s ease;
+        position: relative;
     }
     
     .event-item:hover {
@@ -50,9 +51,10 @@
         margin-bottom: 5px;
     }
     
-    .event-date, .event-location {
+    .event-date, .event-location, .event-participants {
         color: #777;
         font-size: 0.9em;
+        margin-bottom: 3px;
     }
     
     .event-date::before {
@@ -61,6 +63,49 @@
     
     .event-location::before {
         content: "📍 ";
+    }
+    
+    .event-participants::before {
+        content: "👥 ";
+    }
+    
+    .event-action {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .join-btn, .leave-btn {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        cursor: pointer;
+        border: none;
+        color: white;
+    }
+    
+    .join-btn {
+        background-color: #2ecc71;
+    }
+    
+    .join-btn:hover {
+        background-color: #27ae60;
+    }
+    
+    .leave-btn {
+        background-color: #e74c3c;
+    }
+    
+    .leave-btn:hover {
+        background-color: #c0392b;
+    }
+    
+    .event-full {
+        background-color: #95a5a6;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
     }
     
     /* Modern FAQ Section - keeping the original structure */
@@ -173,24 +218,134 @@
 </div>
 
 <script>
-    // Sample event data (in a real app, you'd fetch this from an API endpoint)
-    const upcomingEvents = [
-        {
-            title: "Fall Semester Registration",
-            date: "August 15, 2025",
-            location: "Online Portal"
-        },
-        {
-            title: "New Student Orientation",
-            date: "August 20, 2025",
-            location: "Main Auditorium"
-        },
-        {
-            title: "Academic Club Fair",
-            date: "September 5, 2025",
-            location: "Student Center"
+    // Current user ID for event actions
+    const currentUserId = 1; // Replace with actual user ID from your authentication system
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load upcoming events from API
+        fetchUpcomingEvents();
+        
+        // Load FAQs
+        loadFAQs();
+    });
+    
+    // Function to fetch events from the backend
+    async function fetchUpcomingEvents() {
+        const eventsContainer = document.getElementById('events-container');
+        
+        try {
+            // Replace with your actual API endpoint
+            const response = await fetch('/api/events/upcoming');
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch events');
+            }
+            
+            const events = await response.json();
+            displayEvents(events);
+            
+        } catch (error) {
+            console.error('Error fetching events:', error);
+            
+            // Fallback to display some events if API fails
+            displayFallbackEvents();
         }
-    ];
+    }
+    
+    // Function to display events
+    function displayEvents(events) {
+        const eventsContainer = document.getElementById('events-container');
+        
+        // Clear loading message
+        eventsContainer.innerHTML = '';
+        
+        if (!events || events.length === 0) {
+            eventsContainer.innerHTML = '<div class="empty-state">No upcoming events at this time.</div>';
+            return;
+        }
+        
+        // Create and append event items
+        events.forEach(event => {
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            
+            // Check if user is already participating
+            const isParticipating = event.participants && event.participants.some(participant => participant.id === currentUserId);
+            
+            // Check if event is full
+            const isFull = event.joined_count >= event.max_participants;
+            
+            let actionButton = '';
+            
+            if (isParticipating) {
+                actionButton = `
+                    <form method="POST" action="/Events/leave/${event.event_id}" class="event-action">
+                        <button type="submit" class="leave-btn">Leave</button>
+                    </form>
+                `;
+            } else if (!isFull) {
+                actionButton = `
+                    <form method="POST" action="/Events/join/${event.event_id}" class="event-action">
+                        <button type="submit" class="join-btn">Join</button>
+                    </form>
+                `;
+            } else {
+                actionButton = `<span class="event-action event-full">Full</span>`;
+            }
+            
+            eventItem.innerHTML = `
+                <div class="event-title">${event.title}</div>
+                <div class="event-date">${formatDate(event.date)}</div>
+                <div class="event-location">${event.location}</div>
+                <div class="event-participants">Participants: ${event.joined_count || 0}/${event.max_participants}</div>
+                ${actionButton}
+            `;
+            
+            eventsContainer.appendChild(eventItem);
+        });
+    }
+    
+    // Fallback function if the API call fails
+    function displayFallbackEvents() {
+        const fallbackEvents = [
+            {
+                event_id: 1,
+                title: "Fall Semester Registration",
+                date: new Date("2025-08-15"),
+                location: "Online Portal",
+                joined_count: 45,
+                max_participants: 100,
+                participants: []
+            },
+            {
+                event_id: 2,
+                title: "New Student Orientation",
+                date: new Date("2025-08-20"),
+                location: "Main Auditorium",
+                joined_count: 120,
+                max_participants: 150,
+                participants: [{id: currentUserId}]
+            },
+            {
+                event_id: 3,
+                title: "Academic Club Fair",
+                date: new Date("2025-09-05"),
+                location: "Student Center",
+                joined_count: 50,
+                max_participants: 50,
+                participants: []
+            }
+        ];
+        
+        displayEvents(fallbackEvents);
+    }
+    
+    // Helper function to format dates
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
     
     // Sample FAQ data (in a real app, you'd fetch this from an API endpoint)
     const faqData = [
@@ -211,41 +366,6 @@
             answer: "Scholarship and financial aid applications are available through the Financial Aid Office. Visit the Financial Aid section on our website for more information."
         }
     ];
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        // Load upcoming events
-        loadUpcomingEvents();
-        
-        // Load FAQs
-        loadFAQs();
-    });
-    
-    // Function to load upcoming events
-    function loadUpcomingEvents() {
-        const eventsContainer = document.getElementById('events-container');
-        
-        // Clear loading message
-        eventsContainer.innerHTML = '';
-        
-        if (upcomingEvents.length === 0) {
-            eventsContainer.innerHTML = '<div class="empty-state">No upcoming events at this time.</div>';
-            return;
-        }
-        
-        // Create and append event items
-        upcomingEvents.forEach(event => {
-            const eventItem = document.createElement('div');
-            eventItem.className = 'event-item';
-            
-            eventItem.innerHTML = `
-                <div class="event-title">${event.title}</div>
-                <div class="event-date">${event.date}</div>
-                <div class="event-location">${event.location}</div>
-            `;
-            
-            eventsContainer.appendChild(eventItem);
-        });
-    }
     
     // Function to load FAQs
     function loadFAQs() {
