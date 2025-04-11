@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block head %}
+<style>
+    /* Reset and Box Sizing */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Root Variables - Your Theme Colors */
+    :root {
+        --bg-color: #FFFFFF;
+        --login-bg: #8F87F1;
+        --button-bg: #1E1E1E;
+        --button-text: #FFFFFF;
+        --hover-effect: #B5A9F3;
+        --accent-light: #A9A3F4;
+        --accent-dark: #7B73D9;
+        --highlight: #F5F3FF;
+        --text-primary: #1E1E1E;
+        --text-secondary: #666666;
+        --text-inverse: #FFFFFF;
+        --hover-dark: #333333;
+        --hover-accent: #7870C2;
+        --focus-border: rgba(143, 135, 241, 0.5);
+        --success: #4CAF50;
+        --error: #F44336;
+        --warning: #FFC107;
+        --info: #2196F3;
+        --bg-secondary: #F5F5F5;
+        --bg-dark: #1E1E1E;
+        --border-light: #E0E0E0;
+        --border-medium: #CCCCCC;
+        --nav-item-bg: var(--accent-light); /* Background for nav items */
+        --nav-item-hover-bg: var(--hover-accent); /* Hover background */
+        --nav-item-text: var(--text-inverse); /* Text color for nav items */
+        --nav-item-selected-bg: var(--accent-dark); /* Background for selected item */
+        --top-bar-bg: var(--bg-color); /* Background for top bar */
+        --dropdown-bg: var(--bg-color);
+        --dropdown-border: var(--border-light);
+        --dropdown-item-hover-bg: var(--bg-secondary);
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: 30px;
+        align-items: start; /* Align items to the top in each grid cell */
+    }
+
+    .settings-section {
+        background-color: var(--bg-color);
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border-light);
+    }
+
+    .settings-section h2 {
+        color: var(--text-primary);
+        margin-top: 0;
+        font-size: 1.8em;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--border-light);
+        padding-bottom: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-secondary);
+        font-weight: bold;
+        font-size: 1em;
+    }
+
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group input[type="password"],
+    .form-group input[type="file"] {
+        width: calc(100% - 16px);
+        padding: 10px;
+        border: 1px solid var(--border-light);
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 1em;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--accent-light);
+        box-shadow: 0 0 0 2px rgba(169, 163, 244, 0.25); /* Focus color */
+    }
+
+    .form-group small {
+        display: block;
+        color: var(--text-secondary);
+        margin-top: 8px;
+        font-size: 0.9em;
+    }
+
+    .error-message {
+        color: var(--error);
+        font-size: 0.9em;
+        margin-top: 8px;
+    }
+
+    .button-group {
+        text-align: right;
+        margin-top: 25px;
+    }
+
+    .button-group button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 1em;
+        transition: background-color 0.3s ease;
+    }
+
+    .button-group button.clear {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-light);
+    }
+
+    .button-group button.clear:hover {
+        background-color: #e0e0e0;
+    }
+
+    .button-group button.update,
+    .button-group button.change-profile-pic {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+    }
+
+    .button-group button.update:hover,
+    .button-group button.change-profile-pic:hover {
+        background-color: var(--hover-dark);
+    }
+
+    /* Profile Picture Preview */
+    .profile-picture-preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 15px;
+        border: 2px solid var(--border-light);
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .profile-picture-section {
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <h1>Account Settings</h1>
+    <div class="settings-grid">
+        <div class="settings-section profile-picture-section">
+            <h2>Profile Picture</h2>
+            <img src="/static/images/default-profile.png" alt="Current Profile Picture" class="profile-picture-preview">
+            <form id="profilePictureForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="profilePicture">Upload New Picture</label>
+                    <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
+                    <small>Accepted formats: JPG, PNG, GIF.</small>
+                    <div class="error-message" id="profilePictureError"></div>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="clear" onclick="document.getElementById('profilePicture').value = ''; document.getElementById('profilePictureError').textContent = '';">Clear</button>
+                    <button type="submit" class="change-profile-pic">Change Profile Picture</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="settings-section">
+            <h2>Contact Details</h2>
+            <form id="contactForm">
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" value="" required>
+                    <div class="error-message" id="emailError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="mobile">Mobile Number *</label>
+                    <input type="tel" id="mobile" name="mobile" value="" required>
+                    <small>Format: 11 digit number (09XXXXXXXXX)</small>
+                    <div class="error-message" id="mobileError"></div>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="clear" onclick="clearContactForm()">Clear</button>
+                    <button type="submit" class="update">Update Contact</button>
+                </div>
+            </form>
+
+            <h2>Security</h2>
+            <form id="securityForm">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password *</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                    <div class="error-message" id="currentPasswordError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword">
+                    <small>Must be at least 8 characters long (leave blank to keep current).</small>
+                    <div class="error-message" id="newPasswordError"></div>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword">
+                    <div class="error-message" id="confirmPasswordError"></div>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="clear" onclick="clearSecurityForm()">Clear</button>
+                    <button type="submit" class="update">Update Security</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const contactForm = document.getElementById('contactForm');
+        const securityForm = document.getElementById('securityForm');
+        const profilePictureForm = document.getElementById('profilePictureForm');
+
+        contactForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (validateContactForm()) {
+                alert('Contact details updated (simulated)');
+                // Add your fetch/ajax request here
+            }
+        });
+
+        securityForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (validateSecurityForm()) {
+                alert('Security settings updated (simulated)');
+                // Add your fetch/ajax request here
+            }
+        });
+
+        profilePictureForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (validateProfilePictureForm()) {
+                alert('Profile picture updated (simulated)');
+                // Add your fetch/ajax request here (remember to handle file uploads)
+            }
+        });
+    });
+
+    function clearContactForm() {
+        document.getElementById('email').value = '';
+        document.getElementById('mobile').value = '';
+        clearErrors('contactForm');
+    }
+
+    function clearSecurityForm() {
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        clearErrors('securityForm');
+    }
+
+    function clearErrors(formId) {
+        const errors = document.querySelectorAll(`#${formId} .error-message`);
+        errors.forEach(error => error.textContent = '');
+    }
+
+    function validateContactForm() {
+        clearErrors('contactForm');
+        let isValid = true;
+
+        const emailInput = document.getElementById('email');
+        const mobileInput = document.getElementById('mobile');
+
+        if (!emailInput.value.trim()) {
+            document.getElementById('emailError').textContent = 'Email is required.';
+            isValid = false;
+        } else if (!isValidEmail(emailInput.value.trim())) {
+            document.getElementById('emailError').textContent = 'Invalid email format.';
+            isValid = false;
+        }
+
+        if (!mobileInput.value.trim()) {
+            document.getElementById('mobileError').textContent = 'Mobile number is required.';
+            isValid = false;
+        } else if (!/^(09|\+639)\d{9}$/.test(mobileInput.value.trim())) {
+            document.getElementById('mobileError').textContent = 'Invalid mobile number format (e.g., 09XXXXXXXXX or +639XXXXXXXXX).';
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function validateSecurityForm() {
+        clearErrors('securityForm');
+        let isValid = true;
+
+        const currentPasswordInput = document.getElementById('currentPassword');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+
+        if (!currentPasswordInput.value.trim()) {
+            document.getElementById('currentPasswordError').textContent = 'Current password is required.';
+            isValid = false;
+        }
+
+        if (newPasswordInput.value.trim()) {
+            if (newPasswordInput.value.trim().length < 8) {
+                document.getElementById('newPasswordError').textContent = 'New password must be at least 8 characters long.';
+                isValid = false;
+            } else if (newPasswordInput.value.trim() !== confirmPasswordInput.value.trim()) {
+                document.getElementById('confirmPasswordError').textContent = 'New passwords do not match.';
+                isValid = false;
+            }
+        } else if (confirmPasswordInput.value.trim()) {
+            document.getElementById('newPasswordError').textContent = 'Please enter a new password to confirm.';
+            document.getElementById('confirmPasswordError').textContent = 'Please enter a new password to confirm.';
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function validateProfilePictureForm() {
+        const fileInput = document.getElementById('profilePicture');
+        const errorDiv = document.getElementById('profilePictureError');
+        errorDiv.textContent = '';
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+            if (!allowedTypes.includes(file.type)) {
+                errorDiv.textContent = 'Invalid file type. Only JPG, PNG, and GIF are allowed.';
+                return false;
+            }
+            // Optional: Add file size validation here
+        }
+        return true;
+    }
+
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+</script>
+{% endblock %}

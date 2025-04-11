@@ -35,6 +35,18 @@ def get_db():
     finally:
         db.close()
 
+@app.get("/logout", response_class=RedirectResponse)
+async def logout(request: Request):
+    # Invalidate the user's session (example using request.session)
+    request.session.clear()
+    # Or, if you're using a different session management mechanism,
+    # implement the appropriate logic here to clear the session.
+
+    # Optionally, you can set a success message or perform other actions.
+
+    # Redirect the user to the login page (your root "/")
+    return RedirectResponse(url="/", status_code=303) # Use 303 for POST redirect after GET
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -79,6 +91,10 @@ async def payments(request: Request):
 @app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
 async def financial_statement(request: Request):
     return templates.TemplateResponse("student_dashboard/financial_statement.html", {"request": request, "year": "2025"})
+
+@app.get("/Settings", response_class=HTMLResponse, name="settings")
+async def settings(request: Request):
+    return templates.TemplateResponse("student_dashboard/settings.html", {"request": request, "year": "2025"})
 
 @app.post("/api/signup/")
 async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):

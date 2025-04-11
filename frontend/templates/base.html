@@ -48,8 +48,9 @@
                         Profile
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
-                        <a href="#">Settings</a>
-                        <a href="#">Log Out</a>
+                      
+                        <a href="{{ url_for('settings')}}">Settings</a>
+                        <a href="{{ url_for('logout')}}">Log Out</a>
                     </div>
                 </div>
             </div>
