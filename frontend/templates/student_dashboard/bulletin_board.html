@@ -1,7 +1,38 @@
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %} Bulletin Board {% endblock %}
+
+{% block head %} 
+<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+{% endblock %}
+
 
 {% block content %}
-    <h1>Bulletin Board</h1>
+
+    <div class="bulletin-container">
+        <h2 class="bulletin-header">Bulletin Board</h2>
+
+        <div class="post-card">
+            <div class="post-header">
+                <div class="profile-image"></div>
+                <div class="post-info">
+                    <div class="post-title">NEW PATCH</div>
+                    <div>by asas</div>
+                    <div class="post-date">date posted: 11/23/25</div>
+                </div>
+            </div>
+            <div class="post-content">
+Widely regarded as one of the greatest films of all time, this mob drama, based on Mario Puzo's novel of
+the same name, focuses on the powerful Italian-American crime family of Don Vito Corleone (Marlon
+Brando). When the don's youngest son, Michael (Al Pacino), reluctantly joins the Mafia, he becomes involved
+in the inevitable cycle of violence and betrayal. Although Michael tries to maintain a normal relationship
+with his wife, Kay (Diane Keaton), he is drawn deeper into the family business.
+---------------------------------------------------
+            </div>
+            <div class="post-actions">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
