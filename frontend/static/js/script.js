@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             alert('Login successful!');
-            window.location.href = '/home';
+            window.location.href = '/Home';
         } catch (error) {
             alert('An unexpected error occurred. Please try again.'); // Generic error for network issues
         }

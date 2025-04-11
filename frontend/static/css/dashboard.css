@@ -1,97 +1,181 @@
+/* Reset and Box Sizing */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
+/* Root Variables */
 :root {
     --bg-color: #FFFFFF;
     --login-bg: #8F87F1;
     --button-bg: #1E1E1E;
     --button-text: #FFFFFF;
     --hover-effect: #B5A9F3;
-
-    /* Secondary Colors */
     --accent-light: #A9A3F4;
     --accent-dark: #7B73D9;
     --highlight: #F5F3FF;
-    
-    /* Text Colors */
     --text-primary: #1E1E1E;
     --text-secondary: #666666;
     --text-inverse: #FFFFFF;
-    
-    /* State Colors */
     --hover-dark: #333333;
     --hover-accent: #7870C2;
     --focus-border: rgba(143, 135, 241, 0.5);
-    
-    /* Utility Colors */
     --success: #4CAF50;
     --error: #F44336;
     --warning: #FFC107;
     --info: #2196F3;
-    
-    /* Backgrounds */
     --bg-secondary: #F5F5F5;
     --bg-dark: #1E1E1E;
-    
-    /* Borders */
     --border-light: #E0E0E0;
     --border-medium: #CCCCCC;
+    --nav-item-bg: var(--accent-light); /* Background for nav items */
+    --nav-item-hover-bg: var(--hover-accent); /* Hover background */
+    --nav-item-text: var(--text-inverse); /* Text color for nav items */
+    --nav-item-selected-bg: var(--accent-dark); /* Background for selected item */
+    --top-bar-bg: var(--bg-secondary); /* Background for top bar */
 }
 
 body {
-    height: 100vh;
+    min-height: 100vh;
     background-color: var(--bg-color);
     font-family: "DM Sans", sans-serif;
-    display: flex;
+    display: flex; /* For the sidebar and main content */
 }
 
-header nav {
+.sidebar {
+    width: 250px; /* Fixed width for the sidebar */
+    background: var(--login-bg);
+    color: var(--bg-color);
+    padding: 20px;
     display: flex;
-    justify-content: flex-start; /* Align container to the left */
-    align-items: center; /* Vertically align items */
-    padding: 10px 0;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
-header nav .nav-container {
-    display: flex;
-    align-items: center;
-    /* No specific width set, will take necessary space */
+.sidebar .logo {
+    margin-bottom: 30px;
+    width: 80%;
 }
 
-header nav .logo {
-    /* Center the logo visually within its space */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 20px; /* Adjust spacing as needed */
-    width: 10px;
+.sidebar .logo img {
+    width: 100%;
+    border-radius: 10px;
 }
 
-header nav ul {
+.sidebar .logo a {
+    display: block;
+    text-align: left;
+}
+
+.sidebar nav {
+    width: 100%;
+}
+
+.sidebar nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
-
-header nav ul li:first-child {
-    margin-left: 0;
+.sidebar nav ul li {
+    margin-bottom: 8px;
+    border-radius: 5px;
+    background-color: var(--nav-item-bg);
+    transition: background-color 0.3s ease;
 }
 
-header nav a {
+.sidebar nav ul li a {
+    display: flex;
+    align-items: center;
     text-decoration: none;
-    color: #333; /* Adjust color as needed */
+    color: var(--nav-item-text);
+    padding: 10px 15px;
+    width: 100%;
+    text-align: left;
 }
 
-/* footer {
-    position: fixed;
+.sidebar nav ul li a .material-symbols-outlined {
+    margin-right: 10px;
+    font-size: 1.4em;
+}
+
+.sidebar nav ul li:hover {
+    background-color: var(--nav-item-hover-bg);
+}
+
+.sidebar nav ul li.selected {
+    background-color: var(--nav-item-selected-bg);
+    font-weight: 500;
+}
+
+.main-content {
+    flex-grow: 1; /* Take remaining horizontal space */
+    display: flex;
+    flex-direction: column; /* Stack top bar and content */
+}
+
+.top-bar {
+    background-color: var(--bg-color); /* Use a lighter background */
+    padding: 15px 20px;
+    display: flex;
+    justify-content: flex-end; /* Push user actions to the right */
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+    height: 50px; /* Adjust height for better proportion */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+.top-bar .user-actions {
+    display: flex;
+    align-items: center;
+}
+
+.top-bar .user-actions button {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px 12px; /* Add horizontal padding */
+    margin-left: 3px;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Increased gap */
+    border-radius: 5px; /* Slightly rounded buttons */
+    transition: background-color 0.3s ease; /* Hover effect */
+}
+
+.top-bar .user-actions button:hover {
+    background-color: var(--bg-secondary); /* Subtle hover background */
+}
+
+
+.top-bar .user-actions button:first-child {
+    margin-left: 0; /* No margin for the first button (notifications) */
+}
+
+.top-bar .user-actions .material-symbols-outlined {
+    font-size: 1.8em;
+}
+
+.top-bar .user-actions .profile-btn .material-symbols-outlined {
+    font-size: 2em; /* Slightly larger profile icon */
+}
+
+.content {
+    padding: 20px;
+    flex-grow: 1; /* Allow content to take vertical space */
+}
+
+.main-content footer {
     text-align: center;
-    padding: 10px 0;
+    padding: 15px 0;
     background-color: var(--bg-secondary);
-} 
-*/
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-light);
+}

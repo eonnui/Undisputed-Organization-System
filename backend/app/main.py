@@ -39,25 +39,25 @@ def get_db():
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/home", response_class=HTMLResponse)
+@app.get("/Home", response_class=HTMLResponse, name="home")
 async def home(request: Request):
     return templates.TemplateResponse("student_dashboard/home.html", {"request": request, "year": "2025"})
 
-@app.get("/bulletin_board", response_class=HTMLResponse)
+@app.get("/BulletinBoard", response_class=HTMLResponse, name="bulletin_board")
 async def bulletin_board(request: Request):
-    return templates.TemplateResponse("bulletin_board.html", {"request": request, "year": "2025"})
+    return templates.TemplateResponse("student_dashboard/bulletin_board.html", {"request": request, "year": "2025"})
 
-@app.get("/events", response_class=HTMLResponse)
+@app.get("/Events", response_class=HTMLResponse, name="events")
 async def events(request: Request):
-    return templates.TemplateResponse("events.html", {"request": request, "year": "2025"})
+    return templates.TemplateResponse("student_dashboard/events.html", {"request": request, "year": "2025"})
 
-@app.get("/payments", response_class=HTMLResponse)
+@app.get("/Payments", response_class=HTMLResponse, name="payments")
 async def payments(request: Request):
-    return templates.TemplateResponse("payments.html", {"request": request, "year": "2025"})
+    return templates.TemplateResponse("student_dashboard/payments.html", {"request": request, "year": "2025"})
 
-@app.get("/financial_statement", response_class=HTMLResponse)
+@app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
 async def financial_statement(request: Request):
-    return templates.TemplateResponse("financial_statement.html", {"request": request, "year": "2025"})
+    return templates.TemplateResponse("student_dashboard/financial_statement.html", {"request": request, "year": "2025"})
 
 @app.post("/api/signup/")
 async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
