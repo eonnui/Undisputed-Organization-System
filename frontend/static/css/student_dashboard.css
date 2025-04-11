@@ -1,3 +1,5 @@
+
+/* BULLETIN BOARD */
 .bulletin-container {
     max-width: 600px;
     margin-left: 20px; /* Moved margin from auto to left */
@@ -125,3 +127,82 @@
     font-size: 0.8em; /* Added font-size: 0.8em from new CSS */
     margin-left: 10px; /* Added margin-left: 10px from new CSS */
 }
+
+/* EVENTS */
+.events-page {
+    max-width: 800px; /* Adjust as needed */
+    margin-left: 20px; /* Moved margin to the left */
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.events-title {
+    font-size: 2em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: left; /* Align title to the left */
+}
+
+.events-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.event-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.event-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.event-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #777;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.event-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.event-description {
+    color: #555;
+    font-size: 0.95em;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.event-tag {
+    background-color: #e0f7fa;
+    color: #00acc1;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8em;
+    font-weight: bold;
+    align-self: flex-start;
+    margin-bottom: 10px;
+}
+
+/* Example Tag Colors */
+.tag-academic { background-color: #fbe9e7; color: #d84315; }
+.tag-sports { background-color: #e8f5e9; color: #388e3c; }
+.tag-arts { background-color: #fffde7; color: #f9a825; }
+.tag-music { background-color: #ffecb3; color: #f57f17; }
+.tag-esports { background-color: #b2ebf2; color: #00838f; }
+.tag-cultural { background-color: #f3e5f5; color: #7b1fa2; }
