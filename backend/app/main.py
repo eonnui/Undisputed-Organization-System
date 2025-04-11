@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-from sqlalchemy.orm import Session
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.orm import Session, joinedload
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
@@ -56,9 +56,11 @@ async def bulletin_board(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/Events", response_class=HTMLResponse, name="events")
 async def events(request: Request, db: Session = Depends(get_db)):
-    events_list = db.query(models.Event).order_by(models.Event.date).all()
+    events_list = db.query(models.Event).options(joinedload(models.Event.participants)).order_by(models.Event.date).all()
     # Assuming you have a way to get the current user's ID
     current_user_id = 1  # Replace with actual user identification logic
+    for event in events_list:
+        event.participant_ids = [user.id for user in event.participants]
     return templates.TemplateResponse(
         "student_dashboard/events.html",
         {"request": request, "year": "2025", "events": events_list, "current_user_id": current_user_id}
@@ -120,10 +122,10 @@ async def heart_post(post_id: int, request: Request, db: Session = Depends(get_d
 
 @app.post("/Events/join/{event_id}")
 async def join_event(event_id: int, request: Request, db: Session = Depends(get_db)):
-    # Assuming you have a way to identify the current user (e.g., from session)
+    # Assuming you have a way to identify the current user
     current_user_id = 1  # Replace with actual user identification logic
 
-    event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
+    event = db.query(models.Event).options(joinedload(models.Event.participants)).filter(models.Event.event_id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -136,3 +138,27 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
 
     if event.joined_count() >= event.max_participants:
         raise HTTPException(status_code=400, detail="This event is full.")
+
+    event.participants.append(user)
+    db.commit()
+    return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
+
+@app.post("/Events/leave/{event_id}")
+async def leave_event(event_id: int, request: Request, db: Session = Depends(get_db)):
+    # Assuming you have a way to identify the current user
+    current_user_id = 1  # Replace with actual user identification logic
+
+    event = db.query(models.Event).options(joinedload(models.Event.participants)).filter(models.Event.event_id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    user = db.query(models.User).filter(models.User.id == current_user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user not in event.participants:
+        raise HTTPException(status_code=400, detail="You are not joined in this event.")
+
+    event.participants.remove(user)
+    db.commit()
+    return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)

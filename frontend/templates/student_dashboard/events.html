@@ -5,7 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
 <style>
-    /* Additional styles for the join button and participant count */
+    /* Existing styles */
     .event-actions {
         display: flex;
         align-items: center;
@@ -13,9 +13,7 @@
         margin-top: 10px;
     }
 
-    .join-button {
-        background-color: #4CAF50; /* Green join button */
-        color: white;
+    .join-button, .leave-button, .full-button {
         border: none;
         padding: 8px 15px;
         text-align: center;
@@ -26,8 +24,28 @@
         font-size: 0.9em;
     }
 
+    .join-button {
+        background-color: #4CAF50; /* Green join button */
+        color: white;
+    }
+
     .join-button:hover {
         background-color: #45a049;
+    }
+
+    .leave-button {
+        background-color: #f44336; /* Red leave button */
+        color: white;
+    }
+
+    .leave-button:hover {
+        background-color: #d32f2f;
+    }
+
+    .full-button {
+        background-color: #ccc; /* Grey full button */
+        color: #555;
+        cursor: not-allowed;
     }
 
     .participants-count {
@@ -53,9 +71,17 @@
                     </div>
                     <p class="event-description">{{ event.description }}</p>
                     <div class="event-actions">
-                        <form action="{{ url_for('join_event', event_id=event.event_id) }}" method="post">
-                            <button class="join-button" type="submit">Join</button>
-                        </form>
+                        {% if event.joined_count() >= event.max_participants %}
+                            <button class="full-button" disabled>Full</button>
+                        {% elif current_user_id in event.participant_ids %}
+                            <form action="{{ url_for('leave_event', event_id=event.event_id) }}" method="post">
+                                <button class="leave-button" type="submit">Leave</button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('join_event', event_id=event.event_id) }}" method="post">
+                                <button class="join-button" type="submit">Join</button>
+                            </form>
+                        {% endif %}
                         <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
                     </div>
                 </div>
