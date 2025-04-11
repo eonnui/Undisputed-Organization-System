@@ -40,8 +40,14 @@ async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/home", response_class=HTMLResponse, name="home")
-async def home(request: Request):
-    return templates.TemplateResponse("student_dashboard/home.html", {"request": request, "year": "2025"})
+async def home(request: Request, db: Session = Depends(get_db)):
+    latest_bulletin_posts = db.query(models.BulletinBoard).order_by(models.BulletinBoard.created_at.desc()).limit(5).all()
+    temporary_faqs = [
+        {"question": "What is the schedule for student orientation?", "answer": "The student orientation will be held on August 20, 2025, from 9:00 AM to 12:00 PM in the main auditorium."},
+        {"question": "How do I access the online learning platform?", "answer": "You can access the online learning platform by visiting our website and clicking on the 'Student Portal' link. Use your student ID and password to log in."},
+        {"question": "Who should I contact for academic advising?", "answer": "For academic advising, please contact the Dean's office of your respective faculty. You can find their contact information on the university website under the 'Academics' section."},
+    ]
+    return templates.TemplateResponse("student_dashboard/home.html", {"request": request, "year": "2025", "bulletin_posts": latest_bulletin_posts, "faqs": temporary_faqs})
 
 @app.get("/BulletinBoard", response_class=HTMLResponse, name="bulletin_board")
 async def bulletin_board(request: Request, db: Session = Depends(get_db)):

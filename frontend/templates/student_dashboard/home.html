@@ -1,31 +1,315 @@
 {% extends 'base.html' %}
-
 {% block title %}Home{% endblock %}
-
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+<style>
+    /* General styling improvements */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    /* Announcement styling */
+    .announcement-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 4px solid #3498db;
+    }
+    
+    .announcement-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Upcoming Events styling */
+    .upcoming-events .section-title {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .upcoming-events .section-title::after {
+        content: "→";
+        font-size: 1.2em;
+    }
+    
+    .event-item {
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        background-color: #f9f9f9;
+        border-left: 4px solid #2ecc71;
+        transition: all 0.3s ease;
+    }
+    
+    .event-item:hover {
+        transform: translateX(5px);
+        background-color: #f5f5f5;
+    }
+    
+    .event-title {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .event-date, .event-location {
+        color: #777;
+        font-size: 0.9em;
+    }
+    
+    .event-date {
+        display: flex;
+        align-items: center;
+    }
+    
+    .event-date::before {
+        content: "📅";
+        margin-right: 5px;
+    }
+    
+    .event-location::before {
+        content: "📍";
+        margin-right: 5px;
+    }
+    
+    /* Modern FAQ Section */
+    .faq-section {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .faq-title {
+        font-size: 1.5em;
+        color: #444;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+    }
+    
+    .faq-item {
+        margin-bottom: 15px;
+        border-radius: 6px;
+        background-color: #f9f9f9;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .faq-question {
+        font-weight: 600;
+        color: #333;
+        padding: 15px;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .faq-question::after {
+        content: "+";
+        font-size: 1.4em;
+        transition: all 0.3s ease;
+    }
+    
+    .faq-item.open .faq-question::after {
+        content: "-";
+        transform: rotate(180deg);
+    }
+    
+    .faq-answer {
+        color: #666;
+        line-height: 1.5;
+        padding: 0 15px;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .faq-item.open .faq-answer {
+        padding: 0 15px 15px;
+        max-height: 500px; /* Large enough to fit any answer */
+    }
+    
+    .faq-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Empty state styling */
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #888;
+        font-style: italic;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="home-dashboard">
     <h1 class="dashboard-title">Home</h1>
     <div class="dashboard-grid">
-      <div class="dashboard-section announcements">
-        <h2 class="section-title">Announcements</h2>
-        <div class="announcement-card">
-          <p class="announcement-text">Welcome to Imus Campus Dr. Armi Grace B. Desingaño</p>
-          <p class="announcement-meta">
-            <span class="date-posted">Date Posted: February 24, 2025</span> |
-            <a href="#" class="view-details">View Details</a>
-          </p>
+        <div class="dashboard-section announcements">
+            <h2 class="section-title">Announcements</h2>
+            <div id="announcements-container">
+                {% if bulletin_posts %}
+                    {% for post in bulletin_posts %}
+                    <div class="announcement-card" onclick="navigateTo('{{ url_for('bulletin_board') }}')">
+                        <p class="announcement-text">{{ post.title }}</p>
+                        <p class="announcement-meta">
+                            <span class="date-posted">Date Posted: {{ post.created_at.strftime('%B %d, %Y') }}</span> |
+                            <a href="{{ url_for('bulletin_board') }}" class="view-details">View Details</a>
+                        </p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>No announcements available at the moment.</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
+        
+        <div class="dashboard-section upcoming-events">
+            <h2 class="section-title" onclick="navigateTo('{{ url_for('events') }}')">Upcoming Events</h2>
+            <div id="events-container">
+                <!-- Events will be loaded here via JavaScript -->
+                <div class="loading-events">Loading upcoming events...</div>
+            </div>
         </div>
-      <div class="dashboard-section upcoming-events">
-        <h2 class="section-title">Upcoming Events</h2>
-        <div class="event-card">
-          <p class="event-placeholder">...</p>
-          </div>
-      </div>
-      </div>
-  </div>
+    </div>
+    
+    <div class="faq-section">
+        <h2 class="faq-title">Frequently Asked Questions</h2>
+        <div id="faq-container">
+            <!-- FAQs will be loaded here via JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Helper function for navigation
+    function navigateTo(url) {
+        window.location.href = url;
+    }
+    
+    // Sample event data (in a real app, you'd fetch this from an API endpoint)
+    const upcomingEvents = [
+        {
+            title: "Fall Semester Registration",
+            date: "August 15, 2025",
+            location: "Online Portal"
+        },
+        {
+            title: "New Student Orientation",
+            date: "August 20, 2025",
+            location: "Main Auditorium"
+        },
+        {
+            title: "Academic Club Fair",
+            date: "September 5, 2025",
+            location: "Student Center"
+        },
+        {
+            title: "Career Development Workshop",
+            date: "September 12, 2025",
+            location: "Room 302B"
+        }
+    ];
+    
+    // Sample FAQ data (in a real app, you'd fetch this from an API endpoint)
+    const faqData = [
+        {
+            question: "What is the schedule for student orientation?",
+            answer: "The student orientation will be held on August 20, 2025, from 9:00 AM to 12:00 PM in the main auditorium. All new students are required to attend. Please bring your student ID and admission letter."
+        },
+        {
+            question: "How do I access the online learning platform?",
+            answer: "You can access the online learning platform by visiting our website and clicking on the 'Student Portal' link. Use your student ID and password to log in. If you haven't set up your account yet, click on the 'First-time User' link and follow the instructions."
+        },
+        {
+            question: "Who should I contact for academic advising?",
+            answer: "For academic advising, please contact the Dean's office of your respective faculty. You can find their contact information on the university website under the 'Academics' section. Alternatively, you can visit the Academic Support Center during their office hours (Monday-Friday, 9 AM - 4 PM)."
+        },
+        {
+            question: "How do I apply for scholarships and financial aid?",
+            answer: "Scholarship and financial aid applications are available through the Financial Aid Office. The deadline for most scholarships is March 15 for the following academic year. Visit the Financial Aid section on our website for more information and application forms."
+        },
+        {
+            question: "What resources are available in the library?",
+            answer: "Our library offers physical books, digital resources, study rooms, and computer stations. You can access online journals and research databases both on-campus and remotely using your student credentials. The library is open from 8 AM to 10 PM on weekdays and 10 AM to 6 PM on weekends."
+        }
+    ];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load upcoming events
+        loadUpcomingEvents();
+        
+        // Load FAQs
+        loadFAQs();
+    });
+    
+    // Function to load upcoming events
+    function loadUpcomingEvents() {
+        const eventsContainer = document.getElementById('events-container');
+        
+        // Clear loading message
+        eventsContainer.innerHTML = '';
+        
+        if (upcomingEvents.length === 0) {
+            eventsContainer.innerHTML = '<div class="empty-state">No upcoming events at this time.</div>';
+            return;
+        }
+        
+        // Create and append event items
+        upcomingEvents.forEach(event => {
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            
+            eventItem.innerHTML = `
+                <div class="event-title">${event.title}</div>
+                <div class="event-date">${event.date}</div>
+                <div class="event-location">${event.location}</div>
+            `;
+            
+            eventsContainer.appendChild(eventItem);
+        });
+    }
+    
+    // Function to load FAQs
+    function loadFAQs() {
+        const faqContainer = document.getElementById('faq-container');
+        
+        if (faqData.length === 0) {
+            faqContainer.innerHTML = '<div class="empty-state">No FAQs available at this time.</div>';
+            return;
+        }
+        
+        // Create and append FAQ items
+        faqData.forEach((faq, index) => {
+            const faqItem = document.createElement('div');
+            faqItem.className = 'faq-item';
+            faqItem.id = `faq-${index}`;
+            
+            faqItem.innerHTML = `
+                <div class="faq-question">${faq.question}</div>
+                <div class="faq-answer">${faq.answer}</div>
+            `;
+            
+            faqContainer.appendChild(faqItem);
+            
+            // Add click event to toggle FAQ answer
+            const questionElement = faqItem.querySelector('.faq-question');
+            questionElement.addEventListener('click', function() {
+                faqItem.classList.toggle('open');
+            });
+        });
+    }
+</script>
 {% endblock %}
