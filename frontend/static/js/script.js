@@ -8,16 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return `
             <div class="wrapper">
                 <h1>LOGIN</h1>
-                ${registrationSuccessMessage ? `<div class="success-message" style="color: #A7D1A9; text-align: center; margin-bottom: 10px; font-family: 'DM Sans'; font-weight: bold;">${registrationSuccessMessage}</div>` : ''}
+                ${registrationSuccessMessage ? `<div class="notification success show">${registrationSuccessMessage}</div>` : ''}
                 <form class="form" id="login-form">
                     <div class="input-group">
                         <label for="student-number">Student Number</label>
                         <input type="text" id="login-student-number" placeholder="Enter your student number" required />
+                        <div class="error-message" id="login-student-number-error"></div>
                     </div>
 
                     <div class="input-group">
                         <label for="password">Password</label>
                         <input type="password" id="login-password" placeholder="Enter your password" required />
+                        <div class="error-message" id="login-password-error"></div>
                     </div>
 
                     <button type="submit" class="login-button">Login</button>
@@ -43,11 +45,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="input-group">
                         <label for="student-number">Student Number</label>
                         <input type="text" id="signup-student-number" placeholder="Enter your student number" required />
+                        <div class="error-message" id="signup-student-number-error"></div>
                     </div>
 
                     <div class="input-group">
                         <label for="email">Student Email</label>
                         <input type="email" id="signup-email" placeholder="Enter your email" required />
+                        <div class="error-message" id="signup-email-error"></div>
                     </div>
 
                     <div class="input-group">
@@ -59,21 +63,32 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <option value="org2">Organization 2</option>
                             </select>
                         </div>
+                        <div class="error-message" id="signup-organization-error"></div>
                     </div>
 
                     <div class="input-group">
                         <label for="first-name">First Name</label>
                         <input type="text" id="signup-first-name" placeholder="Enter your first name" required />
+                        <div class="error-message" id="signup-first-name-error"></div>
                     </div>
 
                     <div class="input-group">
                         <label for="last-name">Last Name</label>
                         <input type="text" id="signup-last-name" placeholder="Enter your last name" required />
+                        <div class="error-message" id="signup-last-name-error"></div>
                     </div>
 
                     <div class="input-group">
                         <label for="password">Password</label>
                         <input type="password" id="signup-password" placeholder="Create a password" required />
+                        <div class="error-message" id="signup-password-error"></div>
+                        <p class="password-requirements" style="font-size: 0.7em; color: #ddd; margin-top: 0.2rem;">Password must be at least 8 characters and include uppercase, lowercase, and a number.</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input type="password" id="signup-confirm-password" placeholder="Confirm your password" required />
+                        <div class="error-message" id="signup-confirm-password-error"></div>
                     </div>
 
                     <button type="submit">Sign Up</button>
@@ -97,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="input-group">
                         <label for="forgot-password-identifier">Student Number or Email</label>
                         <input type="text" id="forgot-password-identifier" placeholder="Enter your student number or email" required />
+                        <div class="error-message" id="forgot-password-identifier-error"></div>
                     </div>
 
                     <button type="submit">Send Reset Code</button>
@@ -115,21 +131,25 @@ document.addEventListener('DOMContentLoaded', function() {
         return `
             <div class="wrapper">
                 <h1>RESET PASSWORD</h1>
-                <p style="text-align: center; margin-bottom: 15px; font-family: 'DM Sans'; font-size: 0.9em; color: #6c757d;">Enter the verification code sent to your email.</p>
+                <p style="text-align: center; margin-bottom: 15px; font-family: 'DM Sans'; font-size: 0.9em; color: #ddd;">Enter the verification code sent to your email.</p>
                 <form class="form" id="reset-password-code-form">
                     <div class="input-group">
                         <label for="reset-code">Verification Code</label>
                         <input type="text" id="reset-code" placeholder="Enter the code" required />
+                        <div class="error-message" id="reset-code-error"></div>
                     </div>
 
                     <div class="input-group">
                         <label for="new-password">New Password</label>
                         <input type="password" id="new-password" placeholder="Enter new password" required />
+                        <div class="error-message" id="new-password-error"></div>
+                        <p class="password-requirements" style="font-size: 0.7em; color: #ddd; margin-top: 0.2rem;">Password must be at least 8 characters and include uppercase, lowercase, and a number.</p>
                     </div>
 
                     <div class="input-group">
                         <label for="confirm-new-password">Confirm New Password</label>
                         <input type="password" id="confirm-new-password" placeholder="Confirm new password" required />
+                        <div class="error-message" id="confirm-new-password-error"></div>
                     </div>
 
                     <button type="submit">Reset Password</button>
@@ -156,6 +176,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 render();
             });
             document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+            // Clear success message after rendering login form
+            registrationSuccessMessage = '';
         } else if (currentForm === 'signup') {
             app.innerHTML = renderSignupForm();
             document.getElementById('toggle-to-login')?.addEventListener('click', () => {
@@ -224,15 +246,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.detail) {
                     displayError('login-password', data.detail); // Display error detail from server
                 } else {
-                    alert('Login failed. Please try again.');
+                    displayNotification('Login failed. Please try again.', 'error');
                 }
                 return; // Stop the login process if the server returns an error.
             }
 
-            alert('Login successful!');
+            displayNotification('Login successful!', 'success');
             window.location.href = '/Home';
         } catch (error) {
-            alert('An unexpected error occurred. Please try again.'); // Generic error for network issues
+            displayNotification('An unexpected error occurred. Please try again.', 'error'); // Generic error for network issues
+            console.error("Login error:", error);
         }
     }
 
@@ -245,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const firstName = document.getElementById('signup-first-name').value;
         const lastName = document.getElementById('signup-last-name').value;
         const password = document.getElementById('signup-password').value;
+        const confirmPassword = document.getElementById('signup-confirm-password').value;
 
         // Clear previous errors
         displayError('signup-student-number', '');
@@ -253,6 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
         displayError('signup-first-name', '');
         displayError('signup-last-name', '');
         displayError('signup-password', '');
+        displayError('signup-confirm-password', '');
 
         // Validation checks
         let isValid = true;
@@ -264,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-student-number', 'Student number must be 9 digits.');
             isValid = false;
         }
-
 
         if (!email) {
             displayError('signup-email', 'Email is required.');
@@ -282,15 +306,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!firstName) {
             displayError('signup-first-name', 'First name is required.');
             isValid = false;
+        } else if (!/^[a-zA-Z\s]*$/.test(firstName)) {
+            displayError('signup-first-name', 'First name should only contain letters and spaces.');
+            isValid = false;
         }
 
         if (!lastName) {
             displayError('signup-last-name', 'Last name is required.');
             isValid = false;
+        } else if (!/^[a-zA-Z\s]*$/.test(lastName)) {
+            displayError('signup-last-name', 'Last name should only contain letters and spaces.');
+            isValid = false;
         }
 
-        if (password.length < 8) {
-            displayError('signup-password', 'Password must be at least 8 characters long.');
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            displayError('signup-password', 'Password must be at least 8 characters and include uppercase, lowercase, and a number.');
+            isValid = false;
+        }
+
+        if (password !== confirmPassword) {
+            displayError('signup-confirm-password', 'Passwords do not match.');
             isValid = false;
         }
 
@@ -330,10 +366,8 @@ document.addEventListener('DOMContentLoaded', function() {
             render();
 
         } catch (error) {
-            // Removed the alert here
-            console.error("Signup error:", error); // It's good practice to log errors for debugging
-            // Optionally, you could display a generic error message to the user
-            // displayError('signup-form', 'An error occurred during signup. Please try again.');
+            console.error("Signup error:", error);
+            displayNotification('An error occurred during signup. Please try again.', 'error');
         }
     }
 
@@ -363,13 +397,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            alert('A reset code has been sent to your email if the account exists.'); // Modern websites often give this feedback for security
+            displayNotification('A reset code has been sent to your email if the account exists.', 'info'); // Modern websites often give this feedback for security
             forgotPasswordIdentifier = identifier; // Store for the next step
             currentForm = 'reset-password-code';
             render();
 
         } catch (error) {
-            alert('An unexpected error occurred. Please try again.');
+            displayNotification('An unexpected error occurred. Please try again.', 'error');
             console.error("Forgot password error:", error);
         }
     }
@@ -385,10 +419,13 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('reset-code', 'Please enter the verification code.');
             return;
         }
-        if (newPassword.length < 8) {
-            displayError('new-password', 'New password must be at least 8 characters long.');
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            displayError('new-password', 'New password must be at least 8 characters and include uppercase, lowercase, and a number.');
             return;
         }
+
         if (newPassword !== confirmNewPassword) {
             displayError('confirm-new-password', 'Passwords do not match.');
             return;
@@ -414,35 +451,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            alert('Password reset successfully! You can now log in with your new password.');
+            displayNotification('Password reset successfully! You can now log in with your new password.', 'success');
             currentForm = 'login';
             registrationSuccessMessage = 'Password reset successfully. Please log in.';
             render();
 
         } catch (error) {
-            alert('An unexpected error occurred. Please try again.');
+            displayNotification('An unexpected error occurred. Please try again.', 'error');
             console.error("Reset password error:", error);
         }
     }
 
     function displayError(elementId, errorMessage) {
-        const inputGroup = document.getElementById(elementId).closest('.input-group');
-        let errorElement = inputGroup.querySelector('.error-message');
-
-        if (errorMessage) {
-            if (!errorElement) {
-                errorElement = document.createElement('div');
-                errorElement.classList.add('error-message');
-                errorElement.style.color = '#FFC107';
-                errorElement.style.fontSize = '12px';
-                inputGroup.appendChild(errorElement);
-            }
+        const errorElement = document.getElementById(elementId + '-error');
+        if (errorElement) {
             errorElement.textContent = errorMessage;
         } else {
-            if (errorElement) {
-                errorElement.remove();
+            const inputElement = document.getElementById(elementId);
+            const inputGroup = inputElement ? inputElement.closest('.input-group') : null;
+            if (inputGroup) {
+                const newErrorElement = document.createElement('div');
+                newErrorElement.classList.add('error-message');
+                newErrorElement.id = elementId + '-error';
+                newErrorElement.textContent = errorMessage;
+                inputGroup.appendChild(newErrorElement);
             }
         }
+    }
+
+    function displayNotification(message, type = 'info') {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.classList.add('notification', type);
+        notificationDiv.textContent = message;
+        app.appendChild(notificationDiv);
+        setTimeout(() => {
+            notificationDiv.classList.add('show');
+            setTimeout(() => {
+                notificationDiv.classList.remove('show');
+                setTimeout(() => {
+                    notificationDiv.remove();
+                }, 300); // Fade out duration
+            }, 3000); // Display duration
+        }, 100); // Small delay to ensure it's added to the DOM
     }
 
     // Initial render

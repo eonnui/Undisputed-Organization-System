@@ -1,3 +1,4 @@
+/* Updated CSS with comments for clarity */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,38 +7,38 @@
 
 :root {
     --bg-color: #FFFFFF;
-    --login-bg: #8F87F1;
-    --button-bg: #1E1E1E;
-    --button-text: #FFFFFF;
-    --hover-effect: #B5A9F3;
+    --login-bg: #8F87F1; /* Primary background color for the login/signup wrapper */
+    --button-bg: #1E1E1E; /* Background color for primary buttons */
+    --button-text: #FFFFFF; /* Text color for primary buttons */
+    --hover-effect: #B5A9F3; /* Hover effect for buttons and links */
 
     /* Secondary Colors */
     --accent-light: #A9A3F4;
     --accent-dark: #7B73D9;
-    --highlight: #F5F3FF;
-    
+    --highlight: #F5F3FF; /* Subtle background for focused inputs */
+
     /* Text Colors */
-    --text-primary: #1E1E1E;
-    --text-secondary: #666666;
-    --text-inverse: #FFFFFF;
-    
+    --text-primary: #1E1E1E; /* Primary text color */
+    --text-secondary: #666666; /* Secondary text color for hints etc. */
+    --text-inverse: #FFFFFF; /* Text color on dark backgrounds */
+
     /* State Colors */
     --hover-dark: #333333;
     --hover-accent: #7870C2;
-    --focus-border: rgba(143, 135, 241, 0.5);
-    
+    --focus-border: rgba(143, 135, 241, 0.5); /* Border color for focused inputs */
+
     /* Utility Colors */
-    --success: #4CAF50;
-    --error: #F44336;
-    --warning: #FFC107;
-    --info: #2196F3;
-    
+    --success: #4CAF50; /* Color for success notifications */
+    --error: #F44336; /* Color for error notifications */
+    --warning: #FFC107; /* Color for warning messages */
+    --info: #2196F3; /* Color for informational messages */
+
     /* Backgrounds */
     --bg-secondary: #F5F5F5;
     --bg-dark: #1E1E1E;
-    
+
     /* Borders */
-    --border-light: #E0E0E0;
+    --border-light: #E0E0E0; /* Light gray border color */
     --border-medium: #CCCCCC;
 }
 
@@ -57,8 +58,9 @@ body {
     text-align: center;
     max-width: 400px;
     width: 100%;
-    color: #fff;
+    color: #fff; /* Default text color inside the wrapper */
     min-width: 400px;
+    position: relative; /* For positioning the notification */
 }
 
 h1 {
@@ -71,16 +73,19 @@ h1 {
     display: flex;
     flex-direction: column;
     text-align: left;
+    margin-bottom: 10px; /* Spacing between input groups */
 }
 
 .input-group label {
     margin-bottom: .2rem;
+    font-size: 0.9em;
+    color: #eee; /* Slightly lighter text for labels */
 }
 
 .form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 10px; /* Spacing between form elements */
 }
 
 .forgot-password {
@@ -88,7 +93,7 @@ h1 {
     justify-content: center;
     background: none;
     border: none;
-    color: var(--button-bg); 
+    color: var(--button-bg); /* Text color for the forgot password link */
     text-decoration: underline;
     cursor: pointer;
     font-size: 0.8rem;
@@ -96,17 +101,28 @@ h1 {
     text-align: right;
     padding: 0;
     margin: 0;
+    color: #ddd; /* Slightly lighter color for better visibility on the background */
 }
 
 .forgot-password:hover {
-    color: var(--hover-accent); 
+    color: var(--hover-accent);
     background: none;
 }
 
 input {
+    width: 100%;
     padding: 0.8rem;
     border-radius: 8px;
-    border: none;
+    border: 1px solid var(--border-light);
+    box-sizing: border-box;
+    transition: border 0.3s ease, background-color 0.3s ease;
+    color: var(--text-primary); /* Text color inside the input fields */
+}
+
+input:focus {
+    outline: none;
+    border: 1px solid var(--focus-border);
+    background-color: var(--highlight);
 }
 
 button {
@@ -118,6 +134,7 @@ button {
     cursor: pointer;
     transition: 0.3s;
     margin: 1rem 0 0.3rem 0;
+    font-weight: bold;
 }
 
 button:hover{
@@ -126,22 +143,24 @@ button:hover{
 
 p {
     font-size: 0.8rem;
+    color: #ddd;
 }
 
 .link-button {
     background: none;
     border: none;
-    color: var(--button-bg); 
+    color: var(--button-bg); /* Text color for the link buttons */
     text-decoration: underline;
     cursor: pointer;
     font-size: 0.8rem;
-    font-weight: bold; 
+    font-weight: bold;
     padding: 0;
     margin: 0;
+    color: #ddd;
 }
 
 .link-button:hover {
-    color: var(--hover-accent); 
+    color: var(--hover-accent);
     background: none;
 }
 
@@ -153,21 +172,6 @@ p {
     margin-top: -0.3rem;
 }
 
-input {
-    width: 100%;
-    padding: 0.8rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-light);
-    box-sizing: border-box;
-    transition: border 0.3s ease, background-color 0.3s ease;
-}
-
-input:focus {
-    outline: none;
-    border: 1px solid var(--focus-border);
-    background-color: var(--highlight);
-}
-
 .select-wrapper {
     position: relative;
     display: flex;
@@ -177,6 +181,7 @@ input:focus {
     border: 1px solid var(--border-light);
     padding: 0.6rem;
     cursor: pointer;
+    color: var(--text-primary);
 }
 
 select {
@@ -187,6 +192,7 @@ select {
     width: 100%;
     outline: none;
     cursor: pointer;
+    color: inherit;
 }
 
 .select-wrapper::after {
@@ -200,6 +206,42 @@ select {
 
 select:focus + .select-wrapper::after {
     color: var(--hover-accent);
+}
+
+.error-message {
+    color: #FFC107;
+    font-size: 0.75em;
+    margin-top: 0.2rem;
+}
+
+.notification {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.notification.success {
+    background-color: #4CAF50;
+}
+
+.notification.error {
+    background-color: #F44336;
+}
+
+.notification.info {
+    background-color: #2196F3;
+}
+
+.notification.show {
+    opacity: 1;
 }
 
 @media (max-width: 420px) {
