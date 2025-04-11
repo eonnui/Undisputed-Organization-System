@@ -3,6 +3,7 @@
     margin-left: 20px; /* Moved margin from auto to left */
     margin-top: 20px;
     margin-bottom: 20px;
+    padding: 20px; /* Added padding from the new CSS */
 }
 
 .bulletin-header {
@@ -13,16 +14,18 @@
 }
 
 .post-card {
-    background-color: #fff;
+    background-color: #fff; /* Changed from #f9f9f9 to your original #fff */
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 20px;
+    padding: 20px; /* Kept your original padding */
+    margin-bottom: 20px; /* Kept your original margin-bottom */
+    border: 1px solid #ddd; /* Added border from the new CSS */
 }
 
 .post-header {
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 15px; /* Kept your original margin-bottom */
 }
 
 .profile-image {
@@ -31,6 +34,12 @@
     border-radius: 50%;
     margin-right: 10px;
     background-color: #ddd; /* Placeholder for image */
+    /* Styling for the initial letter avatar (from new CSS) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2em;
+    color: white;
 }
 
 .post-info {
@@ -38,16 +47,20 @@
     flex-direction: column;
     font-size: 0.9em;
     color: #555;
+    flex-grow: 1; /* Added flex-grow from new CSS */
 }
 
 .post-title {
     font-weight: bold;
     color: #333;
     margin-bottom: 3px;
+    font-size: 1.2em; /* Added font-size from new CSS */
 }
 
 .post-date {
     color: #777;
+    font-style: italic; /* Added font-style from new CSS */
+    margin-top: 3px; /* Added margin-top from new CSS */
 }
 
 .post-content {
@@ -55,23 +68,60 @@
     line-height: 1.6;
     margin-bottom: 15px;
     white-space: pre-line; /* Preserve line breaks */
+    color: #444; /* Overrode with color from new CSS */
 }
 
 .post-actions {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 15px; /* Kept your original gap */
     color: #777;
     font-size: 1em;
+    gap: 10px; /* Overrode with gap from new CSS */
 }
 
 .post-actions svg {
     width: 20px;
     height: 20px;
     cursor: pointer;
+    fill: none; /* Added fill: none from new CSS */
+    stroke: currentColor; /* Added stroke: currentColor from new CSS */
+    stroke-width: 2; /* Added stroke-width from new CSS */
+    stroke-linecap: round; /* Added stroke-linecap from new CSS */
+    stroke-linejoin: round; /* Added stroke-linejoin from new CSS */
+    transition: color 0.3s ease; /* Added transition from new CSS */
 }
 
 /* Placeholder heart icon (you might want to use an actual SVG or icon font) */
 .heart-icon {
     font-size: 1.2em;
+}
+
+.heart-button {
+    background: none; /* Added background: none from new CSS */
+    border: none; /* Added border: none from new CSS */
+    padding: 0; /* Added padding: 0 from new CSS */
+    cursor: pointer; /* Added cursor: pointer from new CSS */
+    display: flex; /* Added display: flex from new CSS */
+    align-items: center; /* Added align-items: center from new CSS */
+    gap: 5px; /* Added gap: 5px from new CSS */
+    color: #888; /* Added color: #888 from new CSS */
+}
+
+.heart-button.hearted svg {
+    fill: red; /* Added fill: red from new CSS */
+    stroke: red; /* Added stroke: red from new CSS */
+}
+
+.heart-count {
+    font-size: 0.9em; /* Added font-size: 0.9em from new CSS */
+}
+
+.pinned {
+    background-color: yellow; /* Added background-color: yellow from new CSS */
+    color: black; /* Added color: black from new CSS */
+    padding: 2px 5px; /* Added padding: 2px 5px from new CSS */
+    border-radius: 3px; /* Added border-radius: 3px from new CSS */
+    font-size: 0.8em; /* Added font-size: 0.8em from new CSS */
+    margin-left: 10px; /* Added margin-left: 10px from new CSS */
 }

@@ -44,8 +44,17 @@ async def home(request: Request):
     return templates.TemplateResponse("student_dashboard/home.html", {"request": request, "year": "2025"})
 
 @app.get("/BulletinBoard", response_class=HTMLResponse, name="bulletin_board")
-async def bulletin_board(request: Request):
-    return templates.TemplateResponse("student_dashboard/bulletin_board.html", {"request": request, "year": "2025"})
+async def bulletin_board(request: Request, db: Session = Depends(get_db)):
+    posts = db.query(models.BulletinBoard).order_by(models.BulletinBoard.created_at.desc()).all()
+    # Assuming you have a way to get the current user's ID
+    # For now, we'll just pass an empty list for hearted posts
+    hearted_posts = []
+    return templates.TemplateResponse(
+        "student_dashboard/bulletin_board.html",
+        {"request": request, "year": "2025", "posts": posts, "hearted_posts": hearted_posts}
+    )
+
+
 
 @app.get("/Events", response_class=HTMLResponse, name="events")
 async def events(request: Request):
@@ -81,3 +90,26 @@ async def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     return {"message": "Login successful"}
+
+@app.post("/bulletin/heart/{post_id}")
+async def heart_post(post_id: int, request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    action = form_data.get('action')
+    # Assuming you have a way to identify the current user (e.g., from session)
+    user_id = 1  # Replace with actual user identification logic
+
+    post = db.query(models.BulletinBoard).filter(models.BulletinBoard.post_id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if action == 'heart':
+        post.heart_count += 1
+        # In a real application, you would likely record that the user has hearted this post
+        # in a separate table to prevent multiple hearts from the same user.
+    elif action == 'unheart' and post.heart_count > 0:
+        post.heart_count -= 1
+        # Similarly, you would update the record of the user's interaction.
+
+    db.commit()
+    db.refresh(post)
+    return {"heart_count": post.heart_count}
