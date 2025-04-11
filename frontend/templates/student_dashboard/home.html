@@ -2,6 +2,30 @@
 
 {% block title %}Home{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
-    <h1>Home Page</h1>
+<div class="home-dashboard">
+    <h1 class="dashboard-title">Home</h1>
+    <div class="dashboard-grid">
+      <div class="dashboard-section announcements">
+        <h2 class="section-title">Announcements</h2>
+        <div class="announcement-card">
+          <p class="announcement-text">Welcome to Imus Campus Dr. Armi Grace B. Desingaño</p>
+          <p class="announcement-meta">
+            <span class="date-posted">Date Posted: February 24, 2025</span> |
+            <a href="#" class="view-details">View Details</a>
+          </p>
+        </div>
+        </div>
+      <div class="dashboard-section upcoming-events">
+        <h2 class="section-title">Upcoming Events</h2>
+        <div class="event-card">
+          <p class="event-placeholder">...</p>
+          </div>
+      </div>
+      </div>
+  </div>
 {% endblock %}

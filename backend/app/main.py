@@ -39,7 +39,7 @@ def get_db():
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/Home", response_class=HTMLResponse, name="home")
+@app.get("/home", response_class=HTMLResponse, name="home")
 async def home(request: Request):
     return templates.TemplateResponse("student_dashboard/home.html", {"request": request, "year": "2025"})
 
@@ -53,8 +53,6 @@ async def bulletin_board(request: Request, db: Session = Depends(get_db)):
         "student_dashboard/bulletin_board.html",
         {"request": request, "year": "2025", "posts": posts, "hearted_posts": hearted_posts}
     )
-
-
 
 @app.get("/Events", response_class=HTMLResponse, name="events")
 async def events(request: Request):

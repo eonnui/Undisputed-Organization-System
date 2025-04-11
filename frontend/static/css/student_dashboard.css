@@ -1,4 +1,105 @@
 
+/* HOME */
+/* Modern Home Dashboard Styles */
+.home-dashboard {
+    background-color: #f4f6f8; /* Light grey background */
+    padding: 30px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font */
+  }
+  
+  .dashboard-title {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 30px;
+    /* text-align: left; Removed redundant alignment */
+  }
+  
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 65% 30%; /* Adjust column widths as needed */
+    gap: 30px;
+  }
+  
+  .dashboard-section {
+    background-color: #fff; /* White cards */
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+    padding: 25px;
+  }
+  
+  .section-title {
+    font-size: 1.8em;
+    color: #555;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee; /* Light separator */
+    padding-bottom: 10px;
+  }
+  
+  /* Announcements Section */
+  .announcements {
+    /* No specific styles needed beyond the dashboard-section */
+  }
+  
+  .announcement-card {
+    background-color: #f9f9f9; /* Light grey for announcement cards */
+    padding: 18px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border-left: 5px solid #007bff; /* Highlight color */
+  }
+  
+  .announcement-text {
+    color: #333;
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  
+  .announcement-meta {
+    font-size: 0.9em;
+    color: #777;
+  }
+  
+  .date-posted {
+    font-style: italic;
+  }
+  
+  .view-details {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
+  .view-details:hover {
+    text-decoration: underline;
+  }
+  
+  /* Upcoming Events Section */
+  .upcoming-events {
+    /* No specific styles needed beyond the dashboard-section */
+  }
+  
+  .event-card {
+    background-color: #f9f9f9; /* Light grey for event cards */
+    padding: 18px;
+    border-radius: 6px;
+  }
+  
+  .event-placeholder {
+    color: #999;
+    font-style: italic;
+  }
+  
+  /* Responsive Design (Optional) */
+  @media (max-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr; /* Stack sections on smaller screens */
+    }
+  
+    .dashboard-section {
+      width: 100%; /* Make sections full width */
+    }
+  }
+
 /* BULLETIN BOARD */
 .bulletin-container {
     max-width: 600px;
@@ -206,3 +307,69 @@
 .tag-music { background-color: #ffecb3; color: #f57f17; }
 .tag-esports { background-color: #b2ebf2; color: #00838f; }
 .tag-cultural { background-color: #f3e5f5; color: #7b1fa2; }
+
+/* PAYMENTS */
+.payments-container {
+    padding: 20px;
+}
+
+.payments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.payments-header h1 {
+    margin: 0;
+}
+
+.payments-header .admin-info {
+    text-align: right;
+}
+
+.payments-header .history-link {
+    text-decoration: none;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.payments-header .history-link img {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
+.payment-table {
+    border: 1px solid #ddd;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.payment-table th, .payment-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.payment-table th {
+    background-color: #f2f2f2;
+}
+
+.pay-button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.pay-button:hover {
+    background-color: #d32f2f;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
