@@ -321,7 +321,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
         if (!passwordRegex.test(password)) {
-            displayError('signup-password', 'Password must be at least 8 characters and include uppercase, lowercase, and a number.');
             isValid = false;
         }
 

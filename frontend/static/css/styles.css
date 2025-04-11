@@ -1,4 +1,4 @@
-/* Updated CSS with comments for clarity */
+/* Updated CSS to position error messages below input fields */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -7,38 +7,26 @@
 
 :root {
     --bg-color: #FFFFFF;
-    --login-bg: #8F87F1; /* Primary background color for the login/signup wrapper */
-    --button-bg: #1E1E1E; /* Background color for primary buttons */
-    --button-text: #FFFFFF; /* Text color for primary buttons */
-    --hover-effect: #B5A9F3; /* Hover effect for buttons and links */
-
-    /* Secondary Colors */
+    --login-bg: #8F87F1;
+    --button-bg: #1E1E1E;
+    --button-text: #FFFFFF;
+    --hover-effect: #B5A9F3;
     --accent-light: #A9A3F4;
     --accent-dark: #7B73D9;
-    --highlight: #F5F3FF; /* Subtle background for focused inputs */
-
-    /* Text Colors */
-    --text-primary: #1E1E1E; /* Primary text color */
-    --text-secondary: #666666; /* Secondary text color for hints etc. */
-    --text-inverse: #FFFFFF; /* Text color on dark backgrounds */
-
-    /* State Colors */
+    --highlight: #F5F3FF;
+    --text-primary: #1E1E1E;
+    --text-secondary: #666666;
+    --text-inverse: #FFFFFF;
     --hover-dark: #333333;
     --hover-accent: #7870C2;
-    --focus-border: rgba(143, 135, 241, 0.5); /* Border color for focused inputs */
-
-    /* Utility Colors */
-    --success: #4CAF50; /* Color for success notifications */
-    --error: #F44336; /* Color for error notifications */
-    --warning: #FFC107; /* Color for warning messages */
-    --info: #2196F3; /* Color for informational messages */
-
-    /* Backgrounds */
+    --focus-border: rgba(143, 135, 241, 0.5);
+    --success: #A7D1A9; /* Softer green */
+    --error: #F44336;
+    --warning: #FFC107;
+    --info: #2196F3;
     --bg-secondary: #F5F5F5;
     --bg-dark: #1E1E1E;
-
-    /* Borders */
-    --border-light: #E0E0E0; /* Light gray border color */
+    --border-light: #E0E0E0;
     --border-medium: #CCCCCC;
 }
 
@@ -58,9 +46,9 @@ body {
     text-align: center;
     max-width: 400px;
     width: 100%;
-    color: #fff; /* Default text color inside the wrapper */
+    color: #fff;
     min-width: 400px;
-    position: relative; /* For positioning the notification */
+    position: relative; /* For positioning notifications */
 }
 
 h1 {
@@ -73,19 +61,20 @@ h1 {
     display: flex;
     flex-direction: column;
     text-align: left;
-    margin-bottom: 10px; /* Spacing between input groups */
+    margin-bottom: 15px; /* Reduced margin */
+    position: relative; /* Needed for absolute positioning of error message within */
 }
 
 .input-group label {
     margin-bottom: .2rem;
     font-size: 0.9em;
-    color: #eee; /* Slightly lighter text for labels */
+    color: #eee;
 }
 
 .form {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Spacing between form elements */
+    gap: 10px;
 }
 
 .forgot-password {
@@ -93,7 +82,7 @@ h1 {
     justify-content: center;
     background: none;
     border: none;
-    color: var(--button-bg); /* Text color for the forgot password link */
+    color: var(--button-bg);
     text-decoration: underline;
     cursor: pointer;
     font-size: 0.8rem;
@@ -101,7 +90,6 @@ h1 {
     text-align: right;
     padding: 0;
     margin: 0;
-    color: #ddd; /* Slightly lighter color for better visibility on the background */
 }
 
 .forgot-password:hover {
@@ -116,7 +104,7 @@ input {
     border: 1px solid var(--border-light);
     box-sizing: border-box;
     transition: border 0.3s ease, background-color 0.3s ease;
-    color: var(--text-primary); /* Text color inside the input fields */
+    color: var(--text-primary);
 }
 
 input:focus {
@@ -149,14 +137,13 @@ p {
 .link-button {
     background: none;
     border: none;
-    color: var(--button-bg); /* Text color for the link buttons */
+    color: var(--button-bg);
     text-decoration: underline;
     cursor: pointer;
     font-size: 0.8rem;
     font-weight: bold;
     padding: 0;
     margin: 0;
-    color: #ddd;
 }
 
 .link-button:hover {
@@ -212,6 +199,11 @@ select:focus + .select-wrapper::after {
     color: #FFC107;
     font-size: 0.75em;
     margin-top: 0.2rem;
+    position: absolute;
+    left: 0;
+    bottom: -1.2em; /* Adjust as needed */
+    width: 100%;
+    text-align: left;
 }
 
 .notification {
@@ -219,29 +211,36 @@ select:focus + .select-wrapper::after {
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--success);
+    color: #1E1E1E;
     padding: 10px 20px;
     border-radius: 5px;
-    z-index: 10;
+    z-index: 20;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.5s ease-in-out, top 0.5s ease-in-out;
+    font-size: 1em;
+    white-space: nowrap;
+    margin: 0;
 }
 
 .notification.success {
-    background-color: #4CAF50;
+    background-color: var(--success);
+    color: #1E1E1E;
 }
 
 .notification.error {
-    background-color: #F44336;
+    background-color: var(--error);
+    color: white;
 }
 
 .notification.info {
-    background-color: #2196F3;
+    background-color: var(--info);
+    color: white;
 }
 
 .notification.show {
     opacity: 1;
+    top: 30px;
 }
 
 @media (max-width: 420px) {
