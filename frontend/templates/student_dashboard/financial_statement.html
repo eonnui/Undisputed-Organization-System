@@ -1,7 +1,255 @@
 {% extends 'base.html' %}
 
+
 {% block title %}Home{% endblock %}
+
 
 {% block content %}
     <h1>Financial Statement</h1>
+
+
+    <div class="monthly-cashflow">
+        <h2>Monthly Cash Flow</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>January</th>
+                    <th>February</th>
+                    <th>March</th>
+                    <th>April</th>
+                    <th>May</th>
+                    <th>June</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Starting Balance</th>
+                    <td id="january-starting">--</td>
+                    <td id="february-starting">--</td>
+                    <td id="march-starting">--</td>
+                    <td id="april-starting">--</td>
+                    <td id="may-starting">--</td>
+                    <td id="june-starting">--</td>
+                </tr>
+                <tr>
+                    <th>Running Balance</th>
+                    <td id="january-running">--</td>
+                    <td id="february-running">--</td>
+                    <td id="march-running">--</td>
+                    <td id="april-running">--</td>
+                    <td id="may-running">--</td>
+                    <td id="june-running">--</td>
+                </tr>
+            </tbody>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>July</th>
+                    <th>August</th>
+                    <th>September</th>
+                    <th>October</th>
+                    <th>November</th>
+                    <th>December</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Starting Balance</th>
+                    <td id="july-starting">--</td>
+                    <td id="august-starting">--</td>
+                    <td id="september-starting">--</td>
+                    <td id="october-starting">--</td>
+                    <td id="november-starting">--</td>
+                    <td id="december-starting">--</td>
+                </tr>
+                <tr>
+                    <th>Running Balance</th>
+                    <td id="july-running">--</td>
+                    <td id="august-running">--</td>
+                    <td id="september-running">--</td>
+                    <td id="october-running">--</td>
+                    <td id="november-running">--</td>
+                    <td id="december-running">--</td>
+                </tr>
+            </tbody>
+        </table>
+        <a href="/cash_flow" class="view-cashflow-link">View Detailed Cash Flow</a>
+    </div>
+
+
+    <div class="summary-info">
+        <p>Total Balance Turnover: <span id="total-turnover">0.00</span></p>
+        <p>Current Balance: <span id="current-balance">0.00</span></p>
+        <p id="current-date">--</p>
+    </div>
+
+
+    <div class="summary-buttons">
+        <p>View Summary:</p>
+        <button onclick="window.location.href='/revenues/'">Revenues</button>
+        <button onclick="window.location.href='/expenses/'">Expenses</button>
+        <button onclick="window.location.href='/events/'">Events</button>
+    </div>
+
+
+    <div class="revenue-statement">
+        <h2>Statement of Revenues</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Revenue Source</th>
+                    <th class="amount">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Membership Fee Collection</td>
+                    <td class="amount">22,756.00</td>
+                </tr>
+                <tr>
+                    <td>IGP Org Shirt</td>
+                    <td class="amount">28,280.00</td>
+                </tr>
+                <tr>
+                    <td>IGP Foundation Day</td>
+                    <td class="amount">2,606.00</td>
+                </tr>
+                <tr>
+                    <td>IGP CS Advance</td>
+                    <td class="amount">4,015.00</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>TOTAL REVENUES:</th>
+                    <th class="amount">57,657.00</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentDateElement = document.getElementById('current-date');
+            const today = new Date();
+            const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+            currentDateElement.textContent = today.toLocaleDateString(undefined, options);
+        });
+    </script>
+
+
+    <style>
+        .monthly-cashflow, .revenue-statement {
+            margin-top: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .monthly-cashflow h2, .revenue-statement h2 {
+            font-size: 1.5em;
+            color: #37474f;
+            margin-bottom: 10px;
+        }
+
+
+        .monthly-cashflow table, .revenue-statement table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+
+        .monthly-cashflow th, .monthly-cashflow td, .revenue-statement th, .revenue-statement td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: center;
+        }
+
+
+        .monthly-cashflow th, .revenue-statement th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+
+        .revenue-statement th, .revenue-statement td {
+            text-align: left;
+        }
+
+
+        .revenue-statement .amount {
+            text-align: right;
+        }
+
+
+        .revenue-statement tfoot th {
+            border-top: 2px solid #37474f;
+            padding-top: 15px;
+        }
+
+
+        .summary-info {
+            margin-top: 20px;
+        }
+
+
+        .summary-info p {
+            margin: 5px 0;
+            color: #424242;
+        }
+
+
+        .summary-buttons {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+
+        .summary-buttons p {
+            margin-bottom: 10px;
+            color: #757575;
+        }
+
+
+        .summary-buttons button {
+            background-color: #9fa8da;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+
+        .summary-buttons button:hover {
+            background-color: #7986cb;
+        }
+
+
+        .view-cashflow-link {
+            display: block;
+            margin-top: 15px;
+            text-align: center;
+            background-color: #4CAF50; /* Green background */
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+
+        .view-cashflow-link:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+    </style>
 {% endblock %}

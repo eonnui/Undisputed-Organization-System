@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>Financial Statement</h1>
+
+    <div class="expenses-statement">
+        <h2>Statement of Expenses</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Expense Category</th>
+                    <th class="amount">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Food</td>
+                    <td class="amount">4,936.50</td>
+                </tr>
+                <tr>
+                    <td>Supplies</td>
+                    <td class="amount">4,530.00</td>
+                </tr>
+                <tr>
+                    <td>Transportation</td>
+                    <td class="amount">1,275.00</td>
+                </tr>
+                <tr>
+                    <td>Rent</td>
+                    <td class="amount">715.00</td>
+                </tr>
+                <tr>
+                    <td>Representation</td>
+                    <td class="amount">36,281.00</td>
+                </tr>
+                <tr>
+                    <td>Miscellaneous</td>
+                    <td class="amount">1,240.00</td>
+                </tr>
+                <tr>
+                    <td>Token</td>
+                    <td class="amount">2,100.00</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>TOTAL EXPENSES:</th>
+                    <th class="amount">51,077.50</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <style>
+        .expenses-statement {
+            margin-top: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .expenses-statement h2 {
+            font-size: 1.5em;
+            color: #37474f;
+            margin-bottom: 15px;
+        }
+
+        .expenses-statement table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .expenses-statement th, .expenses-statement td {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .expenses-statement th {
+            font-weight: bold;
+            color: #424242;
+        }
+
+        .expenses-statement .amount {
+            text-align: right;
+        }
+
+        .expenses-statement tfoot th {
+            border-top: 2px solid #37474f;
+            padding-top: 15px;
+        }
+    </style>
+{% endblock %}

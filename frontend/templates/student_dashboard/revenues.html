@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Revenues{% endblock %}
+
+{% block content %}
+    <div class="revenue-statement">
+        <h2>Statement of Revenues</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Revenue Source</th>
+                    <th class="amount">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Membership Fee Collection</td>
+                    <td class="amount">22,756.00</td>
+                </tr>
+                <tr>
+                    <td>IGP Org Shirt</td>
+                    <td class="amount">28,280.00</td>
+                </tr>
+                <tr>
+                    <td>IGP Foundation Day</td>
+                    <td class="amount">2,606.00</td>
+                </tr>
+                <tr>
+                    <td>IGP CS Advance</td>
+                    <td class="amount">4,015.00</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>TOTAL REVENUES:</th>
+                    <th class="amount">57,657.00</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <style>
+        .revenue-statement {
+            margin-top: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .revenue-statement h2 {
+            font-size: 1.5em;
+            color: #37474f;
+            margin-bottom: 15px;
+        }
+
+        .revenue-statement table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .revenue-statement th, .revenue-statement td {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .revenue-statement th {
+            font-weight: bold;
+            color: #424242;
+        }
+
+        .revenue-statement .amount {
+            text-align: right;
+        }
+
+        .revenue-statement tfoot th {
+            border-top: 2px solid #37474f;
+            padding-top: 15px;
+        }
+    </style>
+{% endblock %}
