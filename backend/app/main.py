@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
+from datetime import datetime
 
 # Initialize the database
 models.Base.metadata.create_all(bind=engine)
@@ -184,3 +185,9 @@ async def leave_event(event_id: int, request: Request, db: Session = Depends(get
     event.participants.remove(user)
     db.commit()
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
+
+@app.get("/api/events/upcoming_summary")
+async def get_upcoming_events_summary(db: Session = Depends(get_db)):
+    now = datetime.now()
+    upcoming_events = db.query(models.Event).filter(models.Event.date >= now).order_by(models.Event.date).limit(5).all() # Adjust limit as needed
+    return [{"title": event.title, "date": event.date.isoformat(), "location": event.location, "classification": event.classification} for event in upcoming_events]

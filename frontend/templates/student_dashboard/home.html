@@ -218,136 +218,101 @@
 </div>
 
 <script>
-    // Current user ID for event actions
-    const currentUserId = 1; // Replace with actual user ID from your authentication system
-    
-    document.addEventListener('DOMContentLoaded', function() {
+       document.addEventListener('DOMContentLoaded', function() {
         // Load upcoming events from API
         fetchUpcomingEvents();
-        
+
         // Load FAQs
         loadFAQs();
     });
-    
-    // Function to fetch events from the backend
+
+    // Function to fetch events from the backend for the homepage summary
     async function fetchUpcomingEvents() {
         const eventsContainer = document.getElementById('events-container');
-        
+
         try {
-            // Replace with your actual API endpoint
-            const response = await fetch('/api/events/upcoming');
-            
+            // Replace with your actual API endpoint to get a list of upcoming events
+            // This endpoint should return the necessary event data (title, date, location, classification)
+            const response = await fetch('/api/events/upcoming_summary');
+
             if (!response.ok) {
                 throw new Error('Failed to fetch events');
             }
-            
+
             const events = await response.json();
             displayEvents(events);
-            
+
         } catch (error) {
             console.error('Error fetching events:', error);
-            
-            // Fallback to display some events if API fails
+
+            // Fallback to display some static events if API fails
             displayFallbackEvents();
         }
     }
-    
-    // Function to display events
+
+    // Function to display events on the homepage summary (MODIFIED - no join button, links to /Events)
     function displayEvents(events) {
         const eventsContainer = document.getElementById('events-container');
-        
+
         // Clear loading message
         eventsContainer.innerHTML = '';
-        
+
         if (!events || events.length === 0) {
             eventsContainer.innerHTML = '<div class="empty-state">No upcoming events at this time.</div>';
             return;
         }
-        
-        // Create and append event items
+
+        // Create and append event items (simplified for homepage summary and linked to /Events)
         events.forEach(event => {
             const eventItem = document.createElement('div');
             eventItem.className = 'event-item';
-            
-            // Check if user is already participating
-            const isParticipating = event.participants && event.participants.some(participant => participant.id === currentUserId);
-            
-            // Check if event is full
-            const isFull = event.joined_count >= event.max_participants;
-            
-            let actionButton = '';
-            
-            if (isParticipating) {
-                actionButton = `
-                    <form method="POST" action="/Events/leave/${event.event_id}" class="event-action">
-                        <button type="submit" class="leave-btn">Leave</button>
-                    </form>
-                `;
-            } else if (!isFull) {
-                actionButton = `
-                    <form method="POST" action="/Events/join/${event.event_id}" class="event-action">
-                        <button type="submit" class="join-btn">Join</button>
-                    </form>
-                `;
-            } else {
-                actionButton = `<span class="event-action event-full">Full</span>`;
-            }
-            
+            eventItem.style.cursor = 'pointer'; // Make it clickable
+            eventItem.onclick = function() {
+                window.location = '{{ url_for('events') }}'; // Link to the main events page
+            };
+
+            const eventTag = `<span class="event-tag tag-${event.classification ? event.classification.toLowerCase() : ''}">${event.classification || 'Event'}</span>`;
+
             eventItem.innerHTML = `
+                ${eventTag}
                 <div class="event-title">${event.title}</div>
                 <div class="event-date">${formatDate(event.date)}</div>
                 <div class="event-location">${event.location}</div>
-                <div class="event-participants">Participants: ${event.joined_count || 0}/${event.max_participants}</div>
-                ${actionButton}
             `;
-            
+
             eventsContainer.appendChild(eventItem);
         });
     }
-    
-    // Fallback function if the API call fails
+
+    // Fallback function if the API call fails (MODIFIED - simplified)
     function displayFallbackEvents() {
         const fallbackEvents = [
             {
                 event_id: 1,
-                title: "Fall Semester Registration",
+                title: "Fallback Event 1",
                 date: new Date("2025-08-15"),
-                location: "Online Portal",
-                joined_count: 45,
-                max_participants: 100,
-                participants: []
+                location: "Online",
+                classification: "Academic"
             },
             {
                 event_id: 2,
-                title: "New Student Orientation",
+                title: "Fallback Event 2",
                 date: new Date("2025-08-20"),
-                location: "Main Auditorium",
-                joined_count: 120,
-                max_participants: 150,
-                participants: [{id: currentUserId}]
-            },
-            {
-                event_id: 3,
-                title: "Academic Club Fair",
-                date: new Date("2025-09-05"),
-                location: "Student Center",
-                joined_count: 50,
-                max_participants: 50,
-                participants: []
+                location: "Campus",
+                classification: "Social"
             }
         ];
-        
         displayEvents(fallbackEvents);
     }
-    
-    // Helper function to format dates
+
+    // Helper function to format dates (keeping the long format for the summary)
     function formatDate(dateString) {
         const date = new Date(dateString);
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         return date.toLocaleDateString('en-US', options);
     }
-    
-    // Sample FAQ data (in a real app, you'd fetch this from an API endpoint)
+
+    // Sample FAQ data (UNCHANGED)
     const faqData = [
         {
             question: "What is the schedule for student orientation?",
@@ -366,30 +331,28 @@
             answer: "Scholarship and financial aid applications are available through the Financial Aid Office. Visit the Financial Aid section on our website for more information."
         }
     ];
-    
-    // Function to load FAQs
+
+    // Function to load FAQs (UNCHANGED)
     function loadFAQs() {
         const faqContainer = document.getElementById('faq-container');
-        
+
         if (faqData.length === 0) {
             faqContainer.innerHTML = '<div class="empty-state">No FAQs available at this time.</div>';
             return;
         }
-        
-        // Create and append FAQ items
+
         faqData.forEach((faq, index) => {
             const faqItem = document.createElement('div');
             faqItem.className = 'faq-item';
             faqItem.id = `faq-${index}`;
-            
+
             faqItem.innerHTML = `
                 <div class="faq-question">${faq.question}</div>
                 <div class="faq-answer">${faq.answer}</div>
             `;
-            
+
             faqContainer.appendChild(faqItem);
-            
-            // Add click event to toggle FAQ answer
+
             const questionElement = faqItem.querySelector('.faq-question');
             questionElement.addEventListener('click', function() {
                 faqItem.classList.toggle('open');
