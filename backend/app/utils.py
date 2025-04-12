@@ -1,37 +1,70 @@
 # backend/app/utils.py
 from sqlalchemy.orm import Session
 from .database import SessionLocal, engine
-from .models import Admin, BulletinBoard, Event, User  # Import the Event and User models
+from .models import Admin, BulletinBoard, Event, User
 from werkzeug.security import generate_password_hash
 from datetime import datetime
+import random
 
-def create_temporary_entry():
+def create_single_temporary_event_with_variations():
     db: Session = SessionLocal()
     try:
-        # ... (previous temporary admin and bulletin board code) ...
+        # 1. Create a temporary Admin (if one doesn't exist)
+        admin = db.query(Admin).filter(Admin.email == "varied_event_admin@example.com").first()
+        if not admin:
+            hashed_password = generate_password_hash("temporary_password")
+            temporary_admin = Admin(name="Varied Event Admin", email="varied_event_admin@example.com", password=hashed_password, role="admin")
+            db.add(temporary_admin)
+            db.commit()
+            db.refresh(temporary_admin)
+            admin_id = temporary_admin.admin_id
+            print(f"Temporary Admin (varied event) created with ID: {admin_id}")
+        else:
+            admin_id = admin.admin_id
 
-        # 3. Create a temporary Event
+        # 2. Create a single temporary Event with variations
+        classifications = ["Academic", "Sports", "Arts", "Music", "Esports", "Cultural"]
+        locations = ["Lecture Hall A", "Campus Gym", "Art Gallery", "Music Room 1", "Esports Arena", "Student Union Hall"]
+        titles = {
+            "Academic": ["Study Session: Calculus", "Research Workshop", "Debate Club Meeting"],
+            "Sports": ["Intramural Basketball Game", "Yoga Class", "Fun Run Registration"],
+            "Arts": ["Pottery Workshop", "Painting Session", "Film Screening"],
+            "Music": ["Acoustic Night", "Choir Practice", "Music Theory Seminar"],
+            "Esports": ["League of Legends Tournament", "Valorant Scrims", "Fighting Game Night"],
+            "Cultural": ["International Food Festival Prep", "Language Exchange", "Cultural Dance Rehearsal"],
+        }
+        tag_map = {
+            "Academic": "tag-academic",
+            "Sports": "tag-sports",
+            "Arts": "tag-arts",
+            "Music": "tag-music",
+            "Esports": "tag-esports",
+            "Cultural": "tag-cultural",
+        }
+        max_participants_options = [None, 15, 30, 60, 100]
+
+        chosen_classification = random.choice(classifications)
+        chosen_location = random.choice(locations)
+        chosen_title = random.choice(titles[chosen_classification])
+        chosen_max_participants = 1
+        chosen_date = datetime(2025, random.randint(6, 8), random.randint(1, 28), random.randint(10, 18), 0, 0)
+        chosen_tag = tag_map[chosen_classification]
+
         temporary_event = Event(
-            title="Campus Fun Day",
-            classification="Social",
-            description="A day full of fun activities for all students!",
-            date=datetime(2025, 5, 25, 10, 0, 0),
-            location="Main Grounds",
-            admin_id=1,  # Assuming admin with ID 1 exists from the previous entry
-            max_participants=50,
+            title=chosen_title,
+            classification=chosen_classification, # Using classification as the primary tag
+            description=f"A temporary event for the {chosen_classification} category.",
+            date=chosen_date,
+            location=chosen_location,
+            admin_id=admin_id,
+            max_participants=chosen_max_participants,
+            # If you had a dedicated tags column, you could do something like:
+            # tags=[chosen_tag, "another-potential-tag"]
         )
         db.add(temporary_event)
         db.commit()
         db.refresh(temporary_event)
-        print(f"Temporary Event created with ID: {temporary_event.event_id}")
-
-        # 4. Add some temporary participants to the event
-        user1 = db.query(User).first()  # Get the first user (you might need to create some users first)
-        if user1:
-            temporary_event.participants.append(user1)
-            db.commit()
-            db.refresh(temporary_event)
-            print(f"Added participant {user1.student_number} to Event {temporary_event.event_id}")
+        print(f"Single Temporary Event created with ID: {temporary_event.event_id}, Title: {chosen_title}, Classification: {chosen_classification}, Max Participants: {chosen_max_participants}, Tag: {chosen_tag}")
 
     except Exception as e:
         db.rollback()
@@ -42,5 +75,5 @@ def create_temporary_entry():
 if __name__ == "__main__":
     from .database import Base
     Base.metadata.create_all(bind=engine)
-    create_temporary_entry()
-    print("Temporary admin, bulletin board post, and event created (with a participant).")
+    create_single_temporary_event_with_variations()
+    print("Temporary admin (for varied event) and a single temporary event with variations created.")
