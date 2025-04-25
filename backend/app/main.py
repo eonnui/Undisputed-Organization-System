@@ -1,3 +1,4 @@
+# backend/app/main.py
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -97,7 +98,74 @@ async def financial_statement(request: Request):
 async def settings(request: Request):
     return templates.TemplateResponse("student_dashboard/settings.html", {"request": request, "year": "2025"})
 
-@app.post("/api/signup/")
+# Admin Routes
+@app.get("/admin", response_class=HTMLResponse, name="admin_home")
+async def admin_home(request: Request, db: Session = Depends(get_db)):
+    # Check if the user is an admin.  For now, just check for any admin.
+    admin_user = request.session.get("admin")
+    if not admin_user:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    total_users = db.query(models.User).count()
+    total_events = db.query(models.Event).count()
+    total_bulletin_posts = db.query(models.BulletinBoard).count()
+    
+    return templates.TemplateResponse("admin_dashboard/home.html", {"request": request, "total_users": total_users, "total_events": total_events, "total_bulletin_posts": total_bulletin_posts})
+
+@app.get("/admin/bulletin_board", response_class=HTMLResponse, name="admin_bulletin_board")
+async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
+    admin_user = request.session.get("admin")
+    if not admin_user:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    posts = db.query(models.BulletinBoard).order_by(models.BulletinBoard.created_at.desc()).all()
+    return templates.TemplateResponse("admin_dashboard/bulletin_board.html", {"request": request, "posts": posts})
+
+@app.get("/admin/events", response_class=HTMLResponse, name="admin_events")
+async def admin_events(request: Request, db: Session = Depends(get_db)):
+    admin_user = request.session.get("admin")
+    if not admin_user:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    events_list = db.query(models.Event).options(joinedload(models.Event.participants)).order_by(models.Event.date).all()
+
+    return templates.TemplateResponse(
+        "admin_dashboard/events.html",
+        {"request": request,  "events": events_list}
+    )
+
+@app.get("/admin/archive", response_class=HTMLResponse, name="admin_archive")
+async def admin_archive(request: Request, db: Session = Depends(get_db)):
+    admin_user = request.session.get("admin")
+    if not admin_user:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    return templates.TemplateResponse("admin_dashboard/archive.html", {"request": request})
+
+@app.get("/admin/login", response_class=HTMLResponse, name="admin_login")
+async def admin_login(request: Request):
+    return templates.TemplateResponse("admin_login.html", {"request": request})
+
+@app.post("/admin/login", response_class=RedirectResponse)
+async def admin_login_post(request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    email = form_data.get("email")
+    password = form_data.get("password")
+    
+    admin = crud.authenticate_admin(db, email=email, password=password)
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # Store admin user data in the session.
+    request.session["admin"] = {
+        "admin_id": admin.admin_id,
+        "email": admin.email,
+        "role": admin.role,
+        "organization_id": admin.organization_id
+    }
+    return RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
+
+@app.get("/api/signup/")
 async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user(db, student_number=user.student_number)
     if db_user:
@@ -156,7 +224,7 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user in event.participants:
+    if user not in event.participants:
         raise HTTPException(status_code=400, detail="You are already joined in this event.")
 
     if event.joined_count() >= event.max_participants:
