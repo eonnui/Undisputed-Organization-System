@@ -1,9 +1,8 @@
 # backend/app/models.py
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
-import enum
 
 # Association table for events and participants (many-to-many)
 event_participants = Table(
@@ -12,21 +11,6 @@ event_participants = Table(
     Column('event_id', Integer, ForeignKey('events.event_id'), primary_key=True),
     Column('student_id', Integer, ForeignKey('users.id'), primary_key=True)
 )
-
-# Association table for users and organizations (many-to-many)
-user_organizations = Table(
-    'user_organizations',
-    Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-    Column('organization_id', Integer, ForeignKey('organizations.organization_id'), primary_key=True)
-)
-# Define an enum for the user's organizational position
-class OrganizationPosition(enum.Enum):
-    PRESIDENT = "President"
-    VICE_PRESIDENT = "Vice President"
-    SECRETARY = "Secretary"
-    TREASURER_AUDITOR = "Treasurer/Auditor"
-    PIO = "PIO"  # Public Information Officer
 
 class Event(Base):
     __tablename__ = "events"
@@ -41,7 +25,6 @@ class Event(Base):
     max_participants = Column(Integer)
     participants = relationship("User", secondary=event_participants, back_populates="joined_events")
     admin = relationship("Admin", back_populates="events")
-    organization_id = Column(Integer, ForeignKey("organizations.organization_id")) #add organization
 
     def joined_count(self):
         return len(self.participants)
@@ -52,37 +35,23 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_number = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
+    organization = Column(String)
     first_name = Column(String)
     last_name = Column(String)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     joined_events = relationship("Event", secondary=event_participants, back_populates="participants")
-    organizations = relationship("Organization", secondary=user_organizations, back_populates="members")
-    position = Column(Enum(OrganizationPosition), nullable=True) # Position in Organization.
-    #admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True) # connect user to admin
-    #admin = relationship("Admin", back_populates="users")
 
+# Ensure Admin model is also present (as defined previously)
 class Admin(Base):
     __tablename__ = "admins"
     admin_id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
-    hashed_password = Column(String) # Changed to hashed_password
+    password = Column(String)
     role = Column(String)
-    organization_id = Column(Integer, ForeignKey("organizations.organization_id"))
     bulletin_board_posts = relationship("BulletinBoard", back_populates="admin")
     events = relationship("Event", back_populates="admin")
-    #users = relationship("User", back_populates="admin")
-    organization = relationship("Organization", back_populates="admins")
-    
-class Organization(Base):
-    __tablename__ = "organizations"
-    organization_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True)
-    description = Column(Text)
-    admins = relationship("Admin", back_populates="organization")
-    members = relationship("User", secondary=user_organizations, back_populates="organizations")
-    events = relationship("Event", back_populates="organization")
 
 class BulletinBoard(Base):
     __tablename__ = "bulletin_board"
@@ -96,4 +65,3 @@ class BulletinBoard(Base):
     admin_id = Column(Integer, ForeignKey("admins.admin_id"))
     image_path = Column(String(255), nullable=True)
     admin = relationship("Admin", back_populates="bulletin_board_posts")
-    

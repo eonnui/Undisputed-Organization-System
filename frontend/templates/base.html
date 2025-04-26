@@ -25,9 +25,6 @@
                     <li class="{% if request.path == url_for('events') %}selected{% endif %}"><a href="{{ url_for('events') }}"><span class="material-symbols-outlined">event</span> Events</a></li>
                     <li class="{% if request.path == url_for('payments') %}selected{% endif %}"><a href="{{ url_for('payments')}}"><span class="material-symbols-outlined">payments</span> Membership and Payments</a></li>
                     <li class="{% if request.path == url_for('financial_statement') %}selected{% endif %}"><a href="{{ url_for('financial_statement')}}"><span class="material-symbols-outlined">request_quote</span> Financial Statement</a></li>
-                    {% if request.session.get('admin') %}
-                        <li class="{% if request.path == url_for('admin_archive') %}selected{% endif %}"><a href="{{ url_for('admin_archive') }}"><span class="material-symbols-outlined">archive</span> Archive</a></li>
-                    {% endif %}
                 </ul>
             </div>
         </nav>
@@ -51,7 +48,7 @@
                         Profile
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
-                    
+                      
                         <a href="{{ url_for('settings')}}">Settings</a>
                         <a href="{{ url_for('logout')}}">Log Out</a>
                     </div>
