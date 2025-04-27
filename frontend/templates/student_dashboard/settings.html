@@ -11,7 +11,7 @@
 }
 
 .content h1 {
-    color: var(--settings-text-primary);
+    color: var(--text-primary);
     margin-bottom: 20px;
 }
 
@@ -27,19 +27,22 @@
     }
 }
 
-
 .settings-section {
-    background-color: var(--settings-bg);
+    background-color: var(--bg-secondary);
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .settings-section h2 {
-    color: var(--settings-text-primary);
+    color: var(--text-primary);
     margin-bottom: 20px;
     font-size: 24px;
+    display: flex; /* Added for flexbox */
+    align-items: center; /* Vertically center items */
+    justify-content: space-between; /* Space out title and status */
 }
+
 
 .form-group {
     margin-bottom: 20px;
@@ -48,11 +51,12 @@
 .form-group label {
     display: block;
     margin-bottom: 8px;
-    color: var(--settings-text-primary);
+    color: var(--text-primary);
     font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 12px;
     border: 1px solid var(--border-medium);
@@ -60,7 +64,8 @@
     font-size: 16px;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: var(--focus-border);
     box-shadow: 0 0 0 3px var(--focus-border);
@@ -83,9 +88,8 @@
     display: flex;
     gap: 10px;
     margin-top: 20px;
-    justify-content: flex-start; /* Aligns buttons to the left */
+    justify-content: flex-start;
 }
-
 
 .button-group button {
     padding: 10px 15px;
@@ -132,18 +136,242 @@
 #profilePicture {
     margin-top: 10px;
 }
-.change-profile-pic{
+
+.change-profile-pic {
     background-color: var(--button-bg);
     color: var(--button-text);
 }
-.change-profile-pic:hover{
+
+.change-profile-pic:hover {
     background-color: var(--hover-effect);
+}
+
+.student-info-section {
+    background-color: var(--bg-secondary);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.student-info-section h2 {
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    font-size: 24px;
+    display: flex; /* Added for flexbox */
+    align-items: center; /* Vertically center items */
+    justify-content: space-between; /* Space out title and status */
+}
+
+.student-info-details {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.student-info-details strong {
+    font-weight: bold;
+    color: var(--accent-dark);
+}
+
+.verification-status {
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.verified {
+    background-color: var(--success);
+    color: var(--text-inverse);
+}
+
+.unverified {
+    background-color: var(--warning);
+    color: var(--text-primary);
+}
+
+#registrationFormUpload {
+    margin-top: 10px;
+}
+
+.registration-form-section {
+    background-color: var(--bg-secondary);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.edit-icon {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.edit-icon:hover {
+    background-color: var(--bg-secondary);
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-group .form-group input,
+.input-group .form-group select {
+    flex: 1;
+    margin-right: 0;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-wrapper .edit-icon {
+    margin-left: 10px;
 }
 </style>
 {% endblock %}
+
 {% block content %}
 <div class="content">
     <h1>Account Settings</h1>
+
+    <div class="student-info-section">
+        <h2>Student Information <span id="registrationStatus" class="unverified">Not Verified</span></h2>
+        <form id="studentInfoForm">
+            <div class="form-group">
+                <label for="studentNumber">Student Number</label>
+                <div class="input-wrapper">
+                    <span id="studentNumberDisplay">2023-10001</span>
+                    <span class="material-symbols-outlined edit-icon" id="editStudentNumber">edit</span>
+                    <input type="text" id="studentNumber" name="studentNumber" style="display: none;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="firstName">First Name</label>
+                <div class="input-wrapper">
+                    <span id="firstNameDisplay">John</span>
+                    <span class="material-symbols-outlined edit-icon" id="editFirstName">edit</span>
+                    <input type="text" id="firstName" name="firstName" style="display: none;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <div class="input-wrapper">
+                    <span id="lastNameDisplay">Doe</span>
+                    <span class="material-symbols-outlined edit-icon" id="editLastName">edit</span>
+                    <input type="text" id="lastName" name="lastName" style="display: none;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                 <div class="input-wrapper">
+                    <span id="studentEmailDisplay">john.doe@example.com</span>
+                    <span class="material-symbols-outlined edit-icon" id="editEmail">edit</span>
+                    <input type="text" id="email" name="email" style="display: none;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Birth Date *</label>
+                <div class="input-wrapper">
+                    <span id="birthDateDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editBirthDate">edit</span>
+                    <input type="date" id="birthDate" name="birthDate" style="display: none;" required>
+                </div>
+                <small>Please enter your date of birth.</small>
+                <div class="error-message" id="birthDateError"></div>
+            </div>
+            <div class="form-group">
+                <label>Gender</label>
+                <div class="input-wrapper">
+                    <span id="genderDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editGender">edit</span>
+                    <select id="gender" name="gender" style="display: none;">
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="error-message" id="genderError"></div>
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <div class="input-wrapper">
+                    <span id="addressDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editAddress">edit</span>
+                    <input type="text" id="address" name="address" style="display: none;">
+                </div>
+                <div class="error-message" id="addressError"></div>
+            </div>
+            <div class="form-group">
+                <label>Year Level</label>
+                <div class="input-wrapper">
+                    <span id="yearLevelDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editYearLevel">edit</span>
+                    <select id="yearLevel" name="yearLevel" style="display: none;">
+                        <option value="">Select Year</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                    </select>
+                </div>
+                <div class="error-message" id="yearLevelError"></div>
+            </div>
+            <div class="form-group">
+                <label>Section</label>
+                <div class="input-wrapper">
+                    <span id="sectionDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editSection">edit</span>
+                    <input type="text" id="section" name="section" style="display: none;">
+                </div>
+                <div class="error-message" id="sectionError"></div>
+            </div>
+            <div class="form-group">
+                <label>Guardian Name</label>
+                <div class="input-wrapper">
+                    <span id="guardianNameDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editGuardianName">edit</span>
+                    <input type="text" id="guardianName" name="guardianName" style="display: none;">
+                </div>
+                <div class="error-message" id="guardianNameError"></div>
+            </div>
+            <div class="form-group">
+                <label>Guardian Contact</label>
+                <div class="input-wrapper">
+                    <span id="guardianContactDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editGuardianContact">edit</span>
+                    <input type="text" id="guardianContact" name="guardianContact" style="display: none;">
+                </div>
+                <div class="error-message" id="guardianContactError"></div>
+            </div>
+            <div class="form-group">
+                <label>Registration Form</label>
+                <div class="input-wrapper">
+                    <span id="registrationFormDisplay"></span>
+                    <span class="material-symbols-outlined edit-icon" id="editRegistrationForm">edit</span>
+                    <input type="file" id="registrationFormUpload" name="registrationFormUpload" accept=".pdf" style="display: none;">
+                </div>
+                <small>Accepted format: PDF</small>
+                <div class="error-message" id="registrationFormError"></div>
+            </div>
+            <div class="button-group">
+                <button type="button" class="clear" onclick="clearStudentInfoForm()">Clear</button>
+                <button type="submit" class="update">Update Information</button>
+            </div>
+        </form>
+    </div>
+
+
     <div class="settings-grid">
         <div class="settings-section profile-picture-section">
             <h2>Profile Picture</h2>
@@ -163,25 +391,6 @@
         </div>
 
         <div class="settings-section">
-            <h2>Contact Details</h2>
-            <form id="contactForm">
-                <div class="form-group">
-                    <label for="email">Email Address *</label>
-                    <input type="email" id="email" name="email" value="" required>
-                    <div class="error-message" id="emailError"></div>
-                </div>
-                <div class="form-group">
-                    <label for="mobile">Mobile Number *</label>
-                    <input type="tel" id="mobile" name="mobile" value="" required>
-                    <small>Format: 11 digit number (09XXXXXXXXX)</small>
-                    <div class="error-message" id="mobileError"></div>
-                </div>
-                <div class="button-group">
-                    <button type="button" class="clear" onclick="clearContactForm()">Clear</button>
-                    <button type="submit" class="update">Update Contact</button>
-                </div>
-            </form>
-
             <h2>Security</h2>
             <form id="securityForm">
                 <div class="form-group">
@@ -208,133 +417,5 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const contactForm = document.getElementById('contactForm');
-        const securityForm = document.getElementById('securityForm');
-        const profilePictureForm = document.getElementById('profilePictureForm');
-
-        contactForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            if (validateContactForm()) {
-                alert('Contact details updated (simulated)');
-                // Add your fetch/ajax request here
-            }
-        });
-
-        securityForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            if (validateSecurityForm()) {
-                alert('Security settings updated (simulated)');
-                // Add your fetch/ajax request here
-            }
-        });
-
-        profilePictureForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            if (validateProfilePictureForm()) {
-                alert('Profile picture updated (simulated)');
-                // Add your fetch/ajax request here (remember to handle file uploads)
-            }
-        });
-    });
-
-    function clearContactForm() {
-        document.getElementById('email').value = '';
-        document.getElementById('mobile').value = '';
-        clearErrors('contactForm');
-    }
-
-    function clearSecurityForm() {
-        document.getElementById('currentPassword').value = '';
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
-        clearErrors('securityForm');
-    }
-
-    function clearErrors(formId) {
-        const errors = document.querySelectorAll(`#${formId} .error-message`);
-        errors.forEach(error => error.textContent = '');
-    }
-
-    function validateContactForm() {
-        clearErrors('contactForm');
-        let isValid = true;
-
-        const emailInput = document.getElementById('email');
-        const mobileInput = document.getElementById('mobile');
-
-        if (!emailInput.value.trim()) {
-            document.getElementById('emailError').textContent = 'Email is required.';
-            isValid = false;
-        } else if (!isValidEmail(emailInput.value.trim())) {
-            document.getElementById('emailError').textContent = 'Invalid email format.';
-            isValid = false;
-        }
-
-        if (!mobileInput.value.trim()) {
-            document.getElementById('mobileError').textContent = 'Mobile number is required.';
-            isValid = false;
-        } else if (!/^(09|\+639)\d{9}$/.test(mobileInput.value.trim())) {
-            document.getElementById('mobileError').textContent = 'Invalid mobile number format (e.g., 09XXXXXXXXX or +639XXXXXXXXX).';
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    function validateSecurityForm() {
-        clearErrors('securityForm');
-        let isValid = true;
-
-        const currentPasswordInput = document.getElementById('currentPassword');
-        const newPasswordInput = document.getElementById('newPassword');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-
-        if (!currentPasswordInput.value.trim()) {
-            document.getElementById('currentPasswordError').textContent = 'Current password is required.';
-            isValid = false;
-        }
-
-        if (newPasswordInput.value.trim()) {
-            if (newPasswordInput.value.trim().length < 8) {
-                document.getElementById('newPasswordError').textContent = 'New password must be at least 8 characters long.';
-                isValid = false;
-            } else if (newPasswordInput.value.trim() !== confirmPasswordInput.value.trim()) {
-                document.getElementById('confirmPasswordError').textContent = 'New passwords do not match.';
-                isValid = false;
-            }
-        } else if (confirmPasswordInput.value.trim()) {
-            document.getElementById('newPasswordError').textContent = 'Please enter a new password to confirm.';
-            document.getElementById('confirmPasswordError').textContent = 'Please enter a new password to confirm.';
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    function validateProfilePictureForm() {
-        const fileInput = document.getElementById('profilePicture');
-        const errorDiv = document.getElementById('profilePictureError');
-        errorDiv.textContent = '';
-
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
-            if (!allowedTypes.includes(file.type)) {
-                errorDiv.textContent = 'Invalid file type. Only JPG, PNG, and GIF are allowed.';
-                return false;
-            }
-            // Optional: Add file size validation here
-        }
-        return true;
-    }
-
-    function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-</script>
+<script src="settings.js"></script>
 {% endblock %}
