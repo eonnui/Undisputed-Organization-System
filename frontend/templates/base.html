@@ -20,17 +20,21 @@
         <nav>
             <div class="nav-container">
                 <ul>
-                    <li class="{% if request.path == url_for('home') %}selected{% endif %}"><a href="{{ url_for('home') }}"><span class="material-symbols-outlined">home</span> Home</a></li>
-                    <li class="{% if request.path == url_for('bulletin_board') %}selected{% endif %}"><a href="{{ url_for('bulletin_board') }}"><span class="material-symbols-outlined">breaking_news</span> Bulletin Board</a></li>
-                    <li class="{% if request.path == url_for('events') %}selected{% endif %}"><a href="{{ url_for('events') }}"><span class="material-symbols-outlined">event</span> Events</a></li>
-                    <li class="{% if request.path == url_for('payments') %}selected{% endif %}"><a href="{{ url_for('payments')}}"><span class="material-symbols-outlined">payments</span> Membership and Payments</a></li>
-                    <li class="{% if request.path == url_for('financial_statement') %}selected{% endif %}"><a href="{{ url_for('financial_statement')}}"><span class="material-symbols-outlined">request_quote</span> Financial Statement</a></li>
+                    <li class="{% if request.path == url_for('home') %}selected{% endif %}"><a href="{{ url_for('home') }}"><span class="material-symbols-outlined">home</span> <span class="nav-text">Home</span></a></li>
+                    <li class="{% if request.path == url_for('bulletin_board') %}selected{% endif %}"><a href="{{ url_for('bulletin_board') }}"><span class="material-symbols-outlined">breaking_news</span> <span class="nav-text">Bulletin Board</span></a></li>
+                    <li class="{% if request.path == url_for('events') %}selected{% endif %}"><a href="{{ url_for('events') }}"><span class="material-symbols-outlined">event</span> <span class="nav-text">Events</span></a></li>
+                    <li class="{% if request.path == url_for('payments') %}selected{% endif %}"><a href="{{ url_for('payments')}}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership and Payments</span></a></li>
+                    <li class="{% if request.path == url_for('financial_statement') %}selected{% endif %}"><a href="{{ url_for('financial_statement')}}"><span class="material-symbols-outlined">request_quote</span> <span class="nav-text">Financial Statement</span></a></li>
                 </ul>
             </div>
         </nav>
     </div>
     <div class="main-content">
         <div class="top-bar">
+            <div class="menu-icon" id="menu-toggle">
+                <span class="material-symbols-outlined">menu</span>
+                <span class="menu-text">Menu</span>
+            </div>
             <div class="user-actions">
                 <div class="notification-container">
                     <button class="notification-btn" aria-haspopup="true" aria-expanded="false" aria-controls="notifications-dropdown">
@@ -48,7 +52,7 @@
                         Profile
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
-                      
+                        
                         <a href="{{ url_for('settings')}}">Settings</a>
                         <a href="{{ url_for('logout')}}">Log Out</a>
                     </div>
@@ -66,82 +70,121 @@
     <script src="{{ url_for('static', path='js/scripts.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-          // Function to handle dropdown toggle and accessibility
-          function setupDropdown(buttonSelector, dropdownId) {
-            const button = document.querySelector(buttonSelector);
-            const dropdown = document.getElementById(dropdownId);
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const menuToggle = document.getElementById('menu-toggle');
+            const menuText = document.querySelector('.top-bar .menu-text');
+            const navItems = document.querySelectorAll('.sidebar nav ul li a');
+            const logo = document.querySelector('.sidebar .logo');
+            let isCollapsed = false;
 
-            if (!button || !dropdown) {
-              console.error(`Dropdown elements not found for button: ${buttonSelector}, dropdown: ${dropdownId}`);
-              return;
-            }
 
-            // Toggle dropdown visibility and update aria attributes
-            function toggleDropdown() {
-              const isExpanded = dropdown.classList.toggle('show');
-              button.setAttribute('aria-expanded', isExpanded);
-              if (isExpanded) {
-                // Focus the first interactive element in the dropdown
-                const firstInteractive = dropdown.querySelector('a, button');
-                if (firstInteractive) {
-                  firstInteractive.focus();
+            // Function to handle dropdown toggle and accessibility
+            function setupDropdown(buttonSelector, dropdownId) {
+                const button = document.querySelector(buttonSelector);
+                const dropdown = document.getElementById(dropdownId);
+
+                if (!button || !dropdown) {
+                    console.error(`Dropdown elements not found for button: ${buttonSelector}, dropdown: ${dropdownId}`);
+                    return;
                 }
-              } else {
-                button.focus(); // Return focus to the button
-              }
-            }
 
-            // Handle keyboard navigation for accessibility
-            function handleKeyboardNavigation(event) {
-              if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                toggleDropdown();
-              } else if (event.key === 'Escape' && dropdown.classList.contains('show')) {
-                toggleDropdown();
-              } else if (event.key === 'Tab' && dropdown.classList.contains('show')) {
-                const focusableElements = dropdown.querySelectorAll('a, button');
-                if (focusableElements.length > 0) {
-                  const firstFocusable = focusableElements[0];
-                  const lastFocusable = focusableElements[focusableElements.length - 1];
-                  const currentFocus = document.activeElement;
-
-                  if (event.shiftKey && currentFocus === firstFocusable) {
-                    event.preventDefault();
-                    lastFocusable.focus();
-                  } else if (!event.shiftKey && currentFocus === lastFocusable) {
-                    event.preventDefault();
-                    firstFocusable.focus();
-                  }
+                // Toggle dropdown visibility and update aria attributes
+                function toggleDropdown() {
+                    const isExpanded = dropdown.classList.toggle('show');
+                    button.setAttribute('aria-expanded', isExpanded);
+                    if (isExpanded) {
+                        // Focus the first interactive element in the dropdown
+                        const firstInteractive = dropdown.querySelector('a, button');
+                        if (firstInteractive) {
+                            firstInteractive.focus();
+                        }
+                    } else {
+                        button.focus(); // Return focus to the button
+                    }
                 }
-              }
+
+                // Handle keyboard navigation for accessibility
+                function handleKeyboardNavigation(event) {
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        toggleDropdown();
+                    } else if (event.key === 'Escape' && dropdown.classList.contains('show')) {
+                        toggleDropdown();
+                    } else if (event.key === 'Tab' && dropdown.classList.contains('show')) {
+                        const focusableElements = dropdown.querySelectorAll('a, button');
+                        if (focusableElements.length > 0) {
+                            const firstFocusable = focusableElements[0];
+                            const lastFocusable = focusableElements[focusableElements.length - 1];
+                            const currentFocus = document.activeElement;
+
+                            if (event.shiftKey && currentFocus === firstFocusable) {
+                                event.preventDefault();
+                                lastFocusable.focus();
+                            } else if (!event.shiftKey && currentFocus === lastFocusable) {
+                                event.preventDefault();
+                                firstFocusable.focus();
+                            }
+                        }
+                    }
+                }
+
+                // Event listeners
+                button.setAttribute('aria-haspopup', 'true');
+                button.setAttribute('aria-expanded', 'false');
+                button.addEventListener('click', toggleDropdown);
+                button.addEventListener('keydown', handleKeyboardNavigation);
             }
 
-            // Event listeners
-            button.setAttribute('aria-haspopup', 'true');
-            button.setAttribute('aria-expanded', 'false');
-            button.addEventListener('click', toggleDropdown);
-            button.addEventListener('keydown', handleKeyboardNavigation);
-          }
+            // Setup dropdown for the profile menu
+            setupDropdown('.profile-btn', 'profile-dropdown');
 
-          // Setup dropdown for the profile menu
-          setupDropdown('.profile-btn', 'profile-dropdown');
+            // Setup dropdown for the notifications menu
+            setupDropdown('.notification-btn', 'notifications-dropdown');
 
-          // Setup dropdown for the notifications menu
-          setupDropdown('.notification-btn', 'notifications-dropdown');
-
-          // Close dropdowns when clicking outside
-          window.addEventListener('click', function(event) {
-            document.querySelectorAll('.dropdown-content.show').forEach(openDropdown => {
-              const relatedButton = document.querySelector(`[aria-controls="${openDropdown.id}"]`);
-              if (relatedButton && !event.target.matches(relatedButton) && !openDropdown.contains(event.target)) {
-                openDropdown.classList.remove('show');
-                relatedButton.setAttribute('aria-expanded', 'false');
-              }
+            // Close dropdowns when clicking outside
+            window.addEventListener('click', function(event) {
+                document.querySelectorAll('.dropdown-content.show').forEach(openDropdown => {
+                    const relatedButton = document.querySelector(`[aria-controls="${openDropdown.id}"]`);
+                    if (relatedButton && !event.target.matches(relatedButton) && !openDropdown.contains(event.target)) {
+                        openDropdown.classList.remove('show');
+                        relatedButton.setAttribute('aria-expanded', 'false');
+                    }
+                });
             });
-          });
+
+            // Sidebar toggle functionality
+            menuToggle.addEventListener('click', () => {
+                if (isCollapsed) {
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('collapsed');
+                    menuText.textContent = 'Menu';
+                    navItems.forEach(navItem => {
+                        const navTextSpan = navItem.querySelector('.nav-text');
+                        if (navTextSpan) {
+                            navTextSpan.style.display = 'inline-block';
+                        }
+                    });
+                    logo.style.opacity = 1;
+                    logo.style.pointerEvents = 'auto';
+                } else {
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('collapsed');
+                    menuText.textContent = '';
+                    navItems.forEach(navItem => {
+                        const navTextSpan = navItem.querySelector('.nav-text');
+                        if (navTextSpan) {
+                            navTextSpan.style.display = 'none';
+                        }
+                    });
+                    logo.style.opacity = 0;
+                    logo.style.pointerEvents = 'none';
+                }
+                isCollapsed = !isCollapsed;
+            });
         });
-      </script>
-      {% block scripts %}
-      {% endblock %}
+    </script>
+    {% block scripts %}
+    {% endblock %}
 </body>
 </html>
