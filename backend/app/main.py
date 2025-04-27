@@ -8,10 +8,16 @@ from .database import SessionLocal, engine
 from pathlib import Path
 from datetime import datetime
 
+# Import SessionMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+
 # Initialize the database
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Add SessionMiddleware.  You MUST replace "your_secret_key" with a real secret key.
+app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
 # Calculate paths relative to this file
 # Get the base directory of your project
@@ -36,7 +42,7 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/logout", response_class=RedirectResponse)
+@app.get("/logout", response_class=RedirectResponse, name="logout")
 async def logout(request: Request):
     # Invalidate the user's session (example using request.session)
     request.session.clear()
@@ -46,7 +52,7 @@ async def logout(request: Request):
     # Optionally, you can set a success message or perform other actions.
 
     # Redirect the user to the login page (your root "/")
-    return RedirectResponse(url="/", status_code=303) # Use 303 for POST redirect after GET
+    return RedirectResponse(url="/", status_code=303)  # Use 303 for POST redirect after GET
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
@@ -118,6 +124,11 @@ async def login(form_data: schemas.UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect student number or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    #  Normally you would create a session here.  Since we don't have a full session management
+    #  system in this example, we'll just return a success message.  In a real app,
+    #  you'd set a cookie or JWT here.
+    # In a real application, you would set a session here, e.g.,:
+    # request.session["user_id"] = user.id
     return {"message": "Login successful"}
 
 @app.post("/bulletin/heart/{post_id}")
@@ -189,5 +200,6 @@ async def leave_event(event_id: int, request: Request, db: Session = Depends(get
 @app.get("/api/events/upcoming_summary")
 async def get_upcoming_events_summary(db: Session = Depends(get_db)):
     now = datetime.now()
-    upcoming_events = db.query(models.Event).filter(models.Event.date >= now).order_by(models.Event.date).limit(5).all() # Adjust limit as needed
+    upcoming_events = db.query(models.Event).filter(models.Event.date >= now).order_by(models.Event.date).limit(5).all()  # Adjust limit as needed
     return [{"title": event.title, "date": event.date.isoformat(), "location": event.location, "classification": event.classification} for event in upcoming_events]
+
