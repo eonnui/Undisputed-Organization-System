@@ -142,10 +142,10 @@ function clearSecurityForm() {
 }
 
 function clearStudentInfoForm() {
-    document.getElementById('studentNumber').value = '';
-    document.getElementById('firstName').value = '';
-    document.getElementById('lastName').value = '';
-    document.getElementById('email').value = '';
+    document.getElementById('studentNumber').value = '2023-10001';
+    document.getElementById('firstName').value = 'John';
+    document.getElementById('lastName').value = 'Doe';
+    document.getElementById('email').value = 'john.doe@example.com';
     document.getElementById('birthDate').value = '';
     document.getElementById('gender').value = '';
     document.getElementById('address').value = '';
@@ -322,9 +322,10 @@ function toggleInput(displayId, inputId) {
     if (displayElement.style.display === 'none') {
         displayElement.style.display = 'inline-block';
         inputElement.style.display = 'none';
+         inputElement.focus();
     } else {
         displayElement.style.display = 'none';
         inputElement.style.display = 'inline-block';
-        inputElement.focus();
+       
     }
 }

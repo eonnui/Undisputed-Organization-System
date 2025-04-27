@@ -252,7 +252,7 @@
                 <div class="input-wrapper">
                     <span id="studentNumberDisplay">2023-10001</span>
                     <span class="material-symbols-outlined edit-icon" id="editStudentNumber">edit</span>
-                    <input type="text" id="studentNumber" name="studentNumber" style="display: none;">
+                    <input type="text" id="studentNumber" name="studentNumber" value="2023-10001" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
@@ -260,7 +260,7 @@
                 <div class="input-wrapper">
                     <span id="firstNameDisplay">John</span>
                     <span class="material-symbols-outlined edit-icon" id="editFirstName">edit</span>
-                    <input type="text" id="firstName" name="firstName" style="display: none;">
+                    <input type="text" id="firstName" name="firstName" value="John" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
@@ -268,15 +268,15 @@
                 <div class="input-wrapper">
                     <span id="lastNameDisplay">Doe</span>
                     <span class="material-symbols-outlined edit-icon" id="editLastName">edit</span>
-                    <input type="text" id="lastName" name="lastName" style="display: none;">
+                    <input type="text" id="lastName" name="lastName" value="Doe" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
                 <label for="email">Email</label>
-                 <div class="input-wrapper">
+                <div class="input-wrapper">
                     <span id="studentEmailDisplay">john.doe@example.com</span>
                     <span class="material-symbols-outlined edit-icon" id="editEmail">edit</span>
-                    <input type="text" id="email" name="email" style="display: none;">
+                    <input type="text" id="email" name="email" value="john.doe@example.com" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
@@ -361,7 +361,7 @@
                     <span class="material-symbols-outlined edit-icon" id="editRegistrationForm">edit</span>
                     <input type="file" id="registrationFormUpload" name="registrationFormUpload" accept=".pdf" style="display: none;">
                 </div>
-                <small>Accepted format: PDF</small>
+                <small>Accepted formats: PDF</small>
                 <div class="error-message" id="registrationFormError"></div>
             </div>
             <div class="button-group">
@@ -417,5 +417,4 @@
         </div>
     </div>
 </div>
-<script src="settings.js"></script>
 {% endblock %}
