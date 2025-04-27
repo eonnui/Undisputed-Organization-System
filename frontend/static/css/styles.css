@@ -3,231 +3,258 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
 
 :root {
-  --bg-color: #f3f4f6; /* Very light gray background */
-  --card-bg: #ffffff; /* White card background */
-  --text-primary: #1e293b; /* Dark, readable text */
-  --text-secondary: #4b5563; /* Medium gray secondary text */
-  --primary-color: #4e5d78; /* Inspired by Gentleman's Gray */
-  --primary-hover: #3a475e; /* Darker shade for hover */
-  --border-color: #d1d5db; /* Light gray border */
-  --focus-color: #63b3ed; /* Light blue focus ring */
-  --error-color: #dc2626; /* Clear red error */
-  --success-color: #16a34a; /* Clean green success */
-  --info-color: #0ea5e9; /* Bright blue info */
+    --bg-color: #f3f4f6; /* Very light gray background */
+    --card-bg: #ffffff; /* White card background */
+    --text-primary: #1e293b; /* Dark, readable text */
+    --text-secondary: #4b5563; /* Medium gray secondary text */
+    --primary-color: #4e5d78; /* Inspired by Gentleman's Gray */
+    --primary-hover: #3a475e; /* Darker shade for hover */
+    --border-color: #d1d5db; /* Light gray border */
+    --focus-color: #63b3ed; /* Light blue focus ring */
+    --error-color: #dc2626; /* Clear red error */
+    --success-color: #16a34a; /* Clean green success */
+    --info-color: #0ea5e9; /* Bright blue info */
 }
 
 body {
-  margin: 0;
-  font-family: 'Inter', sans-serif; /* Use Inter font */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-color);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh; /* Ensure full viewport height */
+    margin: 0;
+    font-family: 'Inter', sans-serif; /* Use Inter font */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Ensure full viewport height */
 }
 
 .wrapper {
-  background-color: var(--card-bg);
-  border-radius: 0.75rem; /* Soft rounded corners */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Modern shadow */
-  padding: 2rem 2.5rem;
-  width: 100%;
-  max-width: 400px; /* Limit width for readability */
+    background-color: var(--card-bg);
+    border-radius: 0.75rem; /* Soft rounded corners */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Modern shadow */
+    padding: 2rem 2.5rem;
+    width: 100%;
+    max-width: 400px; /* Limit width for readability */
 }
 
 h1 {
-  font-family: 'Poppins', sans-serif; /* Use Poppins for headings */
-  font-weight: 700;
-  font-size: 2rem;
-  color: var(--text-primary);
-  text-align: center;
-  margin-bottom: 1.5rem;
+    font-family: 'Poppins', sans-serif; /* Use Poppins for headings */
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 1.5rem;
 }
 
 .notification {
-  position: absolute;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: var(--info-color);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.375rem;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out, top 0.3s ease-in-out;
-  font-size: 0.9rem;
-  white-space: nowrap;
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--info-color);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, top 0.3s ease-in-out;
+    font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .notification.success {
-  background-color: var(--success-color);
+    background-color: var(--success-color);
 }
 
 .notification.error {
-  background-color: var(--error-color);
+    background-color: var(--error-color);
 }
 
 .notification.show {
-  opacity: 1;
-  top: 2.5rem;
+    opacity: 1;
+    top: 2.5rem;
 }
 
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem; /* Spacing between form elements */
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem; /* Spacing between form elements */
 }
 
 .input-group {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .input-group label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.375rem;
-  font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.375rem;
+    font-weight: 500;
 }
 
 input {
-  padding: 0.8rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  color: var(--text-primary);
-  background-color: #ffffff;
-  transition: border-color 0.2s ease;
-  font-family: 'Inter', sans-serif;
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+    background-color: #ffffff;
+    transition: border-color 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 3rem; /* Space for the view password button */
+}
+
+.view-password-button {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.5rem;
+    outline: none;
+}
+
+.view-password-button:hover {
+    color: var(--primary-color);
 }
 
 select {
-  padding: 0.8rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.375rem;
-  font-size: 1rem;
-  color: var(--text-primary);
-  background-color: #ffffff;
-  transition: border-color 0.2s ease;
-  font-family: 'Inter', sans-serif;
-  width: 100%;
-  /* Remove background image for default arrow */
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  /* Add padding to the right to make space for the custom arrow */
-  padding-right: 2.5rem;
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 0.75rem; /* Adjust size as needed */
-  /* Using a CSS generated arrow as a background image */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%234b5563'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd' /%3E%3C/svg%3E");
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+    background-color: #ffffff;
+    transition: border-color 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    width: 100%;
+    /* Remove background image for default arrow */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    /* Add padding to the right to make space for the custom arrow */
+    padding-right: 2.5rem;
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.75rem; /* Adjust size as needed */
+    /* Using a CSS generated arrow as a background image */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%234b5563'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd' /%3E%3C/svg%3E");
 }
 
 input:focus, select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25); /* Subtle focus ring in primary color */
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25); /* Subtle focus ring in primary color */
 }
 
 .select-wrapper {
-  position: relative;
-  width: 100%; /* Make the select-wrapper take full width */
+    position: relative;
+    width: 100%; /* Make the select-wrapper take full width */
 }
 
 /* Remove the custom arrow (if you still have this) */
 .select-wrapper::after {
-  content: "";
-  display: none; /* Hide the custom arrow */
+    content: "";
+    display: none; /* Hide the custom arrow */
 }
 
 button {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 0.375rem;
-  background-color: var(--primary-color);
-  color: white;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  font-family: 'Inter', sans-serif;
-  /* Add position relative to the button */
-  position: relative;
-  overflow: hidden; /* Clip any overflowing content during transition */
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 0.375rem;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    /* Add position relative to the button */
+    position: relative;
+    overflow: hidden; /* Clip any overflowing content during transition */
 }
 
 button::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--primary-hover);
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-  z-index: -1; /* Place the hover effect behind the text */
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--primary-hover);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    z-index: -1; /* Place the hover effect behind the text */
 }
 
 button:hover::before {
-  opacity: 1;
+    opacity: 1;
 }
 
 .forgot-password {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0;
-  margin-top: 0.5rem;
-  text-align: right;
-  /* Adjust width to be inline-block to only take necessary space */
-  display: inline-block;
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0;
+    margin-top: 0.5rem;
+    text-align: right;
+    /* Adjust width to be inline-block to only take necessary space */
+    display: inline-block;
 }
 
 .forgot-password:hover {
-  color: var(--primary-hover);
-  text-decoration: none;
+    color: var(--primary-hover);
+    text-decoration: none;
 }
 
 .form-switch {
-  text-align: center;
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
 .link-button {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0;
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0;
 }
 
 .link-button:hover {
-  color: var(--primary-hover);
-  text-decoration: none;
+    color: var(--primary-hover);
+    text-decoration: none;
 }
 
 .error-message {
-  color: var(--error-color);
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
+    color: var(--error-color);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
 }
 
 .password-requirements {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
 }

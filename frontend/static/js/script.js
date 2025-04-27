@@ -11,14 +11,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${registrationSuccessMessage ? `<div class="notification success show">${registrationSuccessMessage}</div>` : ''}
                 <form class="form" id="login-form">
                     <div class="input-group">
-                        <label for="student-number">Student Number</label>
+                        <label for="login-student-number">Student Number</label>
                         <input type="text" id="login-student-number" placeholder="Enter your student number" required />
                         <div class="error-message" id="login-student-number-error"></div>
                     </div>
 
                     <div class="input-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="login-password" placeholder="Enter your password" required />
+                        <label for="login-password">Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="login-password" placeholder="Enter your password" required />
+                            <button type="button" class="view-password-button" data-target="login-password">Show</button>
+                        </div>
                         <div class="error-message" id="login-password-error"></div>
                     </div>
 
@@ -43,19 +46,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h1>SIGN UP</h1>
                 <form class="form" id="signup-form">
                     <div class="input-group">
-                        <label for="student-number">Student Number</label>
+                        <label for="signup-student-number">Student Number</label>
                         <input type="text" id="signup-student-number" placeholder="Enter your student number" required />
                         <div class="error-message" id="signup-student-number-error"></div>
                     </div>
 
                     <div class="input-group">
-                        <label for="email">Student Email</label>
+                        <label for="signup-email">Student Email</label>
                         <input type="email" id="signup-email" placeholder="Enter your email" required />
                         <div class="error-message" id="signup-email-error"></div>
                     </div>
 
                     <div class="input-group">
-                        <label for="organization">Select Organization</label>
+                        <label for="signup-organization">Select Organization</label>
                         <div class="select-wrapper">
                             <select id="signup-organization">
                                 <option value="" disabled selected>Select your organization</option>
@@ -67,27 +70,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="input-group">
-                        <label for="first-name">First Name</label>
+                        <label for="signup-first-name">First Name</label>
                         <input type="text" id="signup-first-name" placeholder="Enter your first name" required />
                         <div class="error-message" id="signup-first-name-error"></div>
                     </div>
 
                     <div class="input-group">
-                        <label for="last-name">Last Name</label>
+                        <label for="signup-last-name">Last Name</label>
                         <input type="text" id="signup-last-name" placeholder="Enter your last name" required />
                         <div class="error-message" id="signup-last-name-error"></div>
                     </div>
 
                     <div class="input-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="signup-password" placeholder="Create a password" required />
+                        <label for="signup-password">Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="signup-password" placeholder="Create a password" required />
+                            <button type="button" class="view-password-button" data-target="signup-password">Show</button>
+                        </div>
                         <div class="error-message" id="signup-password-error"></div>
                         <p class="password-requirements" style="font-size: 0.7em; color: #ddd; margin-top: 0.2rem;">Password must be at least 8 characters and include uppercase, lowercase, and a number.</p>
                     </div>
 
                     <div class="input-group">
-                        <label for="confirm-password">Confirm Password</label>
-                        <input type="password" id="signup-confirm-password" placeholder="Confirm your password" required />
+                        <label for="signup-confirm-password">Confirm Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="signup-confirm-password" placeholder="Confirm your password" required />
+                            <button type="button" class="view-password-button" data-target="signup-confirm-password">Show</button>
+                        </div>
                         <div class="error-message" id="signup-confirm-password-error"></div>
                     </div>
 
@@ -141,14 +150,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     <div class="input-group">
                         <label for="new-password">New Password</label>
-                        <input type="password" id="new-password" placeholder="Enter new password" required />
+                        <div class="password-input-wrapper">
+                            <input type="password" id="new-password" placeholder="Enter new password" required />
+                            <button type="button" class="view-password-button" data-target="new-password">Show</button>
+                        </div>
                         <div class="error-message" id="new-password-error"></div>
                         <p class="password-requirements" style="font-size: 0.7em; color: #ddd; margin-top: 0.2rem;">Password must be at least 8 characters and include uppercase, lowercase, and a number.</p>
                     </div>
 
                     <div class="input-group">
                         <label for="confirm-new-password">Confirm New Password</label>
-                        <input type="password" id="confirm-new-password" placeholder="Confirm new password" required />
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirm-new-password" placeholder="Confirm new password" required />
+                            <button type="button" class="view-password-button" data-target="confirm-new-password">Show</button>
+                        </div>
                         <div class="error-message" id="confirm-new-password-error"></div>
                     </div>
 
@@ -167,39 +182,73 @@ document.addEventListener('DOMContentLoaded', function() {
     function render() {
         if (currentForm === 'login') {
             app.innerHTML = renderLoginForm();
-            document.getElementById('toggle-to-signup')?.addEventListener('click', () => {
-                currentForm = 'signup';
-                render();
-            });
-            document.getElementById('toggle-to-forgot-password')?.addEventListener('click', () => {
-                currentForm = 'forgot-password';
-                render();
-            });
-            document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+            setupEventListenersForLoginForm();
             // Clear success message after rendering login form
             registrationSuccessMessage = '';
         } else if (currentForm === 'signup') {
             app.innerHTML = renderSignupForm();
-            document.getElementById('toggle-to-login')?.addEventListener('click', () => {
-                currentForm = 'login';
-                render();
-            });
-            document.getElementById('signup-form')?.addEventListener('submit', handleSignup);
+            setupEventListenersForSignupForm();
         } else if (currentForm === 'forgot-password') {
             app.innerHTML = renderForgotPasswordForm();
-            document.getElementById('toggle-to-login-from-forgot')?.addEventListener('click', () => {
-                currentForm = 'login';
-                render();
-            });
-            document.getElementById('forgot-password-form')?.addEventListener('submit', handleForgotPassword);
+            setupEventListenersForForgotPasswordForm();
         } else if (currentForm === 'reset-password-code') {
             app.innerHTML = renderResetPasswordCodeForm();
-            document.getElementById('toggle-to-login-from-reset')?.addEventListener('click', () => {
-                currentForm = 'login';
-                render();
-            });
-            document.getElementById('reset-password-code-form')?.addEventListener('submit', handleResetPasswordCode);
+            setupEventListenersForResetPasswordCodeForm();
         }
+        setupViewPasswordButtons();
+    }
+
+    function setupEventListenersForLoginForm() {
+        document.getElementById('toggle-to-signup')?.addEventListener('click', () => {
+            currentForm = 'signup';
+            render();
+        });
+        document.getElementById('toggle-to-forgot-password')?.addEventListener('click', () => {
+            currentForm = 'forgot-password';
+            render();
+        });
+        document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+    }
+
+    function setupEventListenersForSignupForm() {
+        document.getElementById('toggle-to-login')?.addEventListener('click', () => {
+            currentForm = 'login';
+            render();
+        });
+        document.getElementById('signup-form')?.addEventListener('submit', handleSignup);
+    }
+
+    function setupEventListenersForForgotPasswordForm() {
+        document.getElementById('toggle-to-login-from-forgot')?.addEventListener('click', () => {
+            currentForm = 'login';
+            render();
+        });
+        document.getElementById('forgot-password-form')?.addEventListener('submit', handleForgotPassword);
+    }
+
+    function setupEventListenersForResetPasswordCodeForm() {
+        document.getElementById('toggle-to-login-from-reset')?.addEventListener('click', () => {
+            currentForm = 'login';
+            render();
+        });
+        document.getElementById('reset-password-code-form')?.addEventListener('submit', handleResetPasswordCode);
+    }
+
+    function setupViewPasswordButtons() {
+        const buttons = document.querySelectorAll('.view-password-button');
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.dataset.target;
+                const passwordInput = document.getElementById(targetId);
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    this.textContent = 'Hide';
+                } else {
+                    passwordInput.type = 'password';
+                    this.textContent = 'Show';
+                }
+            });
+        });
     }
 
     async function handleLogin(e) {
@@ -261,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleSignup(e) {
         e.preventDefault();
-    
+
         const studentNumber = document.getElementById('signup-student-number').value;
         const email = document.getElementById('signup-email').value;
         const organization = document.getElementById('signup-organization').value;
@@ -269,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastName = document.getElementById('signup-last-name').value;
         const password = document.getElementById('signup-password').value;
         const confirmPassword = document.getElementById('signup-confirm-password').value;
-    
+
         // Clear previous errors
         displayError('signup-student-number', '');
         displayError('signup-email', '');
@@ -278,10 +327,10 @@ document.addEventListener('DOMContentLoaded', function() {
         displayError('signup-last-name', '');
         displayError('signup-password', '');
         displayError('signup-confirm-password', '');
-    
+
         // Validation checks
         let isValid = true;
-    
+
         if (isNaN(studentNumber) || studentNumber === "") {
             displayError('signup-student-number', 'Student number must be a number.');
             isValid = false;
@@ -289,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-student-number', 'Student number must be 9 digits.');
             isValid = false;
         }
-    
+
         if (!email) {
             displayError('signup-email', 'Email is required.');
             isValid = false;
@@ -297,12 +346,12 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-email', 'Invalid email format.');
             isValid = false;
         }
-    
+
         if (!organization) {
             displayError('signup-organization', 'Please select an organization.');
             isValid = false;
         }
-    
+
         if (!firstName) {
             displayError('signup-first-name', 'First name is required.');
             isValid = false;
@@ -310,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-first-name', 'First name should only contain letters and spaces.');
             isValid = false;
         }
-    
+
         if (!lastName) {
             displayError('signup-last-name', 'Last name is required.');
             isValid = false;
@@ -318,22 +367,22 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-last-name', 'Last name should only contain letters and spaces.');
             isValid = false;
         }
-    
+
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
         if (!passwordRegex.test(password)) {
             displayError('signup-password', 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one number.');
             isValid = false;
         }
-    
+
         if (password !== confirmPassword) {
             displayError('signup-confirm-password', 'Passwords do not match.');
             isValid = false;
         }
-    
+
         if (!isValid) {
             return; // Stop the signup process if any validation fails
         }
-    
+
         const userData = {
             student_number: studentNumber,
             email: email,
@@ -342,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
             last_name: lastName,
             password: password
         };
-    
+
         try {
             const response = await fetch('/api/signup/', {
                 method: 'POST',
@@ -351,39 +400,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(userData)
             });
-    
+
             const data = await response.json();
-    
+
             if (!response.ok) {
-                // Check if the error is due to an already registered student
-                if (data.detail && data.detail.includes('already registered')) {
+                // Check if the error is due to an already registered student or email
+                if (data.detail && data.detail.includes('student number already registered')) {
                     displayError('signup-student-number', 'This student number is already registered.');
-                    return; // Stop the signup process
+                } else if (data.detail && data.detail.includes('email already registered')) {
+                    displayError('signup-email', 'This email is already registered.');
+                } else {
+                    throw new Error(data.detail || 'Signup failed');
                 }
-                throw new Error(data.detail || 'Signup failed');
+                return; // Stop the signup process
             }
-    
+
             // Success Message for Login Form
             registrationSuccessMessage = 'Registration successful! Please log in.';
-    
+
             // Redirect to Login
             currentForm = 'login';
             render();
-    
+
         } catch (error) {
             console.error("Signup error:", error);
             displayNotification('An error occurred during signup. Please try again.', 'error');
         }
     }
 
-    
+
     async function handleForgotPassword(e) {
         e.preventDefault();
         const identifier = document.getElementById('forgot-password-identifier').value;
 
-        // Basic client-side validation
+        // Clear previous error
+        displayError('forgot-password-identifier', '');
+
         if (!identifier) {
-            displayError('forgot-password-identifier', 'Please enter your student number or email.');
+            displayError('forgot-password-identifier', 'Student number or email is required.');
             return;
         }
 
@@ -399,41 +453,52 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (!response.ok) {
-                displayError('forgot-password-identifier', data.detail || 'Failed to send reset code. Please try again.');
+                displayError('forgot-password-identifier', data.detail || 'Failed to send reset code.');
                 return;
             }
 
-            displayNotification('A reset code has been sent to your email if the account exists.', 'info'); // Modern websites often give this feedback for security
-            forgotPasswordIdentifier = identifier; // Store for the next step
+            forgotPasswordIdentifier = identifier; // Store for next step
             currentForm = 'reset-password-code';
             render();
 
         } catch (error) {
-            displayNotification('An unexpected error occurred. Please try again.', 'error');
             console.error("Forgot password error:", error);
+            displayNotification('An unexpected error occurred. Please try again.', 'error');
         }
     }
 
     async function handleResetPasswordCode(e) {
         e.preventDefault();
-        const resetCode = document.getElementById('reset-code').value;
+
+        const code = document.getElementById('reset-code').value;
         const newPassword = document.getElementById('new-password').value;
         const confirmNewPassword = document.getElementById('confirm-new-password').value;
 
-        // Basic client-side validation
-        if (!resetCode) {
-            displayError('reset-code', 'Please enter the verification code.');
-            return;
+        // Clear errors
+        displayError('reset-code', '');
+        displayError('new-password', '');
+        displayError('confirm-new-password', '');
+
+        let isValid = true;
+
+        if (!code) {
+            displayError('reset-code', 'Verification code is required.');
+            isValid = false;
         }
 
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
         if (!passwordRegex.test(newPassword)) {
-            displayError('new-password', 'New password must be at least 8 characters and include uppercase, lowercase, and a number.');
-            return;
+            displayError('new-password', 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one number.');
+            isValid = false;
         }
+
 
         if (newPassword !== confirmNewPassword) {
             displayError('confirm-new-password', 'Passwords do not match.');
+            isValid = false;
+        }
+
+        if (!isValid) {
             return;
         }
 
@@ -445,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     identifier: forgotPasswordIdentifier,
-                    code: resetCode,
+                    code: code,
                     new_password: newPassword,
                 }),
             });
@@ -453,54 +518,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (!response.ok) {
-                displayError('reset-code', data.detail || 'Invalid reset code or request. Please try again.');
+                displayError('reset-code', data.detail || 'Failed to reset password.');
                 return;
             }
 
-            displayNotification('Password reset successfully! You can now log in with your new password.', 'success');
+            displayNotification('Password reset successfully! Please log in.', 'success');
             currentForm = 'login';
-            registrationSuccessMessage = 'Password reset successfully. Please log in.';
             render();
 
         } catch (error) {
-            displayNotification('An unexpected error occurred. Please try again.', 'error');
             console.error("Reset password error:", error);
+            displayNotification('An unexpected error occurred. Please try again.', 'error');
         }
     }
 
-    function displayError(elementId, errorMessage) {
-        const errorElement = document.getElementById(elementId + '-error');
+    function displayError(inputId, message) {
+        const errorElement = document.getElementById(inputId + '-error');
         if (errorElement) {
-            errorElement.textContent = errorMessage;
-        } else {
-            const inputElement = document.getElementById(elementId);
-            const inputGroup = inputElement ? inputElement.closest('.input-group') : null;
-            if (inputGroup) {
-                const newErrorElement = document.createElement('div');
-                newErrorElement.classList.add('error-message');
-                newErrorElement.id = elementId + '-error';
-                newErrorElement.textContent = errorMessage;
-                inputGroup.appendChild(newErrorElement);
-            }
+            errorElement.textContent = message;
         }
     }
 
     function displayNotification(message, type = 'info') {
-        const notificationDiv = document.createElement('div');
-        notificationDiv.classList.add('notification', type);
-        notificationDiv.textContent = message;
-        app.appendChild(notificationDiv);
+        const notification = document.createElement('div');
+        notification.className = `notification ${type} show`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
         setTimeout(() => {
-            notificationDiv.classList.add('show');
-            setTimeout(() => {
-                notificationDiv.classList.remove('show');
-                setTimeout(() => {
-                    notificationDiv.remove();
-                }, 300); // Fade out duration
-            }, 3000); // Display duration
-        }, 100); // Small delay to ensure it's added to the DOM
+            notification.classList.remove('show');
+            setTimeout(()=> notification.remove(), 300); //remove element after the animation
+        }, 3000);
     }
 
-    // Initial render
-    render();
+    render(); // Initial render
 });
