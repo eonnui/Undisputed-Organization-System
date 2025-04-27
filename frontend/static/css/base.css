@@ -1,3 +1,5 @@
+/* Updated base.css - Collapsible Sidebar */
+/* Reset and Box Sizing */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -38,7 +40,7 @@
     --dropdown-item-hover-bg: var(--bg-secondary);
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 60px;
-    --sidebar-transition-duration: 0.3s;
+    --sidebar-transition-duration: 0.3s; /* Reverted to 0.3s for animation */
 }
 
 body {
