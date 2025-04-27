@@ -41,13 +41,7 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     joined_events = relationship("Event", secondary=event_participants, back_populates="participants")
-    name = Column(String)
-    campus = Column(String)
-    semester = Column(String)
-    second = Column(String)
-    school_year = Column(String)
-    section = Column(String)
-    address = Column(String)
+
 
 # Ensure Admin model is also present (as defined previously)
 class Admin(Base):
