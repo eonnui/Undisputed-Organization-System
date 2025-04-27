@@ -1,3 +1,4 @@
+# main.py
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -12,7 +13,7 @@ from datetime import datetime
 from starlette.middleware.sessions import SessionMiddleware
 
 # Initialize the database
-models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine) # Make sure this is called only once
 
 app = FastAPI()
 
@@ -202,4 +203,3 @@ async def get_upcoming_events_summary(db: Session = Depends(get_db)):
     now = datetime.now()
     upcoming_events = db.query(models.Event).filter(models.Event.date >= now).order_by(models.Event.date).limit(5).all()  # Adjust limit as needed
     return [{"title": event.title, "date": event.date.isoformat(), "location": event.location, "classification": event.classification} for event in upcoming_events]
-
