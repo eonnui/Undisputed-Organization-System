@@ -1,4 +1,4 @@
-# backend/app/models.py
+# models.py
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -41,7 +41,7 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     joined_events = relationship("Event", secondary=event_participants, back_populates="participants")
-    name = Column(String, nullable=True) # Make these nullable
+    name = Column(String, nullable=True)
     campus = Column(String, nullable=True)
     semester = Column(String, nullable=True)
     course = Column(String, nullable=True)
@@ -56,9 +56,9 @@ class User(Base):
     guardian_contact = Column(String, nullable=True)
     registration_form = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
-
-
-
+    is_verified = Column(Boolean, default=False) # Added for verification status
+    verified_by = Column(String, nullable=True)  # Add this field
+    verification_date = Column(DateTime, nullable=True) #add this
 
 # Ensure Admin model is also present (as defined previously)
 class Admin(Base):
