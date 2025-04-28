@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block title %}Settings{% endblock %}
@@ -417,4 +418,362 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Student Info Form ---
+    const studentInfoForm = document.getElementById('studentInfoForm');
+    const editStudentNumberBtn = document.getElementById('editStudentNumber');
+    const editFirstNameBtn = document.getElementById('editFirstName');
+    const editLastNameBtn = document.getElementById('editLastName');
+    const editEmailBtn = document.getElementById('editEmail');
+    const editBirthDateBtn = document.getElementById('editBirthDate');
+    const editGenderBtn = document.getElementById('editGender');
+    const editAddressBtn = document.getElementById('editAddress');
+    const editYearLevelBtn = document.getElementById('editYearLevel');
+    const editSectionBtn = document.getElementById('editSection');
+    const editGuardianNameBtn = document.getElementById('editGuardianName');
+    const editGuardianContactBtn = document.getElementById('editGuardianContact');
+    const editRegistrationFormBtn = document.getElementById('editRegistrationForm');
+
+
+    function makeFieldEditable(displayElementId, inputElementId) {
+        const displayElement = document.getElementById(displayElementId);
+        const inputElement = document.getElementById(inputElementId);
+
+        if (displayElement && inputElement) { // Check if elements exist
+            displayElement.style.display = 'none';
+            inputElement.style.display = 'block';
+            inputElement.focus(); // Focus on the input when it appears.
+
+             // Hide input and show display on blur
+            inputElement.addEventListener('blur', () => {
+                displayElement.style.display = 'block';
+                inputElement.style.display = 'none';
+            });
+        }
+    }
+
+    if (editStudentNumberBtn) {
+        editStudentNumberBtn.addEventListener('click', () => makeFieldEditable('studentNumberDisplay', 'studentNumber'));
+    }
+    if (editFirstNameBtn) {
+        editFirstNameBtn.addEventListener('click', () => makeFieldEditable('firstNameDisplay', 'firstName'));
+    }
+    if (editLastNameBtn) {
+        editLastNameBtn.addEventListener('click', () => makeFieldEditable('lastNameDisplay', 'lastName'));
+    }
+    if (editEmailBtn) {
+        editEmailBtn.addEventListener('click', () => makeFieldEditable('studentEmailDisplay', 'email'));
+    }
+
+
+    if (editBirthDateBtn) {
+        editBirthDateBtn.addEventListener('click', () => {
+            const displayElement = document.getElementById('birthDateDisplay');
+            const inputElement = document.getElementById('birthDate');
+            if(displayElement && inputElement){
+                inputElement.type = 'date';
+                displayElement.style.display = 'none';
+                inputElement.style.display = 'block';
+                inputElement.focus();
+
+                inputElement.addEventListener('blur', () => {
+                    displayElement.textContent = inputElement.value;
+                    displayElement.style.display = 'block';
+                    inputElement.style.display = 'none';
+                    inputElement.type = 'text';
+                });
+            }
+        });
+    }
+
+    if (editGenderBtn) {
+        editGenderBtn.addEventListener('click', () => {
+            const displayElement = document.getElementById('genderDisplay');
+            const inputElement = document.getElementById('gender');
+            if(displayElement && inputElement){
+                displayElement.style.display = 'none';
+                inputElement.style.display = 'block';
+                inputElement.focus();
+
+                inputElement.addEventListener('blur', () => {
+                    const selectedOption = inputElement.options[inputElement.selectedIndex];
+                    displayElement.textContent = selectedOption.text;
+                    displayElement.style.display = 'block';
+                    inputElement.style.display = 'none';
+                });
+            }
+
+        });
+    }
+
+    if (editAddressBtn) {
+        editAddressBtn.addEventListener('click', () => makeFieldEditable('addressDisplay', 'address'));
+    }
+
+    if (editYearLevelBtn) {
+        editYearLevelBtn.addEventListener('click', () => {
+            const displayElement = document.getElementById('yearLevelDisplay');
+            const inputElement = document.getElementById('yearLevel');
+            if(displayElement && inputElement){
+                displayElement.style.display = 'none';
+                inputElement.style.display = 'block';
+                inputElement.focus();
+
+                inputElement.addEventListener('blur', () => {
+                    const selectedOption = inputElement.options[inputElement.selectedIndex];
+                    displayElement.textContent = selectedOption.text;
+                    displayElement.style.display = 'block';
+                    inputElement.style.display = 'none';
+                });
+            }
+        });
+    }
+
+    if (editSectionBtn) {
+        editSectionBtn.addEventListener('click', () => makeFieldEditable('sectionDisplay', 'section'));
+    }
+
+    if (editGuardianNameBtn) {
+        editGuardianNameBtn.addEventListener('click', () => makeFieldEditable('guardianNameDisplay', 'guardianName'));
+    }
+
+    if (editGuardianContactBtn) {
+        editGuardianContactBtn.addEventListener('click', () => makeFieldEditable('guardianContactDisplay', 'guardianContact'));
+    }
+
+    if (editRegistrationFormBtn) {
+        editRegistrationFormBtn.addEventListener('click', () => {
+            const displayElement = document.getElementById('registrationFormDisplay');
+            const inputElement = document.getElementById('registrationFormUpload');
+             if(displayElement && inputElement){
+                displayElement.style.display = 'none';
+                inputElement.style.display = 'block';
+                inputElement.focus();
+
+                inputElement.addEventListener('change', () => {
+                    if (inputElement.files && inputElement.files[0]) {
+                        displayElement.textContent = inputElement.files[0].name;
+                    } else {
+                         displayElement.textContent = '';
+                    }
+                    displayElement.style.display = 'block';
+                    inputElement.style.display = 'none';
+                });
+             }
+        });
+    }
+
+
+    studentInfoForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        let hasErrors = false;
+
+        // Reset all error messages
+        document.getElementById('birthDateError').textContent = '';
+        document.getElementById('genderError').textContent = '';
+        document.getElementById('addressError').textContent = '';
+        document.getElementById('yearLevelError').textContent = '';
+        document.getElementById('sectionError').textContent = '';
+        document.getElementById('guardianNameError').textContent = '';
+        document.getElementById('guardianContactError').textContent = '';
+        document.getElementById('registrationFormError').textContent = '';
+
+
+        const birthDateInput = document.getElementById('birthDate');
+        const genderInput = document.getElementById('gender');
+        const addressInput = document.getElementById('address');
+        const yearLevelInput = document.getElementById('yearLevel');
+        const sectionInput = document.getElementById('section');
+        const guardianNameInput = document.getElementById('guardianName');
+        const guardianContactInput = document.getElementById('guardianContact');
+        const registrationFormInput = document.getElementById('registrationFormUpload');
+
+
+        if (!birthDateInput.value) {
+            document.getElementById('birthDateError').textContent = 'Please enter your birth date.';
+            hasErrors = true;
+        }
+
+        if (!genderInput.value) {
+            document.getElementById('genderError').textContent = 'Please select your gender.';
+            hasErrors = true;
+        }
+
+        if (!addressInput.value) {
+            document.getElementById('addressError').textContent = 'Please enter your address.';
+            hasErrors = true;
+        }
+         if (!yearLevelInput.value) {
+            document.getElementById('yearLevelError').textContent = 'Please select your year level.';
+            hasErrors = true;
+        }
+        if (!sectionInput.value) {
+            document.getElementById('sectionError').textContent = 'Please enter your section.';
+            hasErrors = true;
+        }
+        if (!guardianNameInput.value) {
+            document.getElementById('guardianNameError').textContent = 'Please enter your guardian name.';
+            hasErrors = true;
+        }
+        if (!guardianContactInput.value) {
+            document.getElementById('guardianContactError').textContent = 'Please enter your guardian contact.';
+            hasErrors = true;
+        }
+
+        if (registrationFormInput.files.length === 0) {
+            document.getElementById('registrationFormError').textContent = 'Please upload your registration form.';
+            hasErrors = true;
+        } else if (registrationFormInput.files[0].type !== 'application/pdf') {
+            document.getElementById('registrationFormError').textContent = 'Invalid file format. Please upload a PDF.';
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            return;
+        }
+
+        alert('Student information updated successfully!');
+        // You would typically send the data to the server here.
+    });
+});
+
+
+function clearStudentInfoForm() {
+    document.getElementById('studentNumber').value = '2023-10001';
+    document.getElementById('firstName').value = 'John';
+    document.getElementById('lastName').value = 'Doe';
+    document.getElementById('email').value = 'john.doe@example.com';
+    document.getElementById('birthDate').value = '';
+    document.getElementById('gender').value = '';
+    document.getElementById('address').value = '';
+    document.getElementById('yearLevel').value = '';
+    document.getElementById('section').value = '';
+    document.getElementById('guardianName').value = '';
+    document.getElementById('guardianContact').value = '';
+    document.getElementById('registrationFormUpload').value = '';
+
+
+    document.getElementById('birthDateError').textContent = '';
+    document.getElementById('genderError').textContent = '';
+    document.getElementById('addressError').textContent = '';
+    document.getElementById('yearLevelError').textContent = '';
+    document.getElementById('sectionError').textContent = '';
+    document.getElementById('guardianNameError').textContent = '';
+    document.getElementById('guardianContactError').textContent = '';
+    document.getElementById('registrationFormError').textContent = '';
+
+    //reset the display labels
+    document.getElementById('studentNumberDisplay').textContent = '2023-10001';
+    document.getElementById('firstNameDisplay').textContent = 'John';
+    document.getElementById('lastNameDisplay').textContent = 'Doe';
+    document.getElementById('studentEmailDisplay').textContent = 'john.doe@example.com';
+    document.getElementById('birthDateDisplay').textContent = '';
+    document.getElementById('genderDisplay').textContent = '';
+    document.getElementById('addressDisplay').textContent = '';
+    document.getElementById('yearLevelDisplay').textContent = '';
+    document.getElementById('sectionDisplay').textContent = '';
+    document.getElementById('guardianNameDisplay').textContent = '';
+    document.getElementById('guardianContactDisplay').textContent = '';
+    document.getElementById('registrationFormDisplay').textContent = '';
+
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const profilePictureForm = document.getElementById('profilePictureForm');
+
+    profilePictureForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const profilePictureInput = document.getElementById('profilePicture');
+        const profilePictureError = document.getElementById('profilePictureError');
+        profilePictureError.textContent = ''; // Clear previous error
+
+        if (profilePictureInput.files.length === 0) {
+            profilePictureError.textContent = 'Please select a profile picture.';
+            return;
+        }
+
+        const file = profilePictureInput.files[0];
+        if (!file.type.startsWith('image/')) {
+            profilePictureError.textContent = 'Invalid file type. Please upload an image.';
+            return;
+        }
+
+        // Simulate a successful upload
+        alert('Profile picture updated successfully!');
+        // In a real application, you would send the file to the server using AJAX or fetch.
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const profilePicturePreview = document.querySelector('.profile-picture-preview');
+            profilePicturePreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        profilePictureInput.value='';
+
+    });
+});
+
+function clearSecurityForm() {
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+
+    document.getElementById('currentPasswordError').textContent = '';
+    document.getElementById('newPasswordError').textContent = '';
+    document.getElementById('confirmPasswordError').textContent = '';
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const securityForm = document.getElementById('securityForm');
+
+    securityForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        let hasErrors = false;
+        const currentPasswordInput = document.getElementById('currentPassword');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const currentPasswordError = document.getElementById('currentPasswordError');
+        const newPasswordError = document.getElementById('newPasswordError');
+        const confirmPasswordError = document.getElementById('confirmPasswordError');
+
+        currentPasswordError.textContent = '';
+        newPasswordError.textContent = '';
+        confirmPasswordError.textContent = '';
+
+        if (!currentPasswordInput.value) {
+            currentPasswordError.textContent = 'Please enter your current password.';
+            hasErrors = true;
+        }
+
+        if (newPasswordInput.value) {
+            if (newPasswordInput.value.length < 8) {
+                newPasswordError.textContent = 'New password must be at least 8 characters long.';
+                hasErrors = true;
+            }
+            if (newPasswordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordError.textContent = 'Passwords do not match.';
+                hasErrors = true;
+            }
+        } else if (confirmPasswordInput.value) {
+            newPasswordError.textContent = 'Please enter a new password or leave both fields empty.';
+            confirmPasswordError.textContent = 'Please confirm your new password.';
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            return;
+        }
+
+        alert('Security settings updated successfully!');
+        // In a real application, you would send the data to the server to update the password.
+        clearSecurityForm();
+    });
+});
+</script>
 {% endblock %}

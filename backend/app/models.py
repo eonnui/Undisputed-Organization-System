@@ -44,10 +44,17 @@ class User(Base):
     name = Column(String, nullable=True) # Make these nullable
     campus = Column(String, nullable=True)
     semester = Column(String, nullable=True)
-    second = Column(String, nullable=True)
+    course = Column(String, nullable=True)
     school_year = Column(String, nullable=True)
+    year_level = Column(String, nullable=True)
     section = Column(String, nullable=True)
     address = Column(String, nullable=True)
+    birthdate = Column(String, nullable=True)
+    sex = Column(String, nullable=True)
+    contact = Column(String, nullable=True)
+    guardian_name = Column(String, nullable=True)
+    guardian_contact = Column(String, nullable=True)
+
 
 
 # Ensure Admin model is also present (as defined previously)
