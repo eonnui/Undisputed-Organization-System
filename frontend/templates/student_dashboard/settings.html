@@ -245,46 +245,48 @@
     <h1>Account Settings</h1>
 
     <div class="student-info-section">
-        <h2>Student Information <span id="registrationStatus" class="unverified">Not Verified</span></h2>
+        <h2>Student Information <span id="registrationStatus" class="unverified">
+        {% if user.is_verified %}Verified{% else %}Not Verified{% endif %}
+        </span></h2>
         <form id="studentInfoForm">
             <div class="form-group">
                 <label for="studentNumber">Student Number</label>
                 <div class="input-wrapper">
-                    <span id="studentNumberDisplay">2023-10001</span>
+                    <span id="studentNumberDisplay">{{ user.student_number }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editStudentNumber">edit</span>
-                    <input type="text" id="studentNumber" name="studentNumber" value="2023-10001" style="display: none;">
+                    <input type="text" id="studentNumber" name="studentNumber" value="{{ user.student_number }}" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
                 <label for="firstName">First Name</label>
                 <div class="input-wrapper">
-                    <span id="firstNameDisplay">John</span>
+                    <span id="firstNameDisplay">{{ user.first_name }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editFirstName">edit</span>
-                    <input type="text" id="firstName" name="firstName" value="John" style="display: none;">
+                    <input type="text" id="firstName" name="firstName" value="{{ user.first_name }}" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
                 <label for="lastName">Last Name</label>
                 <div class="input-wrapper">
-                    <span id="lastNameDisplay">Doe</span>
+                    <span id="lastNameDisplay">{{ user.last_name }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editLastName">edit</span>
-                    <input type="text" id="lastName" name="lastName" value="Doe" style="display: none;">
+                    <input type="text" id="lastName" name="lastName" value="{{ user.last_name }}" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
                 <label for="email">Email</label>
                 <div class="input-wrapper">
-                    <span id="studentEmailDisplay">john.doe@example.com</span>
+                    <span id="studentEmailDisplay">{{ user.email }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editEmail">edit</span>
-                    <input type="text" id="email" name="email" value="john.doe@example.com" style="display: none;">
+                    <input type="text" id="email" name="email" value="{{ user.email }}" style="display: none;">
                 </div>
             </div>
             <div class="form-group">
                 <label>Birth Date *</label>
                 <div class="input-wrapper">
-                    <span id="birthDateDisplay"></span>
+                    <span id="birthDateDisplay">{{ user.birthdate }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editBirthDate">edit</span>
-                    <input type="date" id="birthDate" name="birthDate" style="display: none;" required>
+                    <input type="date" id="birthDate" name="birthDate" style="display: none;"  value="{{ user.birthdate }}">
                 </div>
                 <small>Please enter your date of birth.</small>
                 <div class="error-message" id="birthDateError"></div>
@@ -292,13 +294,13 @@
             <div class="form-group">
                 <label>Gender</label>
                 <div class="input-wrapper">
-                    <span id="genderDisplay"></span>
+                    <span id="genderDisplay">{{ user.sex }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGender">edit</span>
                     <select id="gender" name="gender" style="display: none;">
                         <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
+                        <option value="Male" {% if user.sex == 'Male' %} selected {% endif %}>Male</option>
+                        <option value="Female" {% if user.sex == 'Female' %} selected {% endif %}>Female</option>
+                        <option value="Other" {% if user.sex == 'Other' %} selected {% endif %}>Other</option>
                     </select>
                 </div>
                 <div class="error-message" id="genderError"></div>
@@ -306,58 +308,58 @@
             <div class="form-group">
                 <label>Address</label>
                 <div class="input-wrapper">
-                    <span id="addressDisplay"></span>
+                    <span id="addressDisplay">{{ user.address }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editAddress">edit</span>
-                    <input type="text" id="address" name="address" style="display: none;">
+                    <input type="text" id="address" name="address" style="display: none;" value="{{ user.address }}">
                 </div>
                 <div class="error-message" id="addressError"></div>
             </div>
-            <div class="form-group">
+             <div class="form-group">
                 <label>Year Level</label>
                 <div class="input-wrapper">
-                    <span id="yearLevelDisplay"></span>
+                    <span id="yearLevelDisplay">{{ user.year_level }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editYearLevel">edit</span>
                     <select id="yearLevel" name="yearLevel" style="display: none;">
                         <option value="">Select Year</option>
-                        <option value="1st Year">1st Year</option>
-                        <option value="2nd Year">2nd Year</option>
-                        <option value="3rd Year">3rd Year</option>
-                        <option value="4th Year">4th Year</option>
+                        <option value="1st Year" {% if user.year_level == '1st Year' %} selected {% endif %}>1st Year</option>
+                        <option value="2nd Year" {% if user.year_level == '2nd Year' %} selected {% endif %}>2nd Year</option>
+                        <option value="3rd Year" {% if user.year_level == '3rd Year' %} selected {% endif %}>3rd Year</option>
+                        <option value="4th Year" {% if user.year_level == '4th Year' %} selected {% endif %}>4th Year</option>
                     </select>
                 </div>
                 <div class="error-message" id="yearLevelError"></div>
             </div>
             <div class="form-group">
                 <label>Section</label>
-                <div class="input-wrapper">
-                    <span id="sectionDisplay"></span>
+                 <div class="input-wrapper">
+                    <span id="sectionDisplay">{{ user.section }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editSection">edit</span>
-                    <input type="text" id="section" name="section" style="display: none;">
+                    <input type="text" id="section" name="section" style="display: none;" value="{{ user.section }}">
                 </div>
                 <div class="error-message" id="sectionError"></div>
             </div>
             <div class="form-group">
                 <label>Guardian Name</label>
                 <div class="input-wrapper">
-                    <span id="guardianNameDisplay"></span>
+                    <span id="guardianNameDisplay">{{ user.guardian_name }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianName">edit</span>
-                    <input type="text" id="guardianName" name="guardianName" style="display: none;">
+                    <input type="text" id="guardianName" name="guardianName" style="display: none;" value="{{ user.guardian_name }}">
                 </div>
                 <div class="error-message" id="guardianNameError"></div>
             </div>
             <div class="form-group">
                 <label>Guardian Contact</label>
                 <div class="input-wrapper">
-                    <span id="guardianContactDisplay"></span>
+                    <span id="guardianContactDisplay">{{ user.guardian_contact }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianContact">edit</span>
-                    <input type="text" id="guardianContact" name="guardianContact" style="display: none;">
+                    <input type="text" id="guardianContact" name="guardianContact" style="display: none;" value="{{ user.guardian_contact }}">
                 </div>
                 <div class="error-message" id="guardianContactError"></div>
             </div>
             <div class="form-group">
                 <label>Registration Form</label>
                 <div class="input-wrapper">
-                    <span id="registrationFormDisplay"></span>
+                    <span id="registrationFormDisplay">{{ user.registration_form }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editRegistrationForm">edit</span>
                     <input type="file" id="registrationFormUpload" name="registrationFormUpload" accept=".pdf" style="display: none;">
                 </div>
@@ -374,7 +376,7 @@
     <div class="settings-grid">
         <div class="settings-section profile-picture-section">
             <h2>Profile Picture</h2>
-            <img src="/static/images/default-profile.png" alt="Current Profile Picture" class="profile-picture-preview">
+            <img src="{{ user.profile_picture }}" alt="Current Profile Picture" class="profile-picture-preview">
             <form id="profilePictureForm" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="profilePicture">Upload New Picture</label>

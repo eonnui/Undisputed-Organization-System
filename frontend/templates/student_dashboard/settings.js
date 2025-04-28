@@ -14,6 +14,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const editGuardianContactBtn = document.getElementById('editGuardianContact');
     const editRegistrationFormBtn = document.getElementById('editRegistrationForm');
     const clearStudentInfoFormBtn = document.getElementById('clearStudentInfoForm');
+    const registrationStatusDisplay = document.getElementById('registrationStatus');
+
+    // Initial Registration Status
+    function setRegistrationStatus(status) {
+        if (status === 'Verified') {
+            registrationStatusDisplay.textContent = 'Verified';
+            registrationStatusDisplay.className = 'verified';
+        } else {
+            registrationStatusDisplay.textContent = 'Not Verified';
+            registrationStatusDisplay.className = 'unverified';
+        }
+    }
+    //set initial registration status.
+    const initialStatus = "{{ user.verification_status }}";
+    setRegistrationStatus(initialStatus);
 
     function makeFieldEditable(displayElementId, inputElementId) {
         const displayElement = document.getElementById(displayElementId);
@@ -26,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Hide input and show display on blur
             inputElement.addEventListener('blur', () => {
+                displayElement.textContent = inputElement.value; // Update display with input value
                 displayElement.style.display = 'block';
                 inputElement.style.display = 'none';
             });
@@ -60,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     displayElement.textContent = inputElement.value;
                     displayElement.style.display = 'block';
                     inputElement.style.display = 'none';
-                    inputElement.type = 'text';
+                    inputElement.type = 'text'; // Reset type to text
                 });
             }
         });
@@ -228,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(data => {
                 alert(data.message);
-                 // Update the displayed values after successful submission
+                // Update the displayed values after successful submission
                 document.getElementById('studentNumberDisplay').textContent = document.getElementById('studentNumber').value;
                 document.getElementById('firstNameDisplay').textContent = document.getElementById('firstName').value;
                 document.getElementById('lastNameDisplay').textContent = document.getElementById('lastName').value;
@@ -280,17 +296,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (clearStudentInfoFormBtn) {
         clearStudentInfoFormBtn.addEventListener('click', () => {
-            document.getElementById('studentNumber').value = '2023-10001';
-            document.getElementById('firstName').value = 'John';
-            document.getElementById('lastName').value = 'Doe';
-            document.getElementById('email').value = 'john.doe@example.com';
-            document.getElementById('birthDate').value = '';
-            document.getElementById('gender').value = '';
-            document.getElementById('address').value = '';
-            document.getElementById('yearLevel').value = '';
-            document.getElementById('section').value = '';
-            document.getElementById('guardianName').value = '';
-            document.getElementById('guardianContact').value = '';
+            document.getElementById('studentNumber').value = "{{ user.student_number }}";
+            document.getElementById('firstName').value = "{{ user.name.split()[0] }}";
+            document.getElementById('lastName').value = "{{ user.name.split()[-1] }}";
+            document.getElementById('email').value = "{{ user.email }}";
+            document.getElementById('birthDate').value = "{{ user.birthdate.strftime('%Y-%m-%d') if user.birthdate else '' }}";
+            document.getElementById('gender').value = "{{ user.sex }}";
+            document.getElementById('address').value = "{{ user.address }}";
+            document.getElementById('yearLevel').value = "{{ user.year_level }}";
+            document.getElementById('section').value = "{{ user.section }}";
+            document.getElementById('guardianName').value = "{{ user.guardian_name }}";
+            document.getElementById('guardianContact').value = "{{ user.guardian_contact }}";
             document.getElementById('registrationFormUpload').value = '';
 
 
@@ -304,17 +320,17 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('registrationFormError').textContent = '';
 
             //reset the display labels
-            document.getElementById('studentNumberDisplay').textContent = '2023-10001';
-            document.getElementById('firstNameDisplay').textContent = 'John';
-            document.getElementById('lastNameDisplay').textContent = 'Doe';
-            document.getElementById('studentEmailDisplay').textContent = 'john.doe@example.com';
-            document.getElementById('birthDateDisplay').textContent = '';
-            document.getElementById('genderDisplay').textContent = '';
-            document.getElementById('addressDisplay').textContent = '';
-            document.getElementById('yearLevelDisplay').textContent = '';
-            document.getElementById('sectionDisplay').textContent = '';
-            document.getElementById('guardianNameDisplay').textContent = '';
-            document.getElementById('guardianContactDisplay').textContent = '';
+            document.getElementById('studentNumberDisplay').textContent = "{{ user.student_number }}";
+            document.getElementById('firstNameDisplay').textContent = "{{ user.name.split()[0] }}";
+            document.getElementById('lastNameDisplay').textContent = "{{ user.name.split()[-1] }}";
+            document.getElementById('studentEmailDisplay').textContent = "{{ user.email }}";
+            document.getElementById('birthDateDisplay').textContent =  "{{ user.birthdate.strftime('%Y-%m-%d') if user.birthdate else '' }}";
+            document.getElementById('genderDisplay').textContent = "{{ user.sex }}";
+            document.getElementById('addressDisplay').textContent = "{{ user.address }}";
+            document.getElementById('yearLevelDisplay').textContent = "{{ user.year_level }}";
+            document.getElementById('sectionDisplay').textContent = "{{ user.section }}";
+            document.getElementById('guardianNameDisplay').textContent = "{{ user.guardian_name }}";
+            document.getElementById('guardianContactDisplay').textContent = "{{ user.guardian_contact }}";
             document.getElementById('registrationFormDisplay').textContent = '';
 
             // Hide input fields and show display labels

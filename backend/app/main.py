@@ -103,9 +103,9 @@ async def bulletin_board(request: Request, db: Session = Depends(get_db)):
 async def events(request: Request, db: Session = Depends(get_db)):
     events_list = db.query(models.Event).options(joinedload(models.Event.participants)).order_by(models.Event.date).all()
     # current_user_id = 1 # Removed hardcoded user ID
-    current_user_id = request.session.get("user_id") # Get user ID from session
+    current_user_id = request.session.get("user_id")  # Get user ID from session
     if not current_user_id:
-        current_user_id = 0 # set to 0 or handle unauthenticated user as you prefer
+        current_user_id = 0  # set to 0 or handle unauthenticated user as you prefer
     for event in events_list:
         event.participant_ids = [user.id for user in event.participants]
     return templates.TemplateResponse(
@@ -126,7 +126,6 @@ async def financial_statement(request: Request):
     return templates.TemplateResponse("student_dashboard/financial_statement.html", {"request": request, "year": "2025"})
 
 
-
 # Endpoint for settings
 @app.get("/Settings", response_class=HTMLResponse, name="settings")
 async def settings(request: Request, db: Session = Depends(get_db)):
@@ -137,12 +136,11 @@ async def settings(request: Request, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-    user = db.query(models.User).filter(models.User.id == current_user_id).first() # changed from student_number to id
+    user = db.query(models.User).filter(models.User.id == current_user_id).first()  # changed from student_number to id
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return templates.TemplateResponse("student_dashboard/settings.html",
                                       {"request": request, "year": "2025", "user": user})  # Pass the user object to the template
-
 
 
 # Endpoint for signup
@@ -160,7 +158,6 @@ async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"message": "User created successfully", "user_id": new_user.id}  # Return the new user's ID
 
 
-
 # Endpoint for login
 @app.post("/api/login/")
 async def login(form_data: schemas.UserLogin, request: Request, db: Session = Depends(get_db)):
@@ -175,14 +172,13 @@ async def login(form_data: schemas.UserLogin, request: Request, db: Session = De
     return {"message": "Login successful"}
 
 
-
 # Endpoint for hearting a post
 @app.post("/bulletin/heart/{post_id}")
 async def heart_post(post_id: int, request: Request, db: Session = Depends(get_db)):
     form_data = await request.form()
     action = form_data.get('action')
-    user_id = 1 # Removed hardcoded user ID
-    user_id = request.session.get("user_id") # Get user ID from session
+    user_id = 1  # Removed hardcoded user ID
+    user_id = request.session.get("user_id")  # Get user ID from session
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -201,7 +197,6 @@ async def heart_post(post_id: int, request: Request, db: Session = Depends(get_d
     db.commit()
     db.refresh(post)
     return {"heart_count": post.heart_count}
-
 
 
 # Endpoint for joining an event
@@ -235,7 +230,6 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
 
 
-
 # Endpoint for leaving an event
 @app.post("/Events/leave/{event_id}")
 async def leave_event(event_id: int, request: Request, db: Session = Depends(get_db)):
@@ -262,7 +256,6 @@ async def leave_event(event_id: int, request: Request, db: Session = Depends(get
     event.participants.remove(user)
     db.commit()
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
-
 
 
 # Endpoint for upcoming events summary
@@ -360,7 +353,6 @@ async def verify_student(
     db.refresh(user)
 
     return {"message": "Student information verified successfully", "user": user}
-
 
 
 # Endpoint to update user profile information
