@@ -54,6 +54,9 @@ class User(Base):
     contact = Column(String, nullable=True)
     guardian_name = Column(String, nullable=True)
     guardian_contact = Column(String, nullable=True)
+    registration_form = Column(String, nullable=True)
+    profile_picture = Column(String, nullable=True)
+
 
 
 
