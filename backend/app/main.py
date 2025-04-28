@@ -137,7 +137,7 @@ async def settings(request: Request, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-    user = crud.get_user(db, student_number=request.session.get("user_id")) # Pass student_number from session
+    user = db.query(models.User).filter(models.User.id == current_user_id).first() # changed from student_number to id
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return templates.TemplateResponse("student_dashboard/settings.html",
