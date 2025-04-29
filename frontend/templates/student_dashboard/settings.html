@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block title %}Settings{% endblock %}
@@ -38,11 +39,10 @@
     color: var(--text-primary);
     margin-bottom: 20px;
     font-size: 24px;
-    display: flex; /* Added for flexbox */
-    align-items: center; /* Vertically center items */
-    justify-content: space-between; /* Space out title and status */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
-
 
 .form-group {
     margin-bottom: 20px;
@@ -158,9 +158,9 @@
     color: var(--text-primary);
     margin-bottom: 20px;
     font-size: 24px;
-    display: flex; /* Added for flexbox */
-    align-items: center; /* Vertically center items */
-    justify-content: space-between; /* Space out title and status */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .student-info-details {
@@ -216,18 +216,6 @@
     background-color: var(--bg-secondary);
 }
 
-.input-group {
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-.input-group .form-group input,
-.input-group .form-group select {
-    flex: 1;
-    margin-right: 0;
-}
-
 .input-wrapper {
     display: flex;
     align-items: center;
@@ -236,6 +224,15 @@
 
 .input-wrapper .edit-icon {
     margin-left: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: flex;
+    flex-direction: column;
 }
 </style>
 {% endblock %}
@@ -246,15 +243,16 @@
 
     <div class="student-info-section">
         <h2>Student Information <span id="registrationStatus" class="unverified">
-        {% if user.is_verified %}Verified{% else %}Not Verified{% endif %}
-        </span></h2>
+                {% if user.is_verified %}Verified{% else %}Not Verified{% endif %}
+            </span></h2>
         <form id="studentInfoForm">
             <div class="form-group">
                 <label for="studentNumber">Student Number</label>
                 <div class="input-wrapper">
                     <span id="studentNumberDisplay">{{ user.student_number }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editStudentNumber">edit</span>
-                    <input type="text" id="studentNumber" name="studentNumber" value="{{ user.student_number }}" style="display: none;">
+                    <input type="text" id="studentNumber" name="studentNumber" value="{{ user.student_number }}"
+                        class="hidden">
                 </div>
             </div>
             <div class="form-group">
@@ -262,7 +260,7 @@
                 <div class="input-wrapper">
                     <span id="firstNameDisplay">{{ user.first_name }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editFirstName">edit</span>
-                    <input type="text" id="firstName" name="firstName" value="{{ user.first_name }}" style="display: none;">
+                    <input type="text" id="firstName" name="firstName" value="{{ user.first_name }}" class="hidden">
                 </div>
             </div>
             <div class="form-group">
@@ -270,7 +268,7 @@
                 <div class="input-wrapper">
                     <span id="lastNameDisplay">{{ user.last_name }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editLastName">edit</span>
-                    <input type="text" id="lastName" name="lastName" value="{{ user.last_name }}" style="display: none;">
+                    <input type="text" id="lastName" name="lastName" value="{{ user.last_name }}" class="hidden">
                 </div>
             </div>
             <div class="form-group">
@@ -278,7 +276,7 @@
                 <div class="input-wrapper">
                     <span id="studentEmailDisplay">{{ user.email }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editEmail">edit</span>
-                    <input type="text" id="email" name="email" value="{{ user.email }}" style="display: none;">
+                    <input type="text" id="email" name="email" value="{{ user.email }}" class="hidden">
                 </div>
             </div>
             <div class="form-group">
@@ -286,7 +284,7 @@
                 <div class="input-wrapper">
                     <span id="birthDateDisplay">{{ user.birthdate }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editBirthDate">edit</span>
-                    <input type="date" id="birthDate" name="birthDate" style="display: none;"  value="{{ user.birthdate }}">
+                    <input type="date" id="birthDate" name="birthDate" class="hidden" value="{{ user.birthdate }}">
                 </div>
                 <small>Please enter your date of birth.</small>
                 <div class="error-message" id="birthDateError"></div>
@@ -296,7 +294,7 @@
                 <div class="input-wrapper">
                     <span id="genderDisplay">{{ user.sex }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGender">edit</span>
-                    <select id="gender" name="gender" style="display: none;">
+                    <select id="gender" name="gender" class="hidden">
                         <option value="">Select Gender</option>
                         <option value="Male" {% if user.sex == 'Male' %} selected {% endif %}>Male</option>
                         <option value="Female" {% if user.sex == 'Female' %} selected {% endif %}>Female</option>
@@ -310,16 +308,16 @@
                 <div class="input-wrapper">
                     <span id="addressDisplay">{{ user.address }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editAddress">edit</span>
-                    <input type="text" id="address" name="address" style="display: none;" value="{{ user.address }}">
+                    <input type="text" id="address" name="address" class="hidden" value="{{ user.address }}">
                 </div>
                 <div class="error-message" id="addressError"></div>
             </div>
-             <div class="form-group">
+            <div class="form-group">
                 <label>Year Level</label>
                 <div class="input-wrapper">
                     <span id="yearLevelDisplay">{{ user.year_level }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editYearLevel">edit</span>
-                    <select id="yearLevel" name="yearLevel" style="display: none;">
+                    <select id="yearLevel" name="yearLevel" class="hidden">
                         <option value="">Select Year</option>
                         <option value="1st Year" {% if user.year_level == '1st Year' %} selected {% endif %}>1st Year</option>
                         <option value="2nd Year" {% if user.year_level == '2nd Year' %} selected {% endif %}>2nd Year</option>
@@ -331,10 +329,10 @@
             </div>
             <div class="form-group">
                 <label>Section</label>
-                 <div class="input-wrapper">
+                <div class="input-wrapper">
                     <span id="sectionDisplay">{{ user.section }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editSection">edit</span>
-                    <input type="text" id="section" name="section" style="display: none;" value="{{ user.section }}">
+                    <input type="text" id="section" name="section" class="hidden" value="{{ user.section }}">
                 </div>
                 <div class="error-message" id="sectionError"></div>
             </div>
@@ -343,7 +341,8 @@
                 <div class="input-wrapper">
                     <span id="guardianNameDisplay">{{ user.guardian_name }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianName">edit</span>
-                    <input type="text" id="guardianName" name="guardianName" style="display: none;" value="{{ user.guardian_name }}">
+                    <input type="text" id="guardianName" name="guardianName" class="hidden"
+                        value="{{ user.guardian_name }}">
                 </div>
                 <div class="error-message" id="guardianNameError"></div>
             </div>
@@ -352,7 +351,8 @@
                 <div class="input-wrapper">
                     <span id="guardianContactDisplay">{{ user.guardian_contact }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianContact">edit</span>
-                    <input type="text" id="guardianContact" name="guardianContact" style="display: none;" value="{{ user.guardian_contact }}">
+                    <input type="text" id="guardianContact" name="guardianContact" class="hidden"
+                        value="{{ user.guardian_contact }}">
                 </div>
                 <div class="error-message" id="guardianContactError"></div>
             </div>
@@ -361,7 +361,8 @@
                 <div class="input-wrapper">
                     <span id="registrationFormDisplay">{{ user.registration_form }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editRegistrationForm">edit</span>
-                    <input type="file" id="registrationFormUpload" name="registrationFormUpload" accept=".pdf" style="display: none;">
+                    <input type="file" id="registrationFormUpload" name="registrationFormUpload" accept=".pdf"
+                        class="hidden">
                 </div>
                 <small>Accepted formats: PDF</small>
                 <div class="error-message" id="registrationFormError"></div>
@@ -418,5 +419,291 @@
         </div>
     </div>
 </div>
-<script src="settings.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const studentInfoForm = document.getElementById('studentInfoForm');
+    const profilePictureForm = document.getElementById('profilePictureForm');
+    const securityForm = document.getElementById('securityForm');
+
+    // --- Utility Functions ---
+    /**
+     * Shows an error message for a specific input field.
+     * @param {string} fieldId - The ID of the input field.
+     * @param {string} message - The error message to display.
+     */
+    function showError(fieldId, message) {
+        const errorElement = document.getElementById(fieldId + 'Error');
+        if (errorElement) {
+            errorElement.textContent = message;
+        }
+    }
+
+    /**
+     * Clears the error message for a specific input field.
+     * @param {string} fieldId - The ID of the input field.
+     */
+    function clearError(fieldId) {
+        const errorElement = document.getElementById(fieldId + 'Error');
+        if (errorElement) {
+            errorElement.textContent = '';
+        }
+    }
+
+    /**
+     * Toggles the display of an element between 'block' and 'none'.
+     * @param {string} elementId - The ID of the element to toggle.
+     * @param {boolean} show - If true, display the element; otherwise, hide it.
+     */
+    function toggleDisplay(elementId, show) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.toggle('hidden', !show);
+            element.classList.toggle('visible', show);
+        }
+    }
+
+    /**
+     * Resets a form to its initial state.
+     * @param {HTMLFormElement} form - The form element to reset.
+     */
+    function resetForm(form) {
+        if (form) {
+            form.reset();
+            // Clear all error messages
+            const errorElements = form.querySelectorAll('.error-message');
+            errorElements.forEach(element => {
+                element.textContent = '';
+            });
+
+            // Reset display of editable fields
+            const inputWrappers = form.querySelectorAll('.input-wrapper');
+            inputWrappers.forEach(wrapper => {
+                const span = wrapper.querySelector('span:not(.edit-icon)');
+                const input = wrapper.querySelector('input, select');
+                if (span && input) {
+                    span.classList.remove('hidden');
+                    input.classList.add('hidden');
+                }
+            });
+            const registrationStatus = document.getElementById('registrationStatus');
+            if (registrationStatus) {
+                registrationStatus.className = registrationStatus.className.replace(/bg-(green|red)-\d{2,3}/g, ''); // Remove existing bg color
+                registrationStatus.className = registrationStatus.className.replace(/text-(green|red)-\d{2,3}/g, ''); // Remove existing text color
+
+                if ("{{ user.is_verified }}" === "True") {
+                    registrationStatus.classList.add('bg-green-200', 'text-green-700');
+                    registrationStatus.textContent = "Verified";
+                } else {
+                    registrationStatus.classList.add('bg-red-200', 'text-red-700');
+                    registrationStatus.textContent = "Not Verified";
+                }
+            }
+            const profilePicturePreview = document.querySelector('.profile-picture-preview');
+            if (profilePicturePreview && "{{ user.profile_picture }}") {
+                profilePicturePreview.src = "{{ user.profile_picture }}";
+            }
+        }
+    }
+
+
+
+    // --- Event Listeners for Edit Icons ---
+    document.querySelectorAll('.edit-icon').forEach(icon => {
+        icon.addEventListener('click', function () {
+            const inputWrapper = this.parentElement;
+            const span = inputWrapper.querySelector('span:not(.edit-icon)');
+            const input = inputWrapper.querySelector('input, select');
+            if (span && input) {
+                span.classList.add('hidden');
+                input.classList.remove('hidden');
+                input.focus();
+            }
+        });
+    });
+
+    // --- Event Listeners for Input Fields ---
+    document.querySelectorAll('.input-wrapper input, .input-wrapper select').forEach(input => {
+        input.addEventListener('blur', function () {
+            const inputWrapper = this.parentElement;
+            const span = inputWrapper.querySelector('span:not(.edit-icon)');
+            if (span) {
+                span.classList.remove('hidden');
+                this.classList.add('hidden');
+                span.textContent = this.value;
+            }
+        });
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                const inputWrapper = this.parentElement;
+                const span = inputWrapper.querySelector('span:not(.edit-icon)');
+                if (span) {
+                    span.classList.remove('hidden');
+                    this.classList.add('hidden');
+                    span.textContent = this.value;
+                }
+            }
+        })
+    });
+
+    // --- Form Validation and Submission ---
+    studentInfoForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        let hasErrors = false;
+
+        // --- Student Info Form Validation ---
+        const birthDateInput = document.getElementById('birthDate');
+        const genderInput = document.getElementById('gender');
+        const addressInput = document.getElementById('address');
+        const yearLevelInput = document.getElementById('yearLevel');
+        const sectionInput = document.getElementById('section');
+        const guardianNameInput = document.getElementById('guardianName');
+        const guardianContactInput = document.getElementById('guardianContact');
+        const registrationFormInput = document.getElementById('registrationFormUpload');
+
+
+        if (!birthDateInput.value) {
+            showError('birthDate', 'Please enter your birth date.');
+            hasErrors = true;
+        } else {
+            clearError('birthDate');
+        }
+
+        if (!genderInput.value) {
+            showError('gender', 'Please select your gender.');
+            hasErrors = true;
+        } else {
+            clearError('gender');
+        }
+
+        if (!addressInput.value) {
+            showError('address', 'Please enter your address.');
+            hasErrors = true;
+        } else {
+            clearError('address');
+        }
+        if (!yearLevelInput.value) {
+            showError('yearLevel', 'Please select your year level.');
+            hasErrors = true;
+        } else {
+            clearError('yearLevel');
+        }
+        if (!sectionInput.value) {
+            showError('section', 'Please enter your section.');
+            hasErrors = true;
+        } else {
+            clearError('section');
+        }
+        if (!guardianNameInput.value) {
+            showError('guardianName', 'Please enter your guardian name.');
+            hasErrors = true;
+        } else {
+            clearError('guardianName');
+        }
+        if (!guardianContactInput.value) {
+            showError('guardianContact', 'Please enter your guardian contact.');
+            hasErrors = true;
+        } else {
+            clearError('guardianContact');
+        }
+
+        // Registration form validation (optional, adjust as needed)
+        if (registrationFormInput.files.length === 0) {
+            showError('registrationForm', 'Please upload your registration form.');
+            hasErrors = true;
+        } else {
+            const fileType = registrationFormInput.files[0].type;
+            if (fileType !== 'application/pdf') {
+                showError('registrationForm', 'Invalid file type. Only PDF files are allowed.');
+                hasErrors = true;
+            } else {
+                clearError('registrationForm');
+            }
+        }
+
+
+        if (!hasErrors) {
+            // Simulate form submission (replace with actual submission logic)
+            alert('Student information updated successfully!');
+            resetForm(studentInfoForm); // Clear the form
+        }
+    });
+
+    profilePictureForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const profilePictureInput = document.getElementById('profilePicture');
+        let hasErrors = false;
+
+        if (profilePictureInput.files.length === 0) {
+            showError('profilePicture', 'Please upload your profile picture.');
+            hasErrors = true;
+        } else {
+            const fileType = profilePictureInput.files[0].type;
+            if (!fileType.startsWith('image/')) {
+                showError('profilePicture', 'Invalid file type. Only images are allowed.');
+                hasErrors = true;
+            } else {
+                clearError('profilePicture');
+            }
+        }
+
+
+        if (!hasErrors) {
+            // Simulate profile picture update
+            alert('Profile picture updated successfully!');
+            resetForm(profilePictureForm);
+        }
+    });
+
+    securityForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        let hasErrors = false;
+        const currentPasswordInput = document.getElementById('currentPassword');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+
+        if (!currentPasswordInput.value) {
+            showError('currentPassword', 'Please enter your current password.');
+            hasErrors = true;
+        } else {
+            clearError('currentPassword');
+        }
+
+        if (newPasswordInput.value && newPasswordInput.value.length < 8) {
+            showError('newPassword', 'New password must be at least 8 characters long.');
+            hasErrors = true;
+        } else {
+clearError('newPassword');
+        }
+
+        if (newPasswordInput.value && confirmPasswordInput.value !== newPasswordInput.value) {
+            showError('confirmPassword', 'Passwords do not match.');
+            hasErrors = true;
+        } else {
+            clearError('confirmPassword');
+        }
+
+        if (!hasErrors) {
+            // Simulate security update
+            alert('Security settings updated successfully!');
+            resetForm(securityForm);
+        }
+    });
+
+    // --- Clear Form Buttons ---
+    document.getElementById('clearStudentInfoForm').addEventListener('click', () => {
+        resetForm(studentInfoForm);
+    });
+
+    document.getElementById('clearProfilePicture').addEventListener('click', () => {
+        resetForm(profilePictureForm);
+    });
+
+    document.getElementById('clearSecurityForm').addEventListener('click', () => {
+        resetForm(securityForm);
+    });
+});
+</script>
 {% endblock %}
