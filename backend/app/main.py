@@ -268,104 +268,11 @@ async def get_upcoming_events_summary(db: Session = Depends(get_db)):
              "classification": event.classification} for event in upcoming_events]
 
 
-# New endpoint to handle PDF upload and student verification
-@app.post("/api/verify_student/")
-async def verify_student(
-    request: Request,  # Add the request parameter
-    student_number: str = Form(...),  # Get student number from form data
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
-    """
-    Verifies a student's information by extracting data from a PDF,
-    validating it, and updating the user's record in the database.
-    """
-    # 1.  Basic file validation (check content type and size)
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Invalid file type.  Only PDF files are allowed.")
-
-    # Optional: Size limit (e.g., 500KB) -  Good practice to limit file size.
-    max_file_size_bytes = 500 * 1024  # 500KB
-    file_content = await file.read()  # Read the file content
-    if len(file_content) > max_file_size_bytes:
-        raise HTTPException(status_code=413,
-                            detail=f"File size too large. Maximum allowed size is {max_file_size_bytes} bytes.")
-
-    # 2. Extract text from the PDF
-    extracted_text = extract_text_from_pdf(BytesIO(file_content))  # Pass file content as BytesIO
-    if not extracted_text:
-        raise HTTPException(status_code=400,
-                            detail="Could not extract text from PDF.  The PDF might be corrupted or empty.")
-
-    # 3. Extract student information from the text
-    student_info = extract_student_info(extracted_text)
-    if not student_info:
-        raise HTTPException(status_code=400,
-                            detail="Could not extract student information from the PDF content.")
-
-    # 4. Validate the extracted school year
-    extracted_school_year = student_info.get('school_year')  # Safely get school year
-    if not extracted_school_year or not is_valid_school_year(extracted_school_year):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid school year format in the PDF.  Expected format is-YYYY (e.g., 2024-2025).",
-        )
-
-    if not is_within_valid_school_year(extracted_school_year):
-        raise HTTPException(
-            status_code=400,
-            detail="The school year in the PDF is not the current or previous school year.",
-        )
-    # 5.  Get the user from the database
-    user = crud.get_user(db, student_number=student_number)
-    if not user:
-        raise HTTPException(status_code=404, detail="Student not found.")
-
-    # 6. Check if the user is already verified
-    if user.is_verified:
-        raise HTTPException(status_code=400, detail="Student is already verified.")
-
-    # 7. Update user information with extracted data
-    #   Only update fields that were successfully extracted.
-    if 'name' in student_info and student_info['name']:
-        user.name = student_info['name']
-    if 'campus' in student_info and student_info['campus']:
-        user.campus = student_info['campus']
-    if 'semester' in student_info and student_info['semester']:
-        user.semester = student_info['semester']
-    if 'course' in student_info and student_info['course']:
-        user.course = student_info['course']
-    if 'school_year' in student_info and student_info['school_year']:
-        user.school_year = student_info['school_year']
-    if 'year_level' in student_info and student_info['year_level']:
-        user.year_level = student_info['year_level']
-    if 'section' in student_info and student_info['section']:
-        user.section = student_info['section']
-    if 'address' in student_info and student_info['address']:
-        user.address = student_info['address']
-
-    # 8. Mark the user as verified
-    user.is_verified = True
-    user.verified_by = "Admin"  # Set the verified_by field
-    user.verification_date = datetime.now()  # set the date
-
-    db.commit()
-    db.refresh(user)
-
-    return {"message": "Student information verified successfully", "user": user}
-
-
 # Endpoint to update user profile information
 @app.post("/api/profile/update/")
 async def update_profile(
     request: Request,
     name: Optional[str] = Form(None),
-    campus: Optional[str] = Form(None),
-    semester: Optional[str] = Form(None),
-    course: Optional[str] = Form(None),
-    school_year: Optional[str] = Form(None),
-    year_level: Optional[str] = Form(None),
-    section: Optional[str] = Form(None),
     address: Optional[str] = Form(None),
     birthdate: Optional[datetime] = Form(None),
     sex: Optional[str] = Form(None),
@@ -373,14 +280,13 @@ async def update_profile(
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
     registration_form: Optional[str] = Form(None),
-    profile_picture: Optional[UploadFile] = File(None),
+    #profile_picture: Optional[UploadFile] = File(None), # Remove profile picture
     db: Session = Depends(get_db)
 ):
     """
-    Updates the user's profile information, including handling the profile picture upload.
+    Updates the user's profile information.
     """
     # 1.  Get the user from the database.
-    # current_user_id = 1 # Replace with actual user identification logic
     current_user_id = request.session.get("user_id")  # Get user ID from session
     if not current_user_id:
         raise HTTPException(
@@ -394,18 +300,6 @@ async def update_profile(
     # 2. Update the user object with the provided data
     if name is not None:
         user.name = name
-    if campus is not None:
-        user.campus = campus
-    if semester is not None:
-        user.semester = semester
-    if course is not None:
-        user.course = course
-    if school_year is not None:
-        user.school_year = school_year
-    if year_level is not None:
-        user.year_level = year_level
-    if section is not None:
-        user.section = section
     if address is not None:
         user.address = address
     if birthdate is not None:
@@ -421,39 +315,7 @@ async def update_profile(
     if registration_form is not None:
         user.registration_form = registration_form
 
-    # 3. Handle profile picture upload
-    if profile_picture:
-        # Validate image file type
-        if not profile_picture.content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=400, detail="Invalid file type. Only images are allowed."
-            )
-
-        #  Check image file size (optional)
-        max_image_size_bytes = 2 * 1024 * 1024  # 2MB
-        image_content = await profile_picture.read()
-        if len(image_content) > max_image_size_bytes:
-            raise HTTPException(
-                status_code=413,
-                detail=f"Image size too large. Maximum allowed size is {max_image_size_bytes} bytes.",
-            )
-        try:
-            # Use PIL to open and validate the image
-            img = Image.open(BytesIO(image_content))
-            img.verify()  # Check if it's a valid image
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Invalid image file: {e}")
-
-        # Generate a secure filename
-        filename = generate_secure_filename(profile_picture.filename)
-        # Construct the full file path
-        file_path = os.path.join("frontend", "static", "images", "profile_pictures",
-                                 filename)  # Save in profile_pictures directory
-
-        # Save the image file
-        with open(file_path, "wb") as f:
-            f.write(image_content)
-        user.profile_picture = f"/static/images/profile_pictures/{filename}"  # Store the relative path in the database
+    # 3. Remove Profile picture upload
 
     # 4. Commit the changes to the database
     db.commit()
