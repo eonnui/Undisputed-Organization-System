@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 
 {% block title %}Settings{% endblock %}
@@ -234,6 +233,18 @@
     display: flex;
     flex-direction: column;
 }
+
+.read-only-input {
+    background-color: var(--bg-light);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+.read-only-input:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: var(--border-medium);
+}
 </style>
 {% endblock %}
 
@@ -248,36 +259,22 @@
         <form id="studentInfoForm">
             <div class="form-group">
                 <label for="studentNumber">Student Number</label>
-                <div class="input-wrapper">
-                    <span id="studentNumberDisplay">{{ user.student_number }}</span>
-                    <span class="material-symbols-outlined edit-icon" id="editStudentNumber">edit</span>
-                    <input type="text" id="studentNumber" name="studentNumber" value="{{ user.student_number }}"
-                        class="hidden">
-                </div>
+                <input type="text" id="studentNumber" name="studentNumber" value="{{ user.student_number }}"
+                    class="read-only-input" readonly>
             </div>
             <div class="form-group">
                 <label for="firstName">First Name</label>
-                <div class="input-wrapper">
-                    <span id="firstNameDisplay">{{ user.first_name }}</span>
-                    <span class="material-symbols-outlined edit-icon" id="editFirstName">edit</span>
-                    <input type="text" id="firstName" name="firstName" value="{{ user.first_name }}" class="hidden">
-                </div>
+                <input type="text" id="firstName" name="firstName" value="{{ user.first_name }}" class="read-only-input"
+                    readonly>
             </div>
             <div class="form-group">
                 <label for="lastName">Last Name</label>
-                <div class="input-wrapper">
-                    <span id="lastNameDisplay">{{ user.last_name }}</span>
-                    <span class="material-symbols-outlined edit-icon" id="editLastName">edit</span>
-                    <input type="text" id="lastName" name="lastName" value="{{ user.last_name }}" class="hidden">
-                </div>
+                <input type="text" id="lastName" name="lastName" value="{{ user.last_name }}" class="read-only-input"
+                    readonly>
             </div>
             <div class="form-group">
                 <label for="email">Email</label>
-                <div class="input-wrapper">
-                    <span id="studentEmailDisplay">{{ user.email }}</span>
-                    <span class="material-symbols-outlined edit-icon" id="editEmail">edit</span>
-                    <input type="text" id="email" name="email" value="{{ user.email }}" class="hidden">
-                </div>
+                <input type="text" id="email" name="email" value="{{ user.email }}" class="read-only-input" readonly>
             </div>
             <div class="form-group">
                 <label>Birth Date *</label>
@@ -305,35 +302,20 @@
             </div>
             <div class="form-group">
                 <label>Address</label>
-                <div class="input-wrapper">
-                    <span id="addressDisplay">{{ user.address }}</span>
-                    <span class="material-symbols-outlined edit-icon" id="editAddress">edit</span>
-                    <input type="text" id="address" name="address" class="hidden" value="{{ user.address }}">
-                </div>
+                <input type="text" id="address" name="address" value="{{ user.address }}"
+                    class="read-only-input" readonly>
                 <div class="error-message" id="addressError"></div>
             </div>
             <div class="form-group">
                 <label>Year Level</label>
-                <div class="input-wrapper">
-                    <span id="yearLevelDisplay">{{ user.year_level }}</span>
-                    <span class="material-symbols-outlined edit-icon" id="editYearLevel">edit</span>
-                    <select id="yearLevel" name="yearLevel" class="hidden">
-                        <option value="">Select Year</option>
-                        <option value="1st Year" {% if user.year_level == '1st Year' %} selected {% endif %}>1st Year</option>
-                        <option value="2nd Year" {% if user.year_level == '2nd Year' %} selected {% endif %}>2nd Year</option>
-                        <option value="3rd Year" {% if user.year_level == '3rd Year' %} selected {% endif %}>3rd Year</option>
-                        <option value="4th Year" {% if user.year_level == '4th Year' %} selected {% endif %}>4th Year</option>
-                    </select>
-                </div>
+                <input type="text" id="yearLevel" name="yearLevel" value="{{ user.year_level }}"
+                    class="read-only-input" readonly>
                 <div class="error-message" id="yearLevelError"></div>
             </div>
             <div class="form-group">
                 <label>Section</label>
-                <div class="input-wrapper">
-                    <span id="sectionDisplay">{{ user.section }}</span>
-                    <span class="material-symbols-outlined edit-icon" id="editSection">edit</span>
-                    <input type="text" id="section" name="section" class="hidden" value="{{ user.section }}">
-                </div>
+                <input type="text" id="section" name="section" value="{{ user.section }}"
+                    class="read-only-input" readonly>
                 <div class="error-message" id="sectionError"></div>
             </div>
             <div class="form-group">
@@ -554,9 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Student Info Form Validation ---
         const birthDateInput = document.getElementById('birthDate');
         const genderInput = document.getElementById('gender');
-        const addressInput = document.getElementById('address');
-        const yearLevelInput = document.getElementById('yearLevel');
-        const sectionInput = document.getElementById('section');
         const guardianNameInput = document.getElementById('guardianName');
         const guardianContactInput = document.getElementById('guardianContact');
         const registrationFormInput = document.getElementById('registrationFormUpload');
@@ -576,24 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearError('gender');
         }
 
-        if (!addressInput.value) {
-            showError('address', 'Please enter your address.');
-            hasErrors = true;
-        } else {
-            clearError('address');
-        }
-        if (!yearLevelInput.value) {
-            showError('yearLevel', 'Please select your year level.');
-            hasErrors = true;
-        } else {
-            clearError('yearLevel');
-        }
-        if (!sectionInput.value) {
-            showError('section', 'Please enter your section.');
-            hasErrors = true;
-        } else {
-            clearError('section');
-        }
+
         if (!guardianNameInput.value) {
             showError('guardianName', 'Please enter your guardian name.');
             hasErrors = true;
@@ -675,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showError('newPassword', 'New password must be at least 8 characters long.');
             hasErrors = true;
         } else {
-clearError('newPassword');
+            clearError('newPassword');
         }
 
         if (newPasswordInput.value && confirmPasswordInput.value !== newPasswordInput.value) {
