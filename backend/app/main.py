@@ -280,7 +280,7 @@ async def update_profile(
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
     registration_form: Optional[str] = Form(None),
-    #profile_picture: Optional[UploadFile] = File(None), # Remove profile picture
+    profilePicture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     """
@@ -293,7 +293,7 @@ async def update_profile(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-    user = crud.get_user(db, student_number=current_user_id)
+    user = db.query(models.User).filter(models.User.id == current_user_id).first()  # Corrected line: Use .id
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -315,11 +315,69 @@ async def update_profile(
     if registration_form is not None:
         user.registration_form = registration_form
 
-    # 3. Remove Profile picture upload
+    # 3. Handle Profile picture upload
+    if profilePicture:
+        print(
+            f"Handling profile picture upload: {profilePicture.filename}, content_type: {profilePicture.content_type}"
+        )
+        # Validate image file type
+        if not profilePicture.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file type. Only images are allowed.",
+            )
+
+        # Check image file size (optional)
+        max_image_size_bytes = 2 * 1024 * 1024  # 2MB
+        try:
+            image_content = await profilePicture.read()
+            if len(image_content) > max_image_size_bytes:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Image size too large. Maximum allowed size is {max_image_size_bytes} bytes.",
+                )
+            # Use PIL to open and validate the image
+            img = Image.open(BytesIO(image_content))
+            img.verify()  # Check if it's a valid image
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid image file: {e}"
+            )
+
+        # Generate a secure filename
+        filename = generate_secure_filename(profilePicture.filename)
+        print(f"Generated filename: {filename}")
+        # Construct the full file path - use os.path.join correctly
+        file_path = os.path.join(
+            "..",
+            "frontend",  #  Start from the project root (if 'frontend' is there)
+            "static",
+            "images",
+            "profile_pictures",
+            filename,
+        )
+        print(f"Saving image to: {file_path}")
+        # Save the image file
+        try:
+            # Ensure the directory exists before saving.
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            with open(file_path, "wb") as f:
+                f.write(image_content)
+            user.profile_picture = f"/static/images/profile_pictures/{filename}"  # Store relative path
+            print(f"Profile picture path set to: {user.profile_picture}")
+        except Exception as e:
+            print(f"Error saving image: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  # Correct status code
+                detail=f"Failed to save image: {e}",
+            )
 
     # 4. Commit the changes to the database
     db.commit()
     db.refresh(user)  # Refresh the user object to get the updated values
 
+    print(
+        f"Profile updated successfully. Session after update: {request.session}"
+    )  # Log session
     # 5. Return the updated user data
     return {"message": "Profile updated successfully", "user": user}
