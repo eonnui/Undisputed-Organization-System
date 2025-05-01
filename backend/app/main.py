@@ -278,6 +278,12 @@ async def update_profile(
     birthdate: Optional[datetime] = Form(None),
     sex: Optional[str] = Form(None),
     contact: Optional[str] = Form(None),
+    course: Optional[str] = Form(None),
+    campus: Optional[str] = Form(None),
+    semester: Optional[str] = Form(None),
+    school_year: Optional[str] = Form(None),
+    year_level: Optional[str] = Form(None),
+    section: Optional[str] = Form(None),
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
     registration_form: Optional[UploadFile] = File(None),
@@ -307,6 +313,18 @@ async def update_profile(
         user.birthdate = birthdate
     if sex is not None:
         user.sex = sex
+    if course is not None:
+        user.course = course
+    if semester is not None:
+        user.semester = semester
+    if campus is not None:
+        user.campus = campus
+    if school_year is not None:
+        user.school_year = school_year
+    if year_level is not None:
+        user.year_level = year_level
+    if section is not None:
+        user.section = section
     if contact is not None:
         user.contact = contact
     if guardian_name is not None:
@@ -316,6 +334,7 @@ async def update_profile(
     if registration_form is not None:
         user.registration_form = registration_form
 
+      # 3. Handle Registration Form upload
     if registration_form:
         print(
             f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
@@ -338,18 +357,14 @@ async def update_profile(
         # Generate a secure filename
         filename = generate_secure_filename(registration_form.filename)
         print(f"Generated filename: {filename}")
-        # Construct the full file path
-        file_path = os.path.join(
-            "..",
-            "frontend",  #  Start from the project root
-            "static",
-            "registration_forms",
-            filename,
-        )
+        # Construct the full file path.  Use a more robust approach.
+        upload_dir = "frontend/static/registration_forms"  # Relative to the app
+        os.makedirs(upload_dir, exist_ok=True)  # Ensure directory exists
+        file_path = os.path.join(upload_dir, filename)
+
         print(f"Saving registration form to: {file_path}")
         # Save the file
         try:
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Ensure directory exists
             with open(file_path, "wb") as f:
                 f.write(file_content)
             user.registration_form = f"/static/registration_forms/{filename}"  # Store relative path
@@ -364,15 +379,18 @@ async def update_profile(
         # Extract information from the PDF
         try:
             extracted_text = extract_text_from_pdf(file_path)  # Pass the file_path
-            student_info = extract_student_info(extracted_text)
-            print(f"Extracted student info: {student_info}")
-            # Update user model with extracted information
-            user.student_number = student_info.get('student_number')
-            user.name = student_info.get('name')
-            user.course = student_info.get('course')
-            user.year_level = student_info.get('year_level') # Corrected field name
-            user.section = student_info.get('section')
-            user.address = student_info.get('address')
+            if extracted_text:  # Only extract if there is text
+                student_info = extract_student_info(extracted_text)
+                print(f"Extracted student info: {student_info}")
+                # Update user model with extracted information
+                user.student_number = student_info.get("student_number")
+                user.name = student_info.get("name")
+                user.course = student_info.get("course")
+                user.year_level = student_info.get("year_level")  # Corrected field name
+                user.section = student_info.get("section")
+                user.address = student_info.get("address")
+            else:
+                print("No text extracted from PDF.")
 
         except Exception as e:
             print(f"Error extracting information from PDF: {e}")
@@ -380,7 +398,6 @@ async def update_profile(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error processing registration form: {e}",
             )
-
 
     # 3. Handle Profile picture upload
     if profilePicture:
