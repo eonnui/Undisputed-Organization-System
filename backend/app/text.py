@@ -1,8 +1,16 @@
 # text.py
 from pypdf import PdfReader
 from typing import List
+from werkzeug.utils import secure_filename
 import re  # Import the regular expression module
 from datetime import datetime
+from typing import List, Dict
+
+ALLOWED_EXTENSIONS = {'pdf'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def extract_text_from_pdf(pdf_file: str) -> List[str]:
     """
@@ -115,62 +123,65 @@ def extract_student_info(extracted_text: List[str]) -> dict:
 
     return student
 
-def is_valid_school_year(school_year: str) -> bool:
-    """
-    Validates the format of a school year string (e.g., "2024-2025").
 
-    Args:
-        school_year (str): The school year string to validate.
 
-    Returns:
-        bool: True if the school year is valid, False otherwise.
-    """
-    if not school_year:
-        return False
-    match = re.match(r"^(\d{4})-(\d{4})$", school_year)
-    if not match:
-        return False
-    year1 = int(match.group(1))
-    year2 = int(match.group(2))
-    return year2 == year1 + 1
 
-def is_within_valid_school_year(school_year: str) -> bool:
-    """
-    Checks if a given school year is the current or previous school year.
+# def is_valid_school_year(school_year: str) -> bool:
+#     """
+#     Validates the format of a school year string (e.g., "2024-2025").
 
-    Args:
-        school_year (str): The school year string to check (e.g., "2024-2025").
+#     Args:
+#         school_year (str): The school year string to validate.
 
-    Returns:
-        bool: True if the school year is current or previous, False otherwise.
-    """
-    if not is_valid_school_year(school_year):
-        return False
+#     Returns:
+#         bool: True if the school year is valid, False otherwise.
+#     """
+#     if not school_year:
+#         return False
+#     match = re.match(r"^(\d{4})-(\d{4})$", school_year)
+#     if not match:
+#         return False
+#     year1 = int(match.group(1))
+#     year2 = int(match.group(2))
+#     return year2 == year1 + 1
 
-    current_year = datetime.now().year
-    # Extract the first year from the school year string
-    year1 = int(school_year.split('-')[0])
+# def is_within_valid_school_year(school_year: str) -> bool:
+#     """
+#     Checks if a given school year is the current or previous school year.
 
-    # Check if the school year is the current or previous
-    return year1 == current_year or year1 == current_year - 1
-if __name__ == '__main__':
-    extracted_text = extract_text_from_pdf('sample2.pdf')  # corrected the filename
-    if extracted_text:
-        student_info = extract_student_info(extracted_text)
-        print(student_info)
-    else:
-        print("Could not extract text from PDF.")
+#     Args:
+#         school_year (str): The school year string to check (e.g., "2024-2025").
 
-    #test the school year validation
-    print(is_valid_school_year("2023-2024"))  # True
-    print(is_valid_school_year("2023-2025"))  # False
-    print(is_valid_school_year("2023"))        # False
-    print(is_valid_school_year("abc-def"))     # False
-    print(is_valid_school_year(None))          # False
+#     Returns:
+#         bool: True if the school year is current or previous, False otherwise.
+#     """
+#     if not is_valid_school_year(school_year):
+#         return False
 
-    # Test the within valid school year function
-    print(is_within_valid_school_year("2024-2025")) # True (if current year is 2024 or 2025)
-    print(is_within_valid_school_year("2023-2024")) # True (if current year is 2024)
-    print(is_within_valid_school_year("2022-2023")) # False (if current year is 2024)
-    print(is_within_valid_school_year("2025-2026")) # False (if current year is 2024)
-    print(is_within_valid_school_year(None))          # False
+#     current_year = datetime.now().year
+#     # Extract the first year from the school year string
+#     year1 = int(school_year.split('-')[0])
+
+#     # Check if the school year is the current or previous
+#     return year1 == current_year or year1 == current_year - 1
+# if __name__ == '__main__':
+#     extracted_text = extract_text_from_pdf('sample2.pdf')  # corrected the filename
+#     if extracted_text:
+#         student_info = extract_student_info(extracted_text)
+#         print(student_info)
+#     else:
+#         print("Could not extract text from PDF.")
+
+#     #test the school year validation
+#     print(is_valid_school_year("2023-2024"))  # True
+#     print(is_valid_school_year("2023-2025"))  # False
+#     print(is_valid_school_year("2023"))        # False
+#     print(is_valid_school_year("abc-def"))     # False
+#     print(is_valid_school_year(None))          # False
+
+#     # Test the within valid school year function
+#     print(is_within_valid_school_year("2024-2025")) # True (if current year is 2024 or 2025)
+#     print(is_within_valid_school_year("2023-2024")) # True (if current year is 2024)
+#     print(is_within_valid_school_year("2022-2023")) # False (if current year is 2024)
+#     print(is_within_valid_school_year("2025-2026")) # False (if current year is 2024)
+#     print(is_within_valid_school_year(None))          # False

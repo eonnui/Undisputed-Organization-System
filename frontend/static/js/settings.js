@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const securityForm = document.getElementById('securityForm');
     const clearSecurityFormBtn = document.getElementById('clearSecurityFormBtn');
 
+    // --- Registration Form Only ---
+    const registrationFormOnly = document.getElementById('registrationFormOnly'); // Get the new form element.
+    const clearRegistrationFormOnlyBtn = document.getElementById('clearRegistrationFormOnly'); // Get the clear button.
+
 
     // Initial Registration Status
     function setRegistrationStatus(status) {
@@ -50,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners to make fields editable
     const editBirthDateBtn = document.getElementById('editBirthDate');
     const editGenderBtn = document.getElementById('editGender');
-    const editGuardianNameBtn = document.getElementById('editGuardianName');
+    const editGuardianNameBtn = document.getElementById('guardianName');
     const editGuardianContactBtn = document.getElementById('editGuardianContact');
     const editRegistrationFormBtn = document.getElementById('editRegistrationForm');
 
@@ -136,12 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Form ID: ${formId}`);
 
         // --- Validation ---
-        if (formId === 'studentInfoForm') {
+         if (formId === 'studentInfoForm') {
             const birthDateInput = document.getElementById('birthDate');
             const genderInput = document.getElementById('gender');
             const guardianNameInput = document.getElementById('guardianName');
             const guardianContactInput = document.getElementById('guardianContact');
-            const registrationFormInput = document.getElementById('registrationFormUpload');
 
             if (!birthDateInput.value) {
                 showError('birthDate', 'Please enter your birth date.');
@@ -166,12 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasErrors = true;
             } else {
                 clearError('guardianContact');
-            }
-            if (registrationFormInput.files.length === 0) {
-                showError('registrationForm', 'Please upload your registration form.');
-                hasErrors = true;
-            } else {
-                clearError('registrationForm');
             }
         } else if (formId === 'profilePictureForm') {
             const profilePictureInput = document.getElementById('profilePicture');
@@ -208,6 +205,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasErrors = true;
             } else {
                 clearError('confirmPassword');
+            }
+        }  else if (formId === 'registrationFormOnly') { // Handle the new form.
+            const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
+            if (registrationFormInput.files.length === 0) {
+                showError('registrationFormOnly', 'Please upload your registration form.');
+                hasErrors = true;
+            } else {
+                clearError('registrationFormOnly');
             }
         }
 
@@ -256,10 +261,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('guardianContactDisplay')) {
             document.getElementById('guardianContactDisplay').textContent = formData.get('guardianContact');
         }
-        if (document.getElementById('registrationFormDisplay')) {
-            const registrationFormInput = document.getElementById('registrationFormUpload');
-            const fileName = registrationFormInput.files[0] ? registrationFormInput.files[0].name : '';
-            document.getElementById('registrationFormDisplay').textContent = fileName;
+
+
+        // Update additional fields from the server response.  These are the values extracted from the PDF.
+        if (data.user.student_number) {
+            document.getElementById('studentNumberDisplay').textContent = data.user.student_number;
+        }
+        if (data.user.name) {
+            document.getElementById('nameDisplay').textContent = data.user.name;
+        }
+        if (data.user.course) {
+             document.getElementById('courseDisplay').textContent = data.user.course;
+        }
+        if (data.user.year_level) {
+             document.getElementById('yearLevelDisplay').textContent = data.user.year_level;
+        }
+        if (data.user.section) {
+            document.getElementById('sectionDisplay').textContent = data.user.section;
+        }
+         if (data.user.address) {
+            document.getElementById('addressDisplay').textContent = data.user.address;
         }
     }
 
@@ -277,6 +298,20 @@ document.addEventListener('DOMContentLoaded', () => {
         resetForm(form);
     }
 
+    function handleRegistrationFormOnlySuccess(data, form) {
+        alert('Registration form updated successfully!');
+        resetForm(form);
+         if (document.getElementById('registrationFormDisplay')) {
+            const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
+            const fileName = registrationFormInput.files[0] ? registrationFormInput.files[0].name : '';
+            document.getElementById('registrationFormDisplay').textContent = fileName;
+        }
+       // Update the status
+        if (data.user.verification_status) {
+            setRegistrationStatus(data.user.verification_status);
+        }
+    }
+
     // --- Error Callback ---
     function handleError(error) {
         alert(error.message);
@@ -291,6 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (securityForm) {
         securityForm.addEventListener('submit', (event) => handleFormSubmit(event, 'securityForm', handleSecuritySuccess, handleError));
+    }
+    if (registrationFormOnly) { // Add event listener for the new form
+        registrationFormOnly.addEventListener('submit', (event) => handleFormSubmit(event, 'registrationFormOnly', handleRegistrationFormOnlySuccess, handleError));
     }
 
     // --- Clear Form Buttons ---
@@ -307,6 +345,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearSecurityFormBtn) {
         clearSecurityFormBtn.addEventListener('click', () => {
             resetForm(securityForm);
+        });
+    }
+    if (clearRegistrationFormOnlyBtn) { // Add event listener for the new clear button
+        clearRegistrationFormOnlyBtn.addEventListener('click', () => {
+            resetForm(registrationFormOnly); // Reset only the registration form.
         });
     }
 });

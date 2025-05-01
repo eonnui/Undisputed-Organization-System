@@ -12,11 +12,12 @@ from io import BytesIO  # Import BytesIO
 from PIL import Image  # Import PIL for image processing
 import os
 import secrets
+from .text import extract_text_from_pdf, extract_student_info, allowed_file 
 
 from starlette.middleware.sessions import SessionMiddleware
 
 # Import the necessary functions from text.py
-from .text import extract_text_from_pdf, extract_student_info, is_valid_school_year, is_within_valid_school_year
+from .text import extract_text_from_pdf, extract_student_info
 
 # Initialize the database
 models.Base.metadata.create_all(bind=engine)
@@ -279,7 +280,7 @@ async def update_profile(
     contact: Optional[str] = Form(None),
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
-    registration_form: Optional[str] = Form(None),
+    registration_form: Optional[UploadFile] = File(None),
     profilePicture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
@@ -314,6 +315,72 @@ async def update_profile(
         user.guardian_contact = guardian_contact
     if registration_form is not None:
         user.registration_form = registration_form
+
+    if registration_form:
+        print(
+            f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
+        )
+        # Validate file type
+        if not allowed_file(registration_form.filename):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file type. Only PDF files are allowed.",
+            )
+        # Check file size (optional)
+        max_file_size_bytes = 5 * 1024 * 1024  # 5MB
+        file_content = await registration_form.read()
+        if len(file_content) > max_file_size_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File size too large. Maximum allowed size is {max_file_size_bytes} bytes.",
+            )
+
+        # Generate a secure filename
+        filename = generate_secure_filename(registration_form.filename)
+        print(f"Generated filename: {filename}")
+        # Construct the full file path
+        file_path = os.path.join(
+            "..",
+            "frontend",  #  Start from the project root
+            "static",
+            "registration_forms",
+            filename,
+        )
+        print(f"Saving registration form to: {file_path}")
+        # Save the file
+        try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Ensure directory exists
+            with open(file_path, "wb") as f:
+                f.write(file_content)
+            user.registration_form = f"/static/registration_forms/{filename}"  # Store relative path
+            print(f"Registration form path set to: {user.registration_form}")
+        except Exception as e:
+            print(f"Error saving registration form: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to save registration form: {e}",
+            )
+
+        # Extract information from the PDF
+        try:
+            extracted_text = extract_text_from_pdf(file_path)  # Pass the file_path
+            student_info = extract_student_info(extracted_text)
+            print(f"Extracted student info: {student_info}")
+            # Update user model with extracted information
+            user.student_number = student_info.get('student_number')
+            user.name = student_info.get('name')
+            user.course = student_info.get('course')
+            user.year_level = student_info.get('year_level') # Corrected field name
+            user.section = student_info.get('section')
+            user.address = student_info.get('address')
+
+        except Exception as e:
+            print(f"Error extracting information from PDF: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error processing registration form: {e}",
+            )
+
 
     # 3. Handle Profile picture upload
     if profilePicture:
