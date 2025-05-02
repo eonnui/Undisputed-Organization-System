@@ -467,6 +467,12 @@ async def update_profile(
     birthdate: Optional[datetime] = Form(None),
     sex: Optional[str] = Form(None),
     contact: Optional[str] = Form(None),
+    course: Optional[str] = Form(None),
+    campus: Optional[str] = Form(None),
+    semester: Optional[str] = Form(None),
+    school_year: Optional[str] = Form(None),
+    year_level: Optional[str] = Form(None),
+    section: Optional[str] = Form(None),
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
     registration_form: Optional[str] = Form(None),
@@ -498,6 +504,18 @@ async def update_profile(
         user.sex = sex
     if contact is not None:
         user.contact = contact
+    if course is not None:
+        user.course = course
+    if semester is not None:
+        user.semester = semester
+    if campus is not None:
+        user.campus = campus
+    if school_year is not None:
+        user.school_year = school_year
+    if year_level is not None:
+        user.year_level = year_level
+    if section is not None:
+        user.section = section
     if guardian_name is not None:
         user.guardian_name = guardian_name
     if guardian_contact is not None:
