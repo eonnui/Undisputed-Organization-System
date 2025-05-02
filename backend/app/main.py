@@ -480,7 +480,8 @@ async def update_profile(
     db: Session = Depends(get_db),
 ):
     """
-    Updates the user's profile information, including handling the registration form file upload.
+    Updates the user's profile information, including handling the registration form file upload
+    and extracting data from it.
     """
     # 1.  Get the user from the database.
     current_user_id = request.session.get("user_id")
@@ -538,7 +539,7 @@ async def update_profile(
         user.guardian_contact = guardian_contact
         print(f"Updating guardian_contact: {guardian_contact}")
 
-    # 3. Handle Registration Form upload
+    # 3. Handle Registration Form upload and data extraction
     if registration_form:
         print(f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}")
         # Validate file type (optional, but recommended)
@@ -567,16 +568,52 @@ async def update_profile(
                 f.write(pdf_content)
             user.registration_form = f"/static/documents/registration_forms/{filename}"  # Store relative path
             print(f"Registration form saved to: {user.registration_form}")
+
+            # Extract text from the PDF
+            extracted_text = extract_text_from_pdf(pdf_file_path)
+            print(f"Extracted text from PDF: {extracted_text}")
+
+            # Extract student information
+            student_info = extract_student_info(extracted_text)
+            print(f"Extracted student info: {student_info}")
+
+            # Update user object with extracted information if not already provided in the form
+            if name is None and 'name' in student_info and student_info['name']:
+                user.name = student_info['name']
+                print(f"Updated name from PDF: {user.name}")
+            if course is None and 'course' in student_info and student_info['course']:
+                user.course = student_info['course']
+                print(f"Updated course from PDF: {user.course}")
+            if year_level is None and 'year_level' in student_info and student_info['year_level']:
+                user.year_level = student_info['year_level']
+                print(f"Updated year_level from PDF: {user.year_level}")
+            if section is None and 'section' in student_info and student_info['section']:
+                user.section = student_info['section']
+                print(f"Updated section from PDF: {user.section}")
+            if campus is None and 'campus' in student_info and student_info['campus']:
+                user.campus = student_info['campus']
+                print(f"Updated campus from PDF: {user.campus}")
+            if semester is None and 'semester' in student_info and student_info['semester']:
+                user.semester = student_info['semester']
+                print(f"Updated semester from PDF: {user.semester}")
+            if school_year is None and 'school_year' in student_info and student_info['school_year']:
+                user.school_year = student_info['school_year']
+                print(f"Updated school_year from PDF: {user.school_year}")
+            if address is None and 'address' in student_info and student_info['address']:
+                user.address = student_info['address']
+                print(f"Updated address from PDF: {user.address}")
+
         except Exception as e:
-            print(f"Error saving registration form: {e}")
+            print(f"Error processing registration form: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to save registration form: {e}",
+                detail=f"Failed to process registration form: {e}",
             )
         print(f"User object registration_form after save: {user.registration_form}")
 
     # 4. Handle Profile picture upload
     if profilePicture:
+        # ... (rest of your profile picture handling code remains the same)
         print(
             f"Handling profile picture upload: {profilePicture.filename}, content_type: {profilePicture.content_type}"
         )
@@ -643,7 +680,7 @@ async def update_profile(
                 detail=f"Failed to save image: {e}",
             )
 
-    # 4. Commit the changes to the database
+    # 5. Commit the changes to the database
     try:
         db.commit()
         db.refresh(user)  # Refresh the user object to get the updated values
@@ -658,5 +695,5 @@ async def update_profile(
             detail=f"Failed to update profile in database: {e}",
         )
 
-    # 5. Return the updated user data
+    # 6. Return the updated user data
     return {"message": "Profile updated successfully", "user": user}
