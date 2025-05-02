@@ -475,61 +475,116 @@ async def update_profile(
     section: Optional[str] = Form(None),
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
-    registration_form: Optional[str] = Form(None),
+    registration_form: Optional[UploadFile] = File(None),  # Change to UploadFile
     profilePicture: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
-    Updates the user's profile information.
+    Updates the user's profile information, including handling the registration form file upload.
     """
     # 1.  Get the user from the database.
-    current_user_id = request.session.get("user_id")  # Get user ID from session
+    current_user_id = request.session.get("user_id")
+    print(f"Current user ID from session: {current_user_id}")
     if not current_user_id:
+        print("Error: Not authenticated")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-    user = db.query(models.User).filter(models.User.id == current_user_id).first()  # Corrected line: Use .id
+    user = db.query(models.User).filter(models.User.id == current_user_id).first()
     if not user:
+        print(f"Error: User not found with ID: {current_user_id}")
         raise HTTPException(status_code=404, detail="User not found")
+    print(f"Found user: {user.name}")
 
     # 2. Update the user object with the provided data
     if name is not None:
         user.name = name
+        print(f"Updating name: {name}")
     if address is not None:
         user.address = address
+        print(f"Updating address: {address}")
     if birthdate is not None:
         user.birthdate = birthdate
+        print(f"Updating birthdate: {birthdate}")
     if sex is not None:
         user.sex = sex
+        print(f"Updating sex: {sex}")
     if contact is not None:
         user.contact = contact
+        print(f"Updating contact: {contact}")
     if course is not None:
         user.course = course
+        print(f"Updating course: {course}")
     if semester is not None:
         user.semester = semester
+        print(f"Updating semester: {semester}")
     if campus is not None:
         user.campus = campus
+        print(f"Updating campus: {campus}")
     if school_year is not None:
         user.school_year = school_year
+        print(f"Updating school_year: {school_year}")
     if year_level is not None:
         user.year_level = year_level
+        print(f"Updating year_level: {year_level}")
     if section is not None:
         user.section = section
+        print(f"Updating section: {section}")
     if guardian_name is not None:
         user.guardian_name = guardian_name
+        print(f"Updating guardian_name: {guardian_name}")
     if guardian_contact is not None:
         user.guardian_contact = guardian_contact
-    if registration_form is not None:
-        user.registration_form = registration_form
+        print(f"Updating guardian_contact: {guardian_contact}")
 
-    # 3. Handle Profile picture upload
+    # 3. Handle Registration Form upload
+    if registration_form:
+        print(f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}")
+        # Validate file type (optional, but recommended)
+        if registration_form.content_type != "application/pdf":
+            print(
+                f"Error: Invalid file type for registration form: {registration_form.content_type}. Only PDF is allowed."
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file type for registration form. Only PDF is allowed.",
+            )
+
+        try:
+            pdf_content = await registration_form.read()
+            filename = generate_secure_filename(registration_form.filename)
+            pdf_file_path = os.path.join(
+                "..",
+                "frontend",
+                "static",
+                "documents",  # Store in 'documents'
+                "registration_forms",
+                filename,
+            )
+            os.makedirs(os.path.dirname(pdf_file_path), exist_ok=True)
+            with open(pdf_file_path, "wb") as f:
+                f.write(pdf_content)
+            user.registration_form = f"/static/documents/registration_forms/{filename}"  # Store relative path
+            print(f"Registration form saved to: {user.registration_form}")
+        except Exception as e:
+            print(f"Error saving registration form: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to save registration form: {e}",
+            )
+        print(f"User object registration_form after save: {user.registration_form}")
+
+    # 4. Handle Profile picture upload
     if profilePicture:
         print(
             f"Handling profile picture upload: {profilePicture.filename}, content_type: {profilePicture.content_type}"
         )
         # Validate image file type
         if not profilePicture.content_type.startswith("image/"):
+            print(
+                f"Error: Invalid file type: {profilePicture.content_type}. Only images are allowed."
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid file type. Only images are allowed.",
@@ -539,7 +594,11 @@ async def update_profile(
         max_image_size_bytes = 2 * 1024 * 1024  # 2MB
         try:
             image_content = await profilePicture.read()
+            print(f"Image content length: {len(image_content)}")
             if len(image_content) > max_image_size_bytes:
+                print(
+                    f"Error: Image size too large: {len(image_content)} bytes. Maximum allowed size is {max_image_size_bytes} bytes."
+                )
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail=f"Image size too large. Maximum allowed size is {max_image_size_bytes} bytes.",
@@ -547,7 +606,9 @@ async def update_profile(
             # Use PIL to open and validate the image
             img = Image.open(BytesIO(image_content))
             img.verify()  # Check if it's a valid image
+            print("Image validation successful")
         except Exception as e:
+            print(f"Error: Invalid image file: {e}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid image file: {e}"
             )
@@ -558,7 +619,7 @@ async def update_profile(
         # Construct the full file path - use os.path.join correctly
         file_path = os.path.join(
             "..",
-            "frontend",  #  Start from the project root (if 'frontend' is there)
+            "frontend",  # Start from the project root
             "static",
             "images",
             "profile_pictures",
@@ -569,8 +630,10 @@ async def update_profile(
         try:
             # Ensure the directory exists before saving.
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            print("Directory created (if needed)")
             with open(file_path, "wb") as f:
                 f.write(image_content)
+            print("Image saved successfully")
             user.profile_picture = f"/static/images/profile_pictures/{filename}"  # Store relative path
             print(f"Profile picture path set to: {user.profile_picture}")
         except Exception as e:
@@ -581,11 +644,19 @@ async def update_profile(
             )
 
     # 4. Commit the changes to the database
-    db.commit()
-    db.refresh(user)  # Refresh the user object to get the updated values
+    try:
+        db.commit()
+        db.refresh(user)  # Refresh the user object to get the updated values
+        print("Database commit successful")
+        print(f"Profile updated successfully. Session after update: {request.session}")
+        print(f"User registration form in database: {user.registration_form}")  # <-- ADDED
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating profile in database: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  # Correct status code
+            detail=f"Failed to update profile in database: {e}",
+        )
 
-    print(
-        f"Profile updated successfully. Session after update: {request.session}"
-    )  # Log session
     # 5. Return the updated user data
     return {"message": "Profile updated successfully", "user": user}

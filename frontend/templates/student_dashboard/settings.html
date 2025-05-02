@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block title %}Settings{% endblock %}
@@ -354,7 +355,7 @@
                 <div class="input-wrapper">
                     <span id="registrationFormDisplay">{{ user.registration_form }}</span>
                 </div>
-                <input type="file" id="registrationFormOnlyUpload" name="registrationFormUpload" accept=".pdf">
+                <input type="file" id="registrationFormOnlyUpload" name="registration_form" accept=".pdf">
                 <small>Accepted formats: PDF</small>
                 <div class="error-message" id="registrationFormOnlyError"></div>
             </div>

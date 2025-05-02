@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Form ID: ${formId}`);
 
         // --- Validation ---
-         if (formId === 'studentInfoForm') {
+        if (formId === 'studentInfoForm') {
             const birthDateInput = document.getElementById('birthDate');
             const genderInput = document.getElementById('gender');
             const guardianNameInput = document.getElementById('guardianName');
@@ -176,8 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (profilePictureInput.files.length === 0) {
                 showError('profilePicture', 'Please select a profile picture.');
                 hasErrors = true;
-            }
-            else if (profilePictureInput.files[0].size > 2 * 1024 * 1024) { // 2MB limit
+            } else if (profilePictureInput.files[0].size > 2 * 1024 * 1024) { // 2MB limit
                 showError('profilePicture', 'File size must be less than 2MB.');
                 hasErrors = true;
             } else {
@@ -206,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 clearError('confirmPassword');
             }
-        }  else if (formId === 'registrationFormOnly') { // Handle the new form.
+        } else if (formId === 'registrationFormOnly') { // Handle the new form.
             const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
             if (registrationFormInput.files.length === 0) {
                 showError('registrationFormOnly', 'Please upload your registration form.');
@@ -271,15 +270,15 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('nameDisplay').textContent = data.user.name;
         }
         if (data.user.course) {
-             document.getElementById('courseDisplay').textContent = data.user.course;
+            document.getElementById('courseDisplay').textContent = data.user.course;
         }
         if (data.user.year_level) {
-             document.getElementById('yearLevelDisplay').textContent = data.user.year_level;
+            document.getElementById('yearLevelDisplay').textContent = data.user.year_level;
         }
         if (data.user.section) {
             document.getElementById('sectionDisplay').textContent = data.user.section;
         }
-         if (data.user.address) {
+        if (data.user.address) {
             document.getElementById('addressDisplay').textContent = data.user.address;
         }
     }
@@ -301,12 +300,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleRegistrationFormOnlySuccess(data, form) {
         alert('Registration form updated successfully!');
         resetForm(form);
-         if (document.getElementById('registrationFormDisplay')) {
+        if (document.getElementById('registrationFormDisplay')) {
             const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
             const fileName = registrationFormInput.files[0] ? registrationFormInput.files[0].name : '';
             document.getElementById('registrationFormDisplay').textContent = fileName;
         }
-       // Update the status
+        // Update the status
         if (data.user.verification_status) {
             setRegistrationStatus(data.user.verification_status);
         }
