@@ -253,30 +253,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleLogin(e) {
         e.preventDefault();
-
-        const studentNumber = document.getElementById('login-student-number').value;
+    
+        const identifier = document.getElementById('login-student-number').value; //  Use identifier
         const password = document.getElementById('login-password').value;
-
+    
         // Clear previous errors
-        displayError('login-student-number', '');
+        displayError('login-student-number', ''); // consistent error display
         displayError('login-password', '');
-
+    
         let isValid = true;
-
-        if (!studentNumber) {
-            displayError('login-student-number', 'Student number is required.');
+    
+        if (!identifier) { // Changed to identifier
+            displayError('login-student-number', 'Student number or Email is required.'); // generic message
             isValid = false;
         }
-
+    
         if (!password) {
             displayError('login-password', 'Password is required.');
             isValid = false;
         }
-
+    
         if (!isValid) {
             return; // Stop the login process if any validation fails
         }
-
+    
         try {
             const response = await fetch('/api/login/', {
                 method: 'POST',
@@ -284,33 +284,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    student_number: studentNumber,
+                    identifier: identifier, // Use identifier
                     password: password,
                 }),
             });
-
+    
             const data = await response.json();
-
+    
             if (!response.ok) {
                 if (data.detail) {
-                    displayError('login-password', data.detail); // Display error detail from server
+                    displayError('login-password', data.detail); // Show error from backend
                 } else {
                     displayNotification('Login failed. Please try again.', 'error');
                 }
-                return; // Stop the login process if the server returns an error.
+                return;
             }
-
+    
             displayNotification('Login successful!', 'success');
-            window.location.href = '/home';
+            //  Redirect based on user_role from the response.
+            if (data.user_role === 'admin') {
+                window.location.href = '/admin_dashboard'; // Or wherever admins go
+            } else {
+                window.location.href = '/home'; //  Regular users
+            }
+    
         } catch (error) {
-            displayNotification('An unexpected error occurred. Please try again.', 'error'); // Generic error for network issues
+            displayNotification('An unexpected error occurred. Please try again.', 'error');
             console.error("Login error:", error);
         }
     }
+    
 
     async function handleSignup(e) {
         e.preventDefault();
-
+    
         const studentNumber = document.getElementById('signup-student-number').value;
         const email = document.getElementById('signup-email').value;
         const organization = document.getElementById('signup-organization').value;
@@ -318,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastName = document.getElementById('signup-last-name').value;
         const password = document.getElementById('signup-password').value;
         const confirmPassword = document.getElementById('signup-confirm-password').value;
-
+    
         // Clear previous errors
         displayError('signup-student-number', '');
         displayError('signup-email', '');
@@ -327,10 +334,10 @@ document.addEventListener('DOMContentLoaded', function() {
         displayError('signup-last-name', '');
         displayError('signup-password', '');
         displayError('signup-confirm-password', '');
-
+    
         // Validation checks
         let isValid = true;
-
+    
         if (isNaN(studentNumber) || studentNumber === "") {
             displayError('signup-student-number', 'Student number must be a number.');
             isValid = false;
@@ -338,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-student-number', 'Student number must be 9 digits.');
             isValid = false;
         }
-
+    
         if (!email) {
             displayError('signup-email', 'Email is required.');
             isValid = false;
@@ -346,12 +353,12 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-email', 'Invalid email format.');
             isValid = false;
         }
-
+    
         if (!organization) {
             displayError('signup-organization', 'Please select an organization.');
             isValid = false;
         }
-
+    
         if (!firstName) {
             displayError('signup-first-name', 'First name is required.');
             isValid = false;
@@ -359,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-first-name', 'First name should only contain letters and spaces.');
             isValid = false;
         }
-
+    
         if (!lastName) {
             displayError('signup-last-name', 'Last name is required.');
             isValid = false;
@@ -367,22 +374,22 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-last-name', 'Last name should only contain letters and spaces.');
             isValid = false;
         }
-
+    
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
         if (!passwordRegex.test(password)) {
             displayError('signup-password', 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one number.');
             isValid = false;
         }
-
+    
         if (password !== confirmPassword) {
             displayError('signup-confirm-password', 'Passwords do not match.');
             isValid = false;
         }
-
+    
         if (!isValid) {
             return; // Stop the signup process if any validation fails
         }
-
+    
         const userData = {
             student_number: studentNumber,
             email: email,
@@ -391,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
             last_name: lastName,
             password: password
         };
-
+    
         try {
             const response = await fetch('/api/signup/', {
                 method: 'POST',
@@ -400,33 +407,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(userData)
             });
-
+    
             const data = await response.json();
-
+    
             if (!response.ok) {
-                // Check if the error is due to an already registered student or email
-                if (data.detail && data.detail.includes('student number already registered')) {
+                // **FIX:  Check for specific error messages from the backend**
+                if (data.detail === 'Student number already registered') {
                     displayError('signup-student-number', 'This student number is already registered.');
-                } else if (data.detail && data.detail.includes('email already registered')) {
+                } else if (data.detail === 'Email already registered') {
                     displayError('signup-email', 'This email is already registered.');
-                } else {
-                    throw new Error(data.detail || 'Signup failed');
+                } else if (data.detail === 'First and last name combination already registered') { // ADDED THIS
+                    displayError('signup-first-name', 'This first and last name combination is already registered.');
+                    displayError('signup-last-name', ''); // Clear any previous last name error
+                }
+                 else {
+                    // For *any other* error from the backend, show a generic message
+                    displayNotification(data.detail || 'Signup failed. Please try again.', 'error');
                 }
                 return; // Stop the signup process
             }
-
-            // Success Message for Login Form
+    
+            // Success Message for Login Form (You might want to move this)
             registrationSuccessMessage = 'Registration successful! Please log in.';
-
-            // Redirect to Login
+    
+            // Redirect to Login (You might want to move this)
             currentForm = 'login';
             render();
-
+    
         } catch (error) {
+            // This catch block handles network errors and other exceptions
             console.error("Signup error:", error);
-            displayNotification('An error occurred during signup. Please try again.', 'error');
+            displayNotification('An unexpected error occurred during signup. Please try again.', 'error');
         }
     }
+    
+    function displayError(inputElementId, message) {
+        // Your existing function to display the error message
+        const errorElement = document.getElementById(`${inputElementId}-error`); // Example ID
+        if (errorElement) {
+            errorElement.textContent = message;
+        }
+    }
+    
+    
 
 
     async function handleForgotPassword(e) {

@@ -1,0 +1,95 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Home{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
+
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <h1 class="dashboard-title">Admin Dashboard</h1>
+    <div class="dashboard-grid">
+        <div class="dashboard-section overview">
+            <h2 class="section-title">Overview <i class="fas fa-chart-bar"></i></h2>
+            <div class="admin-card">
+                <div class="card-info">
+                    <div class="card-title">Total Students</div>
+                    <div class="card-value">{{ total_students }}</div>
+                </div>
+            </div>
+            <div class="admin-card">
+                <div class="card-info">
+                    <div class="card-title">Total Events</div>
+                    <div class="card-value">{{ total_events }}</div>
+                </div>
+            </div>
+            <div class="admin-card">
+                <div class="card-info">
+                    <div class="card-title">New Registrations (Last 7 Days)</div>
+                    <div class="card-value">{{ new_registrations }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-section latest-announcements">
+            <h2 class="section-title">Latest Announcements <i class="fas fa-bullhorn"></i></h2>
+            <div id="latest-announcements-container">
+                {% if latest_bulletin_posts %}
+                    {% for post in latest_bulletin_posts %}
+                        <div class="admin-card">
+                            <div class="card-info">
+                                <div class="card-title">{{ post.title }}</div>
+                                <div class="card-meta">Posted on: {{ post.created_at.strftime('%B %d, %Y') }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">No recent announcements.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dashboard-section upcoming-events-admin">
+            <h2 class="section-title">Upcoming Events <i class="fas fa-calendar-alt"></i></h2>
+            <div id="upcoming-events-admin-container">
+                <div class="admin-card">
+                    <div class="card-info">
+                        <div class="card-title">Event Title 1</div>
+                        <div class="card-meta">Date: May 5, 2025 | Location: Main Hall</div>
+                    </div>
+                </div>
+                <div class="admin-card">
+                    <div class="card-info">
+                        <div class="card-title">Another Event</div>
+                        <div class="card-meta">Date: May 10, 2025 | Location: Online</div>
+                    </div>
+                </div>
+                {% if not upcoming_events %}
+                <div class="empty-state">No upcoming events.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dashboard-section latest-activity">
+            <h2 class="section-title">Latest Activity <i class="fas fa-history"></i></h2>
+            <div id="latest-activity-container">
+                <div class="latest-activity-item">
+                    <div class="activity-details">
+                        <div class="activity-text">Admin John Doe created a new announcement.</div>
+                        <div class="activity-meta">Timestamp: May 1, 2025 8:00 PM | User: John Doe</div>
+                    </div>
+                </div>
+                <div class="latest-activity-item">
+                    <div class="activity-details">
+                        <div class="activity-text">New student Alice Smith registered.</div>
+                        <div class="activity-meta">Timestamp: May 1, 2025 7:30 PM | User: System</div>
+                    </div>
+                </div>
+                {% if not latest_activity %}
+                <div class="empty-state">No recent activity.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

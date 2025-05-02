@@ -1,0 +1,207 @@
+{% extends 'admin_base.html' %}
+{% block title %}Total Members{% endblock %}
+{% block content %}
+    <div class="payments-page">
+        <h1 class="page-title">Total Members</h1>
+        <div class="data-container" style="margin-left: 20px;">
+            <p class="page-description">This page displays the total number of members.</p>
+            <p class="year-info">Year: {{ year }}</p>
+
+            <h2 class="section-heading">Member Management Suggestions</h2>
+            <ul class="suggestions-list">
+                <li><strong>Verification of Registration Forms:</strong> Melissa suggests that the "Manage Users"
+                    section could be used for verifying uploaded registration forms. This implies a workflow where users
+                    upload their registration forms, and administrators use the system to check and approve them.
+                </li>
+                <li><strong>Main System Goal:</strong> The primary goal of the system is to collect payments.</li>
+                <li><strong>List of Members per Semester:</strong>
+                    <ul class="sub-list">
+                        <li>The list of members should be organized per semester.</li>
+                        <li>Each semester's list should indicate the payment status of each member (paid or unpaid).</li>
+                        <li>The list should include full names.</li>
+                    </ul>
+                </li>
+                <li><strong>Excel-like Display:</strong> Melissa suggests displaying the member data in an Excel-like
+                    format, with columns for each semester and indicators for payment status.
+                </li>
+                <li><strong>Fourth-Year Clearance:</strong> Membership fees don't have a deadline, but 4th-year students
+                    cannot get their clearance signed if they haven't paid all their dues for all semesters.
+                </li>
+            </ul>
+
+            <h2 class="section-heading">Suggested Implementation for Member List</h2>
+            <p class="implementation-description">Based on Melissa's suggestions, here's a possible way to structure the member data display:</p>
+
+            <style>
+                .member-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    margin-left: 20px;
+                }
+
+                .member-table th,
+                .member-table td {
+                    padding: 12px;
+                    text-align: left;
+                    border-bottom: 1px solid #ddd;
+                }
+
+                .member-table th {
+                    background-color: #4CAF50;
+                    color: white;
+                    font-weight: bold;
+                    text-align: center;
+                }
+
+                .member-table td {
+                    color: #555;
+                }
+
+                .member-table tbody tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+
+                .member-table tbody tr:hover {
+                    background-color: #f0f0f0;
+                }
+
+                .paid {
+                    color: green;
+                    font-weight: bold;
+                }
+
+                .unpaid {
+                    color: red;
+                    font-weight: bold;
+                }
+
+                /* Responsive adjustments */
+                @media screen and (max-width: 768px) {
+                    .member-table {
+                        overflow-x: auto;
+                        display: block;
+                        margin-left: 0;
+                    }
+
+                    .member-table th,
+                    .member-table td {
+                        white-space: nowrap;
+                    }
+                }
+
+                .page-title {
+                    font-size: 24px;
+                    color: #2c3e50;
+                    margin-bottom: 20px;
+                    text-align: left;
+                     margin-left: 20px;
+                }
+
+                .page-description {
+                    font-size: 16px;
+                    color: #666;
+                    margin-bottom: 10px;
+                    line-height: 1.5;
+                     margin-left: 20px;
+                }
+
+                .year-info {
+                    font-size: 14px;
+                    color: #888;
+                    margin-bottom: 20px;
+                    text-align: left;
+                     margin-left: 20px;
+                }
+
+                .section-heading {
+                    font-size: 20px;
+                    color: #2c3e50;
+                    margin-top: 30px;
+                    margin-bottom: 15px;
+                    font-weight: bold;
+                    text-align: left;
+                     margin-left: 20px;
+                }
+
+                .suggestions-list {
+                    list-style-position: inside;
+                    padding-left: 0;
+                    margin-bottom: 20px;
+                    color: #555;
+                    font-size: 16px;
+                     margin-left: 20px;
+                }
+
+                .suggestions-list li {
+                    margin-bottom: 12px;
+                    line-height: 1.5;
+                }
+
+                .sub-list {
+                    list-style-type: disc;
+                    padding-left: 20px;
+                    margin-top: 10px;
+                }
+
+                .sub-list li {
+                    margin-bottom: 5px;
+                }
+
+                .implementation-description {
+                    font-size: 16px;
+                    color: #666;
+                    margin-bottom: 20px;
+                    line-height: 1.5;
+                    text-align: left;
+                     margin-left: 20px;
+                }
+        </style>
+
+        <table class="member-table">
+            <thead>
+                <tr>
+                    <th>Student Number</th>
+                    <th>Full Name</th>
+                    <th>1st Semester</th>
+                    <th>2nd Semester</th>
+                    <th>3rd Semester</th>
+                    <th>4th Semester</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2020-12345</td>
+                    <td>John Doe</td>
+                    <td class="paid">Paid</td>
+                    <td class="paid">Paid</td>
+                    <td class="unpaid">Unpaid</td>
+                    <td class="paid">Paid</td>
+                </tr>
+                <tr>
+                    <td>2020-54321</td>
+                    <td>Jane Smith</td>
+                    <td class="unpaid">Unpaid</td>
+                    <td class="unpaid">Unpaid</td>
+                    <td class="unpaid">Unpaid</td>
+                    <td class="unpaid">Unpaid</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Notes:</strong></p>
+        <ul style="margin-left: 20px;">
+                <li>The table provides a clear overview of each student's payment status per semester.</li>
+                <li>The "Student Number" and "Full Name" columns uniquely identify each student.</li>
+                <li>The semester columns (e.g., "1st Semester", "2nd Semester") indicate whether the student has paid
+                    the membership fee for that semester. Values like "Paid" and "Unpaid" can be used.
+                </li>
+                <li>This table structure can be generated dynamically using data from your database.</li>
+            </ul>
+
+        </div>
+    </div>
+{% endblock %}
