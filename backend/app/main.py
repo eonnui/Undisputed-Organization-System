@@ -475,6 +475,7 @@ async def update_profile(
     section: Optional[str] = Form(None),
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
+    is_verified: Optional[bool] = Form(None), 
     registration_form: Optional[UploadFile] = File(None),  # Change to UploadFile
     profilePicture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
