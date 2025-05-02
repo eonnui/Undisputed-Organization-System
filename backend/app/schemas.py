@@ -11,11 +11,9 @@ class UserCreate(UserBase):
     first_name: str
     last_name: str
     password: str
-
 class UserLogin(BaseModel):
-    student_number: str
+    identifier: str  # Changed to 'identifier' to accept either email or student_number
     password: str
-
 class User(UserBase):
     id: int
     organization: str

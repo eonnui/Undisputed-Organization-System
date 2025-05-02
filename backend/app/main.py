@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Form, APIRouter
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -12,7 +12,6 @@ from io import BytesIO  # Import BytesIO
 from PIL import Image  # Import PIL for image processing
 import os
 import secrets
-from .text import extract_text_from_pdf, extract_student_info, allowed_file 
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -36,7 +35,7 @@ app.mount(
     StaticFiles(directory=BASE_DIR / "frontend" / "static"),
     name="static"
 )
-
+router = APIRouter()
 # Setup templates
 templates = Jinja2Templates(directory=BASE_DIR / "frontend" / "templates")
 
@@ -57,6 +56,103 @@ def generate_secure_filename(original_filename: str) -> str:
     random_prefix = secrets.token_hex(16)  # 32 character hex string
     return f"{random_prefix}{file_extension}"
 
+@router.get("/admin_settings/", response_class=HTMLResponse, name="admin_settings") # Added a trailing slash
+async def admin_settings(request: Request, db: Session = Depends(get_db)):
+    """
+    Retrieves all users from the database and renders the admin settings page,
+    including a list of users.
+
+    Args:
+        request (Request): The incoming request object.
+        db (Session, optional): The database session. Defaults to Depends(get_db).
+
+    Returns:
+        HTMLResponse: The rendered HTML page with the user list.
+    """
+    # Get the current user's data to pre-populate the form
+    current_user_id = request.session.get("user_id") or request.session.get("admin_id")
+    user_role = request.session.get("user_role")
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    if user_role != "Admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions.  Admin access required.")
+    
+    user = db.query(models.User).filter(models.User.id == current_user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Get all users from the database.
+    users: List[models.User] = db.query(models.User).all()  # Fetch all users
+    # print(users) #for debugging
+    return templates.TemplateResponse(
+        "admin_dashboard/admin_settings.html",
+        {
+            "request": request,
+            "year": "2025",  #  Keep this, assuming it's a global constant
+            "user": user,
+            "users": users,  # Pass the list of users to the template
+        },
+    )
+
+@router.get("/payments/total-members", response_class=HTMLResponse, name="payments_total_members")
+async def payments_total_members(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/total_members.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/active-members", response_class=HTMLResponse, name="payments_active_members")
+async def payments_active_members(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/active_members.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/total-collected", response_class=HTMLResponse, name="payments_total_collected")
+async def payments_total_collected(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/total_collected.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/pending", response_class=HTMLResponse, name="payments_pending")
+async def payments_pending(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/pending.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/overdue", response_class=HTMLResponse, name="payments_overdue")
+async def payments_overdue(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/overdue.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/recent", response_class=HTMLResponse, name="payments_recent")
+async def payments_recent(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/recent.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/upcoming-dues", response_class=HTMLResponse, name="payments_upcoming_dues")
+async def payments_upcoming_dues(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/upcoming_dues.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/failed", response_class=HTMLResponse, name="payments_failed")
+async def payments_failed(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/failed.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/new-registrations", response_class=HTMLResponse, name="payments_new_registrations")
+async def payments_new_registrations(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/new_registrations.html", {"request": request, "year": "2025"})
+
+@router.get("/payments/quick-actions", response_class=HTMLResponse, name="payments_quick_actions")
+async def payments_quick_actions(request: Request):
+    return templates.TemplateResponse("admin_dashboard/payments/quick_actions.html", {"request": request, "year": "2025"})
+
+@router.get("/admin/bulletin_board", response_class=HTMLResponse, name="admin_bulletin_board")
+async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse("admin_dashboard/admin_bulletin_board.html", {"request": request, "year": "2025"})
+
+@router.get("/admin/events", response_class=HTMLResponse, name="admin_events")
+async def admin_events(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse("admin_dashboard/admin_events.html", {"request": request, "year": "2025"})
+
+@router.get("/admin/financial_statement", response_class=HTMLResponse, name="admin_financial_statement")
+async def admin_financial_statement(request: Request):
+    return templates.TemplateResponse("admin_dashboard/admin_financial_statement.html", {"request": request, "year": "2025"})
+
+# Include the router in your main application
+app.include_router(router)
+
 
 # Endpoint for logout
 @app.get("/logout", response_class=RedirectResponse, name="logout")
@@ -73,19 +169,74 @@ async def read_root(request: Request):
 
 # Endpoint for home
 @app.get("/home", response_class=HTMLResponse, name="home")
-async def home(request: Request, db: Session = Depends(get_db)):
-    latest_bulletin_posts = db.query(models.BulletinBoard).order_by(models.BulletinBoard.created_at.desc()).limit(5).all()
-    temporary_faqs = [
-        {"question": "What is the schedule for student orientation?",
-         "answer": "The student orientation will be held on August 20, 2025, from 9:00 AM to 12:00 PM in the main auditorium."},
-        {"question": "How do I access the online learning platform?",
-         "answer": "You can access the online learning platform by visiting our website and clicking on the 'Student Portal' link. Use your student ID and password to log in."},
-        {"question": "Who should I contact for academic advising?",
-         "answer": "For academic advising, please contact the Dean's office of your respective faculty. You can find their contact information on the university website under the 'Academics' section."},
-    ]
-    return templates.TemplateResponse("student_dashboard/home.html",
-                                      {"request": request, "year": "2025", "bulletin_posts": latest_bulletin_posts,
-                                       "faqs": temporary_faqs})
+async def home(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Handles the /home route, displaying either the student or admin dashboard
+    depending on the user's role stored in the session.
+    """
+    user_id = request.session.get("user_id") or request.session.get("admin_id") # changed
+    user_role = request.session.get("user_role")
+
+    if not user_id or not user_role:
+        #  Redirect to login if the user is not logged in.
+        return templates.TemplateResponse("index.html", {"request": request, "error": "Please log in to access this page."}) #adjust to your login template
+    if user_role == "Admin":
+        # Logic for admin dashboard
+        # Fetch data needed for admin dashboard
+        latest_bulletin_posts = (
+            db.query(models.BulletinBoard)
+            .order_by(models.BulletinBoard.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        # You might have different templates for admin and student
+        return templates.TemplateResponse(
+            "admin_dashboard/home.html",  #  Admin template
+            {
+                "request": request,
+                "year": "2025",
+                "bulletin_posts": latest_bulletin_posts,
+            },
+        )
+    elif user_role == "user":
+        # Logic for student dashboard
+        latest_bulletin_posts = (
+            db.query(models.BulletinBoard)
+            .order_by(models.BulletinBoard.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        temporary_faqs = [
+            {
+                "question": "What is the schedule for student orientation?",
+                "answer": "The student orientation will be held on August 20, 2025, from 9:00 AM to 12:00 PM in the main auditorium.",
+            },
+            {
+                "question": "How do I access the online learning platform?",
+                "answer": "You can access the online learning platform by visiting our website and clicking on the 'Student Portal' link. Use your student ID and password to log in.",
+            },
+            {
+                "question": "Who should I contact for academic advising?",
+                "answer": "For academic advising, please contact the Dean's office of your respective faculty. You can find their contact information on the university website under the 'Academics' section.",
+            },
+        ]
+        return templates.TemplateResponse(
+            "student_dashboard/home.html",  #  Student template
+            {
+                "request": request,
+                "year": "2025",
+                "bulletin_posts": latest_bulletin_posts,
+                "faqs": temporary_faqs,
+            },
+        )
+    else:
+        # Handle unexpected roles (optional, but good practice)
+        raise HTTPException(status_code=403, detail="Invalid user role")
+
+
 
 
 # Endpoint for bulletin board
@@ -147,7 +298,7 @@ async def settings(request: Request, db: Session = Depends(get_db)):
 # Endpoint for signup
 @app.post("/api/signup/")
 async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, student_number=user.student_number)
+    db_user = crud.get_user(db, identifier=user.student_number)
     if db_user:
         raise HTTPException(status_code=400, detail="Student number already registered")
 
@@ -155,22 +306,60 @@ async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db_email:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    new_user = crud.create_user(db=db, user=user)
-    return {"message": "User created successfully", "user_id": new_user.id}  # Return the new user's ID
+    # NEW: Check for existing first and last name combination
+    db_name_combination = db.query(models.User).filter(
+        models.User.first_name == user.first_name,
+        models.User.last_name == user.last_name
+    ).first()
+    if db_name_combination:
+        raise HTTPException(status_code=400, detail="First and last name combination already registered") #ADDED THIS
 
+    new_user = crud.create_user(db=db, user=user)
+    return {"message": "User created successfully", "user_id": new_user.id}
 
 # Endpoint for login
 @app.post("/api/login/")
-async def login(form_data: schemas.UserLogin, request: Request, db: Session = Depends(get_db)):
-    user = crud.authenticate_user(db, form_data.student_number, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect student number or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    request.session["user_id"] = user.id  # Store the user ID in the session
-    return {"message": "Login successful"}
+async def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(get_db)):
+    """
+    Login endpoint that handles both user and admin login.
+    Admins log in using their email, and users with their student number.
+    """
+    print(f"Attempting login with identifier: {form_data.identifier}, password: {form_data.password}")
+
+    user = crud.authenticate_user(db, form_data.identifier, form_data.password)
+    print(f"Result from authenticate_user: {user}")
+
+    if user:
+        print("authenticate_user succeeded")
+        request.session["user_id"] = user.id  # Changed to user_id
+        request.session["user_role"] = getattr(user, 'role', 'user')
+        print(f"User login successful. Session: {request.session}")
+        return {
+            "message": "User login successful",
+            "user_id": user.id,
+            "user_role": request.session["user_role"],
+        }
+    else:
+        print("authenticate_user failed, trying admin authentication")
+        admin = crud.authenticate_admin_by_email(db, form_data.identifier, form_data.password)
+        print(f"Result from authenticate_admin_by_email: {admin}")
+        if admin:
+            request.session["admin_id"] = admin.admin_id  # Changed to admin_id
+            request.session["user_role"] = admin.role
+            print(f"Admin login successful. Session: {request.session}")
+            return {
+                "message": "Admin login successful",
+                "admin_id": admin.admin_id,  # Changed to admin_id
+                "user_role": admin.role,
+            }
+        else:
+            print("Admin authentication failed")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
 
 
 # Endpoint for hearting a post
@@ -278,15 +467,9 @@ async def update_profile(
     birthdate: Optional[datetime] = Form(None),
     sex: Optional[str] = Form(None),
     contact: Optional[str] = Form(None),
-    course: Optional[str] = Form(None),
-    campus: Optional[str] = Form(None),
-    semester: Optional[str] = Form(None),
-    school_year: Optional[str] = Form(None),
-    year_level: Optional[str] = Form(None),
-    section: Optional[str] = Form(None),
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
-    registration_form: Optional[UploadFile] = File(None),
+    registration_form: Optional[str] = Form(None),
     profilePicture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
@@ -313,18 +496,6 @@ async def update_profile(
         user.birthdate = birthdate
     if sex is not None:
         user.sex = sex
-    if course is not None:
-        user.course = course
-    if semester is not None:
-        user.semester = semester
-    if campus is not None:
-        user.campus = campus
-    if school_year is not None:
-        user.school_year = school_year
-    if year_level is not None:
-        user.year_level = year_level
-    if section is not None:
-        user.section = section
     if contact is not None:
         user.contact = contact
     if guardian_name is not None:
@@ -333,71 +504,6 @@ async def update_profile(
         user.guardian_contact = guardian_contact
     if registration_form is not None:
         user.registration_form = registration_form
-
-      # 3. Handle Registration Form upload
-    if registration_form:
-        print(
-            f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
-        )
-        # Validate file type
-        if not allowed_file(registration_form.filename):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid file type. Only PDF files are allowed.",
-            )
-        # Check file size (optional)
-        max_file_size_bytes = 5 * 1024 * 1024  # 5MB
-        file_content = await registration_form.read()
-        if len(file_content) > max_file_size_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"File size too large. Maximum allowed size is {max_file_size_bytes} bytes.",
-            )
-
-        # Generate a secure filename
-        filename = generate_secure_filename(registration_form.filename)
-        print(f"Generated filename: {filename}")
-        # Construct the full file path.  Use a more robust approach.
-        upload_dir = "frontend/static/registration_forms"  # Relative to the app
-        os.makedirs(upload_dir, exist_ok=True)  # Ensure directory exists
-        file_path = os.path.join(upload_dir, filename)
-
-        print(f"Saving registration form to: {file_path}")
-        # Save the file
-        try:
-            with open(file_path, "wb") as f:
-                f.write(file_content)
-            user.registration_form = f"/static/registration_forms/{filename}"  # Store relative path
-            print(f"Registration form path set to: {user.registration_form}")
-        except Exception as e:
-            print(f"Error saving registration form: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to save registration form: {e}",
-            )
-
-        # Extract information from the PDF
-        try:
-            extracted_text = extract_text_from_pdf(file_path)  # Pass the file_path
-            if extracted_text:  # Only extract if there is text
-                student_info = extract_student_info(extracted_text)
-                print(f"Extracted student info: {student_info}")
-                # Update user model with extracted information
-                user.student_number = student_info.get("student_number")
-                user.name = student_info.get("name")
-                user.course = student_info.get("course")
-                user.year_level = student_info.get("year_level")  # Corrected field name
-                user.section = student_info.get("section")
-                user.address = student_info.get("address")
-            else:
-                print("No text extracted from PDF.")
-
-        except Exception as e:
-            print(f"Error extracting information from PDF: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Error processing registration form: {e}",
-            )
 
     # 3. Handle Profile picture upload
     if profilePicture:
