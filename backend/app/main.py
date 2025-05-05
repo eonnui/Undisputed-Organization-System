@@ -709,22 +709,21 @@ async def update_profile(
             if "name" in student_info and student_info["name"]:
                 name_str = student_info["name"].strip()
 
-                # Remove any middle initial (e.g., "A.")
-                name_str = re.sub(r'\b[a-zA-Z]\.\b', '', name_str)
-                name_str = re.sub(r'\s+', ' ', name_str).strip()  # Normalize spaces
+                # Remove any middle initial (like "b.")
+                name_str = re.sub(r'\s+[a-zA-Z]\.\s+', ' ', name_str)  # between names
+                name_str = re.sub(r'\s+[a-zA-Z]\.$', '', name_str)     # at the end
+                name_str = re.sub(r'\s+[a-zA-Z]\.(?=\s)', '', name_str) # before last name
+                name_str = re.sub(r'\s+', ' ', name_str).strip()       # clean spacing
 
-                # Split the name into parts
+                # Split the cleaned name
                 name_parts = name_str.split()
 
                 if len(name_parts) >= 2:
-                    # First name includes all except the last word
                     user.first_name = ' '.join(name_parts[:-1]).title()
                     user.last_name = name_parts[-1].title()
-                    print(f"First name from PDF: {user.first_name}")
-                    print(f"Last name from PDF: {user.last_name}")
                 elif len(name_parts) == 1:
                     user.first_name = name_parts[0].title()
-                    print(f"First name from PDF: {user.first_name}")
+                    user.last_name = ''
 
             # Update email if first_name and last_name are available
             if user.first_name and user.last_name:
