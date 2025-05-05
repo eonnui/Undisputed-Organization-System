@@ -278,22 +278,45 @@ async def financial_statement(request: Request):
     return templates.TemplateResponse("student_dashboard/financial_statement.html", {"request": request, "year": "2025"})
 
 
-# Endpoint for settings
+
 @app.get("/Settings", response_class=HTMLResponse, name="settings")
 async def settings(request: Request, db: Session = Depends(get_db)):
+    """
+    Renders the settings page, including the user's birthdate in the correct format.
+    """
     # Get the current user's data to pre-populate the form
-    current_user_id = request.session.get("user_id")  # Get user ID from session
+    current_user_id = request.session.get("user_id")
     if not current_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-    user = db.query(models.User).filter(models.User.id == current_user_id).first()  # changed from student_number to id
+    user = db.query(models.User).filter(models.User.id == current_user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return templates.TemplateResponse("student_dashboard/settings.html",
-                                      {"request": request, "year": "2025", "user": user})  # Pass the user object to the template
 
+    formatted_birthdate = ""
+    if user.birthdate:
+        try:
+            # Try converting from a common format (adjust if yours is different)
+            birthdate_object = datetime.strptime(user.birthdate, "%Y-%m-%d %H:%M:%S")  # Handle "2025-05-23 00:00:00" format
+            formatted_birthdate = birthdate_object.strftime("%Y-%m-%d")
+        except ValueError:
+            try:
+                birthdate_object = datetime.strptime(user.birthdate, "%Y-%m-%d")
+                formatted_birthdate = birthdate_object.strftime("%Y-%m-%d")
+            except ValueError:
+                try:
+                    birthdate_object = datetime.strptime(user.birthdate, "%m/%d/%Y")
+                    formatted_birthdate = birthdate_object.strftime("%Y-%m-%d")
+                except ValueError:
+                    print(f"Warning: Could not parse birthdate string: {user.birthdate}")
+                    formatted_birthdate = user.birthdate  # Use the original string as a fallback
+
+    return templates.TemplateResponse(
+        "student_dashboard/settings.html",
+        {"request": request, "year": "2025", "user": user, "formatted_birthdate": formatted_birthdate},
+    )
 
 # Endpoint for signup
 @app.post("/api/signup/")
@@ -316,6 +339,33 @@ async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     new_user = crud.create_user(db=db, user=user)
     return {"message": "User created successfully", "user_id": new_user.id}
+
+@app.get("/api/user/{user_id}", response_model=schemas.User)
+async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    user = crud.get_user(db, identifier=str(user_id))
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@app.get("/get_user_data", response_model=schemas.User)
+async def get_user_data(request: Request, db: Session = Depends(get_db)):
+    print("get_user_data function called")
+    try:
+        user_identifier = request.session.get("user_id") or request.session.get("admin_id")
+        print(f"User identifier from session: {user_identifier}, type: {type(user_identifier)}")
+        if not user_identifier:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+
+        user = db.query(models.User).filter(models.User.id == user_identifier).first()
+        print(f"User data from db.query: {user}")
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return user
+
+    except Exception as e:
+        print(f"Error in get_user_data: {e}")
+        raise
 
 # Endpoint for login
 @app.post("/api/login/")
@@ -475,14 +525,15 @@ async def update_profile(
     section: Optional[str] = Form(None),
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
-    is_verified: Optional[bool] = Form(None), 
+    is_verified: Optional[bool] = Form(None),
     registration_form: Optional[UploadFile] = File(None),  # Change to UploadFile
     profilePicture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
     """
     Updates the user's profile information, including handling the registration form file upload
-    and extracting data from it.
+    and extracting data from it. It also deletes the previous registration form and profile picture
+    if new ones are uploaded.
     """
     # 1.  Get the user from the database.
     current_user_id = request.session.get("user_id")
@@ -498,6 +549,20 @@ async def update_profile(
         print(f"Error: User not found with ID: {current_user_id}")
         raise HTTPException(status_code=404, detail="User not found")
     print(f"Found user: {user.name}")
+
+    # Function to safely delete a file
+    def delete_file(file_path: Optional[str]):
+        if file_path:
+            full_path = os.path.join("..", file_path.lstrip("/"))  # Construct full path
+            print(f"Attempting to delete file: {full_path}")
+            if os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                    print(f"Successfully deleted file: {full_path}")
+                except Exception as e:
+                    print(f"Error deleting file {full_path}: {e}")
+            else:
+                print(f"File not found, cannot delete: {full_path}")
 
     # 2. Update the user object with the provided data
     if name is not None:
@@ -554,6 +619,10 @@ async def update_profile(
             )
 
         try:
+            # Delete the previous registration form if it exists
+            print(f"Previous registration form path: {user.registration_form}")
+            delete_file(user.registration_form)
+
             pdf_content = await registration_form.read()
             filename = generate_secure_filename(registration_form.filename)
             pdf_file_path = os.path.join(
@@ -614,7 +683,6 @@ async def update_profile(
 
     # 4. Handle Profile picture upload
     if profilePicture:
-        # ... (rest of your profile picture handling code remains the same)
         print(
             f"Handling profile picture upload: {profilePicture.filename}, content_type: {profilePicture.content_type}"
         )
@@ -631,6 +699,10 @@ async def update_profile(
         # Check image file size (optional)
         max_image_size_bytes = 2 * 1024 * 1024  # 2MB
         try:
+            # Delete the previous profile picture if it exists
+            print(f"Previous profile picture path: {user.profile_picture}")
+            delete_file(user.profile_picture)
+
             image_content = await profilePicture.read()
             print(f"Image content length: {len(image_content)}")
             if len(image_content) > max_image_size_bytes:
@@ -688,6 +760,7 @@ async def update_profile(
         print("Database commit successful")
         print(f"Profile updated successfully. Session after update: {request.session}")
         print(f"User registration form in database: {user.registration_form}")  # <-- ADDED
+        print(f"User profile picture in database: {user.profile_picture}") # <-- ADDED
     except Exception as e:
         db.rollback()
         print(f"Error updating profile in database: {e}")

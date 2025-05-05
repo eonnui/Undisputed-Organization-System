@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listeners to make fields editable
     const editBirthDateBtn = document.getElementById('editBirthDate');
     const editGenderBtn = document.getElementById('editGender');
-    const editGuardianNameBtn = document.getElementById('guardianName');
+    const editGuardianNameBtn = document.getElementById('editGuardianName');
     const editGuardianContactBtn = document.getElementById('editGuardianContact');
     const editRegistrationFormBtn = document.getElementById('editRegistrationForm');
 
@@ -246,40 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleStudentInfoSuccess(data, form) {
         alert('Profile information updated successfully!');
         resetForm(form);
-        // Update displayed values
-        const formData = new FormData(form);
-        if (document.getElementById('birthDateDisplay')) {
-            document.getElementById('birthDateDisplay').textContent = formData.get('birthDate');
-        }
-        if (document.getElementById('genderDisplay')) {
-            document.getElementById('genderDisplay').textContent = formData.get('gender');
-        }
-        if (document.getElementById('guardianNameDisplay')) {
-            document.getElementById('guardianNameDisplay').textContent = formData.get('guardianName');
-        }
-        if (document.getElementById('guardianContactDisplay')) {
-            document.getElementById('guardianContactDisplay').textContent = formData.get('guardianContact');
-        }
-
-
-        // Update additional fields from the server response.  These are the values extracted from the PDF.
-        if (data.user.student_number) {
-            document.getElementById('studentNumberDisplay').textContent = data.user.student_number;
-        }
-        if (data.user.name) {
-            document.getElementById('nameDisplay').textContent = data.user.name;
-        }
-        if (data.user.course) {
-            document.getElementById('courseDisplay').textContent = data.user.course;
-        }
-        if (data.user.year_level) {
-            document.getElementById('yearLevelDisplay').textContent = data.user.year_level;
-        }
-        if (data.user.section) {
-            document.getElementById('sectionDisplay').textContent = data.user.section;
-        }
-        if (data.user.address) {
-            document.getElementById('addressDisplay').textContent = data.user.address;
+        // The student info display is now updated in handleRegistrationFormOnlySuccess
+        // if the update was triggered by the registration form submission.
+    
+        // If this function is called directly after submitting the Student Info form,
+        // we need to update the display based on the data received.
+        if (data && data.user) {
+            updateStudentInfoDisplay(data.user);
         }
     }
 
@@ -299,16 +272,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleRegistrationFormOnlySuccess(data, form) {
         alert('Registration form updated successfully!');
-        resetForm(form);
-        if (document.getElementById('registrationFormDisplay')) {
-            const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
-            const fileName = registrationFormInput.files[0] ? registrationFormInput.files[0].name : '';
-            document.getElementById('registrationFormDisplay').textContent = fileName;
+    
+        const registrationFormDisplayElement = document.getElementById('registrationFormDisplay');
+        const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
+        const fileName = registrationFormInput.files[0] ? registrationFormInput.files[0].name : '';
+    
+        if (registrationFormDisplayElement && fileName) {
+            registrationFormDisplayElement.textContent = fileName;
         }
-        // Update the status
+    
+        resetForm(form); // Call resetForm AFTER updating the display
+    
         if (data.user.verification_status) {
             setRegistrationStatus(data.user.verification_status);
         }
+    
+        // Immediately update student info display using the data received
+        updateStudentInfoDisplay(data.user);
     }
 
     // --- Error Callback ---
@@ -351,4 +331,43 @@ document.addEventListener('DOMContentLoaded', () => {
             resetForm(registrationFormOnly); // Reset only the registration form.
         });
     }
+
+    function updateStudentInfoDisplay(userData) {
+        if (document.getElementById('studentNumber')) {
+            document.getElementById('studentNumber').value = userData.student_number || '';
+        }
+        if (document.getElementById('firstName')) {
+            document.getElementById('firstName').value = userData.first_name || '';
+        }
+        if (document.getElementById('lastName')) {
+            document.getElementById('lastName').value = userData.last_name || '';
+        }
+        if (document.getElementById('email')) {
+            document.getElementById('email').value = userData.email || '';
+        }
+        if (document.getElementById('birthDateDisplay')) {
+            document.getElementById('birthDateDisplay').textContent = userData.birthdate ? new Date(userData.birthdate).toLocaleDateString() : '';
+        }
+        if (document.getElementById('genderDisplay')) {
+            document.getElementById('genderDisplay').textContent = userData.sex || '';
+        }
+        if (document.getElementById('address')) {
+            document.getElementById('address').value = userData.address || '';
+        }
+        if (document.getElementById('yearLevel')) {
+            document.getElementById('yearLevel').value = userData.year_level || '';
+        }
+        if (document.getElementById('section')) {
+            document.getElementById('section').value = userData.section || '';
+        }
+        if (document.getElementById('guardianNameDisplay')) {
+            document.getElementById('guardianNameDisplay').textContent = userData.guardian_name || '';
+        }
+        if (document.getElementById('guardianContactDisplay')) {
+            document.getElementById('guardianContactDisplay').textContent = userData.guardian_contact || '';
+        }
+    }
+
+    
 });
+

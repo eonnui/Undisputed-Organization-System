@@ -1,4 +1,5 @@
 
+
 {% extends 'base.html' %}
 
 {% block title %}Settings{% endblock %}
@@ -280,9 +281,15 @@
             <div class="form-group">
                 <label>Birth Date *</label>
                 <div class="input-wrapper">
-                    <span id="birthDateDisplay">{{ user.birthdate }}</span>
+                    <span id="birthDateDisplay">
+                        {% if user.birthdate %}
+                            {{ user.birthdate.split(' ')[0] }}
+                        {% else %}
+                            ''
+                        {% endif %}
+                    </span>
                     <span class="material-symbols-outlined edit-icon" id="editBirthDate">edit</span>
-                    <input type="date" id="birthDate" name="birthDate" class="hidden" value="{{ user.birthdate }}">
+                    <input type="date" id="birthDate" name="birthdate" class="hidden" value="{{ formatted_birthdate }}">
                 </div>
                 <small>Please enter your date of birth.</small>
                 <div class="error-message" id="birthDateError"></div>
@@ -290,9 +297,9 @@
             <div class="form-group">
                 <label>Gender</label>
                 <div class="input-wrapper">
-                    <span id="genderDisplay">{{ user.sex }}</span>
+                    <span id="genderDisplay">{{ user.sex if user.sex else '' }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGender">edit</span>
-                    <select id="gender" name="gender" class="hidden">
+                    <select id="gender" name="sex" class="hidden">
                         <option value="">Select Gender</option>
                         <option value="Male" {% if user.sex == 'Male' %} selected {% endif %}>Male</option>
                         <option value="Female" {% if user.sex == 'Female' %} selected {% endif %}>Female</option>
@@ -300,46 +307,45 @@
                     </select>
                 </div>
                 <div class="error-message" id="genderError"></div>
-            </div>
             <div class="form-group">
                 <label>Address</label>
-                <input type="text" id="address" name="address" value="{{ user.address }}"
+                <input type="text" id="address" name="address" value="{{ user.address if user.address else '' }}"
                     class="read-only-input" readonly>
                 <div class="error-message" id="addressError"></div>
             </div>
             <div class="form-group">
                 <label>Year Level</label>
-                <input type="text" id="yearLevel" name="yearLevel" value="{{ user.year_level }}"
+                <input type="text" id="yearLevel" name="yearLevel" value="{{ user.year_level if user.year_level else '' }}"
                     class="read-only-input" readonly>
                 <div class="error-message" id="yearLevelError"></div>
             </div>
             <div class="form-group">
                 <label>Section</label>
-                <input type="text" id="section" name="section" value="{{ user.section }}"
+                <input type="text" id="section" name="section" value="{{ user.section if user.section else '' }}"
                     class="read-only-input" readonly>
                 <div class="error-message" id="sectionError"></div>
             </div>
             <div class="form-group">
                 <label>Guardian Name</label>
                 <div class="input-wrapper">
-                    <span id="guardianNameDisplay">{{ user.guardian_name }}</span>
+                    <span id="guardianNameDisplay">{{ user.guardian_name if user.guardian_name else '' }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianName">edit</span>
-                    <input type="text" id="guardianName" name="guardianName" class="hidden"
-                        value="{{ user.guardian_name }}">
-                </div>
+                    <input type="text" id="guardianName" name="guardian_name" class="hidden"
+                        value="{{ user.guardian_name if user.guardian_name else '' }}">
+                    </div>
                 <div class="error-message" id="guardianNameError"></div>
             </div>
             <div class="form-group">
                 <label>Guardian Contact</label>
                 <div class="input-wrapper">
-                    <span id="guardianContactDisplay">{{ user.guardian_contact }}</span>
+                    <span id="guardianContactDisplay">{{ user.guardian_contact if user.guardian_contact else '' }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianContact">edit</span>
-                    <input type="text" id="guardianContact" name="guardianContact" class="hidden"
-                        value="{{ user.guardian_contact }}">
-                </div>
+                    <input type="text" id="guardianContact" name="guardian_contact" class="hidden"
+                        value="{{ user.guardian_contact if user.guardian_contact else '' }}">
+                    </div>
                 <div class="error-message" id="guardianContactError"></div>
             </div>
-
+    
             <div class="button-group">
                 <button type="button" class="clear" id="clearStudentInfoForm">Clear</button>
                 <button type="submit" class="update">Update Information</button>

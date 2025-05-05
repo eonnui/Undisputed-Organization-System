@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,8 +49,8 @@
                 </div>
                 <div class="profile-container">
                     <button class="profile-btn" aria-haspopup="true" aria-expanded="false" aria-controls="profile-dropdown">
-                        <span class="material-symbols-outlined">account_circle</span>
-                        Profile
+                        <img id="user-profile-pic" src="/static/images/your_image_name.jpg" alt="Profile Picture" style="border-radius: 50%; width: 36px; height: 36px; object-fit: cover;">
+                        <span id="profile-name">Profile</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
                         
@@ -182,6 +183,35 @@
                 }
                 isCollapsed = !isCollapsed;
             });
+            fetch('/get_user_data') //  your backend endpoint
+                .then(response => response.json())
+                .then(data => {
+                    const userData = {
+                        name: data.name,
+                        profilePicture: data.profile_picture, // Corrected case to profile_picture
+                    };
+
+                    // Update the profile button with user data
+                    const profilePicElement = document.getElementById('user-profile-pic');
+                    const profileNameElement = document.getElementById('profile-name');
+                    if (userData.profilePicture) {
+                        profilePicElement.src = userData.profilePicture;
+                    }
+                    profileNameElement.textContent = userData.name;
+                })
+                .catch(error => {
+                    console.error('Error fetching user data:', error);
+                    // Handle the error (e.g., display a default profile picture)
+                    const userData = {
+                        name: "Profile",
+                        profilePicture: "/static/images/default_profile.png"
+                    }
+                    const profilePicElement = document.getElementById('user-profile-pic');
+                    const profileNameElement = document.getElementById('profile-name');
+                    profilePicElement.src = userData.profilePicture;
+                    profileNameElement.textContent = userData.name;
+
+                });
         });
     </script>
     {% block scripts %}
