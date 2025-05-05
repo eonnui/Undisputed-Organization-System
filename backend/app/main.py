@@ -12,6 +12,7 @@ from io import BytesIO  # Import BytesIO
 from PIL import Image  # Import PIL for image processing
 import os
 import secrets
+import re
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -701,18 +702,33 @@ async def update_profile(
             if "student_number" in student_info and student_info["student_number"]:
                 user.student_number = student_info["student_number"]
                 print(f"Updated student_number from PDF: {user.student_number}")
+                        # Update student number, first name, last name if found in PDF
+            if "student_number" in student_info and student_info["student_number"]:
+                user.student_number = student_info["student_number"]
+                print(f"Updated student_number from PDF: {user.student_number}")
             if "name" in student_info and student_info["name"]:
-                # Split name into first and last (very basic, might need improvement)
-                name_parts = student_info["name"].split()
-                if len(name_parts) > 0:
-                    user.first_name = name_parts[0]
-                    print(f"Updated first_name from PDF: {user.first_name}")
-                if len(name_parts) > 1:
-                    user.last_name = name_parts[-1]  # Get the last part
-                    print(f"Updated last_name from PDF: {user.last_name}")
+                name_str = student_info["name"].strip()
+
+                # Remove any middle initial (e.g., "A.")
+                name_str = re.sub(r'\b[a-zA-Z]\.\b', '', name_str)
+                name_str = re.sub(r'\s+', ' ', name_str).strip()  # Normalize spaces
+
+                # Split the name into parts
+                name_parts = name_str.split()
+
+                if len(name_parts) >= 2:
+                    # First name includes all except the last word
+                    user.first_name = ' '.join(name_parts[:-1]).title()
+                    user.last_name = name_parts[-1].title()
+                    print(f"First name from PDF: {user.first_name}")
+                    print(f"Last name from PDF: {user.last_name}")
+                elif len(name_parts) == 1:
+                    user.first_name = name_parts[0].title()
+                    print(f"First name from PDF: {user.first_name}")
+
             # Update email if first_name and last_name are available
             if user.first_name and user.last_name:
-                user.email = generate_email(user.first_name, user.last_name)
+                user.email = generate_email(user.first_name.replace(" ", ""), user.last_name)
                 print(f"Updated email: {user.email}")
 
         except Exception as e:
