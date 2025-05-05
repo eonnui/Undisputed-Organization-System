@@ -508,10 +508,12 @@ async def get_upcoming_events_summary(db: Session = Depends(get_db)):
              "classification": event.classification} for event in upcoming_events]
 
 
-# Endpoint to update user profile information
 @app.post("/api/profile/update/")
 async def update_profile(
     request: Request,
+    student_number: Optional[str] = Form(None),
+    first_name: Optional[str] = Form(None),
+    last_name: Optional[str] = Form(None),
     name: Optional[str] = Form(None),
     address: Optional[str] = Form(None),
     birthdate: Optional[datetime] = Form(None),
@@ -565,6 +567,15 @@ async def update_profile(
                 print(f"File not found, cannot delete: {full_path}")
 
     # 2. Update the user object with the provided data
+    if student_number is not None:
+        user.student_number = student_number
+        print(f"Updating student_number: {student_number}")
+    if first_name is not None:
+        user.first_name = first_name
+        print(f"Updating first_name: {first_name}")
+    if last_name is not None:
+        user.last_name = last_name
+        print(f"Updating last_name: {last_name}")
     if name is not None:
         user.name = name
         print(f"Updating name: {name}")
@@ -607,7 +618,9 @@ async def update_profile(
 
     # 3. Handle Registration Form upload and data extraction
     if registration_form:
-        print(f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}")
+        print(
+            f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
+        )
         # Validate file type (optional, but recommended)
         if registration_form.content_type != "application/pdf":
             print(
@@ -636,7 +649,9 @@ async def update_profile(
             os.makedirs(os.path.dirname(pdf_file_path), exist_ok=True)
             with open(pdf_file_path, "wb") as f:
                 f.write(pdf_content)
-            user.registration_form = f"/static/documents/registration_forms/{filename}"  # Store relative path
+            user.registration_form = (
+                f"/static/documents/registration_forms/{filename}"  # Store relative path
+            )
             print(f"Registration form saved to: {user.registration_form}")
 
             # Extract text from the PDF
@@ -648,30 +663,44 @@ async def update_profile(
             print(f"Extracted student info: {student_info}")
 
             # Update user object with extracted information if not already provided in the form
-            if name is None and 'name' in student_info and student_info['name']:
-                user.name = student_info['name']
+            if name is None and "name" in student_info and student_info["name"]:
+                user.name = student_info["name"]
                 print(f"Updated name from PDF: {user.name}")
-            if course is None and 'course' in student_info and student_info['course']:
-                user.course = student_info['course']
+            if course is None and "course" in student_info and student_info["course"]:
+                user.course = student_info["course"]
                 print(f"Updated course from PDF: {user.course}")
-            if year_level is None and 'year_level' in student_info and student_info['year_level']:
-                user.year_level = student_info['year_level']
+            if year_level is None and "year_level" in student_info and student_info["year_level"]:
+                user.year_level = student_info["year_level"]
                 print(f"Updated year_level from PDF: {user.year_level}")
-            if section is None and 'section' in student_info and student_info['section']:
-                user.section = student_info['section']
+            if section is None and "section" in student_info and student_info["section"]:
+                user.section = student_info["section"]
                 print(f"Updated section from PDF: {user.section}")
-            if campus is None and 'campus' in student_info and student_info['campus']:
-                user.campus = student_info['campus']
+            if campus is None and "campus" in student_info and student_info["campus"]:
+                user.campus = student_info["campus"]
                 print(f"Updated campus from PDF: {user.campus}")
-            if semester is None and 'semester' in student_info and student_info['semester']:
-                user.semester = student_info['semester']
+            if semester is None and "semester" in student_info and student_info["semester"]:
+                user.semester = student_info["semester"]
                 print(f"Updated semester from PDF: {user.semester}")
-            if school_year is None and 'school_year' in student_info and student_info['school_year']:
-                user.school_year = student_info['school_year']
+            if school_year is None and "school_year" in student_info and student_info["school_year"]:
+                user.school_year = student_info["school_year"]
                 print(f"Updated school_year from PDF: {user.school_year}")
-            if address is None and 'address' in student_info and student_info['address']:
-                user.address = student_info['address']
+            if address is None and "address" in student_info and student_info["address"]:
+                user.address = student_info["address"]
                 print(f"Updated address from PDF: {user.address}")
+
+            # Update student number, first name, last name if found in PDF
+            if "student_number" in student_info and student_info["student_number"]:
+                user.student_number = student_info["student_number"]
+                print(f"Updated student_number from PDF: {user.student_number}")
+            if "name" in student_info and student_info["name"]:
+                # Split name into first and last (very basic, might need improvement)
+                name_parts = student_info["name"].split()
+                if len(name_parts) > 0:
+                    user.first_name = name_parts[0]
+                    print(f"Updated first_name from PDF: {user.first_name}")
+                if len(name_parts) > 1:
+                    user.last_name = name_parts[-1]  # Get the last part
+                    print(f"Updated last_name from PDF: {user.last_name}")
 
         except Exception as e:
             print(f"Error processing registration form: {e}")
@@ -744,7 +773,9 @@ async def update_profile(
             with open(file_path, "wb") as f:
                 f.write(image_content)
             print("Image saved successfully")
-            user.profile_picture = f"/static/images/profile_pictures/{filename}"  # Store relative path
+            user.profile_picture = (
+                f"/static/images/profile_pictures/{filename}"  # Store relative path
+            )
             print(f"Profile picture path set to: {user.profile_picture}")
         except Exception as e:
             print(f"Error saving image: {e}")
@@ -760,7 +791,7 @@ async def update_profile(
         print("Database commit successful")
         print(f"Profile updated successfully. Session after update: {request.session}")
         print(f"User registration form in database: {user.registration_form}")  # <-- ADDED
-        print(f"User profile picture in database: {user.profile_picture}") # <-- ADDED
+        print(f"User profile picture in database: {user.profile_picture}")  # <-- ADDED
     except Exception as e:
         db.rollback()
         print(f"Error updating profile in database: {e}")
