@@ -507,6 +507,11 @@ async def get_upcoming_events_summary(db: Session = Depends(get_db)):
     return [{"title": event.title, "date": event.date.isoformat(), "location": event.location,
              "classification": event.classification} for event in upcoming_events]
 
+def generate_email(first_name: str, last_name: str) -> str:
+    """Generates the email address based on the provided format."""
+    if first_name and last_name:
+        return f"ic.{first_name.lower()}.{last_name.lower()}@cvsu.edu.ph"
+    return None  # Or some default/error value
 
 @app.post("/api/profile/update/")
 async def update_profile(
@@ -514,6 +519,7 @@ async def update_profile(
     student_number: Optional[str] = Form(None),
     first_name: Optional[str] = Form(None),
     last_name: Optional[str] = Form(None),
+    email: Optional[str] = Form(None),
     name: Optional[str] = Form(None),
     address: Optional[str] = Form(None),
     birthdate: Optional[datetime] = Form(None),
@@ -576,6 +582,9 @@ async def update_profile(
     if last_name is not None:
         user.last_name = last_name
         print(f"Updating last_name: {last_name}")
+    if email is not None:
+        user.email = email
+        print(f"Updating email: {email}")
     if name is not None:
         user.name = name
         print(f"Updating name: {name}")
@@ -701,6 +710,10 @@ async def update_profile(
                 if len(name_parts) > 1:
                     user.last_name = name_parts[-1]  # Get the last part
                     print(f"Updated last_name from PDF: {user.last_name}")
+            # Update email if first_name and last_name are available
+            if user.first_name and user.last_name:
+                user.email = generate_email(user.first_name, user.last_name)
+                print(f"Updated email: {user.email}")
 
         except Exception as e:
             print(f"Error processing registration form: {e}")
@@ -784,14 +797,21 @@ async def update_profile(
                 detail=f"Failed to save image: {e}",
             )
 
-    # 5. Commit the changes to the database
+    # 5.  Generate and update email.  <-- Simplified and moved
+    if first_name and last_name:
+        email = generate_email(first_name, last_name)
+        user.email = email
+        print(f"Updating email: {email}")
+
+    # 6. Commit the changes to the database
     try:
         db.commit()
         db.refresh(user)  # Refresh the user object to get the updated values
         print("Database commit successful")
         print(f"Profile updated successfully. Session after update: {request.session}")
-        print(f"User registration form in database: {user.registration_form}")  # <-- ADDED
-        print(f"User profile picture in database: {user.profile_picture}")  # <-- ADDED
+        print(f"User registration form in database: {user.registration_form}")
+        print(f"User profile picture in database: {user.profile_picture}")
+        print(f"User email in database: {user.email}")  # <--- Added this line
     except Exception as e:
         db.rollback()
         print(f"Error updating profile in database: {e}")
@@ -800,5 +820,5 @@ async def update_profile(
             detail=f"Failed to update profile in database: {e}",
         )
 
-    # 6. Return the updated user data
+    # 7. Return the updated user data
     return {"message": "Profile updated successfully", "user": user}

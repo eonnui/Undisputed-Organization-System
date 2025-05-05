@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetForm(form);
         // The student info display is now updated in handleRegistrationFormOnlySuccess
         // if the update was triggered by the registration form submission.
-    
+
         // If this function is called directly after submitting the Student Info form,
         // we need to update the display based on the data received.
         if (data && data.user) {
@@ -272,21 +272,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleRegistrationFormOnlySuccess(data, form) {
         alert('Registration form updated successfully!');
-    
+
         const registrationFormDisplayElement = document.getElementById('registrationFormDisplay');
         const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
         const fileName = registrationFormInput.files[0] ? registrationFormInput.files[0].name : '';
-    
+
         if (registrationFormDisplayElement && fileName) {
             registrationFormDisplayElement.textContent = fileName;
         }
-    
+
         resetForm(form); // Call resetForm AFTER updating the display
-    
+
         if (data.user.verification_status) {
             setRegistrationStatus(data.user.verification_status);
         }
-    
+
         // Immediately update student info display using the data received
         updateStudentInfoDisplay(data.user);
     }
@@ -368,6 +368,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    
-});
 
+});
