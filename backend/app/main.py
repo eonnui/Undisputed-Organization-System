@@ -57,59 +57,249 @@ def generate_secure_filename(original_filename: str) -> str:
     random_prefix = secrets.token_hex(16)  # 32 character hex string
     return f"{random_prefix}{file_extension}"
 
+@router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
+async def admin_post_bulletin(
+        request: Request,
+        title: str = Form(...),
+        content: str = Form(...),
+        category: str = Form(...),
+        is_pinned: Optional[bool] = Form(False),
+        image: Optional[UploadFile] = File(None),
+        db: Session = Depends(get_db),
+):
+    """
+    Handles the submission of new bulletin board posts by admins.
+    """
+    print("Received post request!")
+    print(f"Title: {title}")
+    print(f"Content: {content}")
+    print(f"Category: {category}")
+    print(f"Is Pinned: {is_pinned}")
+    print(f"Image: {image}")
+    print(f"Session Admin ID: {request.session.get('admin_id')}")
+    try:
+        admin_id = request.session.get("admin_id")
+        if not admin_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated as admin",
+            )
+
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Admin user not found",
+            )
+
+        image_path = None
+        if image and image.filename:  # Check if an image was actually uploaded
+            if image.content_type.startswith("image/"):
+                try:
+                    filename = generate_secure_filename(image.filename)
+                    file_path = os.path.join(
+                        "..", "frontend", "static", "images", "bulletin_board", filename
+                    )
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    with open(file_path, "wb") as f:
+                        f.write(await image.read())
+                    image_path = f"/static/images/bulletin_board/{filename}"
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Failed to save image: {e}",
+                    )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid image file type",
+                )
+
+        db_post = models.BulletinBoard(
+            title=title,
+            content=content,
+            category=category,
+            is_pinned=is_pinned,
+            admin_id=admin_id,
+            image_path=image_path,
+        )
+        db.add(db_post)
+        db.commit()
+        db.refresh(db_post)
+
+        return RedirectResponse(url="/admin/bulletin_board",
+                                    status_code=status.HTTP_303_SEE_OTHER)  # Changed redirect
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Error processing post: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error during post creation",
+        )
+
 @router.get("/admin_settings/", response_class=HTMLResponse, name="admin_settings") # Added a trailing slash
-async def admin_settings(request: Request, db: Session = Depends(get_db)):
-    """
-    Retrieves all users from the database and renders the admin settings page,
-    including a list of users.
+async def admin_settings(request: Request):
+   
+    # --- Placeholder Authentication and Authorization ---
+    current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
+    user_role: Optional[str] = request.session.get("user_role")
 
-    Args:
-        request (Request): The incoming request object.
-        db (Session, optional): The database session. Defaults to Depends(get_db).
-
-    Returns:
-        HTMLResponse: The rendered HTML page with the user list.
-    """
-    # Get the current user's data to pre-populate the form
-    current_user_id = request.session.get("user_id") or request.session.get("admin_id")
-    user_role = request.session.get("user_role")
     if not current_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-
     if user_role != "Admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions.  Admin access required.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
     
-    user = db.query(models.User).filter(models.User.id == current_user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Get all users from the database.
-    users: List[models.User] = db.query(models.User).all()  # Fetch all users
-    # print(users) #for debugging
     return templates.TemplateResponse(
         "admin_dashboard/admin_settings.html",
         {
             "request": request,
-            "year": "2025",  #  Keep this, assuming it's a global constant
-            "user": user,
-            "users": users,  # Pass the list of users to the template
+            "year": "2025",  # Keep this, assuming it's a global constant
+          
         },
     )
 
-@router.get("/payments/total-members", response_class=HTMLResponse, name="payments_total_members")
-async def payments_total_members(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/total_members.html", {"request": request, "year": "2025"})
+@router.post("/admin/events/create", name="admin_create_event") # Removed HTMLResponse
+async def admin_create_event(
+    request: Request,
+    title: str = Form(...),
+    classification: str = Form(...),
+    description: str = Form(...),
+    date: str = Form(...),
+    location: str = Form(...),
+    max_participants: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Handles the creation of new events by admins.  Redirects to events list after.
+    """
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated as admin",
+        )
 
+    admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin user not found",
+        )
+
+    try:
+        event_date = datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date format. Please use %Y-%m-%d.",
+        )
+
+    db_event = models.Event(
+        title=title,
+        classification=classification,
+        description=description,
+        date=event_date,
+        location=location,
+        admin_id=admin_id,
+        max_participants=max_participants,
+    )
+    db.add(db_event)
+    db.commit()
+    db.refresh(db_event)
+
+    # Redirect to the events list page after successful creation
+    return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER) #changed
+
+
+# Route to handle event deletion
+@router.post("/admin/events/delete/{event_id}", response_class=HTMLResponse, name="admin_delete_event")
+async def admin_delete_event(
+    request: Request,
+    event_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Handles the deletion of events by admins.
+    """
+    print(f"Deleting event with ID: {event_id}")
+    try:
+        event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Event not found",
+            )
+        print(f"Event found: {event}")
+        db.delete(event)
+        db.commit()
+        print("Event deleted from database")
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting event: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}",
+        )
+    finally:
+        db.close()
+    # Redirect back to the events list page after successful deletion
+    return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/admin/bulletin_board/delete/{post_id}", response_class=HTMLResponse, name="admin_delete_bulletin_post")
+async def admin_delete_bulletin_post(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Handles the deletion of bulletin board posts by admins.
+    """
+    print(f"Deleting bulletin board post with ID: {post_id}")
+    try:
+        # Correct the attribute name here to .post_id
+        post = db.query(models.BulletinBoard).filter(models.BulletinBoard.post_id == post_id).first()
+        if not post:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Post not found",
+            )
+        print(f"Post found: {post}")
+        db.delete(post)
+        db.commit()
+        print("Post deleted from database")
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting post: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}",
+        )
+    finally:
+        db.close()
+    # Redirect back to the bulletin board page after successful deletion
+    return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
+
+@router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
+async def admin_payments(request: Request):
+    return templates.TemplateResponse("admin_dashboard/admin_payments.html", {"request": request, "year": "2025"})
+
+@router.get("/admin/payments/total_members", response_class=HTMLResponse, name="payments_total_members")
+async def payments_total_members(request: Request, db: Session = Depends(get_db)):
+    year = 2025  # Or however you determine the year
+    users = db.query(models.User).all()  # Fetch all users from the database
+    return templates.TemplateResponse(
+        "admin_dashboard/payments/total_members.html",
+        {"request": request, "year": year, "members": users},
+    )
 @router.get("/payments/active-members", response_class=HTMLResponse, name="payments_active_members")
 async def payments_active_members(request: Request):
     return templates.TemplateResponse("admin_dashboard/payments/active_members.html", {"request": request, "year": "2025"})
-
-@router.get("/payments/total-collected", response_class=HTMLResponse, name="payments_total_collected")
-async def payments_total_collected(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/total_collected.html", {"request": request, "year": "2025"})
 
 @router.get("/payments/pending", response_class=HTMLResponse, name="payments_pending")
 async def payments_pending(request: Request):
@@ -127,25 +317,34 @@ async def payments_recent(request: Request):
 async def payments_upcoming_dues(request: Request):
     return templates.TemplateResponse("admin_dashboard/payments/upcoming_dues.html", {"request": request, "year": "2025"})
 
-@router.get("/payments/failed", response_class=HTMLResponse, name="payments_failed")
-async def payments_failed(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/failed.html", {"request": request, "year": "2025"})
-
-@router.get("/payments/new-registrations", response_class=HTMLResponse, name="payments_new_registrations")
-async def payments_new_registrations(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/new_registrations.html", {"request": request, "year": "2025"})
-
-@router.get("/payments/quick-actions", response_class=HTMLResponse, name="payments_quick_actions")
-async def payments_quick_actions(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/quick_actions.html", {"request": request, "year": "2025"})
-
-@router.get("/admin/bulletin_board", response_class=HTMLResponse, name="admin_bulletin_board")
-async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
-    return templates.TemplateResponse("admin_dashboard/admin_bulletin_board.html", {"request": request, "year": "2025"})
+@router.get('/admin/bulletin_board', response_class=HTMLResponse)
+def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
+    """
+    Displays the admin bulletin board page with recent posts.
+    """
+    posts: List[models.BulletinBoard] = db.query(models.BulletinBoard).order_by(
+        models.BulletinBoard.created_at.desc()).all()
+    return templates.TemplateResponse("admin_dashboard/admin_bulletin_board.html", {"request": request, "posts": posts})
 
 @router.get("/admin/events", response_class=HTMLResponse, name="admin_events")
 async def admin_events(request: Request, db: Session = Depends(get_db)):
-    return templates.TemplateResponse("admin_dashboard/admin_events.html", {"request": request, "year": "2025"})
+    """
+    Displays the list of events to the admin.
+    """
+    admin_id = request.session.get("admin_id")  # Get admin ID from the session
+    if not admin_id:
+        return RedirectResponse(url="/admin/login", status_code=status.HTTP_302_FOUND)
+
+    admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+    if not admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Admin user not found"
+        )
+
+    events = db.query(models.Event).all()  # Fetch ALL events from the database
+    return templates.TemplateResponse(
+        "admin_dashboard/admin_events.html", {"request": request, "events": events}  # Pass the events to the template
+    )
 
 @router.get("/admin/financial_statement", response_class=HTMLResponse, name="admin_financial_statement")
 async def admin_financial_statement(request: Request):

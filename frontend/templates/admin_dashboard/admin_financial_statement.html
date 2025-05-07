@@ -3,674 +3,396 @@
 {% block title %}Admin Financial Statement Dashboard{% endblock %}
 
 {% block head %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
-<style>
-    /* Specific styles for the dashboard content */
-    .content {
-        padding: 24px;
-        flex-grow: 1; /* Ensure content takes remaining vertical space */
-    }
-
-    .quick-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-
-    .stat-card {
-        background-color: var(--surface);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
-        padding: 20px;
-        position: relative;
-        overflow: hidden;
-        transition: var(--transition);
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--shadow-lg);
-    }
-
-    .stat-card h3 {
-        font-size: 14px;
-        color: var(--text-secondary);
-        margin-bottom: 14px;
-        font-weight: 500;
-    }
-
-    .stat-card p {
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-
-    .stat-card.positive p {
-        color: var(--success);
-    }
-
-    .stat-card.negative p {
-        color: var(--error);
-    }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 6px;
-        height: 100%;
-        background-color: var(--primary);
-        border-radius: 3px 0 0 3px;
-    }
-
-    .stat-card.positive::before {
-        background-color: var(--success);
-    }
-
-    .stat-card.negative::before {
-        background-color: var(--error);
-    }
-
-    .summary-info {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        margin-bottom: 30px;
-        background-color: var(--surface);
-        padding: 20px;
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
-    }
-
-    .summary-info p {
-        margin: 5px 0;
-        color: var(--text-secondary);
-        font-size: 14px;
-    }
-
-    .summary-info span {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-left: 5px;
-    }
-
-    .toggle-container {
-        margin-bottom: 30px;
-    }
-
-    .toggle-label {
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 12px;
-        display: block;
-    }
-
-    .toggle-buttons {
-        display: flex;
-        background-color: var(--surface);
-        border-radius: var(--radius-lg);
-        padding: 4px;
-        width: fit-content;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-light);
-    }
-
-    .toggle-btn {
-        background: none;
-        border: none;
-        padding: 10px 20px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        border-radius: var(--radius-md);
-        transition: var(--transition);
-        color: var(--text-secondary);
-    }
-
-    .toggle-btn:hover {
-        color: var(--text-primary);
-    }
-
-    .toggle-btn.active {
-        background-color: var(--primary);
-        color: var(--text-light);
-    }
-
-    .report-card {
-        background-color: var(--surface);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
-        margin-bottom: 24px;
-        overflow: hidden;
-        display: none;
-    }
-
-    .report-card.active {
-        display: block;
-        animation: fadeIn 0.3s ease-in-out;
-    }
-
-    .report-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--border-light);
-    }
-
-    .report-header h2 {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 6px;
-    }
-
-    .report-header p {
-        color: var(--text-secondary);
-        font-size: 14px;
-    }
-
-    .report-body {
-        padding: 20px 24px;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    th, td {
-        padding: 12px 16px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-light);
-        font-size: 14px;
-    }
-
-    th {
-        font-weight: 600;
-        color: var(--text-primary);
-        background-color: var(--secondary);
-    }
-
-    td {
-        color: var(--text-secondary);
-    }
-
-    tfoot th, tfoot td {
-        border-top: 2px solid var(--border-medium);
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .amount {
-        text-align: right;
-        font-family: monospace;
-        font-size: 14px;
-    }
-
-    .inflows-row td,
-    .outflows-row td {
-        background-color: var(--primary-light);
-        color: var(--text-light);
-        font-weight: 600;
-        padding: 10px 16px;
-    }
-
-    .view-detail-link {
-        display: inline-flex;
-        align-items: center;
-        margin-top: 20px;
-        background-color: var(--primary);
-        color: var(--text-light);
-        padding: 10px 20px;
-        border-radius: var(--radius-md);
-        text-decoration: none;
-        font-weight: 500;
-        transition: var(--transition);
-        box-shadow: var(--shadow-sm);
-        gap: 8px;
-    }
-
-    .view-detail-link:hover {
-        background-color: var(--primary-hover);
-        box-shadow: var(--shadow-md);
-    }
-
-    .monthly-toggles {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-
-    .monthly-toggles button {
-        background-color: var(--surface);
-        border: 1px solid var(--border-light);
-        color: var(--text-secondary);
-        padding: 8px 16px;
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        font-weight: 500;
-        transition: var(--transition);
-    }
-
-    .monthly-toggles button:hover {
-        border-color: var(--primary-light);
-        color: var(--primary);
-    }
-
-    .monthly-toggles button.active {
-        background-color: var(--primary);
-        color: var(--text-light);
-        border-color: var(--primary);
-    }
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="content">
-    <section id="dashboard" class="section active">
-        <h1>Financial Statement Dashboard</h1>
+<div class="dashboard-container">
+  <h2 class="dashboard-header">Admin Financial Statement Dashboard</h2>
 
-        <div class="quick-stats">
-            <div class="stat-card">
-                <h3>Current Balance</h3>
-                <p>₱35,929.00</p>
-            </div>
-            <div class="stat-card positive">
-                <h3>Total Revenue</h3>
-                <p>₱57,657.00</p>
-            </div>
-            <div class="stat-card negative">
-                <h3>Total Expenses</h3>
-                <p>₱51,077.50</p>
-            </div>
-            <div class="stat-card">
-                <h3>Net Income</h3>
-                <p>₱6,579.50</p>
-            </div>
-        </div>
+  <div class="quick-stats-container">
+    <div class="stat-card">
+      <h3>Total Current Balance</h3>
+      <p>₱[Total Current Balance]</p>
+    </div>
+    <div class="stat-card">
+      <h3>Total Revenue (YTD)</h3>
+      <p>₱[Total Revenue YTD]</p>
+    </div>
+    <div class="stat-card">
+      <h3>Total Expenses (YTD)</h3>
+      <p>₱[Total Expenses YTD]</p>
+    </div>
+    <div class="stat-card">
+      <h3>Net Income (YTD)</h3>
+      <p>₱[Net Income YTD]</p>
+    </div>
+  </div>
 
-        <div class="summary-info">
-            <p>Total Balance Turnover: <span id="total-turnover">₱57,657.00</span></p>
-            <p>Current Balance: <span id="current-balance">₱35,929.00</span></p>
-            <p>Current Date: <span id="current-date">April 12, 2025</span></p>
-        </div>
+  <div class="summary-info-container">
+    <p><strong>Overall Balance Turnover:</strong> ₱[Balance Turnover]</p>
+    <p><strong>Total Funds Available:</strong> ₱[Total Funds Available]</p>
+    <p><strong>Reporting Date:</strong> [Reporting Date]</p>
+  </div>
 
-        <div class="toggle-container">
-            <span class="toggle-label">Quick View:</span>
-            <div class="toggle-buttons">
-                <button id="toggle-revenues" class="toggle-btn active" onclick="toggleDashboardView('revenues')">Revenues</button>
-                <button id="toggle-expenses" class="toggle-btn" onclick="toggleDashboardView('expenses')">Expenses</button>
-                <button id="toggle-summary" class="toggle-btn" onclick="toggleDashboardView('summary')">Summary</button>
-                <button id="toggle-monthly" class="toggle-btn" onclick="toggleDashboardView('monthly')">Monthly</button>
-            </div>
-        </div>
+  <div class="report-toggle-container">
+    <span class="report-toggle-label">Quick View:</span>
+    <div class="report-toggle-buttons">
+      <button class="report-toggle-button active" onclick="toggleView('overview')">Overview</button>
+      <button class="report-toggle-button" onclick="toggleView('revenues')">Revenues</button>
+      <button class="report-toggle-button" onclick="toggleView('expenses')">Expenses</button>
+      <button class="report-toggle-button" onclick="toggleView('monthly')">Monthly</button>
+      <button class="report-toggle-button" onclick="toggleView('accounts')">Accounts</button>
+    </div>
+  </div>
 
-        <div id="dashboard-revenues" class="report-card active">
-            <div class="report-header">
-                <h2>Statement of Revenues</h2>
-                <p>September 2023 - January 2024</p>
-            </div>
-            <div class="report-body">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Revenue Source</th>
-                            <th class="amount">Amount (₱)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Membership Fee Collection</td>
-                            <td class="amount">22,756.00</td>
-                        </tr>
-                        <tr>
-                            <td>IGP Org Shirt</td>
-                            <td class="amount">28,280.00</td>
-                        </tr>
-                        <tr>
-                            <td>IGP Foundation Day</td>
-                            <td class="amount">2,606.00</td>
-                        </tr>
-                        <tr>
-                            <td>IGP CS Advance</td>
-                            <td class="amount">4,015.00</td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th>TOTAL REVENUES:</th>
-                            <th class="amount">57,657.00</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+  <div id="overview" class="report-card active">
+    <div class="report-header">
+      <h2>Financial Overview</h2>
+      <p>Key Financial Indicators</p>
+    </div>
+    <div class="report-body">
+      <div class="overview-charts-container">
+        <div class="chart-container">
+          <h3>Revenue vs. Expenses (YTD)</h3>
+          <canvas id="revenue-expense-chart" class="chart-canvas" ></canvas>
         </div>
+        <div class="chart-container">
+          <h3>Net Income Trend (Last 12 Months)</h3>
+          <canvas id="net-income-trend-chart" class="chart-canvas" ></canvas>
+        </div>
+      </div>
+      <div class="key-metrics-container">
+        <div class="metric-card">
+          <h4>Top Revenue Source</h4>
+          <p>[Highest Revenue Source] (₱[Highest Revenue Amount])</p>
+        </div>
+        <div class="metric-card">
+          <h4>Largest Expense</h4>
+          <p>[Largest Expense Category] (₱[Largest Expense Amount])</p>
+        </div>
+        <div class="metric-card">
+          <h4>Profit Margin (YTD)</h4>
+          <p>[Profit Margin YTD]%</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <div id="dashboard-expenses" class="report-card">
-            <div class="report-header">
-                <h2>Statement of Expenses</h2>
-                <p>September 2023 - January 2024</p>
-            </div>
-            <div class="report-body">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Expense Category</th>
-                            <th class="amount">Amount (₱)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Food</td>
-                            <td class="amount">4,936.50</td>
-                        </tr>
-                        <tr>
-                            <td>Supplies</td>
-                            <td class="amount">4,530.00</td>
-                        </tr>
-                        <tr>
-                            <td>Transportation</td>
-                            <td class="amount">1,275.00</td>
-                        </tr>
-                        <tr>
-                            <td>Rent</td>
-                            <td class="amount">715.00</td>
-                        </tr>
-                        <tr>
-                            <td>Representation</td>
-                            <td class="amount">36,281.00</td>
-                        </tr>
-                        <tr>
-                            <td>Miscellaneous</td>
-                            <td class="amount">1,240.00</td>
-                        </tr>
-                        <tr>
-                            <td>Token</td>
-                            <td class="amount">2,100.00</td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th>TOTAL EXPENSES:</th>
-                            <th class="amount">51,077.50</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
+  <div id="revenues" class="report-card">
+    <div class="report-header">
+      <h2>Revenue Breakdown</h2>
+      <p>Detailed Income Sources</p>
+    </div>
+    <div class="report-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Amount (₱)</th>
+            <th>Trend</th>
+            <th>% of Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[Revenue Source 1]</td>
+            <td class="amount">₱[Revenue 1 Amount]</td>
+            <td><span class="trend">[Revenue 1 Trend]</span></td>
+            <td>[Revenue 1 Percentage]%</td>
+          </tr>
+          <tr>
+            <td>[Revenue Source 2]</td>
+            <td class="amount">₱[Revenue 2 Amount]</td>
+            <td><span class="trend">[Revenue 2 Trend]</span></td>
+            <td>[Revenue 2 Percentage]%</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Total Revenue:</th>
+            <th class="amount">₱[Total Revenue YTD]</th>
+            <th></th>
+            <th>100%</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
 
-        <div id="dashboard-summary" class="report-card">
-            <div class="report-header">
-                <h2>Financial Summary</h2>
-                <p>September 2023 - January 2024</p>
-            </div>
-            <div class="report-body">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Event/IGP</th>
-                            <th class="amount">INFLOWS (₱)</th>
-                            <th class="amount">OUTFLOWS (₱)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Turnover Balance</td>
-                            <td class="amount">18,387.00</td>
-                            <td class="amount">--</td>
-                        </tr>
-                        <tr>
-                            <td>Table and Bulletin Design</td>
-                            <td class="amount">--</td>
-                            <td class="amount">1,013.00</td>
-                        </tr>
-                        <tr>
-                            <td>Organization Shirt</td>
-                            <td class="amount">28,280.00</td>
-                            <td class="amount">24,230.00</td>
-                        </tr>
-                        <tr>
-                            <td>1st Semester Membership Collection</td>
-                            <td class="amount">22,756.00</td>
-                            <td class="amount">--</td>
-                        </tr>
-                        <tr>
-                            <td>Student Leadership Training Program</td>
-                            <td class="amount">--</td>
-                            <td class="amount">540.00</td>
-                        </tr>
-                        <tr>
-                            <td>Local Sportsfest</td>
-                            <td class="amount">--</td>
-                            <td class="amount">6,935.50</td>
-                        </tr>
-                        <tr>
-                            <td>Film and Fair</td>
-                            <td class="amount">--</td>
-                            <td class="amount">8,709.00</td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th>TOTALS:</th>
-                            <th class="amount">69,423.00</th>
-                            <th class="amount">41,427.50</th>
-                        </tr>
-                        <tr>
-                            <th>NET BALANCE:</th>
-                            <th class="amount" colspan="2">35,929.00</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
+  <div id="expenses" class="report-card">
+    <div class="report-header">
+      <h2>Expense Breakdown</h2>
+      <p>Detailed Expenditures</p>
+    </div>
+    <div class="report-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Amount (₱)</th>
+            <th>Trend</th>
+            <th>% of Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[Expense Category 1]</td>
+            <td class="amount">₱[Expense 1 Amount]</td>
+            <td><span class="trend">[Expense 1 Trend]</span></td>
+            <td>[Expense 1 Percentage]%</td>
+          </tr>
+          <tr>
+            <td>[Expense Category 2]</td>
+            <td class="amount">₱[Expense 2 Amount]</td>
+            <td><span class="trend">[Expense 2 Trend]</span></td>
+            <td>[Expense 2 Percentage]%</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Total Expenses:</th>
+            <th class="amount">₱[Total Expenses YTD]</th>
+            <th></th>
+            <th>100%</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
 
-        <div id="dashboard-monthly" class="report-card">
-            <div class="report-header">
-                <h2>Monthly Cash Flow Overview</h2>
-                <p>Annual Overview (2023-2024)</p>
-            </div>
-            <div class="report-body">
-                <div class="monthly-toggles">
-                    <button class="active" onclick="showMonthlyData('january')">January</button>
-                    <button onclick="showMonthlyData('february')">February</button>
-                    <button onclick="showMonthlyData('march')">March</button>
-                    <button onclick="showMonthlyData('april')">April</button>
-                    <button onclick="showMonthlyData('may')">May</button>
-                    <button onclick="showMonthlyData('june')">June</button>
-                    <button onclick="showMonthlyData('july')">July</button>
-                    <button onclick="showMonthlyData('august')">August</button>
-                    <button onclick="showMonthlyData('september')">September</button>
-                    <button onclick="showMonthlyData('october')">October</button>
-                    <button onclick="showMonthlyData('november')">November</button>
-                    <button onclick="showMonthlyData('december')">December</button>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Amount (₱)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="monthly-data-table">
-                        <tr class="inflows-row">
-                            <td>Starting Balance</td>
-                            <td class="amount">35,929.00</td>
-                        </tr>
-                        <tr class="outflows-row">
-                            <td>Ending Balance</td>
-                            <td class="amount">--</td>
-                        </tr>
-                        </tbody>
-                </table>
-                <a href="#" class="view-detail-link">
-                    <span class="material-symbols-outlined">visibility</span>
-                    View Detailed Monthly Report
-                </a>
-            </div>
-        </div>
-    </section>
+  <div id="monthly" class="report-card">
+    <div class="report-header">
+      <h2>Monthly Summary</h2>
+      <p>Income and Expenses by Month</p>
+    </div>
+    <div class="report-body">
+      <div class="monthly-summary-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Revenue (₱)</th>
+              <th>Expenses (₱)</th>
+              <th>Net Income (₱)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>January</td>
+              <td class="amount positive">₱[January Revenue]</td>
+              <td class="amount negative">₱[January Expenses]</td>
+              <td class="amount [January Net Income Class]">₱[January Net Income]</td>
+            </tr>
+            <tr>
+              <td>February</td>
+              <td class="amount positive">₱[February Revenue]</td>
+              <td class="amount negative">₱[February Expenses]</td>
+              <td class="amount [February Net Income Class]">₱[February Net Income]</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Year Total:</th>
+              <th class="amount positive">₱[Total Revenue YTD]</th>
+              <th class="amount negative">₱[Total Expenses YTD]</th>
+              <th class="amount [Net Income YTD Class]">₱[Net Income YTD]</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="accounts" class="report-card">
+    <div class="report-header">
+      <h2>Account Balances</h2>
+      <p>Current Balances in All Accounts</p>
+    </div>
+    <div class="report-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Balance (₱)</th>
+            <th>Last Transaction</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[Account Name 1]</td>
+            <td class="amount">₱[Account 1 Balance]</td>
+            <td>[Account 1 Last Transaction]</td>
+            <td class="[Account 1 Status Lowercase]">[Account 1 Status]</td>
+          </tr>
+          <tr>
+            <td>[Account Name 2]</td>
+            <td class="amount">₱[Account 2 Balance]</td>
+            <td>[Account 2 Last Transaction]</td>
+            <td class="[Account 2 Status Lowercase]">[Account 2 Status]</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Total Balance:</th>
+            <th class="amount">₱[Total Current Balance]</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    let lastActiveMonth = 'january'; // Store the last active month
+  function toggleView(viewId) {
+    const reportCards = document.querySelectorAll('.report-card');
+    const toggleButtons = document.querySelectorAll('.report-toggle-button');
 
-    function toggleDashboardView(viewId) {
-        console.log('toggleDashboardView called with:', viewId);
-        const reportCards = document.querySelectorAll('.report-card');
-        const toggleButtons = document.querySelectorAll('.toggle-btn');
-        const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
-
-        reportCards.forEach(card => {
-            card.classList.remove('active');
-            if (card.id === `dashboard-${viewId}`) {
-                card.classList.add('active');
-                console.log('dashboard-monthly is now active');
-                if (viewId === 'monthly') {
-                    console.log('Calling showMonthlyData with lastActiveMonth:', lastActiveMonth);
-                    showMonthlyData(lastActiveMonth);
-
-                    // Ensure the correct monthly button has the active class when switching back
-                    monthlyButtons.forEach(button => {
-                        button.classList.remove('active');
-                        if (button.textContent.toLowerCase() === lastActiveMonth) {
-                            button.classList.add('active');
-                        }
-                    });
-                }
-            }
-        });
-
-        toggleButtons.forEach(button => {
-            button.classList.remove('active');
-            if (button.id === `toggle-${viewId}`) {
-                button.classList.add('active');
-            }
-        });
-    }
-
-    function showMonthlyData(month) {
-        console.log('showMonthlyData called for:', month);
-        lastActiveMonth = month; // Update the last active month
-
-        const monthlyDataTable = document.getElementById('monthly-data-table');
-        if (!monthlyDataTable) {
-            console.error('monthly-data-table element not found!');
-            return;
-        }
-        monthlyDataTable.innerHTML = ''; // Clear previous data
-
-        // Dummy data - replace with actual data fetching
-        let startingBalance = 35929.00;
-        let inflows = 0;
-        let outflows = 0;
-
-        switch (month.toLowerCase()) {
-            case 'january':
-                inflows = 12500.00;
-                outflows = 8200.00;
-                break;
-            case 'february':
-                inflows = 9800.00;
-                outflows = 11500.00;
-                break;
-            case 'march':
-                inflows = 15200.00;
-                outflows = 7800.00;
-                break;
-            case 'april':
-                inflows = 11000.00;
-                outflows = 9500.00;
-                break;
-            case 'may':
-                inflows = 13000.00;
-                outflows = 8800.00;
-                break;
-            case 'june':
-                inflows = 16000.00;
-                outflows = 10500.00;
-                break;
-            case 'july':
-                inflows = 10500.00;
-                outflows = 7200.00;
-                break;
-            case 'august':
-                inflows = 14200.00;
-                outflows = 9100.00;
-                break;
-            case 'september':
-                inflows = 11800.00;
-                outflows = 8500.00;
-                break;
-            case 'october':
-                inflows = 12800.00;
-                outflows = 10200.00;
-                break;
-            case 'november':
-                inflows = 9500.00;
-                outflows = 7800.00;
-                break;
-            case 'december':
-                inflows = 15500.00;
-                outflows = 11200.00;
-                break;
-            default:
-                inflows = 0.00;
-                outflows = 0.00;
-                break;
-        }
-
-        let endingBalance = startingBalance + inflows - outflows;
-
-        let startingBalanceRow = monthlyDataTable.insertRow();
-        let startingBalanceCellLabel = startingBalanceRow.insertCell();
-        let startingBalanceCellAmount = startingBalanceRow.insertCell();
-        startingBalanceCellLabel.textContent = 'Starting Balance';
-        startingBalanceCellAmount.textContent = `₱${startingBalance.toFixed(2)}`;
-        startingBalanceCellAmount.classList.add('amount');
-
-        let inflowsRow = monthlyDataTable.insertRow();
-        let inflowsCellLabel = inflowsRow.insertCell();
-        let inflowsCellAmount = inflowsRow.insertCell();
-        inflowsCellLabel.textContent = 'Total Inflows';
-        inflowsCellAmount.textContent = `₱${inflows.toFixed(2)}`;
-        inflowsCellAmount.classList.add('amount');
-
-        let outflowsRow = monthlyDataTable.insertRow();
-        let outflowsCellLabel = outflowsRow.insertCell();
-        let outflowsCellAmount = outflowsRow.insertCell();
-        outflowsCellLabel.textContent = 'Total Outflows';
-        outflowsCellAmount.textContent = `₱${outflows.toFixed(2)}`;
-        outflowsCellAmount.classList.add('amount');
-
-        let endingBalanceRow = monthlyDataTable.insertRow();
-        let endingBalanceCellLabel = endingBalanceRow.insertCell();
-        let endingBalanceCellAmount = endingBalanceRow.insertCell();
-        endingBalanceCellLabel.textContent = 'Ending Balance';
-        endingBalanceCellAmount.textContent = `₱${endingBalance.toFixed(2)}`;
-        endingBalanceCellAmount.classList.add('amount');
-        endingBalanceRow.classList.add('outflows-row'); // Use outflows-row for styling the ending balance
-    }
-
-    // Add event listeners to the month buttons
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOMContentLoaded event fired');
-        const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
-        monthlyButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Remove active class from other buttons
-                monthlyButtons.forEach(btn => btn.classList.remove('active'));
-                // Add active class to the clicked button
-                this.classList.add('active');
-                showMonthlyData(this.textContent.toLowerCase());
-            });
-        });
-
-        showMonthlyData(lastActiveMonth); // Initialize with the default active month
+    reportCards.forEach(card => {
+      card.classList.remove('active');
+      if (card.id === viewId) {
+        card.classList.add('active');
+      }
     });
+
+    toggleButtons.forEach(button => {
+      button.classList.remove('active');
+      if (button.textContent.toLowerCase().includes(viewId)) {
+        button.classList.add('active');
+      }
+    });
+
+    // --- Initialize Charts (Conceptual) ---
+    if (viewId === 'overview') {
+      //  Replace this with your actual chart rendering code using Chart.js
+      //  Example (Conceptual):
+      const revenueExpenseCtx = document.getElementById('revenue-expense-chart');
+      if (revenueExpenseCtx) {
+        new Chart(revenueExpenseCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Revenue', 'Expenses'],
+            datasets: [{
+              label: 'Year-to-Date (₱)',
+              data: [1000000, 750000], // Example Data
+              backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: 'rgba(0, 0, 0, 0.1)', // Light grid lines
+                  lineWidth: 0.5
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                }}
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: 'rgba(0, 0, 0, 0.8)',
+                borderWidth: 1,
+                animationDuration: 200
+              }
+            },
+            animation: {
+              duration: 1000,
+              easing: 'easeInOutQuart'
+            }
+          }
+        });
+      }
+
+      const netIncomeCtx = document.getElementById('net-income-trend-chart');
+      if (netIncomeCtx) {
+        new Chart(netIncomeCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+              label: 'Net Income (₱)',
+              data: [50000, 60000, 70000, 80000, 90000, 100000, 110000, 120000, 130000, 140000, 150000, 160000], // Example Data
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 3,
+              fill: false,
+              pointRadius: 6,
+              pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+              pointHoverRadius: 8,
+              pointHoverBackgroundColor: 'rgba(75, 192, 192, 1)',
+              tension: 0.4, // Add some curve
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: 'rgba(0, 0, 0, 0.1)',
+                  lineWidth: 0.5
+                },
+              },
+              x: {
+                grid: {
+                  color: 'rgba(0, 0, 0, 0.1)',
+                  lineWidth: 0.5
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'bottom'
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: 'rgba(0, 0, 0, 0.8)',
+                borderWidth: 1,
+                animationDuration: 200,
+                yAlign: 'bottom',
+                intersect: false
+              }
+            },
+            animation: {
+              duration: 1200,
+              easing: 'easeInOutCubic'
+            },
+            elements: {
+              line: {
+                capStyle: 'round',
+                joinStyle: 'round',
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+
+  // Initially show the overview
+  document.addEventListener('DOMContentLoaded', function () {
+    toggleView('overview');
+  });
 </script>
 {% endblock %}

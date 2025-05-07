@@ -3,92 +3,97 @@
 {% block title %}Admin Events{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
-<style>
-    /* Existing styles */
-    .event-actions {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-top: 10px;
-    }
-
-    .join-button, .leave-button, .full-button {
-        border: none;
-        padding: 8px 15px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.9em;
-    }
-
-    .join-button {
-        background-color: #4CAF50; /* Green join button */
-        color: white;
-    }
-
-    .join-button:hover {
-        background-color: #45a049;
-    }
-
-    .leave-button {
-        background-color: #f44336; /* Red leave button */
-        color: white;
-    }
-
-    .leave-button:hover {
-        background-color: #d32f2f;
-    }
-
-    .full-button {
-        background-color: #ccc; /* Grey full button */
-        color: #555;
-        cursor: not-allowed;
-    }
-
-    .participants-count {
-        font-size: 0.9em;
-        color: #777;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="events-page">
-    <h1 class="events-title">Upcoming Events</h1>
-    <div class="events-container">
-        {% if events %}
-            {% for event in events %}
-                <div class="event-card">
-                    <span class="event-tag tag-{{ event.classification|lower }}">{{ event.classification }}</span>
-                    <h3 class="event-title">{{ event.title }}</h3>
-                    <div class="event-meta">
-                        <span><i style="font-style: normal;">Date:</i> {{ event.date.strftime('%B %d, %Y') }}</span>
-                        <span><i style="font-style: normal;">Time:</i> {{ event.date.strftime('%I:%M %p') }}</span>
-                        <span><i style="font-style: normal;">Location:</i> {{ event.location }}</span>
-                    </div>
-                    <p class="event-description">{{ event.description }}</p>
-                    <div class="event-actions">
-                        {% if event.joined_count() >= event.max_participants %}
-                            <button class="full-button" disabled>Full</button>
-                        {% elif current_user_id in event.participant_ids %}
-                            <form action="{{ url_for('leave_event', event_id=event.event_id) }}" method="post">
-                                <button class="leave-button" type="submit">Leave</button>
-                            </form>
-                        {% else %}
-                            <form action="{{ url_for('join_event', event_id=event.event_id) }}" method="post">
-                                <button class="join-button" type="submit">Join</button>
-                            </form>
-                        {% endif %}
-                        <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
-                    </div>
+<div class="events-page-container">
+    <h2 class="events-header">Events</h2>
+    <div class="create-event-container">
+        <div class="create-event-header">
+            <input type="text" class="create-event-input" placeholder="What's the event about?"
+                onclick="this.style.display='none'; document.querySelector('.create-event-form-fields').style.display='block'; document.querySelector('.back-to-events').style.display='block';">
+        </div>
+
+        <form action="{{ url_for('admin_create_event') }}" method="post" class="create-event-form-fields">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required><br>
+
+            <label for="classification">Classification:</label>
+            <input type="text" id="classification" name="classification"><br>
+
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="3"></textarea><br>
+
+            <div class="form-row">
+                <div>
+                    <label for="date">Date (YYYY-MM-DD):</label>
+                    <input type="date" id="date" name="date" required>
                 </div>
-            {% endfor %}
-        {% else %}
-            <p>No upcoming events at the moment.</p>
-        {% endif %}
+                <div>
+                    <label for="location">Location:</label>
+                    <input type="text" id="location" name="location" required>
+                </div>
+                <div>
+                    <label for="max_participants">Max Participants:</label>
+                    <input type="number" id="max_participants" name="max_participants" required>
+                </div>
+            </div>
+
+            <button type="submit" class="create-event-submit-button">Create Event</button>
+        </form>
     </div>
+
+    <a href="{{ url_for('admin_events') }}" class="back-to-events">Back to Events</a>
+
+    <h2 class="existing-events-title">Current Events</h2>
+    {% if events %}
+    {% for event in events %}
+    <div class="event-card">
+        <div class="event-header">
+            <h3 class="event-title">{{ event.title }}</h3>
+            <span class="event-tag tag-{{ event.classification|lower }}">{{ event.classification }}</span>
+        </div>
+        <div class="event-meta">
+            <span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') }}</span>
+            <span><i>Time:</i> {{ event.date.strftime('%I:%M %p') }}</span>
+            <span><i>Location:</i> {{ event.location }}</span>
+        </div>
+        <p class="event-description">{{ event.description }}</p>
+        <div class="event-actions">
+            <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
+            <form action="{{ url_for('admin_delete_event', event_id=event.event_id) }}" method="post">
+                <button class="delete-button" type="submit">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No current events.</p>
+    {% endif %}
 </div>
+
+<script>
+    /* JavaScript for toggling the create event form */
+    const createEventInput = document.querySelector('.create-event-input');
+    const createEventForm = document.querySelector('.create-event-form-fields');
+    const backToEventsLink = document.querySelector('.back-to-events');
+
+    if (createEventInput) {
+        createEventInput.addEventListener('click', function () {
+            this.style.display = 'none';
+            createEventForm.style.display = 'block';
+            backToEventsLink.style.display = 'block';
+        });
+    }
+
+    if (backToEventsLink) {
+        backToEventsLink.addEventListener('click', function (event) {
+            event.preventDefault();
+            createEventInput.style.display = 'block';
+            createEventForm.style.display = 'none';
+            this.style.display = 'none';
+        });
+    }
+</script>
 {% endblock %}

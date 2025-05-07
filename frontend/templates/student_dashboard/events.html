@@ -4,55 +4,6 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
-<style>
-    /* Existing styles */
-    .event-actions {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-top: 10px;
-    }
-
-    .join-button, .leave-button, .full-button {
-        border: none;
-        padding: 8px 15px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.9em;
-    }
-
-    .join-button {
-        background-color: #4CAF50; /* Green join button */
-        color: white;
-    }
-
-    .join-button:hover {
-        background-color: #45a049;
-    }
-
-    .leave-button {
-        background-color: #f44336; /* Red leave button */
-        color: white;
-    }
-
-    .leave-button:hover {
-        background-color: #d32f2f;
-    }
-
-    .full-button {
-        background-color: #ccc; /* Grey full button */
-        color: #555;
-        cursor: not-allowed;
-    }
-
-    .participants-count {
-        font-size: 0.9em;
-        color: #777;
-    }
-</style>
 {% endblock %}
 
 {% block content %}

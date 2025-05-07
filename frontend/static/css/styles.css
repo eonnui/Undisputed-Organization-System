@@ -1,49 +1,87 @@
-/* Sleek, Modern, and Polished Styling with Custom Dropdown Arrow (Corrected) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
 
 :root {
-    --bg-color: #f3f4f6; /* Very light gray background */
-    --card-bg: #ffffff; /* White card background */
-    --text-primary: #1e293b; /* Dark, readable text */
-    --text-secondary: #4b5563; /* Medium gray secondary text */
-    --primary-color: #4e5d78; /* Inspired by Gentleman's Gray */
-    --primary-hover: #3a475e; /* Darker shade for hover */
-    --border-color: #d1d5db; /* Light gray border */
-    --focus-color: #63b3ed; /* Light blue focus ring */
-    --error-color: #dc2626; /* Clear red error */
-    --success-color: #16a34a; /* Clean green success */
-    --info-color: #0ea5e9; /* Bright blue info */
+    --bg-color: #f3f4f6;
+    --card-bg: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #4b5563;
+    --primary-color: #4e5d78;
+    --border-color: #d1d5db;
+    --focus-color: #63b3ed;
+    --error-color: #dc2626;
+    --success-color: #16a34a;
+    --info-color: #0ea5e9;
+    --animation-duration: 0.3s; /* Shortened animation duration */
 }
 
 body {
     margin: 0;
-    font-family: 'Inter', sans-serif; /* Use Inter font */
+    font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg-color);
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* Ensure full viewport height */
+    min-height: 100vh;
+    /* Gradient background animation */
+    background-image: linear-gradient(to bottom, #f3f4f6, #d9dee7);
+    background-size: 200% 200%;
+    animation: gradientAnimation 3s ease infinite;
+}
+
+@keyframes gradientAnimation {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 .wrapper {
     background-color: var(--card-bg);
-    border-radius: 0.75rem; /* Soft rounded corners */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Modern shadow */
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     padding: 2rem 2.5rem;
     width: 100%;
-    max-width: 400px; /* Limit width for readability */
+    max-width: 400px;
 }
 
 h1 {
-    font-family: 'Poppins', sans-serif; /* Use Poppins for headings */
+    font-family: 'Poppins', sans-serif;
     font-weight: 700;
     font-size: 2rem;
     color: var(--text-primary);
     text-align: center;
     margin-bottom: 1.5rem;
+    animation: fadeIn 1s ease, pulse 2s infinite alternate;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.04); /*Subtle pulse*/
+    }
 }
 
 .notification {
@@ -73,12 +111,25 @@ h1 {
 .notification.show {
     opacity: 1;
     top: 2.5rem;
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-50%) translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
 }
 
 .form {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem; /* Spacing between form elements */
+    gap: 1.25rem;
 }
 
 .input-group {
@@ -100,8 +151,15 @@ input {
     font-size: 1rem;
     color: var(--text-primary);
     background-color: #ffffff;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, transform var(--animation-duration) ease;
     font-family: 'Inter', sans-serif;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
+    transform: scale(1.02); /*Subtle scale*/
 }
 
 .password-input-wrapper {
@@ -111,7 +169,7 @@ input {
 }
 
 .password-input-wrapper input {
-    padding-right: 3rem; /* Space for the view password button */
+    padding-right: 3rem;
 }
 
 .view-password-button {
@@ -125,11 +183,14 @@ input {
     font-weight: 500;
     padding: 0.5rem;
     outline: none;
+    transition: color var(--animation-duration) ease;
 }
 
 .view-password-button:hover {
     color: var(--primary-color);
+    opacity: 0.7; /* Further reduced opacity */
 }
+
 
 select {
     padding: 0.8rem;
@@ -138,37 +199,34 @@ select {
     font-size: 1rem;
     color: var(--text-primary);
     background-color: #ffffff;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, transform var(--animation-duration) ease;
     font-family: 'Inter', sans-serif;
     width: 100%;
-    /* Remove background image for default arrow */
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    /* Add padding to the right to make space for the custom arrow */
     padding-right: 2.5rem;
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
-    background-size: 0.75rem; /* Adjust size as needed */
-    /* Using a CSS generated arrow as a background image */
+    background-size: 0.75rem;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%234b5563'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd' /%3E%3C/svg%3E");
 }
 
-input:focus, select:focus {
+select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25); /* Subtle focus ring in primary color */
+    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
+    transform: scale(1.02); /*Subtle scale*/
 }
 
 .select-wrapper {
     position: relative;
-    width: 100%; /* Make the select-wrapper take full width */
+    width: 100%;
 }
 
-/* Remove the custom arrow (if you still have this) */
 .select-wrapper::after {
     content: "";
-    display: none; /* Hide the custom arrow */
+    display: none;
 }
 
 button {
@@ -180,29 +238,20 @@ button {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: transform var(--animation-duration) ease, box-shadow 0.2s ease; /*Removed background-color*/
     font-family: 'Inter', sans-serif;
-    /* Add position relative to the button */
     position: relative;
-    overflow: hidden; /* Clip any overflowing content during transition */
+    overflow: hidden;
 }
 
-button::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--primary-hover);
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    z-index: -1; /* Place the hover effect behind the text */
+
+
+button:hover {
+    transform: translateY(-2px) scale(1.04); /* Reduced scale and translateY */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Even more subtle shadow */
 }
 
-button:hover::before {
-    opacity: 1;
-}
+
 
 .forgot-password {
     background: none;
@@ -215,13 +264,14 @@ button:hover::before {
     padding: 0;
     margin-top: 0.5rem;
     text-align: right;
-    /* Adjust width to be inline-block to only take necessary space */
     display: inline-block;
+    transition: color var(--animation-duration) ease, opacity var(--animation-duration) ease; /* Added opacity */
 }
 
 .forgot-password:hover {
-    color: var(--primary-hover);
+    color: var(--primary-color);
     text-decoration: none;
+    opacity: 0.7; /* Further reduced opacity */
 }
 
 .form-switch {
@@ -240,17 +290,20 @@ button:hover::before {
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0;
+    transition: color var(--animation-duration) ease, opacity 0.3s ease; /* Added opacity */
 }
 
 .link-button:hover {
-    color: var(--primary-hover);
+    color: var(--primary-color);
     text-decoration: none;
+    opacity: 0.7; /* Further reduced opacity */
 }
 
 .error-message {
     color: var(--error-color);
     font-size: 0.8rem;
     margin-top: 0.25rem;
+    animation: fadeIn 0.5s ease;
 }
 
 .password-requirements {
@@ -258,3 +311,7 @@ button:hover::before {
     color: var(--text-secondary);
     margin-top: 0.25rem;
 }
+
+/* Corrected student_dashboard.css */
+
+/* Removed empty rulesets */

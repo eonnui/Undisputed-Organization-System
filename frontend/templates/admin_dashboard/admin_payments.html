@@ -1,0 +1,218 @@
+{% extends 'admin_base.html' %}
+{% block title %}Admin Payments{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+{% endblock %}
+
+{% block content %}
+<div class="payments-page-container">
+    <h2 class="payments-header">Membership and Payments</h2>
+    <div class="header-actions">
+        <a href="#" class="view-history-link">
+            <span class="material-symbols-outlined">history</span>
+            <span>View Payment History</span>
+        </a>
+    </div>
+    <div class="membership-payments-grid">
+        <a href="{{ url_for('payments_overdue') }}" class="payment-link-card">
+            <span class="material-symbols-outlined">event_busy</span>
+            <span>Overdue Payments</span>
+        </a>
+        <a href="{{ url_for('payments_recent') }}" class="payment-link-card">
+            <span class="material-symbols-outlined">history</span>
+            <span>Recent Payments</span>
+        </a>
+        <a href="{{ url_for('payments_upcoming_dues') }}" class="payment-link-card">
+            <span class="material-symbols-outlined">calendar_today</span>
+            <span>Upcoming Dues</span>
+        </a>
+        <a href="{{ url_for('payments_active_members') }}" class="payment-link-card">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>Active Members</span>
+        </a>
+        <a href="{{ url_for('payments_pending') }}" class="payment-link-card">
+            <span class="material-symbols-outlined">pending</span>
+            <span>Pending Payments</span>
+        </a>
+    </div>
+
+    <div class="payments-table-container">
+        <table class="payments-table">
+            <thead>
+                <tr>
+                    <th>
+                        <div class="custom-select-wrapper" id="academic-year-select-wrapper">
+                            <div class="custom-select-trigger" id="academic-year-select-trigger">
+                                <span>Academic Year</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                            <div class="custom-options" id="academic-year-select-options">
+                                <ul role="listbox">
+                                    <li data-value="2024-2025">2024-2025</li>
+                                    <li data-value="2023-2024">2023-2024</li>
+                                    <li data-value="2022-2023">2022-2023</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="custom-select-wrapper" id="semester-select-wrapper">
+                            <div class="custom-select-trigger" id="semester-select-trigger">
+                                <span>Semester</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                            <div class="custom-options" id="semester-select-options">
+                                <ul role="listbox">
+                                    <li data-value="1st">1st Semester</li>
+                                    <li data-value="2nd">2nd Semester</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </th>
+                    <th>Total Paid</th>
+                    <th>Total Amount</th>
+                    <th>List</th>
+                </tr>
+                <tr>
+                    <th>Year &amp; Section</th>
+                    <th>Status</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1A</td>
+                    <td>18/25</td>
+                    <td>1350</td>
+                    <td>1875</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>1B</td>
+                    <td>21/30</td>
+                    <td>1575</td>
+                    <td>2250</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>1C</td>
+                    <td>26/35</td>
+                    <td>1950</td>
+                    <td>2625</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>2A</td>
+                    <td>25/28</td>
+                    <td>1875</td>
+                    <td>2100</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>2B</td>
+                    <td>28/32</td>
+                    <td>2100</td>
+                    <td>2400</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>2C</td>
+                    <td>28/30</td>
+                    <td>2100</td>
+                    <td>2250</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>3A</td>
+                    <td>23/28</td>
+                    <td>1725</td>
+                    <td>2100</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>3B</td>
+                    <td>26/31</td>
+                    <td>1950</td>
+                    <td>2825</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>3C</td>
+                    <td>27/30</td>
+                    <td>2025</td>
+                    <td>2250</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>3D</td>
+                    <td>16/18</td>
+                    <td>1200</td>
+                    <td>1350</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>4A</td>
+                    <td>20/23</td>
+                    <td>1500</td>
+                    <td>1725</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr>
+                    <td>4B</td>
+                    <td>24/28</td>
+                    <td>1800</td>
+                    <td>2100</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+                <tr class="total-row">
+                    <td>TOTAL:</td>
+                    <td>282/338</td>
+                    <td>21150</td>
+                    <td>25850</td>
+                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+    // --- Custom Select Logic ---
+    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+        const trigger = wrapper.querySelector('.custom-select-trigger');
+        const options = wrapper.querySelector('.custom-options');
+        const listItems = options.querySelectorAll('li');
+
+        trigger.addEventListener('click', () => {
+            wrapper.classList.toggle('open');
+            if (wrapper.classList.contains('open')) {
+                options.style.display = "block";
+            } else {
+                options.style.display = "none";
+            }
+
+        });
+
+        listItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const value = item.dataset.value;
+                trigger.querySelector('span').textContent = item.textContent;
+                wrapper.classList.remove('open');
+                options.style.display = "none";
+            });
+        });
+    });
+
+    // Close select when clicking outside
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('.custom-select-wrapper')) {
+            document.querySelectorAll('.custom-select-wrapper.open').forEach(openWrapper => {
+                openWrapper.classList.remove('open');
+                openWrapper.querySelector('.custom-options').style.display = 'none';
+            });
+        }
+    });
+</script>
+{% endblock %}
