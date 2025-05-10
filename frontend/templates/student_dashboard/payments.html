@@ -3,57 +3,85 @@
 {% block title %}Membership and Payments {% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
 {% endblock %}
 
 {% block content %}
-<h1> Membership Status </h1>
-<table class="payment-table">
-    <thead>
-        <tr>
-            <th>Academic Year</th>
-            <th>Semester</th>
-            <th>Fee</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>2023-2024</td>
-            <td>1st Semester</td>
-            <td>$100</td>
-            <td>Pending</td>
-            <td><button class="pay-button">PAY</button></td>
-        </tr>
-        <tr>
-            <td>2023-2024</td>
-            <td>2nd Semester</td>
-            <td>$100</td>
-            <td>Pending</td>
-            <td><button class="pay-button">PAY</button></td>
-        </tr>
-        <tr>
-            <td>2024-2025</td>
-            <td>1st Semester</td>
-            <td>$100</td>
-            <td>Pending</td>
-            <td><button class="pay-button">PAY</button></td>
-        </tr>
-        <tr>
-            <td>2024-2025</td>
-            <td>2nd Semester</td>
-            <td>$100</td>
-            <td>Pending</td>
-            <td><button class="pay-button">PAY</button></td>
-        </tr>
-        <tr>
-            <td>2025-2026</td>
-            <td>1st Semester</td>
-            <td>$100</td>
-            <td>Pending</td>
-            <td><button class="pay-button">PAY</button></td>
-        </tr>
-    </tbody>
-</table>
+    <h1>Membership Payment</h1>
+    <div class="payments-table-container">
+        <table class="payment-table">
+            <thead>
+                <tr>
+                    <th>Academic Year</th>
+                    <th>Semester</th>
+                    <th>Fee</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if payment_items %}
+                    {% for item in payment_items %}
+                        <tr>
+                            <td>{{ item.academic_year }}</td>
+                            <td>{{ item.semester }}</td>
+                            <td>{{ item.fee }}</td>
+                            <td>
+                                {% if item.status == 'paid' %}
+                                    <span class="status paid">Paid</span>
+                                {% elif item.status == 'pending' %}
+                                    <span class="status pending">Pending</span>
+                                {% else %}
+                                    <span class="status unpaid">Unpaid</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date }}</td>
+                            <td>
+                                {% if item.status != 'paid' %}
+                                    <form action="{{ url_for('paymaya_create_payment') }}" method="post">
+                                        <input type="hidden" name="payment_item_id" value="{{ item.id }}">
+                                        <button type="submit" class="pay-button">PAY</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <p style="display:none;">Raw Due Date: {{ item.due_date }}</p>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="6">No payment items available.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', async (event) => {
+                console.log('PAY button clicked and form submitted!');
+                event.preventDefault(); // Prevent the default form submission
+
+                // Get the form data.
+                const formData = new FormData(form);
+
+                // Use fetch to send the request
+                const response = await fetch(form.action, {
+                    method: form.method, // Get method from the form
+                    body: formData,
+                });
+
+                const data = await response.json(); // Parse JSON response
+
+                if (response.ok && data.redirectUrl) {
+                    // Redirect the user to PayMaya
+                    window.location.href = data.redirectUrl;
+                } else {
+                    // Handle errors (e.g., show a message to the user)
+                    alert('Payment initiation failed. Please try again.');
+                    console.error('Error initiating payment:', data);
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

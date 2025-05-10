@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Form, APIRouter
+from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Form, APIRouter, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from . import models, schemas, crud
 from .database import SessionLocal, engine
@@ -13,6 +13,9 @@ from PIL import Image  # Import PIL for image processing
 import os
 import secrets
 import re
+import requests
+import base64
+import logging
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -140,8 +143,9 @@ async def admin_post_bulletin(
         )
 
 @router.get("/admin_settings/", response_class=HTMLResponse, name="admin_settings") # Added a trailing slash
-async def admin_settings(request: Request):
-   
+async def admin_settings(request: Request, db: Session = Depends(get_db)):
+    """Displays the admin settings, including payment settings."""
+
     # --- Placeholder Authentication and Authorization ---
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
@@ -153,13 +157,14 @@ async def admin_settings(request: Request):
         )
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
-    
+
+     
+
     return templates.TemplateResponse(
         "admin_dashboard/admin_settings.html",
         {
             "request": request,
-            "year": "2025",  # Keep this, assuming it's a global constant
-          
+            "year": "2025",  # Keep this, assuming it's a global constant           
         },
     )
 
@@ -285,9 +290,63 @@ async def admin_delete_bulletin_post(
     # Redirect back to the bulletin board page after successful deletion
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
 
+@router.post("/admin/payments", name="admin_add_payment_item")
+async def admin_add_payment_item(
+    request: Request,
+    user_id: int = Form(...),
+    academic_year: str = Form(...),
+    semester: str = Form(...),
+    fee: float = Form(...),
+    due_date: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    """Handles the form submission for adding a new payment item."""
+    current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
+    user_role: Optional[str] = request.session.get("user_role")
+
+    if not current_user_id or user_role != "Admin":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated or insufficient permissions")
+
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User with ID {user_id} not found.")
+
+    due_date_obj = None
+    if due_date:
+        try:
+            due_date_obj = datetime.strptime(due_date, "%Y-%m-%d").date()  # Parse as date
+            logging.info(f"Parsed due_date: {due_date_obj}")
+        except ValueError as e:
+            logging.error(f"Error parsing due date: {e}")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid due date format (YYYY-MM-DD).")
+
+    logging.info(f"Adding new payment item for user_id: {user_id}, academic_year: {academic_year}, semester: {semester}, fee: {fee}, due_date: {due_date_obj}")
+    new_payment_item = crud.add_payment_item(db, academic_year=academic_year, semester=semester, fee=fee, user_id=user_id, due_date=due_date_obj)
+    logging.info(f"New payment item successfully added: {new_payment_item}")
+    logging.info(f"New payment item created: {new_payment_item}")
+
+    return RedirectResponse(router.url_path_for("admin_payments"), status_code=status.HTTP_303_SEE_OTHER)
+
+
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
-async def admin_payments(request: Request):
-    return templates.TemplateResponse("admin_dashboard/admin_payments.html", {"request": request, "year": "2025"})
+async def admin_payments(request: Request, db: Session = Depends(get_db)):
+    current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
+    user_role: Optional[str] = request.session.get("user_role")
+
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+    if user_role != "Admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
+
+    payment_items = crud.get_all_payment_items(db)  # Fetch only unpaid payment items
+
+    return templates.TemplateResponse(
+        "admin_dashboard/admin_payments.html",
+        {"request": request, "year": "2025", "payment_items": payment_items},
+    )
 
 @router.get("/admin/payments/total_members", response_class=HTMLResponse, name="payments_total_members")
 async def payments_total_members(request: Request, db: Session = Depends(get_db)):
@@ -297,25 +356,6 @@ async def payments_total_members(request: Request, db: Session = Depends(get_db)
         "admin_dashboard/payments/total_members.html",
         {"request": request, "year": year, "members": users},
     )
-@router.get("/payments/active-members", response_class=HTMLResponse, name="payments_active_members")
-async def payments_active_members(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/active_members.html", {"request": request, "year": "2025"})
-
-@router.get("/payments/pending", response_class=HTMLResponse, name="payments_pending")
-async def payments_pending(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/pending.html", {"request": request, "year": "2025"})
-
-@router.get("/payments/overdue", response_class=HTMLResponse, name="payments_overdue")
-async def payments_overdue(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/overdue.html", {"request": request, "year": "2025"})
-
-@router.get("/payments/recent", response_class=HTMLResponse, name="payments_recent")
-async def payments_recent(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/recent.html", {"request": request, "year": "2025"})
-
-@router.get("/payments/upcoming-dues", response_class=HTMLResponse, name="payments_upcoming_dues")
-async def payments_upcoming_dues(request: Request):
-    return templates.TemplateResponse("admin_dashboard/payments/upcoming_dues.html", {"request": request, "year": "2025"})
 
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
 def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
@@ -349,6 +389,135 @@ async def admin_events(request: Request, db: Session = Depends(get_db)):
 @router.get("/admin/financial_statement", response_class=HTMLResponse, name="admin_financial_statement")
 async def admin_financial_statement(request: Request):
     return templates.TemplateResponse("admin_dashboard/admin_financial_statement.html", {"request": request, "year": "2025"})
+
+# ---------------------- PayMaya Sandbox Integration ----------------------
+@router.post("/payments/paymaya/create", response_class=JSONResponse, name="paymaya_create_payment")
+async def paymaya_create_payment(
+    request: Request,
+    payment_item_id: int = Form(...),  # Expect payment_item_id from the form
+    db: Session = Depends(get_db),
+):
+    """
+    Creates a PayMaya payment request. Handles cases where the amount is
+    provided directly or needs to be retrieved from a payment item.
+    """
+    public_api_key = "pk-rpwb5YR6EfnKiMsldZqY4hgpvJjuy8hhxW2bVAAiz2N"
+    encoded_key = base64.b64encode(f"{public_api_key}:".encode()).decode()
+    url = "https://pg-sandbox.paymaya.com/payby/v2/paymaya/payments"
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": f"Basic {encoded_key}"
+    }
+
+    # Get the user ID from the session.  This is crucial.
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated")
+
+    # 2. Fetch the payment item from the database.
+    payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
+    if not payment_item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment item not found")
+
+    payment_amount = payment_item.fee  # Use the fee from the payment item.
+
+    # Create a pending payment record in your database
+    db_payment = crud.create_payment(db, amount=payment_amount, user_id=user_id)  # Pass the user_id here
+
+    payload = {
+        "totalAmount": {
+            "currency": "PHP",
+            "value": payment_amount
+        },
+        "requestReferenceNumber": f"your-unique-ref-{datetime.now().strftime('%Y%m%d%H%M%S')}-{db_payment.id}",  # Include your DB payment ID for easier tracking
+        "redirectUrl": {
+            "success": f"http://127.0.0.1:8000/Success?paymentId={db_payment.id}&paymentItemId={payment_item_id}",  # Pass your DB payment ID AND payment_item_id
+            "failure": f"http://127.0.0.1:8000/Failure?paymentId={db_payment.id}&paymentItemId={payment_item_id}",  # Pass your DB payment ID AND payment_item_id
+            "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}"  # Pass your DB payment ID AND payment_item_id
+        },
+        "metadata": {
+            "pf": {
+                "smi": "CVSU",
+                "smn": "Undisputed",
+                "mci": "Imus City",
+                "mpc": "608",
+                "mco": "PHL",
+                "postalCode": "1554",
+                "contactNo": "0211111111",
+                "addressLine1": "Palico",
+            },
+            "subMerchantRequestReferenceNumber": "63d9934f9281"
+        }
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        payment_data = response.json()
+        paymaya_payment_id = payment_data.get("paymentId")
+
+        # Update your database record with the PayMaya payment ID
+        crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
+
+        print(f"Generated PayMaya payment ID: {paymaya_payment_id}, Our payment ID: {db_payment.id}")
+        return payment_data
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}")
+        crud.update_payment(db, payment_id=db_payment.id, status="failed")  # Update status in case of error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}"
+        )
+    
+@router.get("/Success", response_class=HTMLResponse, name="payment_success")
+async def payment_success(
+    request: Request,
+    paymentId: int = Query(...),
+    paymentItemId: int = Query(...),  # Extract paymentItemId from query
+    db: Session = Depends(get_db),
+):
+    payment = crud.get_payment_by_id(db, payment_id=paymentId)
+    if not payment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+
+    crud.update_payment(db, payment_id=payment.id, status="success")
+
+    # Mark the associated PaymentItem as paid
+    payment_item = crud.get_payment_item_by_id(db, payment_item_id=paymentItemId)
+    if payment_item:
+        logging.info(f"Attempting to mark payment item {paymentItemId} as paid.")
+        updated_item = crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
+        return templates.TemplateResponse(
+            "student_dashboard/payment_success.html",
+            {"request": request, "payment_id": payment.paymaya_payment_id, "payment_item_id": paymentItemId, "updated": updated_item}
+        )
+    else:
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"PaymentItem with ID {paymentItemId} not found."
+        )
+    
+@router.get("/Failure", response_class=HTMLResponse, name="payment_failure")
+async def payment_failure(request: Request, paymentId: int, db: Session = Depends(get_db)):
+    payment = crud.get_payment_by_id(db, payment_id=paymentId)
+    if payment:
+        crud.update_payment(db, payment_id=payment.id, status="failed")
+        return templates.TemplateResponse("student_dashboard/payment_failure.html", {"request": request, "payment_id": payment.paymaya_payment_id})
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+
+@router.get("/Cancel", response_class=HTMLResponse, name="payment_cancel")
+async def payment_cancel(request: Request, paymentId: int, db: Session = Depends(get_db)):
+    payment = crud.get_payment_by_id(db, payment_id=paymentId)
+    if payment:
+        crud.update_payment(db, payment_id=payment.id, status="cancelled")
+        return templates.TemplateResponse("student_dashboard/payment_cancel.html", {"request": request, "payment_id": payment.paymaya_payment_id})
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+    
+# ---------------------- End of PayMaya Sandbox Integration ----------------------
 
 # Include the router in your main application
 app.include_router(router)
@@ -465,11 +634,53 @@ async def events(request: Request, db: Session = Depends(get_db)):
         {"request": request, "year": "2025", "events": events_list, "current_user_id": current_user_id}
     )
 
-
 # Endpoint for payments
 @app.get("/Payments", response_class=HTMLResponse, name="payments")
-async def payments(request: Request):
-    return templates.TemplateResponse("student_dashboard/payments.html", {"request": request, "year": "2025"})
+async def payments(request: Request, db: Session = Depends(get_db)):
+    """
+    Renders the payments page with data for a student, displaying only their unpaid payment items
+    and including the due date.
+    """
+    logging.info("Entering /Payments route")
+    user_identifier = request.session.get("user_id") or request.session.get("admin_id")
+    logging.info(f"User identifier: {user_identifier}")
+    current_user = None
+
+    if not user_identifier:
+        logging.warning("User not authenticated, redirecting to /")
+        return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+    current_user = db.query(models.User).filter(models.User.id == user_identifier).first()
+    if not current_user:
+        logging.error(f"User not found with identifier: {user_identifier}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    logging.info(f"Current user: {current_user}")
+
+    try:
+        # Fetch only unpaid payment items for the current user.
+        payment_items = (
+            db.query(models.PaymentItem)
+            .filter(models.PaymentItem.user_id == user_identifier)
+            .filter(models.PaymentItem.is_paid == False)
+            .all()
+        )
+        logging.info(f"Unpaid payment items: {payment_items}")
+
+        return templates.TemplateResponse(
+            "student_dashboard/payments.html",
+            {
+                "request": request,
+                "payment_items": payment_items,
+                "current_user": current_user,
+            },
+        )
+    except Exception as e:
+        logging.exception(f"Error fetching unpaid payments: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve unpaid payment information.",
+        )
 
 
 # Endpoint for financial statement

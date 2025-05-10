@@ -1,185 +1,312 @@
 {% extends 'admin_base.html' %}
-{% block title %}Admin Payments{% endblock %}
+{% block title %}Admin Membership and Payments{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<style>
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 20px;
+    }
+
+    .tab-button {
+        padding: 10px 20px;
+        cursor: pointer;
+        border: none;
+        background-color: #f0f0f0;
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        margin-right: 5px;
+    }
+
+    .tab-button.active {
+        background-color: #ddd;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .payments-page-container {
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .payments-header {
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .header-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 15px;
+    }
+
+    .view-history-link {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        color: #007bff;
+        padding: 8px 15px;
+        border: 1px solid #007bff;
+        border-radius: 5px;
+        font-size: 0.9rem;
+    }
+
+    .view-history-link .material-symbols-outlined {
+        margin-right: 5px;
+    }
+
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="payments-page-container">
-    <h2 class="payments-header">Membership and Payments</h2>
-    <div class="header-actions">
-        <a href="#" class="view-history-link">
-            <span class="material-symbols-outlined">history</span>
-            <span>View Payment History</span>
-        </a>
-    </div>
-    <div class="membership-payments-grid">
-        <a href="{{ url_for('payments_overdue') }}" class="payment-link-card">
-            <span class="material-symbols-outlined">event_busy</span>
-            <span>Overdue Payments</span>
-        </a>
-        <a href="{{ url_for('payments_recent') }}" class="payment-link-card">
-            <span class="material-symbols-outlined">history</span>
-            <span>Recent Payments</span>
-        </a>
-        <a href="{{ url_for('payments_upcoming_dues') }}" class="payment-link-card">
-            <span class="material-symbols-outlined">calendar_today</span>
-            <span>Upcoming Dues</span>
-        </a>
-        <a href="{{ url_for('payments_active_members') }}" class="payment-link-card">
-            <span class="material-symbols-outlined">check_circle</span>
-            <span>Active Members</span>
-        </a>
-        <a href="{{ url_for('payments_pending') }}" class="payment-link-card">
-            <span class="material-symbols-outlined">pending</span>
-            <span>Pending Payments</span>
-        </a>
-    </div>
+<div class="tabs">
+    <button class="tab-button active" onclick="openTab('membership')">Membership</button>
+    <button class="tab-button" onclick="openTab('payments')">Payments</button>
+</div>
 
-    <div class="payments-table-container">
-        <table class="payments-table">
-            <thead>
-                <tr>
-                    <th>
-                        <div class="custom-select-wrapper" id="academic-year-select-wrapper">
-                            <div class="custom-select-trigger" id="academic-year-select-trigger">
-                                <span>Academic Year</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+<div id="membership" class="tab-content active">
+    <div class="payments-page-container">
+        <h2 class="payments-header">Membership and Payments</h2>
+        <div class="header-actions">
+            <a href="#" class="view-history-link">
+                <span class="material-symbols-outlined">history</span>
+                <span>View Payment History</span>
+            </a>
+        </div>
+        <div class="payments-table-container">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <div class="custom-select-wrapper" id="academic-year-select-wrapper">
+                                <div class="custom-select-trigger" id="academic-year-select-trigger">
+                                    <span>Academic Year</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                </div>
+                                <div class="custom-options" id="academic-year-select-options">
+                                    <ul role="listbox">
+                                        <li data-value="2024-2025">2024-2025</li>
+                                        <li data-value="2023-2024">2023-2024</li>
+                                        <li data-value="2022-2023">2022-2023</li>
+                                    </ul>
+                                </div>
                             </div>
-                            <div class="custom-options" id="academic-year-select-options">
-                                <ul role="listbox">
-                                    <li data-value="2024-2025">2024-2025</li>
-                                    <li data-value="2023-2024">2023-2024</li>
-                                    <li data-value="2022-2023">2022-2023</li>
-                                </ul>
+                        </th>
+                        <th>
+                            <div class="custom-select-wrapper" id="semester-select-wrapper">
+                                <div class="custom-select-trigger" id="semester-select-trigger">
+                                    <span>Semester</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                </div>
+                                <div class="custom-options" id="semester-select-options">
+                                    <ul role="listbox">
+                                        <li data-value="1st">1st Semester</li>
+                                        <li data-value="2nd">2nd Semester</li>
+                                    </ul>
+                                </div>
                             </div>
-                        </div>
-                    </th>
-                    <th>
-                        <div class="custom-select-wrapper" id="semester-select-wrapper">
-                            <div class="custom-select-trigger" id="semester-select-trigger">
-                                <span>Semester</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                            <div class="custom-options" id="semester-select-options">
-                                <ul role="listbox">
-                                    <li data-value="1st">1st Semester</li>
-                                    <li data-value="2nd">2nd Semester</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </th>
-                    <th>Total Paid</th>
-                    <th>Total Amount</th>
-                    <th>List</th>
-                </tr>
-                <tr>
-                    <th>Year &amp; Section</th>
-                    <th>Status</th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>1A</td>
-                    <td>18/25</td>
-                    <td>1350</td>
-                    <td>1875</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>1B</td>
-                    <td>21/30</td>
-                    <td>1575</td>
-                    <td>2250</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>1C</td>
-                    <td>26/35</td>
-                    <td>1950</td>
-                    <td>2625</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>2A</td>
-                    <td>25/28</td>
-                    <td>1875</td>
-                    <td>2100</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>2B</td>
-                    <td>28/32</td>
-                    <td>2100</td>
-                    <td>2400</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>2C</td>
-                    <td>28/30</td>
-                    <td>2100</td>
-                    <td>2250</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>3A</td>
-                    <td>23/28</td>
-                    <td>1725</td>
-                    <td>2100</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>3B</td>
-                    <td>26/31</td>
-                    <td>1950</td>
-                    <td>2825</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>3C</td>
-                    <td>27/30</td>
-                    <td>2025</td>
-                    <td>2250</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>3D</td>
-                    <td>16/18</td>
-                    <td>1200</td>
-                    <td>1350</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>4A</td>
-                    <td>20/23</td>
-                    <td>1500</td>
-                    <td>1725</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr>
-                    <td>4B</td>
-                    <td>24/28</td>
-                    <td>1800</td>
-                    <td>2100</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-                <tr class="total-row">
-                    <td>TOTAL:</td>
-                    <td>282/338</td>
-                    <td>21150</td>
-                    <td>25850</td>
-                    <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                </tr>
-            </tbody>
-        </table>
+                        </th>
+                        <th>Total Paid</th>
+                        <th>Total Amount</th>
+                        <th>List</th>
+                    </tr>
+                    <tr>
+                        <th>Year &amp; Section</th>
+                        <th>Status</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1A</td>
+                        <td>18/25</td>
+                        <td>1350</td>
+                        <td>1875</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>1B</td>
+                        <td>21/30</td>
+                        <td>1575</td>
+                        <td>2250</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>1C</td>
+                        <td>26/35</td>
+                        <td>1950</td>
+                        <td>2625</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>2A</td>
+                        <td>25/28</td>
+                        <td>1875</td>
+                        <td>2100</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>2B</td>
+                        <td>28/32</td>
+                        <td>2100</td>
+                        <td>2400</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>2C</td>
+                        <td>28/30</td>
+                        <td>2100</td>
+                        <td>2250</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>3A</td>
+                        <td>23/28</td>
+                        <td>1725</td>
+                        <td>2100</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>3B</td>
+                        <td>26/31</td>
+                        <td>1950</td>
+                        <td>2825</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>3C</td>
+                        <td>27/30</td>
+                        <td>2025</td>
+                        <td>2250</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>3D</td>
+                        <td>16/18</td>
+                        <td>1200</td>
+                        <td>1350</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>4A</td>
+                        <td>20/23</td>
+                        <td>1500</td>
+                        <td>1725</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr>
+                        <td>4B</td>
+                        <td>24/28</td>
+                        <td>1800</td>
+                        <td>2100</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>TOTAL:</td>
+                        <td>282/338</td>
+                        <td>21150</td>
+                        <td>25850</td>
+                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<div id="payments" class="tab-content">
+    <div class="payments-page-container">
+        <h2 class="payments-header">Membership and Payments</h2>
+        <div class="header-actions">
+            <a href="#" class="view-history-link">
+                <span class="material-symbols-outlined">history</span>
+                <span>View Payment History</span>
+            </a>
+        </div>
+
+        <div class="payment-settings-section">
+            <h2>Add New Payment Item</h2>
+            <form id="add-payment-item-form" method="post" action="{{ url_for('admin_add_payment_item') }}">
+                <label for="user_id">User ID:</label>
+                <input type="number" id="user_id" name="user_id" required>
+                <div id="user_id_error" class="error-message"></div>
+
+                <label for="academic_year">Academic Year:</label>
+                <input type="text" id="academic_year" name="academic_year" required>
+                <div id="academic_year_error" class="error-message"></div>
+
+                <label for="semester">Semester:</label>
+                <input type="text" id="semester" name="semester" required>
+                <div id="semester_error" class="error-message"></div>
+
+                <label for="fee">Fee :</label>
+                <input type="number" id="fee" name="fee" required>
+                <div id="fee_error" class="error-message"></div>
+
+                <label for="due_date">Due Date:</label>
+                <input type="date" id="due_date" name="due_date" required>
+                <div id="due_date_error" class="error-message"></div>
+
+                <button type="submit">Add Payment Item</button>
+            </form>
+        </div>
+
+        <div class="payments-table-container">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Academic Year</th>
+                        <th>Semester</th>
+                        <th>Fee</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in payment_items %}
+                    <tr>
+                        <td>{{ item.user_id }}</td>
+                        <td>{{ item.academic_year }}</td>
+                        <td>{{ item.semester }}</td>
+                        <td>{{ item.fee }}</td>
+                        <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date else 'Not Set' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5">No payment items found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script>
-    // --- Custom Select Logic ---
+    function openTab(tabName) {
+        const tabs = document.querySelectorAll('.tab-content');
+        const buttons = document.querySelectorAll('.tab-button');
+        for (let i = 0; i < tabs.length; i++) {
+            tabs[i].classList.remove('active');
+        }
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].classList.remove('active');
+        }
+        document.getElementById(tabName).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- Custom Select Logic (remains the same) ---
     document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
         const trigger = wrapper.querySelector('.custom-select-trigger');
         const options = wrapper.querySelector('.custom-options');
@@ -192,7 +319,6 @@
             } else {
                 options.style.display = "none";
             }
-
         });
 
         listItems.forEach(item => {
@@ -205,7 +331,7 @@
         });
     });
 
-    // Close select when clicking outside
+    // Close select when clicking outside (remains the same)
     document.addEventListener('click', (event) => {
         if (!event.target.closest('.custom-select-wrapper')) {
             document.querySelectorAll('.custom-select-wrapper.open').forEach(openWrapper => {

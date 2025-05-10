@@ -1,5 +1,4 @@
-# models.py
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean, Float, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -56,11 +55,12 @@ class User(Base):
     guardian_contact = Column(String, nullable=True)
     registration_form = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
-    is_verified = Column(Boolean, default=False) # Added for verification status
+    is_verified = Column(Boolean, default=False)  # Added for verification status
     verified_by = Column(String, nullable=True)  # Add this field
-    verification_date = Column(DateTime, nullable=True) #add this
+    verification_date = Column(DateTime, nullable=True)  # add this
+    payments = relationship("Payment", back_populates="user") # Relationship to the Payment model
+    payment_items = relationship("PaymentItem", back_populates="user") # Relationship to the PaymentItem model
 
-# Ensure Admin model is also present (as defined previously)
 class Admin(Base):
     __tablename__ = "admins"
     admin_id = Column(Integer, primary_key=True, index=True)
@@ -83,3 +83,32 @@ class BulletinBoard(Base):
     admin_id = Column(Integer, ForeignKey("admins.admin_id"))
     image_path = Column(String(255), nullable=True)
     admin = relationship("Admin", back_populates="bulletin_board_posts")
+
+# Add the Payment model here
+class Payment(Base):
+    __tablename__ = "payments"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    amount = Column(Float, nullable=False)
+    paymaya_payment_id = Column(String, unique=True, nullable=True)
+    status = Column(String, default="pending")
+    created_at = Column(Date, default=func.current_date())  # Use func.current_date
+    updated_at = Column(Date, onupdate=func.current_date())  # Use func.current_date
+    payment_item_id = Column(Integer, ForeignKey("payment_items.id"), nullable=True)
+    payment_item = relationship("PaymentItem", back_populates="payments")
+    user = relationship("User", back_populates="payments")
+
+class PaymentItem(Base):
+    __tablename__ = "payment_items"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    academic_year = Column(String)
+    semester = Column(String)
+    fee = Column(Float)
+    created_at = Column(Date, default=func.current_date())  # Use func.current_date
+    updated_at = Column(Date, onupdate=func.current_date())  # Use func.current_date
+    is_paid = Column(Boolean, default=False)
+    due_date = Column(Date, nullable=True)
+
+    user = relationship("User", back_populates="payment_items")
+    payments = relationship("Payment", back_populates="payment_item")

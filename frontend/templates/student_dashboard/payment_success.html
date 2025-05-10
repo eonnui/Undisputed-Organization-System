@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Payment Successful{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h1>Payment Successful</h1>
+    <p>Thank you for your payment. Your Payment ID is: {{ payment_id }}</p>
+    <p>You may print this page for your reference.</p>
+{% endblock %}
