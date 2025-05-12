@@ -206,7 +206,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if item_with_status.item.due_date and now and item_with_status.item.due_date < now and item_with_status.status != "Paid" and not item_with_status.item.is_not_responsible %}
+                                {% if item_with_status.status == "Past Due" %}
                                     <div class="action-button-container">
                                         <form method="post" action="/admin/payment/{{ item_with_status.item.id }}/update_status">
                                             <select name="status" id="status-select-{{ item_with_status.item.id }}">
@@ -225,21 +225,7 @@
                                         </form>
                                     </div>
                                 {% else %}
-                                    <div class="action-button-container disabled">
-                                        <span style="color: var(--text-secondary);">
-                                            {% if not item_with_status.item.due_date %}
-                                                Due date not set
-                                            {% elif not now %}
-                                                Today is not defined
-                                            {% elif item_with_status.status == "Paid" %}
-                                                Already Paid
-                                            {% elif item_with_status.item.is_not_responsible %}
-                                                Not Responsible
-                                            {% elif item_with_status.item.due_date >= now %}
-                                                Due date not yet passed
-                                            {% endif %}
-                                        </span>
-                                    </div>
+                                    -
                                 {% endif %}
                             </td>
                         </tr>
@@ -406,7 +392,6 @@
             const formElement = event.target.closest('form'); // Find the form element
             const statusSelect = document.getElementById(`status-select-${itemId}`);
             const selectedStatus = statusSelect.value;
-            const updateButton = event.target; // The button that was clicked
 
             try {
                 const response = await fetch(`/admin/payment/${itemId}/update_status`, {
@@ -422,19 +407,10 @@
                 }
 
                 // Update the UI directly
-                const statusCell = event.target.closest('tr').querySelector('td:nth-child(6)'); //gets the 6th cell
-                if (selectedStatus === "NOT RESPONSIBLE") {
-                    statusCell.textContent = "NR";
-                    statusCell.className = "not-responsible";
-                } else {
-                    statusCell.textContent = selectedStatus;
-                    statusCell.className = selectedStatus.toLowerCase();
-                }
+                const statusCell = event.target.closest('tr').querySelector('td:nth-child(6)');
+                statusCell.textContent = selectedStatus;
+                statusCell.className = selectedStatus.toLowerCase();
 
-                // Disable the select and button after updating
-                statusSelect.disabled = true;
-                updateButton.disabled = true;
-                updateButton.classList.add('disabled-button'); // Apply the disabled style
 
 
             } catch (error) {

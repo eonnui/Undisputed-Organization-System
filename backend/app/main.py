@@ -342,7 +342,8 @@ async def admin_add_payment_item(
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
 async def admin_payments(request: Request, db: Session = Depends(get_db)):
     """
-    Displays all payment items for administrators, with accurate payment status.
+    Displays all payment items for administrators, with accurate payment status
+    respecting the is_past_due and is_not_responsible flags.
     """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
@@ -355,18 +356,24 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
 
-    # Fetch all payment items, including past due
+    # Fetch all payment items
     payment_items = db.query(models.PaymentItem).all()
 
-    # Determine payment status for each item
+    # Determine payment status for each item, respecting flags
     payment_items_with_status = []
     today = date.today()
     for item in payment_items:
         status_text = "Unpaid"  # Default status
-        if item.is_paid:
+        if item.is_not_responsible:
+            status_text = "Not Responsible"
+        elif item.is_paid:
             status_text = "Paid"
-        elif item.due_date < today:
-            status_text = "Past Due"  # Correctly determine Past Due status
+        elif item.is_past_due:
+            status_text = "Past Due"
+        # If none of the above conditions are met, it remains "Unpaid".
+        # This ensures that if an admin manually sets it to "Unpaid"
+        # (and is_past_due is False), it stays "Unpaid".
+
         payment_items_with_status.append({
             "item": item,
             "status": status_text,
@@ -374,7 +381,7 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
 
     logging.info("Payment items with status:")
     for payment in payment_items_with_status:
-        logging.info(f"  Item ID: {payment['item'].id}, Due Date: {payment['item'].due_date}, Status: {payment['status']}, Academic Year: {payment['item'].academic_year}, Semester: {payment['item'].semester}, Fee: {payment['item'].fee}, User ID: {payment['item'].user_id}")
+        logging.info(f"  Item ID: {payment['item'].id}, Due Date: {payment['item'].due_date}, Status: {payment['status']}, Academic Year: {payment['item'].academic_year}, Semester: {payment['item'].semester}, Fee: {payment['item'].fee}, User ID: {payment['item'].user_id}, is_past_due: {payment['item'].is_past_due}, is_paid: {payment['item'].is_paid}, is_not_responsible: {payment['item'].is_not_responsible}")
 
     return templates.TemplateResponse(
         "admin_dashboard/admin_payments.html",
@@ -391,7 +398,8 @@ async def update_payment_status(
 ):
     """
     Updates the status of a specific payment item and handles payment creation
-    or updates based on the selected status. Includes marking item as 'not responsible'.
+    or updates based on the selected status. Includes marking item as 'not responsible'
+    and explicitly handles 'Unpaid' status with past due override, with added logging.
     """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
@@ -425,19 +433,22 @@ async def update_payment_status(
             )
 
         payment_item.is_paid = (status == "Paid")
-        payment_item.is_not_responsible = (status == "NOT RESPONSIBLE")  # Set the new field
-        payment_item.is_past_due = False  # Reset past due status on admin action
-        db.commit()
-        db.refresh(payment_item)
+        payment_item.is_not_responsible = (status == "NOT RESPONSIBLE")
+        # Explicitly handle "Unpaid" and override past due
+        if status == "Unpaid":
+            payment_item.is_past_due = False
+            logger.info(f"Payment item {payment_item_id} marked as 'Unpaid'. Overriding is_past_due to False.")
+        elif status == "Paid":
+            payment_item.is_past_due = False # Reset past due on payment
+            logger.info(f"Payment item {payment_item_id} marked as 'Paid'. Resetting is_past_due to False.")
 
-        if status == "Paid":
             # Check if a payment record already exists for this item
             existing_payment = db.query(models.Payment).filter(models.Payment.payment_item_id == payment_item_id).first()
 
             if existing_payment:
                 # Update the existing payment amount and status
                 existing_payment.amount = payment_item.fee
-                existing_payment.status = "success"  # Set status to "success"
+                existing_payment.status = "success"
                 logger.info(f"Updated existing payment {existing_payment.id} for item {payment_item_id} to amount {payment_item.fee} and status 'success'")
             else:
                 # Create a new payment record with status "success"
@@ -445,7 +456,7 @@ async def update_payment_status(
                     user_id=payment_item.user_id,
                     amount=payment_item.fee,
                     payment_item_id=payment_item_id,
-                    status="success"  # Set status to "success"
+                    status="success"
                 )
                 db.add(new_payment)
                 logger.info(f"Created new payment for item {payment_item_id} with amount {payment_item.fee} and status 'success'")
@@ -458,6 +469,7 @@ async def update_payment_status(
                 db.commit()
                 logger.info(f"Deleted associated payment {existing_payment.id} for item {payment_item_id} marked as NOT RESPONSIBLE")
 
+        db.commit()
         db.refresh(payment_item)
         return {"message": f"Payment item {payment_item_id} status updated to {status}"}
     except Exception as e:
@@ -467,7 +479,6 @@ async def update_payment_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update payment item status: {e}",
         )
-
 
 @router.get("/admin/membership/")
 async def admin_membership(
