@@ -1269,7 +1269,6 @@ async def update_profile(
     """
     # 1.  Get the user from the database.
     current_user_id = request.session.get("user_id")
-    logger.info(f"1. Current user ID from session: {current_user_id}")
     if not current_user_id:
         logger.error("Error: Not authenticated")
         raise HTTPException(
@@ -1285,17 +1284,15 @@ async def update_profile(
         )
     except Exception as e:
         db.rollback()
-        logger.error(f"2. Error querying user: {e}")
+        logger.error(f"Error querying user: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error while retrieving user",
         )
 
     if not user:
-        logger.error(f"3. Error: User not found with ID: {current_user_id}")
+        logger.error(f"Error: User not found with ID: {current_user_id}")
         raise HTTPException(status_code=404, detail="User not found")
-    logger.info(f"4. Found user: {user.name}")
-    logger.info(f"4. User object: {user}")  # Add this to see the whole user object
 
     # Function to safely delete a file
     def delete_file(file_path: Optional[str]):
@@ -1316,68 +1313,50 @@ async def update_profile(
     # 2. Update the user object with the provided data
     if student_number is not None:
         user.student_number = student_number
-        logger.info(f"5. Updating student_number: {student_number}")
     if first_name is not None:
         user.first_name = first_name
-        logger.info(f"6. Updating first_name: {first_name}")
     if last_name is not None:
         user.last_name = last_name
-        logger.info(f"7. Updating last_name: {last_name}")
     if email is not None:
         user.email = email
-        logger.info(f"8. Updating email: {email}")
     if name is not None:
         user.name = name
-        logger.info(f"9. Updating name: {name}")
     if address is not None:
         user.address = address
-        logger.info(f"10. Updating address: {address}")
     if birthdate is not None:
         user.birthdate = birthdate
-        logger.info(f"11. Updating birthdate: {birthdate}")
     if sex is not None:
         user.sex = sex
-        logger.info(f"12. Updating sex: {sex}")
     if contact is not None:
         user.contact = contact
-        logger.info(f"13. Updating contact: {contact}")
     if course is not None:
         user.course = course
-        logger.info(f"14. Updating course: {course}")
     if semester is not None:
         user.semester = semester
-        logger.info(f"15. Updating semester: {semester}")
     if campus is not None:
         user.campus = campus
-        logger.info(f"16. Updating campus: {campus}")
     if school_year is not None:
         user.school_year = school_year
-        logger.info(f"17. Updating school_year: {school_year}")
     if year_level is not None:
         user.year_level = year_level
-        logger.info(f"18. Updating year_level: {year_level}")
     if section is not None:
         user.section = section
-        logger.info(f"19. Updating section: {section}")
     if guardian_name is not None:
         user.guardian_name = guardian_name
-        logger.info(f"20. Updating guardian_name: {guardian_name}")
     if guardian_contact is not None:
         user.guardian_contact = guardian_contact
-        logger.info(f"21. Updating guardian_contact: {guardian_contact}")
     if is_verified is not None:
         user.is_verified = is_verified
-        logger.info(f"22. Updating is_verified: {is_verified}")
 
     # 3. Handle Registration Form upload and data extraction
     if registration_form:
         logger.info(
-            f"23. Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
+            f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
         )
         # Validate file type (optional, but recommended)
         if registration_form.content_type != "application/pdf":
             logger.error(
-                f"24. Error: Invalid file type for registration form: {registration_form.content_type}. Only PDF is allowed."
+                f"Error: Invalid file type for registration form: {registration_form.content_type}. Only PDF is allowed."
             )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1386,7 +1365,7 @@ async def update_profile(
 
         try:
             # Delete the previous registration form if it exists
-            logger.info(f"25. Previous registration form path: {user.registration_form}")
+            logger.info(f"Previous registration form path: {user.registration_form}")
             delete_file(user.registration_form)
 
             pdf_content = await registration_form.read()
@@ -1405,60 +1384,49 @@ async def update_profile(
             user.registration_form = (
                 f"/static/documents/registration_forms/{filename}"  # Store relative path
             )
-            logger.info(f"26. Registration form saved to: {user.registration_form}")
 
             # Extract text from the PDF
             extracted_text = extract_text_from_pdf(pdf_file_path)
-            logger.info(f"27. Extracted text from PDF: {extracted_text}")
 
             # Extract student information
             student_info = extract_student_info(extracted_text)
-            logger.info(f"28. Extracted student info: {student_info}")
+            logger.info(f"Extracted student info: {student_info}")
 
             # Update user object with extracted information if not already provided in the form
             if name is None and "name" in student_info and student_info["name"]:
                 user.name = student_info["name"]
-                logger.info(f"29. Updated name from PDF: {user.name}")
             if course is None and "course" in student_info and student_info["course"]:
                 user.course = student_info["course"]
-                logger.info(f"30. Updated course from PDF: {user.course}")
             if (
                 year_level is None
                 and "year_level" in student_info
                 and student_info["year_level"]
             ):
                 user.year_level = student_info["year_level"]
-                logger.info(f"31. Updated year_level from PDF: {user.year_level}")
             if section is None and "section" in student_info and student_info["section"]:
                 user.section = student_info["section"]
-                logger.info(f"32. Updated section from PDF: {user.section}")
             if campus is None and "campus" in student_info and student_info["campus"]:
                 user.campus = student_info["campus"]
-                logger.info(f"33. Updated campus from PDF: {user.campus}")
             if (
                 semester is None
                 and "semester" in student_info
                 and student_info["semester"]
             ):
                 user.semester = student_info["semester"]
-                logger.info(f"34. Updated semester from PDF: {user.semester}")
             if (
                 school_year is None
                 and "school_year" in student_info
                 and student_info["school_year"]
             ):
                 user.school_year = student_info["school_year"]
-                logger.info(f"35. Updated school_year from PDF: {user.school_year}")
             if address is None and "address" in student_info and student_info["address"]:
                 user.address = student_info["address"]
-                logger.info(f"36. Updated address from PDF: {user.address}")
             if (
                 student_number is None
                 and "student_number" in student_info
                 and student_info["student_number"]
             ):
                 user.student_number = student_info["student_number"]
-                logger.info(f"37. Updated student_number from PDF: {user.student_number}")
 
             # Update first and last name
             if "name" in student_info and student_info["name"]:
@@ -1480,46 +1448,24 @@ async def update_profile(
                 user.email = generate_email(
                     user.first_name.replace(" ", ""), user.last_name
                 )
-                logger.info(f"38. Updated email: {email}")
 
         except Exception as e:
-            logger.error(f"39. Error processing registration form: {e}")
+            logger.error(f"Error processing registration form: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to process registration form: {e}",
             )
-        logger.info(
-            f"40. User object registration_form after save: {user.registration_form}"
-        )
 
     # 4. Handle Profile picture upload
     if profilePicture:
-        logger.info(
-            f"41. Handling profile picture upload: {profilePicture.filename}, content_type: {profilePicture.content_type}"
-        )
-        # Validate image file type
-        if not profilePicture.content_type.startswith("image/"):
-            logger.error(
-                f"42. Error: Invalid file type: {profilePicture.content_type}. Only images are allowed."
-            )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid file type. Only images are allowed.",
-            )
-
-        # Check image file size (optional)
-        max_image_size_bytes = 2 * 1024 * 1024
+        #Removed loggings
         try:
             # Delete the previous profile picture if it exists
-            logger.info(f"43. Previous profile picture path: {user.profile_picture}")
             delete_file(user.profile_picture)
 
             image_content = await profilePicture.read()
-            logger.info(f"44. Image content length: {len(image_content)}")
+            max_image_size_bytes = 2 * 1024 * 1024
             if len(image_content) > max_image_size_bytes:
-                logger.error(
-                    f"45. Error: Image size too large: {len(image_content)} bytes. Maximum allowed size is {max_image_size_bytes} bytes."
-                )
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail=f"Image size too large. Maximum allowed size is {max_image_size_bytes} bytes.",
@@ -1527,9 +1473,7 @@ async def update_profile(
             # Use PIL to open and validate the image
             img = Image.open(BytesIO(image_content))
             img.verify()
-            logger.info("46. Image validation successful")
         except Exception as e:
-            logger.error(f"47. Error: Invalid image file: {e}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid image file: {e}",
@@ -1537,7 +1481,6 @@ async def update_profile(
 
         # Generate a secure filename
         filename = generate_secure_filename(profilePicture.filename)
-        logger.info(f"48. Generated filename: {filename}")
         # Construct the full file path
         file_path = os.path.join(
             "..",
@@ -1547,21 +1490,16 @@ async def update_profile(
             "profile_pictures",
             filename,
         )
-        logger.info(f"49. Saving image to: {file_path}")
         # Save the image file
         try:
             # Ensure the directory exists before saving.
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            logger.info("50. Directory created (if needed)")
             with open(file_path, "wb") as f:
                 f.write(image_content)
-            logger.info("51. Image saved successfully")
             user.profile_picture = (
                 f"/static/images/profile_pictures/{filename}"
             )
-            logger.info(f"52. Profile picture path set to: {user.profile_picture}")
         except Exception as e:
-            logger.error(f"53. Error saving image: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to save image: {e}",
@@ -1571,12 +1509,10 @@ async def update_profile(
     if first_name and last_name and not email:  # Only generate if email not provided
         email = generate_email(first_name, last_name)
         user.email = email
-        logger.info(f"54. Updating email: {email}")
 
     # 6. Update payment items with revised logic
     # Determine the correct academic year for the first payment item based on year level
     current_date = datetime.now()
-    logger.info(f"60. Current date: {current_date}")
 
     # Parse the year level to determine how many years the student has been in school
     year_level_str = str(user.year_level).lower().strip()
@@ -1589,7 +1525,6 @@ async def update_profile(
 
     # Default to first year if we can't determine the year level
     student_year = year_level_mapping.get(year_level_str, 1)
-    logger.info(f"60.1 Parsed student year level: {student_year}")
 
     # Calculate the starting academic year for this student
     # For example, if it's May 2025 and the student is in 3rd year,
@@ -1599,22 +1534,17 @@ async def update_profile(
         first_academic_year_start -= 1
 
     first_academic_year = f"{first_academic_year_start}-{first_academic_year_start + 1}"
-    logger.info(f"60.5 Academic year for first item: {first_academic_year}")
 
     # Process each payment item
     # Fetch payment items for the current user
     payment_items = user.payment_items  # Assuming `user.payment_items` contains the payment items
 
     for i, item in enumerate(payment_items):
-        logger.info(f"61. Processing payment item: {item.id}")
-        logger.info(f"61.1 Original item: {item.__dict__}")  # Log original item
-        
         # Calculate the academic year based on position relative to the first item
         semester_offset = i // 2  # Each year has 2 semesters
         item_academic_year_start = first_academic_year_start + semester_offset
         item.academic_year = f"{item_academic_year_start}-{item_academic_year_start + 1}"
-        logger.info(f"62. Payment Item {item.id} Academic Year: {item.academic_year}")
-        
+
         # Determine the due date based on semester pattern (alternating Feb/Jul)
         due_date_year = int(item.academic_year.split("-")[1])
         if (i % 2) == 0:
@@ -1628,45 +1558,23 @@ async def update_profile(
                 days=7 - datetime(due_date_year, 7, 1).weekday()
             )
         item.due_date = due_date.date()
-        logger.info(f"63. Payment Item {item.id} Due Date: {item.due_date}")
 
         # Update past due status
         if item.due_date and item.due_date < current_date.date() and not item.is_paid:
             item.is_past_due = True
-            logger.info(
-                f"64. Payment Item {item.id} is_past_due is set to True, due_date: {item.due_date}, current_date: {current_date.date()}"
-            )
         else:
             item.is_past_due = False
-            logger.info(
-                f"65. Payment Item {item.id} is_past_due is set to False, due_date: {item.due_date}, current_date: {current_date.date()}"
-            )
-        
-        logger.info(f"65.5 Modified item: {item.__dict__}")  # Log modified item
+
         db.add(item)  # Add this line to explicitly add the item to the session
         db.flush()  # Flush changes
 
     # 7. Commit the changes to the database
     try:
-        logger.info("68.  About to commit changes to the database...")
         db.commit()
-        logger.info("68.5 Database commit successful")
         db.refresh(user)
-        logger.info("69. Database commit successful")
-        logger.info(
-            f"70. Profile updated successfully. Session after update: {request.session}"
-        )
-        logger.info(
-            f"71. User registration form in database: {user.registration_form}"
-        )
-        logger.info(
-            f"72. User profile picture in database: {user.profile_picture}"
-        )
-        logger.info(f"73. User email in database: {user.email}")
         return {"message": "Profile updated successfully", "user": user}
     except Exception as e:
         db.rollback()
-        logger.error(f"74. Error updating profile in database: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update profile in database: {e}",
