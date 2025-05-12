@@ -102,13 +102,17 @@ class PaymentItem(Base):
     __tablename__ = "payment_items"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    academic_year = Column(String)
-    semester = Column(String)
-    fee = Column(Float)
-    created_at = Column(Date, default=func.current_date())  # Use func.current_date
-    updated_at = Column(Date, onupdate=func.current_date())  # Use func.current_date
+    academic_year = Column(String, nullable=True)  # Make nullable to handle cases where it might not be immediately known
+    semester = Column(String, nullable=True)  # Make nullable for flexibility
+    fee = Column(Float, nullable=False)
+    created_at = Column(Date, default=func.current_date())
+    updated_at = Column(Date, onupdate=func.current_date())
     is_paid = Column(Boolean, default=False)
     due_date = Column(Date, nullable=True)
+    year_level_applicable = Column(Integer, nullable=True)  # Added year_level_applicable
+    is_past_due = Column(Boolean, default=False) # Added is_past_due
+    is_not_responsible = Column(Boolean, default=False)  # Added this field
 
     user = relationship("User", back_populates="payment_items")
     payments = relationship("Payment", back_populates="payment_item")
+

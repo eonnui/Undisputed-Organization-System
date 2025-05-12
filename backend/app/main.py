@@ -2,14 +2,15 @@ from fastapi import FastAPI, Request, Depends, HTTPException, status, File, Uplo
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from sqlalchemy.orm import Session, joinedload
+from fastapi.logger import logger  
+from sqlalchemy.orm import Session, joinedload, selectinload
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
-from datetime import datetime
-from typing import List, Optional
-from io import BytesIO  # Import BytesIO
-from PIL import Image  # Import PIL for image processing
+from datetime import datetime, date,  timedelta
+from typing import List, Optional, Dict # Added Dict
+from io import BytesIO 
+from PIL import Image 
 import os
 import secrets
 import re
@@ -298,6 +299,7 @@ async def admin_add_payment_item(
     semester: str = Form(...),
     fee: float = Form(...),
     due_date: Optional[str] = Form(None),
+    year_level_applicable: Optional[int] = Form(None), # Added year_level_applicable
     db: Session = Depends(get_db),
 ):
     """Handles the form submission for adding a new payment item."""
@@ -320,16 +322,28 @@ async def admin_add_payment_item(
             logging.error(f"Error parsing due date: {e}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid due date format (YYYY-MM-DD).")
 
-    logging.info(f"Adding new payment item for user_id: {user_id}, academic_year: {academic_year}, semester: {semester}, fee: {fee}, due_date: {due_date_obj}")
-    new_payment_item = crud.add_payment_item(db, academic_year=academic_year, semester=semester, fee=fee, user_id=user_id, due_date=due_date_obj)
+    logging.info(
+        f"Adding new payment item for user_id: {user_id}, academic_year: {academic_year}, semester: {semester}, fee: {fee}, due_date: {due_date_obj}, year_level_applicable: {year_level_applicable}"
+    )
+    new_payment_item = crud.add_payment_item(
+        db,
+        academic_year=academic_year,
+        semester=semester,
+        fee=fee,
+        user_id=user_id,
+        due_date=due_date_obj,
+        year_level_applicable=year_level_applicable, # Pass year_level_applicable
+    )
     logging.info(f"New payment item successfully added: {new_payment_item}")
     logging.info(f"New payment item created: {new_payment_item}")
 
     return RedirectResponse(router.url_path_for("admin_payments"), status_code=status.HTTP_303_SEE_OTHER)
 
-
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
 async def admin_payments(request: Request, db: Session = Depends(get_db)):
+    """
+    Displays all payment items for administrators, with accurate payment status.
+    """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
 
@@ -341,20 +355,234 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
 
-    payment_items = crud.get_all_payment_items(db)  # Fetch only unpaid payment items
+    # Fetch all payment items, including past due
+    payment_items = db.query(models.PaymentItem).all()
+
+    # Determine payment status for each item
+    payment_items_with_status = []
+    today = date.today()
+    for item in payment_items:
+        status_text = "Unpaid"  # Default status
+        if item.is_paid:
+            status_text = "Paid"
+        elif item.due_date < today:
+            status_text = "Past Due"  # Correctly determine Past Due status
+        payment_items_with_status.append({
+            "item": item,
+            "status": status_text,
+        })
+
+    logging.info("Payment items with status:")
+    for payment in payment_items_with_status:
+        logging.info(f"  Item ID: {payment['item'].id}, Due Date: {payment['item'].due_date}, Status: {payment['status']}, Academic Year: {payment['item'].academic_year}, Semester: {payment['item'].semester}, Fee: {payment['item'].fee}, User ID: {payment['item'].user_id}")
 
     return templates.TemplateResponse(
         "admin_dashboard/admin_payments.html",
-        {"request": request, "year": "2025", "payment_items": payment_items},
+        {"request": request, "year": "2025", "payment_items": payment_items_with_status, "now": today},
     )
 
+
+@router.post("/admin/payment/{payment_item_id}/update_status")
+async def update_payment_status(
+    request: Request,
+    payment_item_id: int,
+    status: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Updates the status of a specific payment item and handles payment creation
+    or updates based on the selected status. Includes marking item as 'not responsible'.
+    """
+    current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
+    user_role: Optional[str] = request.session.get("user_role")
+
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+    if user_role != "Admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions. Admin access required.",
+        )
+
+    logger.info(f"Updating payment item {payment_item_id} to status '{status}'")
+
+    allowed_statuses = ["Unpaid", "Paid", "NOT RESPONSIBLE"]
+    if status not in allowed_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid status: {status}. Allowed statuses are: {allowed_statuses}",
+        )
+
+    try:
+        payment_item = db.query(models.PaymentItem).get(payment_item_id)
+        if not payment_item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Payment item {payment_item_id} not found",
+            )
+
+        payment_item.is_paid = (status == "Paid")
+        payment_item.is_not_responsible = (status == "NOT RESPONSIBLE")  # Set the new field
+        payment_item.is_past_due = False  # Reset past due status on admin action
+        db.commit()
+        db.refresh(payment_item)
+
+        if status == "Paid":
+            # Check if a payment record already exists for this item
+            existing_payment = db.query(models.Payment).filter(models.Payment.payment_item_id == payment_item_id).first()
+
+            if existing_payment:
+                # Update the existing payment amount and status
+                existing_payment.amount = payment_item.fee
+                existing_payment.status = "success"  # Set status to "success"
+                logger.info(f"Updated existing payment {existing_payment.id} for item {payment_item_id} to amount {payment_item.fee} and status 'success'")
+            else:
+                # Create a new payment record with status "success"
+                new_payment = models.Payment(
+                    user_id=payment_item.user_id,
+                    amount=payment_item.fee,
+                    payment_item_id=payment_item_id,
+                    status="success"  # Set status to "success"
+                )
+                db.add(new_payment)
+                logger.info(f"Created new payment for item {payment_item_id} with amount {payment_item.fee} and status 'success'")
+            db.commit()
+        elif status == "NOT RESPONSIBLE":
+            # If marked as not responsible, ensure no associated payment exists or is cleared
+            existing_payment = db.query(models.Payment).filter(models.Payment.payment_item_id == payment_item_id).first()
+            if existing_payment:
+                db.delete(existing_payment)
+                db.commit()
+                logger.info(f"Deleted associated payment {existing_payment.id} for item {payment_item_id} marked as NOT RESPONSIBLE")
+
+        db.refresh(payment_item)
+        return {"message": f"Payment item {payment_item_id} status updated to {status}"}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating payment item status: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update payment item status: {e}",
+        )
+
+
+@router.get("/admin/membership/")
+async def admin_membership(
+    request: Request,
+    db: Session = Depends(get_db),
+    academic_year: Optional[str] = None,
+    semester: Optional[str] = None,
+) -> List[Dict]:
+    logging.info(f"Entered /admin/membership/ route with academic_year: {academic_year}, semester: {semester}")
+    logging.info(f"Received academic_year: {academic_year}, semester: {semester}")
+
+    try:
+        # Fetch users, eager load payment_items and payments
+        query = db.query(models.User).options(
+            joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
+        )
+        users = query.all()
+
+        membership_data = []
+        processed_user_ids = set()
+
+        for user in users:
+            if user.id not in processed_user_ids:
+                total_paid = 0
+                total_amount = 0
+                displayed_school_year = None
+                displayed_semester = None
+                section_users_count = 0  # Count of users in the same section
+                section_paid_count = 0    # Count of users in the same section who have paid
+
+                logging.info(f"User ID: {user.id}, Academic Year Filter: {academic_year}, Semester Filter: {semester}")
+
+                # Filter payment items based on the provided academic year and semester
+                filtered_payment_items = [
+                    pi for pi in user.payment_items
+                    if (academic_year is None or pi.academic_year == academic_year) and
+                       (semester is None or pi.semester == semester)
+                ]
+
+                for payment_item in filtered_payment_items:
+                    logging.info(
+                        f"  Payment Item ID: {payment_item.id}, Academic Year: {payment_item.academic_year}, Semester: {payment_item.semester}, Fee: {payment_item.fee}"
+                    )
+                    total_amount += payment_item.fee
+                    for payment in payment_item.payments:
+                        logging.info(f"   Payment ID: {payment.id}, Status: {payment.status}, Amount: {payment.amount}")
+                        if payment.status == 'success':
+                            total_paid += payment.amount
+                        else:
+                            logging.info(f"   -> Payment status is '{payment.status}', not adding to total_paid.")
+
+                    if not displayed_school_year:  # Capture the first matching one for display
+                        displayed_school_year = payment_item.academic_year
+                        displayed_semester = payment_item.semester
+                # Iterate through all users to count users in the same section
+                for other_user in users:
+                    if other_user.section == user.section:
+                        section_users_count += 1
+                        # Check if the other user has paid.  Use the same filtering logic
+                        other_user_total_paid = 0
+                        other_user_filtered_payment_items = [
+                            pi for pi in other_user.payment_items
+                            if (academic_year is None or pi.academic_year == academic_year) and
+                               (semester is None or pi.semester == semester)
+                        ]
+                        for pi in other_user_filtered_payment_items:
+                            for p in pi.payments:
+                                if p.status == 'success':
+                                    other_user_total_paid += p.amount
+                        if other_user_total_paid >= total_amount and total_amount > 0:
+                            section_paid_count += 1
+
+                # Determine membership status based on the filtered totals
+                # Changed this part to show the numbers
+                status = f"{section_paid_count}/{section_users_count}"
+
+                membership_data.append(
+                    {
+                        'student_number': user.student_number,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'year_level': user.year_level,
+                        'section': user.section,
+                        'status': status,
+                        'total_paid': total_paid,
+                        'total_amount': total_amount,
+                        'academic_year': displayed_school_year,
+                        'semester': displayed_semester,
+                        'section_users_count': section_users_count, # Added total count
+                        'section_paid_count': section_paid_count
+                    }
+                )
+                processed_user_ids.add(user.id)
+
+        logging.info("Successfully fetched and filtered membership data")
+        return membership_data
+    except Exception as e:
+        logging.error(f"Error fetching membership data: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch membership data")
+
+
 @router.get("/admin/payments/total_members", response_class=HTMLResponse, name="payments_total_members")
-async def payments_total_members(request: Request, db: Session = Depends(get_db)):
-    year = 2025  # Or however you determine the year
-    users = db.query(models.User).all()  # Fetch all users from the database
+async def payments_total_members(
+    request: Request,
+    db: Session = Depends(get_db),
+    section: Optional[str] = None  # Add section as an optional query parameter
+):   
+    if section:
+        users = db.query(models.User).filter(models.User.section == section).all()  # Fetch users by section
+    else:
+        users = db.query(models.User).all() #fetch all users
     return templates.TemplateResponse(
         "admin_dashboard/payments/total_members.html",
-        {"request": request, "year": year, "members": users},
+        {"request": request, "members": users, "section": section}, # Pass the section to the template
     )
 
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
@@ -482,7 +710,10 @@ async def payment_success(
     if not payment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
 
-    crud.update_payment(db, payment_id=payment.id, status="success")
+    # Link the Payment to the PaymentItem by setting payment_item_id
+    updated_payment = crud.update_payment(
+        db, payment_id=payment.id, status="success", payment_item_id=paymentItemId
+    )
 
     # Mark the associated PaymentItem as paid
     payment_item = crud.get_payment_item_by_id(db, payment_item_id=paymentItemId)
@@ -491,7 +722,7 @@ async def payment_success(
         updated_item = crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
         return templates.TemplateResponse(
             "student_dashboard/payment_success.html",
-            {"request": request, "payment_id": payment.paymaya_payment_id, "payment_item_id": paymentItemId, "updated": updated_item}
+            {"request": request, "payment_id": payment.paymaya_payment_id, "payment_item_id": paymentItemId, "updated": updated_payment} # Use updated_payment here if needed
         )
     else:
         return HTTPException(
@@ -638,8 +869,8 @@ async def events(request: Request, db: Session = Depends(get_db)):
 @app.get("/Payments", response_class=HTMLResponse, name="payments")
 async def payments(request: Request, db: Session = Depends(get_db)):
     """
-    Renders the payments page with data for a student, displaying only their unpaid payment items
-    and including the due date.
+    Renders the payments page with data for a student, displaying past due and unpaid payment items
+    based on the is_paid, is_past_due, and is_not_responsible flags.  Payment items are ordered by academic year.
     """
     logging.info("Entering /Payments route")
     user_identifier = request.session.get("user_id") or request.session.get("admin_id")
@@ -658,30 +889,50 @@ async def payments(request: Request, db: Session = Depends(get_db)):
     logging.info(f"Current user: {current_user}")
 
     try:
-        # Fetch only unpaid payment items for the current user.
+        # Fetch payment items for the current user that are NOT marked as not responsible,
+        # ordered by academic year.
         payment_items = (
             db.query(models.PaymentItem)
             .filter(models.PaymentItem.user_id == user_identifier)
-            .filter(models.PaymentItem.is_paid == False)
+            .filter(models.PaymentItem.is_not_responsible == False)  # Exclude items where is_not_responsible is True
+            .order_by(models.PaymentItem.academic_year)  # Order by academic year
             .all()
         )
-        logging.info(f"Unpaid payment items: {payment_items}")
+        logging.info(f"Payment items: {payment_items}")
+
+        past_due_items = []
+        unpaid_upcoming_items = []
+
+        for item in payment_items:
+            if not item.is_paid:
+                if item.is_past_due:
+                    past_due_items.append(item)
+                else:
+                    unpaid_upcoming_items.append(item)
+
+        logging.info("Past due items (before template):")
+        for item in past_due_items:
+            logging.info(f"  Item ID: {item.id}, Due Date: {item.due_date}, Academic Year: {item.academic_year}, Semester: {item.semester}")
+
+        logging.info("Unpaid upcoming items (before template):")
+        for item in unpaid_upcoming_items:
+            logging.info(f"  Item ID: {item.id}, Due Date: {item.due_date}, Academic Year: {item.academic_year}, Semester: {item.semester}")
 
         return templates.TemplateResponse(
             "student_dashboard/payments.html",
             {
                 "request": request,
-                "payment_items": payment_items,
+                "past_due_items": past_due_items,
+                "unpaid_upcoming_items": unpaid_upcoming_items,
                 "current_user": current_user,
             },
         )
     except Exception as e:
-        logging.exception(f"Error fetching unpaid payments: {e}")
+        logging.exception(f"Error fetching payments: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve unpaid payment information.",
+            detail="Failed to retrieve payment information.",
         )
-
 
 # Endpoint for financial statement
 @app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
@@ -731,7 +982,11 @@ async def settings(request: Request, db: Session = Depends(get_db)):
 
 # Endpoint for signup
 @app.post("/api/signup/")
-async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
+async def signup(
+    user: schemas.UserCreate,
+    db: Session = Depends(get_db),
+    request: Request = None,  # Added Request for potential use, though not directly used as of now
+):
     db_user = crud.get_user(db, identifier=user.student_number)
     if db_user:
         raise HTTPException(status_code=400, detail="Student number already registered")
@@ -743,13 +998,59 @@ async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # NEW: Check for existing first and last name combination
     db_name_combination = db.query(models.User).filter(
         models.User.first_name == user.first_name,
-        models.User.last_name == user.last_name
+        models.User.last_name == user.last_name,
     ).first()
     if db_name_combination:
-        raise HTTPException(status_code=400, detail="First and last name combination already registered") #ADDED THIS
+        raise HTTPException(status_code=400, detail="First and last name combination already registered")  # ADDED THIS
 
     new_user = crud.create_user(db=db, user=user)
+
+    # Preload payments
+    current_year = date.today().year
+    semester = "1st"  # Start with 1st semester
+    payment_items = []
+    start_date = date(current_year, 2, 28)  # February 28th
+    for i in range(8):
+        academic_year = f"{current_year}-{current_year + 1}"
+        due_date = start_date + timedelta(days=i * 6 * 30)  # Approximately 6 months interval
+        #  Calculate year level.  This is just an example, and you might need
+        #  to adjust the logic based on your specific academic calendar.
+        year_level_applicable = (i // 2) + 1  # 1st year for first 2 semesters, etc.
+        payment_items.append(
+            {
+                "user_id": new_user.id,
+                "academic_year": academic_year,
+                "semester": semester,
+                "fee": 100.00,
+                "description": f"Payment Item {i+1}",
+                "due_date": due_date,
+                "year_level_applicable": year_level_applicable, # Added year_level_applicable
+            }
+        )
+        # Switch semester after each year (2 semesters per year)
+        if semester == "1st":
+            semester = "2nd"
+        else:
+            semester = "1st"
+            current_year += 1
+            start_date = date(current_year, 2, 28)  # reset start date for the next academic year
+
+    for payment_data in payment_items:
+        crud.add_payment_item(
+            db=db,
+            user_id=payment_data["user_id"],
+            academic_year=payment_data["academic_year"],
+            semester=payment_data["semester"],
+            fee=payment_data["fee"],
+            due_date=payment_data["due_date"],
+            year_level_applicable=payment_data["year_level_applicable"], # Added year_level_applicable
+        )
+
     return {"message": "User created successfully", "user_id": new_user.id}
+
+
+
+
 
 @app.get("/api/user/{user_id}", response_model=schemas.User)
 async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
@@ -924,6 +1225,7 @@ def generate_email(first_name: str, last_name: str) -> str:
         return f"ic.{first_name.lower()}.{last_name.lower()}@cvsu.edu.ph"
     return None  # Or some default/error value
 
+
 @app.post("/api/profile/update/")
 async def update_profile(
     request: Request,
@@ -945,106 +1247,126 @@ async def update_profile(
     guardian_name: Optional[str] = Form(None),
     guardian_contact: Optional[str] = Form(None),
     is_verified: Optional[bool] = Form(None),
-    registration_form: Optional[UploadFile] = File(None),  # Change to UploadFile
+    registration_form: Optional[UploadFile] = File(None),
     profilePicture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
     """
     Updates the user's profile information, including handling the registration form file upload
-    and extracting data from it. It also deletes the previous registration form and profile picture
-    if new ones are uploaded.
+    and extracting data from it.  It also updates the user's payment items, setting the academic year
+    and due date dynamically based on the user's year level.
     """
     # 1.  Get the user from the database.
     current_user_id = request.session.get("user_id")
-    print(f"Current user ID from session: {current_user_id}")
+    logger.info(f"1. Current user ID from session: {current_user_id}")
     if not current_user_id:
-        print("Error: Not authenticated")
+        logger.error("Error: Not authenticated")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-    user = db.query(models.User).filter(models.User.id == current_user_id).first()
+    try:
+        user = (
+            db.query(models.User)
+            .filter(models.User.id == current_user_id)
+            .options(selectinload(models.User.payment_items))
+            .first()
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"2. Error querying user: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error while retrieving user",
+        )
+
     if not user:
-        print(f"Error: User not found with ID: {current_user_id}")
+        logger.error(f"3. Error: User not found with ID: {current_user_id}")
         raise HTTPException(status_code=404, detail="User not found")
-    print(f"Found user: {user.name}")
+    logger.info(f"4. Found user: {user.name}")
+    logger.info(f"4. User object: {user}")  # Add this to see the whole user object
 
     # Function to safely delete a file
     def delete_file(file_path: Optional[str]):
         if file_path:
-            full_path = os.path.join("..", file_path.lstrip("/"))  # Construct full path
-            print(f"Attempting to delete file: {full_path}")
+            full_path = os.path.join(
+                "..", file_path.lstrip("/")
+            )  # Construct full path
+            logger.info(f"Attempting to delete file: {full_path}")
             if os.path.exists(full_path):
                 try:
                     os.remove(full_path)
-                    print(f"Successfully deleted file: {full_path}")
+                    logger.info(f"Successfully deleted file: {full_path}")
                 except Exception as e:
-                    print(f"Error deleting file {full_path}: {e}")
+                    logger.error(f"Error deleting file {full_path}: {e}")
             else:
-                print(f"File not found, cannot delete: {full_path}")
+                logger.info(f"File not found, cannot delete: {full_path}")
 
     # 2. Update the user object with the provided data
     if student_number is not None:
         user.student_number = student_number
-        print(f"Updating student_number: {student_number}")
+        logger.info(f"5. Updating student_number: {student_number}")
     if first_name is not None:
         user.first_name = first_name
-        print(f"Updating first_name: {first_name}")
+        logger.info(f"6. Updating first_name: {first_name}")
     if last_name is not None:
         user.last_name = last_name
-        print(f"Updating last_name: {last_name}")
+        logger.info(f"7. Updating last_name: {last_name}")
     if email is not None:
         user.email = email
-        print(f"Updating email: {email}")
+        logger.info(f"8. Updating email: {email}")
     if name is not None:
         user.name = name
-        print(f"Updating name: {name}")
+        logger.info(f"9. Updating name: {name}")
     if address is not None:
         user.address = address
-        print(f"Updating address: {address}")
+        logger.info(f"10. Updating address: {address}")
     if birthdate is not None:
         user.birthdate = birthdate
-        print(f"Updating birthdate: {birthdate}")
+        logger.info(f"11. Updating birthdate: {birthdate}")
     if sex is not None:
         user.sex = sex
-        print(f"Updating sex: {sex}")
+        logger.info(f"12. Updating sex: {sex}")
     if contact is not None:
         user.contact = contact
-        print(f"Updating contact: {contact}")
+        logger.info(f"13. Updating contact: {contact}")
     if course is not None:
         user.course = course
-        print(f"Updating course: {course}")
+        logger.info(f"14. Updating course: {course}")
     if semester is not None:
         user.semester = semester
-        print(f"Updating semester: {semester}")
+        logger.info(f"15. Updating semester: {semester}")
     if campus is not None:
         user.campus = campus
-        print(f"Updating campus: {campus}")
+        logger.info(f"16. Updating campus: {campus}")
     if school_year is not None:
         user.school_year = school_year
-        print(f"Updating school_year: {school_year}")
+        logger.info(f"17. Updating school_year: {school_year}")
     if year_level is not None:
         user.year_level = year_level
-        print(f"Updating year_level: {year_level}")
+        logger.info(f"18. Updating year_level: {year_level}")
     if section is not None:
         user.section = section
-        print(f"Updating section: {section}")
+        logger.info(f"19. Updating section: {section}")
     if guardian_name is not None:
         user.guardian_name = guardian_name
-        print(f"Updating guardian_name: {guardian_name}")
+        logger.info(f"20. Updating guardian_name: {guardian_name}")
     if guardian_contact is not None:
         user.guardian_contact = guardian_contact
-        print(f"Updating guardian_contact: {guardian_contact}")
+        logger.info(f"21. Updating guardian_contact: {guardian_contact}")
+    if is_verified is not None:
+        user.is_verified = is_verified
+        logger.info(f"22. Updating is_verified: {is_verified}")
 
     # 3. Handle Registration Form upload and data extraction
     if registration_form:
-        print(
-            f"Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
+        logger.info(
+            f"23. Handling registration form upload: {registration_form.filename}, content_type: {registration_form.content_type}"
         )
         # Validate file type (optional, but recommended)
         if registration_form.content_type != "application/pdf":
-            print(
-                f"Error: Invalid file type for registration form: {registration_form.content_type}. Only PDF is allowed."
+            logger.error(
+                f"24. Error: Invalid file type for registration form: {registration_form.content_type}. Only PDF is allowed."
             )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1053,7 +1375,7 @@ async def update_profile(
 
         try:
             # Delete the previous registration form if it exists
-            print(f"Previous registration form path: {user.registration_form}")
+            logger.info(f"25. Previous registration form path: {user.registration_form}")
             delete_file(user.registration_form)
 
             pdf_content = await registration_form.read()
@@ -1072,91 +1394,102 @@ async def update_profile(
             user.registration_form = (
                 f"/static/documents/registration_forms/{filename}"  # Store relative path
             )
-            print(f"Registration form saved to: {user.registration_form}")
+            logger.info(f"26. Registration form saved to: {user.registration_form}")
 
             # Extract text from the PDF
             extracted_text = extract_text_from_pdf(pdf_file_path)
-            print(f"Extracted text from PDF: {extracted_text}")
+            logger.info(f"27. Extracted text from PDF: {extracted_text}")
 
             # Extract student information
             student_info = extract_student_info(extracted_text)
-            print(f"Extracted student info: {student_info}")
+            logger.info(f"28. Extracted student info: {student_info}")
 
             # Update user object with extracted information if not already provided in the form
             if name is None and "name" in student_info and student_info["name"]:
                 user.name = student_info["name"]
-                print(f"Updated name from PDF: {user.name}")
+                logger.info(f"29. Updated name from PDF: {user.name}")
             if course is None and "course" in student_info and student_info["course"]:
                 user.course = student_info["course"]
-                print(f"Updated course from PDF: {user.course}")
-            if year_level is None and "year_level" in student_info and student_info["year_level"]:
+                logger.info(f"30. Updated course from PDF: {user.course}")
+            if (
+                year_level is None
+                and "year_level" in student_info
+                and student_info["year_level"]
+            ):
                 user.year_level = student_info["year_level"]
-                print(f"Updated year_level from PDF: {user.year_level}")
+                logger.info(f"31. Updated year_level from PDF: {user.year_level}")
             if section is None and "section" in student_info and student_info["section"]:
                 user.section = student_info["section"]
-                print(f"Updated section from PDF: {user.section}")
+                logger.info(f"32. Updated section from PDF: {user.section}")
             if campus is None and "campus" in student_info and student_info["campus"]:
                 user.campus = student_info["campus"]
-                print(f"Updated campus from PDF: {user.campus}")
-            if semester is None and "semester" in student_info and student_info["semester"]:
+                logger.info(f"33. Updated campus from PDF: {user.campus}")
+            if (
+                semester is None
+                and "semester" in student_info
+                and student_info["semester"]
+            ):
                 user.semester = student_info["semester"]
-                print(f"Updated semester from PDF: {user.semester}")
-            if school_year is None and "school_year" in student_info and student_info["school_year"]:
+                logger.info(f"34. Updated semester from PDF: {user.semester}")
+            if (
+                school_year is None
+                and "school_year" in student_info
+                and student_info["school_year"]
+            ):
                 user.school_year = student_info["school_year"]
-                print(f"Updated school_year from PDF: {user.school_year}")
+                logger.info(f"35. Updated school_year from PDF: {user.school_year}")
             if address is None and "address" in student_info and student_info["address"]:
                 user.address = student_info["address"]
-                print(f"Updated address from PDF: {user.address}")
+                logger.info(f"36. Updated address from PDF: {user.address}")
+            if (
+                student_number is None
+                and "student_number" in student_info
+                and student_info["student_number"]
+            ):
+                user.student_number = student_info["student_number"]
+                logger.info(f"37. Updated student_number from PDF: {user.student_number}")
 
-            # Update student number, first name, last name if found in PDF
-            if "student_number" in student_info and student_info["student_number"]:
-                user.student_number = student_info["student_number"]
-                print(f"Updated student_number from PDF: {user.student_number}")
-                        # Update student number, first name, last name if found in PDF
-            if "student_number" in student_info and student_info["student_number"]:
-                user.student_number = student_info["student_number"]
-                print(f"Updated student_number from PDF: {user.student_number}")
+            # Update first and last name
             if "name" in student_info and student_info["name"]:
                 name_str = student_info["name"].strip()
-
-                # Remove any middle initial (like "b.")
-                name_str = re.sub(r'\s+[a-zA-Z]\.\s+', ' ', name_str)  # between names
-                name_str = re.sub(r'\s+[a-zA-Z]\.$', '', name_str)     # at the end
-                name_str = re.sub(r'\s+[a-zA-Z]\.(?=\s)', '', name_str) # before last name
-                name_str = re.sub(r'\s+', ' ', name_str).strip()       # clean spacing
-
-                # Split the cleaned name
+                name_str = re.sub(r"\s+[a-zA-Z]\.\s+", " ", name_str)
+                name_str = re.sub(r"\s+[a-zA-Z]\.$", "", name_str)
+                name_str = re.sub(r"\s+[a-zA-Z]\.(?=\s)", "", name_str)
+                name_str = re.sub(r"\s+", " ", name_str).strip()
                 name_parts = name_str.split()
-
                 if len(name_parts) >= 2:
-                    user.first_name = ' '.join(name_parts[:-1]).title()
+                    user.first_name = " ".join(name_parts[:-1]).title()
                     user.last_name = name_parts[-1].title()
                 elif len(name_parts) == 1:
                     user.first_name = name_parts[0].title()
-                    user.last_name = ''
+                    user.last_name = ""
 
             # Update email if first_name and last_name are available
             if user.first_name and user.last_name:
-                user.email = generate_email(user.first_name.replace(" ", ""), user.last_name)
-                print(f"Updated email: {user.email}")
+                user.email = generate_email(
+                    user.first_name.replace(" ", ""), user.last_name
+                )
+                logger.info(f"38. Updated email: {email}")
 
         except Exception as e:
-            print(f"Error processing registration form: {e}")
+            logger.error(f"39. Error processing registration form: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to process registration form: {e}",
             )
-        print(f"User object registration_form after save: {user.registration_form}")
+        logger.info(
+            f"40. User object registration_form after save: {user.registration_form}"
+        )
 
     # 4. Handle Profile picture upload
     if profilePicture:
-        print(
-            f"Handling profile picture upload: {profilePicture.filename}, content_type: {profilePicture.content_type}"
+        logger.info(
+            f"41. Handling profile picture upload: {profilePicture.filename}, content_type: {profilePicture.content_type}"
         )
         # Validate image file type
         if not profilePicture.content_type.startswith("image/"):
-            print(
-                f"Error: Invalid file type: {profilePicture.content_type}. Only images are allowed."
+            logger.error(
+                f"42. Error: Invalid file type: {profilePicture.content_type}. Only images are allowed."
             )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1164,17 +1497,17 @@ async def update_profile(
             )
 
         # Check image file size (optional)
-        max_image_size_bytes = 2 * 1024 * 1024  # 2MB
+        max_image_size_bytes = 2 * 1024 * 1024
         try:
             # Delete the previous profile picture if it exists
-            print(f"Previous profile picture path: {user.profile_picture}")
+            logger.info(f"43. Previous profile picture path: {user.profile_picture}")
             delete_file(user.profile_picture)
 
             image_content = await profilePicture.read()
-            print(f"Image content length: {len(image_content)}")
+            logger.info(f"44. Image content length: {len(image_content)}")
             if len(image_content) > max_image_size_bytes:
-                print(
-                    f"Error: Image size too large: {len(image_content)} bytes. Maximum allowed size is {max_image_size_bytes} bytes."
+                logger.error(
+                    f"45. Error: Image size too large: {len(image_content)} bytes. Maximum allowed size is {max_image_size_bytes} bytes."
                 )
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -1182,68 +1515,148 @@ async def update_profile(
                 )
             # Use PIL to open and validate the image
             img = Image.open(BytesIO(image_content))
-            img.verify()  # Check if it's a valid image
-            print("Image validation successful")
+            img.verify()
+            logger.info("46. Image validation successful")
         except Exception as e:
-            print(f"Error: Invalid image file: {e}")
+            logger.error(f"47. Error: Invalid image file: {e}")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid image file: {e}"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid image file: {e}",
             )
 
         # Generate a secure filename
         filename = generate_secure_filename(profilePicture.filename)
-        print(f"Generated filename: {filename}")
-        # Construct the full file path - use os.path.join correctly
+        logger.info(f"48. Generated filename: {filename}")
+        # Construct the full file path
         file_path = os.path.join(
             "..",
-            "frontend",  # Start from the project root
+            "frontend",
             "static",
             "images",
             "profile_pictures",
             filename,
         )
-        print(f"Saving image to: {file_path}")
+        logger.info(f"49. Saving image to: {file_path}")
         # Save the image file
         try:
             # Ensure the directory exists before saving.
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            print("Directory created (if needed)")
+            logger.info("50. Directory created (if needed)")
             with open(file_path, "wb") as f:
                 f.write(image_content)
-            print("Image saved successfully")
+            logger.info("51. Image saved successfully")
             user.profile_picture = (
-                f"/static/images/profile_pictures/{filename}"  # Store relative path
+                f"/static/images/profile_pictures/{filename}"
             )
-            print(f"Profile picture path set to: {user.profile_picture}")
+            logger.info(f"52. Profile picture path set to: {user.profile_picture}")
         except Exception as e:
-            print(f"Error saving image: {e}")
+            logger.error(f"53. Error saving image: {e}")
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  # Correct status code
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to save image: {e}",
             )
 
-    # 5.  Generate and update email.  <-- Simplified and moved
-    if first_name and last_name:
+    # 5.  Generate and update email.
+    if first_name and last_name and not email:  # Only generate if email not provided
         email = generate_email(first_name, last_name)
         user.email = email
-        print(f"Updating email: {email}")
+        logger.info(f"54. Updating email: {email}")
 
-    # 6. Commit the changes to the database
+    # 6. Update payment items with revised logic
+    # Determine the correct academic year for the first payment item based on year level
+    current_date = datetime.now()
+    logger.info(f"60. Current date: {current_date}")
+
+    # Parse the year level to determine how many years the student has been in school
+    year_level_str = str(user.year_level).lower().strip()
+    year_level_mapping = {
+        "1st": 1, "first": 1, "1": 1,
+        "2nd": 2, "second": 2, "2": 2,
+        "3rd": 3, "third": 3, "3": 3,
+        "4th": 4, "fourth": 4, "4": 4
+    }
+
+    # Default to first year if we can't determine the year level
+    student_year = year_level_mapping.get(year_level_str, 1)
+    logger.info(f"60.1 Parsed student year level: {student_year}")
+
+    # Calculate the starting academic year for this student
+    # For example, if it's May 2025 and the student is in 3rd year,
+    # their first year would have started in 2022-2023
+    first_academic_year_start = current_date.year - (student_year - 1)
+    if current_date.month < 6:  # Before June, still in previous academic year
+        first_academic_year_start -= 1
+
+    first_academic_year = f"{first_academic_year_start}-{first_academic_year_start + 1}"
+    logger.info(f"60.5 Academic year for first item: {first_academic_year}")
+
+    # Process each payment item
+    # Fetch payment items for the current user
+    payment_items = user.payment_items  # Assuming `user.payment_items` contains the payment items
+
+    for i, item in enumerate(payment_items):
+        logger.info(f"61. Processing payment item: {item.id}")
+        logger.info(f"61.1 Original item: {item.__dict__}")  # Log original item
+        
+        # Calculate the academic year based on position relative to the first item
+        semester_offset = i // 2  # Each year has 2 semesters
+        item_academic_year_start = first_academic_year_start + semester_offset
+        item.academic_year = f"{item_academic_year_start}-{item_academic_year_start + 1}"
+        logger.info(f"62. Payment Item {item.id} Academic Year: {item.academic_year}")
+        
+        # Determine the due date based on semester pattern (alternating Feb/Jul)
+        due_date_year = int(item.academic_year.split("-")[1])
+        if (i % 2) == 0:
+            # First semester - February first week
+            due_date = datetime(due_date_year, 2, 1) + timedelta(
+                days=7 - datetime(due_date_year, 2, 1).weekday()
+            )
+        else:
+            # Second semester - July first week
+            due_date = datetime(due_date_year, 7, 1) + timedelta(
+                days=7 - datetime(due_date_year, 7, 1).weekday()
+            )
+        item.due_date = due_date.date()
+        logger.info(f"63. Payment Item {item.id} Due Date: {item.due_date}")
+
+        # Update past due status
+        if item.due_date and item.due_date < current_date.date() and not item.is_paid:
+            item.is_past_due = True
+            logger.info(
+                f"64. Payment Item {item.id} is_past_due is set to True, due_date: {item.due_date}, current_date: {current_date.date()}"
+            )
+        else:
+            item.is_past_due = False
+            logger.info(
+                f"65. Payment Item {item.id} is_past_due is set to False, due_date: {item.due_date}, current_date: {current_date.date()}"
+            )
+        
+        logger.info(f"65.5 Modified item: {item.__dict__}")  # Log modified item
+        db.add(item)  # Add this line to explicitly add the item to the session
+        db.flush()  # Flush changes
+
+    # 7. Commit the changes to the database
     try:
+        logger.info("68.  About to commit changes to the database...")
         db.commit()
-        db.refresh(user)  # Refresh the user object to get the updated values
-        print("Database commit successful")
-        print(f"Profile updated successfully. Session after update: {request.session}")
-        print(f"User registration form in database: {user.registration_form}")
-        print(f"User profile picture in database: {user.profile_picture}")
-        print(f"User email in database: {user.email}")  # <--- Added this line
+        logger.info("68.5 Database commit successful")
+        db.refresh(user)
+        logger.info("69. Database commit successful")
+        logger.info(
+            f"70. Profile updated successfully. Session after update: {request.session}"
+        )
+        logger.info(
+            f"71. User registration form in database: {user.registration_form}"
+        )
+        logger.info(
+            f"72. User profile picture in database: {user.profile_picture}"
+        )
+        logger.info(f"73. User email in database: {user.email}")
+        return {"message": "Profile updated successfully", "user": user}
     except Exception as e:
         db.rollback()
-        print(f"Error updating profile in database: {e}")
+        logger.error(f"74. Error updating profile in database: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  # Correct status code
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update profile in database: {e}",
         )
-
-    # 7. Return the updated user data
-    return {"message": "Profile updated successfully", "user": user}

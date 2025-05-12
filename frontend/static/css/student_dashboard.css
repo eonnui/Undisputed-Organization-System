@@ -82,7 +82,7 @@
 }
 
 
-.announcements {}
+/* .announcements {} */
 
 .announcement-card {
   background-color: #f9fafb;
@@ -146,8 +146,8 @@
   transform: scale(1.1);
 }
 
-
-.upcoming-events {}
+/* 
+.upcoming-events {} */
 
 .event-card {
   background-color: #f9fafb;

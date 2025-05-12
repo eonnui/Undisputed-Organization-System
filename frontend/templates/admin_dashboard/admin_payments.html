@@ -1,344 +1,446 @@
 {% extends 'admin_base.html' %}
 {% block title %}Admin Membership and Payments{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-<style>
-    .tabs {
-        display: flex;
-        border-bottom: 1px solid #ccc;
-        margin-bottom: 20px;
-    }
+    <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
+    <style>
+        .action-button-container {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
 
-    .tab-button {
-        padding: 10px 20px;
-        cursor: pointer;
-        border: none;
-        background-color: #f0f0f0;
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
-        margin-right: 5px;
-    }
+        .action-button-container select {
+            padding: 8px;
+            border: 1px solid var(--accent-light);
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: var(--highlight);
+            color: var(--text-primary);
+        }
 
-    .tab-button.active {
-        background-color: #ddd;
-    }
+        .action-button-container button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
 
-    .tab-content {
-        display: none;
-    }
+        .action-button-container button:hover {
+            background-color: var(--hover-effect);
+        }
 
-    .tab-content.active {
-        display: block;
-    }
+        .past-due {
+            color: red;
+        }
 
-    .payments-page-container {
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
+        .unpaid {
+            color: #e6b800;
+        }
 
-    .payments-header {
-        color: #333;
-        margin-bottom: 20px;
-    }
+        .paid {
+            color: green;
+        }
 
-    .header-actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 15px;
-    }
+        .not-responsible {
+            color: #808080; /* Grey */
+        }
 
-    .view-history-link {
-        display: inline-flex;
-        align-items: center;
-        text-decoration: none;
-        color: #007bff;
-        padding: 8px 15px;
-        border: 1px solid #007bff;
-        border-radius: 5px;
-        font-size: 0.9rem;
-    }
+        .disabled-button {
+            background-color: #cccccc; /* Grey background */
+            color: #666666; /* Darker grey text */
+            cursor: not-allowed; /* Change cursor to indicate disabled */
+        }
 
-    .view-history-link .material-symbols-outlined {
-        margin-right: 5px;
-    }
+        .disabled-button:hover {
+            background-color: #cccccc; /* Keep the same background on hover */
+        }
 
-</style>
+        .action-button-container.disabled {
+            display: none;
+        }
+
+    </style>
 {% endblock %}
 
 {% block content %}
-<div class="tabs">
-    <button class="tab-button active" onclick="openTab('membership')">Membership</button>
-    <button class="tab-button" onclick="openTab('payments')">Payments</button>
-</div>
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab('membership')">Membership</button>
+        <button class="tab-button" onclick="openTab('payments')">Payments</button>
+    </div>
 
-<div id="membership" class="tab-content active">
-    <div class="payments-page-container">
-        <h2 class="payments-header">Membership and Payments</h2>
-        <div class="header-actions">
-            <a href="#" class="view-history-link">
-                <span class="material-symbols-outlined">history</span>
-                <span>View Payment History</span>
-            </a>
-        </div>
-        <div class="payments-table-container">
-            <table class="payments-table">
-                <thead>
+    <div id="membership" class="tab-content active">
+        <div class="payments-page-container">
+            <h2 class="payments-header">Membership</h2>
+            <div class="header-actions">
+                <a href="#" class="view-history-link">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>View Payment History</span>
+                </a>
+            </div>
+            <div class="payments-table-container">
+                <table class="payments-table" id="membership-table">
+                    <thead>
                     <tr>
-                        <th>
-                            <div class="custom-select-wrapper" id="academic-year-select-wrapper">
-                                <div class="custom-select-trigger" id="academic-year-select-trigger">
-                                    <span>Academic Year</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                </div>
-                                <div class="custom-options" id="academic-year-select-options">
-                                    <ul role="listbox">
-                                        <li data-value="2024-2025">2024-2025</li>
-                                        <li data-value="2023-2024">2023-2024</li>
-                                        <li data-value="2022-2023">2022-2023</li>
-                                    </ul>
-                                </div>
+                        <div class="custom-select-wrapper" id="academic-year-filter-wrapper">
+                            <div class="custom-select-trigger" id="academic-year-filter-trigger">
+                                <span>Academic Year</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                             </div>
-                        </th>
-                        <th>
-                            <div class="custom-select-wrapper" id="semester-select-wrapper">
-                                <div class="custom-select-trigger" id="semester-select-trigger">
-                                    <span>Semester</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                </div>
-                                <div class="custom-options" id="semester-select-options">
-                                    <ul role="listbox">
-                                        <li data-value="1st">1st Semester</li>
-                                        <li data-value="2nd">2nd Semester</li>
-                                    </ul>
-                                </div>
+                            <div class="custom-options" id="academic-year-filter-options">
+                                <ul role="listbox" id="academic-year-dropdown">
+                                    <li data-value="">All</li>
+                                    <li data-value="2028-2029">2028-2029</li>
+                                    <li data-value="2027-2028">2027-2028</li>
+                                    <li data-value="2026-2027">2026-2027</li>
+                                    <li data-value="2025-2026">2025-2026</li>
+                                    <li data-value="2024-2025">2024-2025</li>
+                                    <li data-value="2023-2024">2023-2024</li>
+                                    <li data-value="2022-2023">2022-2023</li>
+                                </ul>
                             </div>
-                        </th>
+                        </div>
+                        </div>
+                        <div class="custom-select-wrapper" id="semester-filter-wrapper">
+                            <div class="custom-select-trigger" id="semester-filter-trigger">
+                                <span>Semester</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                            <div class="custom-options" id="semester-filter-options">
+                                <ul role="listbox" id="semester-dropdown">
+                                    <li data-value="">All</li>
+                                    <li data-value="1st">1st</li>
+                                    <li data-value="2nd">2nd</li>
+                                </ul>
+                            </div>
+                        </div>
+                        </div>
+                        <th>Year Level</th>
+                        <th>Section</th>
                         <th>Total Paid</th>
                         <th>Total Amount</th>
+                        <th>Status</th>
                         <th>List</th>
                     </tr>
-                    <tr>
-                        <th>Year &amp; Section</th>
-                        <th>Status</th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1A</td>
-                        <td>18/25</td>
-                        <td>1350</td>
-                        <td>1875</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>1B</td>
-                        <td>21/30</td>
-                        <td>1575</td>
-                        <td>2250</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>1C</td>
-                        <td>26/35</td>
-                        <td>1950</td>
-                        <td>2625</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>2A</td>
-                        <td>25/28</td>
-                        <td>1875</td>
-                        <td>2100</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>2B</td>
-                        <td>28/32</td>
-                        <td>2100</td>
-                        <td>2400</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>2C</td>
-                        <td>28/30</td>
-                        <td>2100</td>
-                        <td>2250</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>3A</td>
-                        <td>23/28</td>
-                        <td>1725</td>
-                        <td>2100</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>3B</td>
-                        <td>26/31</td>
-                        <td>1950</td>
-                        <td>2825</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>3C</td>
-                        <td>27/30</td>
-                        <td>2025</td>
-                        <td>2250</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>3D</td>
-                        <td>16/18</td>
-                        <td>1200</td>
-                        <td>1350</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>4A</td>
-                        <td>20/23</td>
-                        <td>1500</td>
-                        <td>1725</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>4B</td>
-                        <td>24/28</td>
-                        <td>1800</td>
-                        <td>2100</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                    <tr class="total-row">
-                        <td>TOTAL:</td>
-                        <td>282/338</td>
-                        <td>21150</td>
-                        <td>25850</td>
-                        <td><a href="{{ url_for('payments_total_members') }}" class="view-button">View</a></td>
-                    </tr>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="payments" class="tab-content">
-    <div class="payments-page-container">
-        <h2 class="payments-header">Membership and Payments</h2>
-        <div class="header-actions">
-            <a href="#" class="view-history-link">
-                <span class="material-symbols-outlined">history</span>
-                <span>View Payment History</span>
-            </a>
-        </div>
+    <div id="payments" class="tab-content">
+        <div class="payments-page-container">
+            <h2 class="payments-header">Payments</h2>
+            <div class="header-actions">
+                <a href="#" class="view-history-link">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>View Payment History</span>
+                </a>
+            </div>
 
-        <div class="payment-settings-section">
-            <h2>Add New Payment Item</h2>
-            <form id="add-payment-item-form" method="post" action="{{ url_for('admin_add_payment_item') }}">
-                <label for="user_id">User ID:</label>
-                <input type="number" id="user_id" name="user_id" required>
-                <div id="user_id_error" class="error-message"></div>
+            <div class="payment-settings-section">
+                <h2>Add New Payment Item</h2>
+                <form id="add-payment-item-form" method="post" action="{{ url_for('admin_add_payment_item') }}">
+                    <label for="user_id">User ID:</label>
+                    <input type="number" id="user_id" name="user_id" required>
+                    <div id="user_id_error" class="error-message"></div>
 
-                <label for="academic_year">Academic Year:</label>
-                <input type="text" id="academic_year" name="academic_year" required>
-                <div id="academic_year_error" class="error-message"></div>
+                    <label for="academic_year">Academic Year:</label>
+                    <input type="text" id="academic_year" name="academic_year" required>
+                    <div id="academic_year_error" class="error-message"></div>
 
-                <label for="semester">Semester:</label>
-                <input type="text" id="semester" name="semester" required>
-                <div id="semester_error" class="error-message"></div>
+                    <label for="semester">Semester:</label>
+                    <input type="text" id="semester" name="semester" required>
+                    <div id="semester_error" class="error-message"></div>
 
-                <label for="fee">Fee :</label>
-                <input type="number" id="fee" name="fee" required>
-                <div id="fee_error" class="error-message"></div>
+                    <label for="fee">Fee :</label>
+                    <input type="number" id="fee" name="fee" required>
+                    <div id="fee_error" class="error-message"></div>
 
-                <label for="due_date">Due Date:</label>
-                <input type="date" id="due_date" name="due_date" required>
-                <div id="due_date_error" class="error-message"></div>
+                    <label for="due_date">Due Date:</label>
+                    <input type="date" id="due_date" name="due_date" required>
+                    <div id="due_date_error" class="error-message"></div>
 
-                <button type="submit">Add Payment Item</button>
-            </form>
-        </div>
+                    <label for="year_level_applicable">Year Level:</label>
+                    <input type="number" id="year_level_applicable" name="year_level_applicable" required>
+                    <div id="year_level_applicable_error" class="error-message"></div>
 
-        <div class="payments-table-container">
-            <table class="payments-table">
-                <thead>
+                    <button type="submit">Add Payment Item</button>
+                </form>
+            </div>
+
+            <div class="payments-table-container">
+                <table class="payments-table" id="payments-table">
+                    <thead>
                     <tr>
                         <th>User ID</th>
                         <th>Academic Year</th>
                         <th>Semester</th>
                         <th>Fee</th>
                         <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for item in payment_items %}
-                    <tr>
-                        <td>{{ item.user_id }}</td>
-                        <td>{{ item.academic_year }}</td>
-                        <td>{{ item.semester }}</td>
-                        <td>{{ item.fee }}</td>
-                        <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date else 'Not Set' }}</td>
-                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item_with_status in payment_items %}
+                        <tr>
+                            <td>{{ item_with_status.item.user_id }}</td>
+                            <td>{{ item_with_status.item.academic_year }}</td>
+                            <td>{{ item_with_status.item.semester }}</td>
+                            <td>{{ item_with_status.item.fee }}</td>
+                            <td>{{ item_with_status.item.due_date.strftime('%Y-%m-%d') if item_with_status.item.due_date else 'Not Set' }}</td>
+                            <td class="{% if item_with_status.item.is_not_responsible %}not-responsible{% else %}{{ item_with_status.status.lower() }}{% endif %}">
+                                {% if item_with_status.item.is_not_responsible %}
+                                    NR
+                                {% else %}
+                                    {{ item_with_status.status }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item_with_status.item.due_date and now and item_with_status.item.due_date < now and item_with_status.status != "Paid" and not item_with_status.item.is_not_responsible %}
+                                    <div class="action-button-container">
+                                        <form method="post" action="/admin/payment/{{ item_with_status.item.id }}/update_status">
+                                            <select name="status" id="status-select-{{ item_with_status.item.id }}">
+                                                <option value="Unpaid" {% if item_with_status.status == "Unpaid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
+                                                    Unpaid
+                                                </option>
+                                                <option value="Paid" {% if item_with_status.status == "Paid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
+                                                    Paid
+                                                </option>
+                                                <option value="NOT RESPONSIBLE" {% if item_with_status.item.is_not_responsible %}selected{% endif %}>
+                                                    Not Responsible
+                                                </option>
+                                            </select>
+                                            <button type="submit" class="update-button"
+                                                    data-item-id="{{ item_with_status.item.id }}">Update</button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <div class="action-button-container disabled">
+                                        <span style="color: var(--text-secondary);">
+                                            {% if not item_with_status.item.due_date %}
+                                                Due date not set
+                                            {% elif not now %}
+                                                Today is not defined
+                                            {% elif item_with_status.status == "Paid" %}
+                                                Already Paid
+                                            {% elif item_with_status.item.is_not_responsible %}
+                                                Not Responsible
+                                            {% elif item_with_status.item.due_date >= now %}
+                                                Due date not yet passed
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
                     {% else %}
-                    <tr><td colspan="5">No payment items found.</td></tr>
+                        <tr>
+                            <td colspan="7">No payment items found.</td>
+                        </tr>
                     {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    function openTab(tabName) {
-        const tabs = document.querySelectorAll('.tab-content');
-        const buttons = document.querySelectorAll('.tab-button');
-        for (let i = 0; i < tabs.length; i++) {
-            tabs[i].classList.remove('active');
+    <script>
+        function openTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
         }
-        for (let i = 0; i < buttons.length; i++) {
-            buttons[i].classList.remove('active');
-        }
-        document.getElementById(tabName).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
 
-    // --- Custom Select Logic (remains the same) ---
-    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
-        const trigger = wrapper.querySelector('.custom-select-trigger');
-        const options = wrapper.querySelector('.custom-options');
-        const listItems = options.querySelectorAll('li');
+        // --- Custom Select Logic ---
+        document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+            const trigger = wrapper.querySelector('.custom-select-trigger');
+            const options = wrapper.querySelector('.custom-options');
+            const listItems = options.querySelectorAll('li');
 
-        trigger.addEventListener('click', () => {
-            wrapper.classList.toggle('open');
-            if (wrapper.classList.contains('open')) {
-                options.style.display = "block";
-            } else {
-                options.style.display = "none";
+            trigger.addEventListener('click', () => {
+                const triggerId = trigger.id;
+                wrapper.classList.toggle('open');
+                options.style.display = wrapper.classList.contains('open') ? "block" : "none";
+                console.log(`Dropdown trigger clicked! ID: ${triggerId}`);
+            });
+
+            listItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const value = item.dataset.value;
+                    trigger.querySelector('span').textContent = item.textContent;
+                    wrapper.classList.remove('open');
+                    options.style.display = "none";
+                    if (wrapper.id === 'academic-year-filter-wrapper') {
+                        selectedAcademicYear = value;
+                    } else if (wrapper.id === 'semester-filter-wrapper') {
+                        selectedSemester = value;
+                    }
+                    updateMembershipTable(); // Call the function here to update table
+                });
+            });
+        });
+
+        // Close select when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.custom-select-wrapper.open').forEach(openWrapper => {
+                    openWrapper.classList.remove('open');
+                    openWrapper.querySelector('.custom-options').style.display = 'none';
+                });
             }
         });
 
-        listItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const value = item.dataset.value;
-                trigger.querySelector('span').textContent = item.textContent;
-                wrapper.classList.remove('open');
-                options.style.display = "none";
+        let selectedAcademicYear = "";
+        let selectedSemester = "";
+
+        async function updateMembershipTable() {
+            const table = document.getElementById("membership-table").getElementsByTagName('tbody')[0];
+            table.innerHTML = ""; // Clear the table
+
+            console.log("Academic Year Filter:", selectedAcademicYear);
+            console.log("Semester Filter:", selectedSemester);
+
+            let url = "/admin/membership/";
+            let queryParams = [];
+
+            if (selectedAcademicYear) {
+                queryParams.push(`academic_year=${selectedAcademicYear}`);
+            }
+            if (selectedSemester) {
+                queryParams.push(`semester=${selectedSemester}`);
+            }
+
+            if (queryParams.length > 0) {
+                url += "?" + queryParams.join("&");
+            }
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+
+                data.forEach(item => {
+                    let row = table.insertRow();
+                    let yearCell = row.insertCell();
+                    let sectionCell = row.insertCell();
+                    let totalPaidCell = row.insertCell();
+                    let totalAmountCell = row.insertCell();
+                    let statusCell = row.insertCell();
+                    let listCell = row.insertCell();
+
+                    yearCell.textContent = item.year_level;
+                    sectionCell.textContent = item.section;
+                    totalPaidCell.textContent = item.total_paid;
+                    totalAmountCell.textContent = item.total_amount;
+                    statusCell.textContent = item.status;
+                    listCell.innerHTML = '<a href="/admin/payments/total_members" class="view-history-link">View</a>';
+                });
+            } catch (error) {
+                console.error("Failed to fetch membership data:", error);
+                table.innerHTML = `<tr><td colspan="9">Error loading data. Please check console.</td></tr>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateMembershipTable();
+            // Event listener for dynamically added update buttons
+            document.querySelectorAll('.update-button').forEach(button => {
+                button.addEventListener('click', function (event) {
+                    const itemId = this.dataset.itemId;
+                    updatePaymentStatus(event, itemId);
+                });
             });
         });
-    });
 
-    // Close select when clicking outside (remains the same)
-    document.addEventListener('click', (event) => {
-        if (!event.target.closest('.custom-select-wrapper')) {
-            document.querySelectorAll('.custom-select-wrapper.open').forEach(openWrapper => {
-                openWrapper.classList.remove('open');
-                openWrapper.querySelector('.custom-options').style.display = 'none';
+        // Expansion form
+        const form = document.getElementById('add-payment-item-form');
+        const labels = form.querySelectorAll('label');
+        const inputs = form.querySelectorAll('input');
+
+        form.addEventListener('click', () => {
+            form.classList.add('expanded');
+            labels.forEach(label => {
+                label.style.opacity = 1;
             });
+            inputs.forEach(input => {
+                input.style.opacity = 1;
+            });
+
+        });
+
+        form.addEventListener('focusout', () => {
+            if (!form.querySelector('input:focus')) {
+                form.classList.remove('expanded');
+                labels.forEach(label => {
+                    label.style.opacity = 0;
+                });
+                inputs.forEach(input => {
+                    input.style.opacity = 0;
+                });
+            }
+        });
+
+        async function updatePaymentStatus(event, itemId) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const formElement = event.target.closest('form'); // Find the form element
+            const statusSelect = document.getElementById(`status-select-${itemId}`);
+            const selectedStatus = statusSelect.value;
+            const updateButton = event.target; // The button that was clicked
+
+            try {
+                const response = await fetch(`/admin/payment/${itemId}/update_status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `status=${encodeURIComponent(selectedStatus)}`,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Update the UI directly
+                const statusCell = event.target.closest('tr').querySelector('td:nth-child(6)'); //gets the 6th cell
+                if (selectedStatus === "NOT RESPONSIBLE") {
+                    statusCell.textContent = "NR";
+                    statusCell.className = "not-responsible";
+                } else {
+                    statusCell.textContent = selectedStatus;
+                    statusCell.className = selectedStatus.toLowerCase();
+                }
+
+                // Disable the select and button after updating
+                statusSelect.disabled = true;
+                updateButton.disabled = true;
+                updateButton.classList.add('disabled-button'); // Apply the disabled style
+
+
+            } catch (error) {
+                console.error("Failed to update payment status:", error);
+                alert('Failed to update status. Please check the console.');
+            }
         }
-    });
-</script>
+    </script>
 {% endblock %}

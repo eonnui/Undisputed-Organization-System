@@ -4,10 +4,31 @@
 
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+    <style>
+        .standby-button {
+            background-color: #808080; /* Gray background */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: not-allowed; /* Change cursor to indicate it's not clickable */
+            opacity: 0.6; /* Reduce opacity to further indicate it's disabled */
+            display: inline-block; /* Ensure it behaves like a button */
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .standby-button:hover {
+            opacity: 0.6; /* Keep the same opacity on hover */
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
     <h1>Membership Payment</h1>
+
+    <h2>Past Due Items</h2>
     <div class="payments-table-container">
         <table class="payment-table">
             <thead>
@@ -21,24 +42,65 @@
                 </tr>
             </thead>
             <tbody>
-                {% if payment_items %}
-                    {% for item in payment_items %}
-                        <tr>
+                {% if past_due_items %}
+                    {% for item in past_due_items %}
+                        <tr class="past-due">
                             <td>{{ item.academic_year }}</td>
                             <td>{{ item.semester }}</td>
                             <td>{{ item.fee }}</td>
                             <td>
-                                {% if item.status == 'paid' %}
+                                {% if item.is_paid %}
                                     <span class="status paid">Paid</span>
-                                {% elif item.status == 'pending' %}
-                                    <span class="status pending">Pending</span>
                                 {% else %}
                                     <span class="status unpaid">Unpaid</span>
                                 {% endif %}
                             </td>
                             <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date }}</td>
                             <td>
-                                {% if item.status != 'paid' %}
+                                {% if not item.is_paid %}
+                                    <span class="standby-button">STANDBY</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                         <p style="display:none;">Raw Due Date: {{ item.due_date }}</p>
+                    {% endfor %}
+                {% else %}
+                    <tr><td colspan="6">No past due payment items.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Upcoming Payments</h2>
+    <div class="payments-table-container">
+        <table class="payment-table">
+            <thead>
+                <tr>
+                    <th>Academic Year</th>
+                    <th>Semester</th>
+                    <th>Fee</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if unpaid_upcoming_items %}
+                    {% for item in unpaid_upcoming_items %}
+                        <tr class="upcoming">
+                            <td>{{ item.academic_year }}</td>
+                            <td>{{ item.semester }}</td>
+                            <td>{{ item.fee }}</td>
+                            <td>
+                                 {% if item.is_paid %}
+                                     <span class="status paid">Paid</span>
+                                 {% else %}
+                                     <span class="status unpaid">Unpaid</span>
+                                 {% endif %}
+                            </td>
+                            <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date }}</td>
+                            <td>
+                                {% if not item.is_paid %}
                                     <form action="{{ url_for('paymaya_create_payment') }}" method="post">
                                         <input type="hidden" name="payment_item_id" value="{{ item.id }}">
                                         <button type="submit" class="pay-button">PAY</button>
@@ -49,11 +111,12 @@
                         <p style="display:none;">Raw Due Date: {{ item.due_date }}</p>
                     {% endfor %}
                 {% else %}
-                    <tr><td colspan="6">No payment items available.</td></tr>
+                    <tr><td colspan="6">No upcoming payment items.</td></tr>
                 {% endif %}
             </tbody>
         </table>
     </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('form').forEach(form => {

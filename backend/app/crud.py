@@ -106,20 +106,26 @@ def get_payment_by_id(db: Session, payment_id: int):
 
 
 def update_payment(
-    db: Session, payment_id: int, paymaya_payment_id: str = None, status: str = None
+    db: Session,
+    payment_id: int,
+    paymaya_payment_id: Optional[str] = None,
+    status: Optional[str] = None,
+    payment_item_id: Optional[int] = None,  # Add this parameter
 ):
-    """Updates a payment record's PayMaya ID and/or status."""
+    """Updates a payment record's PayMaya ID, status, and/or payment_item_id."""
     db_payment = db.query(models.Payment).filter(models.Payment.id == payment_id).first()
     if db_payment:
         if paymaya_payment_id is not None:
             db_payment.paymaya_payment_id = paymaya_payment_id
         if status is not None:
             db_payment.status = status
-        db_payment.updated_at = datetime.utcnow()  # Corrected import # This is correct, it should be a datetime
+        if payment_item_id is not None:
+            db_payment.payment_item_id = payment_item_id  # Set the payment_item_id
+        db_payment.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(db_payment)
         logging.info(
-            f"Updated payment with id: {payment_id}, paymaya_payment_id: {paymaya_payment_id}, status: {status}"
+            f"Updated payment with id: {payment_id}, paymaya_payment_id: {paymaya_payment_id}, status: {status}, payment_item_id: {payment_item_id}"
         )
         return db_payment
     else:
@@ -127,17 +133,28 @@ def update_payment(
         return None
 
 
+
 def add_payment_item(
-    db: Session, academic_year: str, semester: str, fee: float, user_id: int, due_date: Optional[date] = None
+    db: Session,
+    academic_year: str,
+    semester: str,
+    fee: float,
+    user_id: int,
+    due_date: Optional[date] = None,
+    year_level_applicable: Optional[int] = None,  # Added year_level_applicable
+    is_past_due: bool = False, # Added is_past_due
 ):
+    """Adds a new payment item to the database."""
     db_payment_item = models.PaymentItem(
         academic_year=academic_year,
         semester=semester,
         fee=fee,
         user_id=user_id,
         due_date=due_date,  # Save the date object
-        created_at=date.today(), # corrected
-        updated_at=date.today(), # corrected
+        created_at=date.today(),
+        updated_at=date.today(),
+        year_level_applicable=year_level_applicable,  # Use the new parameter here
+        is_past_due=is_past_due, # Set is_past_due
     )
     db.add(db_payment_item)
     db.commit()
@@ -151,6 +168,7 @@ def get_all_payment_items(db: Session):
     payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.is_paid == False).all()
     logging.info(f"Retrieved all unpaid payment items. Count: {len(payment_items)}")
     return payment_items
+
 
 
 def get_payment_item_by_id(db: Session, payment_item_id: int):
@@ -173,7 +191,7 @@ def mark_payment_item_as_paid(db: Session, payment_item_id: int):
         # Instead of db.refresh(), re-fetch and extract the date
         db_payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
         if db_payment_item:  # check if the item was really found.
-            db_payment_item.created_at = db_payment_item.created_at  # no need to change this, but keep it for consistency
+            db_payment_item.created_at = db_payment_item.created_at
             db_payment_item.updated_at = db_payment_item.updated_at
         logging.info(f"Payment item with id: {payment_item_id} marked as paid.")
         return db_payment_item
