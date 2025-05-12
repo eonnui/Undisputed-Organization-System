@@ -1293,13 +1293,14 @@ async def update_profile(
     if not user:
         logger.error(f"Error: User not found with ID: {current_user_id}")
         raise HTTPException(status_code=404, detail="User not found")
-
-    # Function to safely delete a file
+    
+        # Function to safely delete a file
     def delete_file(file_path: Optional[str]):
         if file_path:
+            # Construct the correct full path to the file in the frontend's static directory
             full_path = os.path.join(
-                "..", file_path.lstrip("/")
-            )  # Construct full path
+                "..", "frontend", file_path.lstrip("/")
+            )
             logger.info(f"Attempting to delete file: {full_path}")
             if os.path.exists(full_path):
                 try:
@@ -1366,6 +1367,8 @@ async def update_profile(
         try:
             # Delete the previous registration form if it exists
             logger.info(f"Previous registration form path: {user.registration_form}")
+            # Add logging statement here
+            logger.info(f"Value of user.registration_form before deletion: {user.registration_form}")
             delete_file(user.registration_form)
 
             pdf_content = await registration_form.read()
@@ -1458,7 +1461,6 @@ async def update_profile(
 
     # 4. Handle Profile picture upload
     if profilePicture:
-        #Removed loggings
         try:
             # Delete the previous profile picture if it exists
             delete_file(user.profile_picture)
@@ -1517,10 +1519,18 @@ async def update_profile(
     # Parse the year level to determine how many years the student has been in school
     year_level_str = str(user.year_level).lower().strip()
     year_level_mapping = {
-        "1st": 1, "first": 1, "1": 1,
-        "2nd": 2, "second": 2, "2": 2,
-        "3rd": 3, "third": 3, "3": 3,
-        "4th": 4, "fourth": 4, "4": 4
+        "1st": 1,
+        "first": 1,
+        "1": 1,
+        "2nd": 2,
+        "second": 2,
+        "2": 2,
+        "3rd": 3,
+        "third": 3,
+        "3": 3,
+        "4th": 4,
+        "fourth": 4,
+        "4": 4,
     }
 
     # Default to first year if we can't determine the year level
@@ -1579,3 +1589,4 @@ async def update_profile(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update profile in database: {e}",
         )
+
