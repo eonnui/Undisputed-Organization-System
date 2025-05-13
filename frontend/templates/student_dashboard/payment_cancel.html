@@ -1,7 +1,111 @@
 {% extends 'base.html' %}
 {% block title %}Payment Cancelled{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+<style>
+  .container {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  h1 {
+    color: #ffc107; /* Warning yellow/amber */
+    margin-bottom: 20px;
+  }
+
+  .lead {
+    color: #495057;
+    margin-bottom: 30px;
+  }
+
+  .cancel-icon {
+    font-size: 3em;
+    color: #ffc107;
+    margin-bottom: 20px;
+  }
+
+  .payment-info {
+    margin-bottom: 30px;
+    padding: 15px;
+    border: 1px solid #ffeeba;
+    background-color: #fff3cd;
+    border-radius: 6px;
+  }
+
+  .payment-info p {
+    margin-bottom: 8px;
+    color: #85640a;
+  }
+
+  .payment-info strong {
+    font-weight: 600;
+  }
+
+  .button-container a {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
+    background-color: #2d3748; /* Primary blue */
+    color: white;
+    border-radius: 6px;
+    margin: 0 10px;
+    transition: background-color 0.3s ease;
+    border: 1px solid transparent;
+  }
+
+  .button-container a:hover {
+    background-color: #1a202c;
+    border-color: #1a202c;
+  }
+
+  .text-muted {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 20px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="container">
+    <h1 class="cancel-icon"><i class="fas fa-ban"></i></h1>
     <h1>Payment Cancelled</h1>
-    <p>You cancelled your payment.</p>
-    <p>Payment ID: {{ payment_id }}</p>
+    <p class="lead">Your payment process has been cancelled. If this was unintentional, you can try again.</p>
+
+    <div class="payment-info">
+        <p><strong>Payment ID:</strong> {{ payment_id }}</p>
+        {% if payment_item %}
+        <p><strong>Payment For:</strong>
+            {% if payment_item.user %}
+                {{ payment_item.user.first_name }} {{ payment_item.user.last_name }} ({{ payment_item.user.student_number }})
+            {% else %}
+                N/A
+            {% endif %}
+        </p>
+        {% if payment_item.academic_year %}
+        <p><strong>Academic Year:</strong> {{ payment_item.academic_year }}</p>
+        {% endif %}
+        {% if payment_item.semester %}
+        <p><strong>Semester:</strong> {{ payment_item.semester }}</p>
+        {% endif %}
+        <p><strong>Amount:</strong> ₱{{ payment_item.fee if payment_item else 'N/A' }}</p>
+        {% endif %}
+        <p>You can initiate the payment again from your dashboard or payment history.</p>
+    </div>
+
+    <div class="button-container">
+        <a href="/Payments">Try Again</a>
+        <a href="/home">Back to Dashboard</a>
+        <a href="/student/payment_history">View Payment History</a>
+    </div>
+
+    <p class="text-muted">If you have any concerns, please contact our support team.</p>
+</div>
+<script src="https://kit.fontawesome.com/your_fontawesome_kit.js" crossorigin="anonymous"></script>
 {% endblock %}

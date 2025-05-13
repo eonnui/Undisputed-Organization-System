@@ -3,10 +3,121 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+<style>
+  .container {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+
+  h1 {
+    color: #28a745; /* Success green */
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .lead {
+    color: #495057;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .payment-details {
+    margin-bottom: 30px;
+    border: 1px solid #e0e0e0;
+    padding: 25px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+  }
+
+  .payment-details h2 {
+    color: #343a40;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+  }
+
+  .payment-details p {
+    margin-bottom: 12px;
+    color: #555;
+    line-height: 1.6;
+  }
+
+  .payment-details strong {
+    font-weight: 600;
+    color: #343a40;
+  }
+
+  .button-container {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .button-container a {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
+    background-color: #2d3748; /* Primary blue */
+    color: white;
+    border-radius: 6px;
+    margin: 0 10px;
+    transition: background-color 0.3s ease;
+    border: 1px solid transparent;
+  }
+
+  .button-container a:hover {
+    background-color: #1a202c;
+    border-color: #1a202c;
+  }
+
+  .text-muted {
+    color: #6c757d;
+    text-align: center;
+    font-size: 0.9em;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
-    <h1>Payment Successful</h1>
-    <p>Thank you for your payment. Your Payment ID is: {{ payment_id }}</p>
-    <p>You may print this page for your reference.</p>
+  <div class="container">
+    <h1><i class="fas fa-check-circle text-success"></i> Payment Successful!</h1>
+    <p class="lead">Your transaction has been successfully processed. Here are your payment details:</p>
+
+    <div class="payment-details">
+      <h2><i class="fas fa-info-circle"></i> Payment Information</h2>
+      <p><strong>Payment ID:</strong> {{ payment_id }}</p>
+      <p><strong>Payment Item ID:</strong> {{ payment_item_id }}</p>
+      <p><strong>Amount Paid:</strong> ₱{{ payment_item.fee if payment_item else 'N/A' }}</p>
+      <p><strong>Payment Date:</strong> {{ payment.created_at.strftime('%Y-%m-%d %H:%M:%S') if payment else 'N/A' }}</p>
+
+      {% if payment_item %}
+      <h2><i class="fas fa-file-invoice"></i> Payment For</h2>
+      <p><strong>Student Name:</strong> {{ payment_item.user.first_name if payment_item.user else 'N/A' }} {{ payment_item.user.last_name if payment_item.user else 'N/A' }}</p>
+      <p><strong>Student Number:</strong> {{ payment_item.user.student_number if payment_item.user else 'N/A' }}</p>
+      {% if payment_item.academic_year %}
+      <p><strong>Academic Year:</strong> {{ payment_item.academic_year }}</p>
+      {% endif %}
+      {% if payment_item.semester %}
+      <p><strong>Semester:</strong> {{ payment_item.semester }}</p>
+      {% endif %}
+      {% if payment_item.due_date %}
+      <p><strong>Due Date:</strong> {{ payment_item.due_date.strftime('%Y-%m-%d') }}</p>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="button-container">
+      <a href="javascript:window.print()"><i class="fas fa-print"></i> Print this page</a>
+      <a href="/student/dashboard"><i class="fas fa-home"></i> Back to Dashboard</a>
+      <a href="/student/payment_history"><i class="fas fa-history"></i> View Payment History</a>
+    </div>
+
+    <p class="mt-4 text-muted"><i class="fas fa-question-circle"></i> If you have any questions regarding this payment, please contact the administration office.</p>
+  </div>
+
+  <script src="https://kit.fontawesome.com/your_fontawesome_kit.js" crossorigin="anonymous"></script>
 {% endblock %}

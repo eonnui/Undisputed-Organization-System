@@ -1,122 +1,108 @@
 {% extends 'base.html' %}
 
-{% block title %}Membership and Payments {% endblock %}
+{% block title %}Payments{% endblock %}
 
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
-    <style>
-        .standby-button {
-            background-color: #808080; /* Gray background */
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: not-allowed; /* Change cursor to indicate it's not clickable */
-            opacity: 0.6; /* Reduce opacity to further indicate it's disabled */
-            display: inline-block; /* Ensure it behaves like a button */
-            text-align: center;
-            text-decoration: none;
-            font-size: 16px;
-        }
-
-        .standby-button:hover {
-            opacity: 0.6; /* Keep the same opacity on hover */
-        }
-    </style>
+<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-    <h1>Membership Payment</h1>
+<div class="payments-page">
+    <div class="header-container">
+        <h1 class="page-title">Membership Payments</h1>            
+    </div>       
+    <div class="payments-container">
+        <h2>Past Due Items</h2>
+        <div class="payments-table-container">
+            <table class="payment-table">
+                <thead>
+                    <tr>
+                        <th>Academic Year</th>
+                        <th>Semester</th>
+                        <th>Fee</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if past_due_items %}
+                        {% for item in past_due_items %}
+                            <tr class="past-due">
+                                <td>{{ item.academic_year }}</td>
+                                <td>{{ item.semester }}</td>
+                                <td>₱{{ "{:,.2f}".format(item.fee) }}</td>
+                                <td>
+                                    {% if item.is_paid %}
+                                        <span class="status paid"><i class="fas fa-check-circle"></i> Paid</span>
+                                    {% else %}
+                                        <span class="status unpaid"><i class="fas fa-exclamation-circle"></i> Unpaid</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date }}</td>
+                                <td>
+                                    {% if not item.is_paid %}
+                                        <span class="standby-button"><i class="fas fa-clock"></i> STANDBY</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <p style="display:none;">Raw Due Date: {{ item.due_date }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="6">No past due payment items.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
 
-    <h2>Past Due Items</h2>
-    <div class="payments-table-container">
-        <table class="payment-table">
-            <thead>
-                <tr>
-                    <th>Academic Year</th>
-                    <th>Semester</th>
-                    <th>Fee</th>
-                    <th>Status</th>
-                    <th>Due Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if past_due_items %}
-                    {% for item in past_due_items %}
-                        <tr class="past-due">
-                            <td>{{ item.academic_year }}</td>
-                            <td>{{ item.semester }}</td>
-                            <td>{{ item.fee }}</td>
-                            <td>
-                                {% if item.is_paid %}
-                                    <span class="status paid">Paid</span>
-                                {% else %}
-                                    <span class="status unpaid">Unpaid</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date }}</td>
-                            <td>
-                                {% if not item.is_paid %}
-                                    <span class="standby-button">STANDBY</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                         <p style="display:none;">Raw Due Date: {{ item.due_date }}</p>
-                    {% endfor %}
-                {% else %}
-                    <tr><td colspan="6">No past due payment items.</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
+        <h2>Upcoming Payments</h2>
+        <div class="payments-table-container">
+            <table class="payment-table">
+                <thead>
+                    <tr>
+                        <th>Academic Year</th>
+                        <th>Semester</th>
+                        <th>Fee</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if unpaid_upcoming_items %}
+                        {% for item in unpaid_upcoming_items %}
+                            <tr class="upcoming">
+                                <td>{{ item.academic_year }}</td>
+                                <td>{{ item.semester }}</td>
+                                <td>₱{{ "{:,.2f}".format(item.fee) }}</td>
+                                <td>
+                                    {% if item.is_paid %}
+                                        <span class="status paid"><i class="fas fa-check-circle"></i> Paid</span>
+                                    {% else %}
+                                        <span class="status unpaid"><i class="fas fa-exclamation-circle"></i> Unpaid</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date }}</td>
+                                <td>
+                                    {% if not item.is_paid %}
+                                        <form action="{{ url_for('paymaya_create_payment') }}" method="post">
+                                            <input type="hidden" name="payment_item_id" value="{{ item.id }}">
+                                            <button type="submit" class="pay-button"><i class="fas fa-credit-card"></i> PAY</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <p style="display:none;">Raw Due Date: {{ item.due_date }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="6">No upcoming payment items.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <h2>Upcoming Payments</h2>
-    <div class="payments-table-container">
-        <table class="payment-table">
-            <thead>
-                <tr>
-                    <th>Academic Year</th>
-                    <th>Semester</th>
-                    <th>Fee</th>
-                    <th>Status</th>
-                    <th>Due Date</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if unpaid_upcoming_items %}
-                    {% for item in unpaid_upcoming_items %}
-                        <tr class="upcoming">
-                            <td>{{ item.academic_year }}</td>
-                            <td>{{ item.semester }}</td>
-                            <td>{{ item.fee }}</td>
-                            <td>
-                                 {% if item.is_paid %}
-                                     <span class="status paid">Paid</span>
-                                 {% else %}
-                                     <span class="status unpaid">Unpaid</span>
-                                 {% endif %}
-                            </td>
-                            <td>{{ item.due_date.strftime('%Y-%m-%d') if item.due_date }}</td>
-                            <td>
-                                {% if not item.is_paid %}
-                                    <form action="{{ url_for('paymaya_create_payment') }}" method="post">
-                                        <input type="hidden" name="payment_item_id" value="{{ item.id }}">
-                                        <button type="submit" class="pay-button">PAY</button>
-                                    </form>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <p style="display:none;">Raw Due Date: {{ item.due_date }}</p>
-                    {% endfor %}
-                {% else %}
-                    <tr><td colspan="6">No upcoming payment items.</td></tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('form').forEach(form => {

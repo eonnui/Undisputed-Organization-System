@@ -741,31 +741,60 @@ async def payment_success(
         updated_item = crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
         return templates.TemplateResponse(
             "student_dashboard/payment_success.html",
-            {"request": request, "payment_id": payment.paymaya_payment_id, "payment_item_id": paymentItemId, "updated": updated_payment} # Use updated_payment here if needed
+            {
+                "request": request,
+                "payment_id": payment.paymaya_payment_id,
+                "payment_item_id": paymentItemId,
+                "payment": payment,  # Pass the Payment object
+                "payment_item": payment_item,  # Pass the PaymentItem object
+                # "updated": updated_payment, # You might not need this for display
+            }
         )
     else:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"PaymentItem with ID {paymentItemId} not found."
         )
     
 @router.get("/Failure", response_class=HTMLResponse, name="payment_failure")
-async def payment_failure(request: Request, paymentId: int, db: Session = Depends(get_db)):
+async def payment_failure(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if payment:
         crud.update_payment(db, payment_id=payment.id, status="failed")
-        return templates.TemplateResponse("student_dashboard/payment_failure.html", {"request": request, "payment_id": payment.paymaya_payment_id})
+        payment_item = await _get_related_payment_item(db, payment.payment_item_id)
+        return templates.TemplateResponse(
+            "student_dashboard/payment_failure.html",
+            {
+                "request": request,
+                "payment_id": payment.paymaya_payment_id,
+                "payment_item": payment_item,  # Pass payment_item for details
+            },
+        )
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
 
 @router.get("/Cancel", response_class=HTMLResponse, name="payment_cancel")
-async def payment_cancel(request: Request, paymentId: int, db: Session = Depends(get_db)):
+async def payment_cancel(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if payment:
         crud.update_payment(db, payment_id=payment.id, status="cancelled")
-        return templates.TemplateResponse("student_dashboard/payment_cancel.html", {"request": request, "payment_id": payment.paymaya_payment_id})
+        payment_item = await _get_related_payment_item(db, payment.payment_item_id)
+        return templates.TemplateResponse(
+            "student_dashboard/payment_cancel.html",
+            {
+                "request": request,
+                "payment_id": payment.paymaya_payment_id,
+                "payment_item": payment_item,  # Pass payment_item for details
+            },
+        )
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+
+async def _get_related_payment_item(db: Session, payment_item_id: int | None) -> models.PaymentItem | None:
+    """Helper function to fetch the PaymentItem if payment_item_id is available."""
+    if payment_item_id:
+        return crud.get_payment_item_by_id(db, payment_item_id=payment_item_id)
+    return None
     
 # ---------------------- End of PayMaya Sandbox Integration ----------------------
 

@@ -836,105 +836,167 @@
 
 /* MEMBERSHIP AND PAYMENTS */
 .payments-container {
-  padding: 20px;
-  animation: fadeIn 0.5s ease-out;
+    padding: 30px;
+    background-color: var(--background-light);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); /* Increased shadow for depth */
+    animation: slideInUp 0.6s ease-out; /* Added slide-in animation */
+    margin-top: 20px;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .payments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 2px dashed var(--border-light); /* Subtle dashed line */
 }
 
 .payments-header h1 {
-  margin: 0;
-  font-size: 2.2em;
-  font-weight: bold;
-  color: #2c3e50;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05);
-  animation: fadeIn 0.5s ease-out;
+    margin: 0;
+    font-size: 2.8em; /* Slightly larger title */
+    font-weight: 700; /* More prominent bold */
+    color: var(--text-primary-darker); /* Darker primary text */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1); /* Softer, wider shadow */
+    letter-spacing: -0.5px; /* Slightly tighter letter spacing */
 }
 
-.payments-header .admin-info {
-  text-align: right;
-  font-size: 0.9em;
-  color: #7f8c8d;
+.payments-table-container {
+    margin-bottom: 35px; /* Increased bottom margin */
 }
 
-.payments-header .history-link {
-  text-decoration: none;
-  color: #4299e1;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s ease;
-}
-
-.payments-header .history-link:hover {
-  color: #2b6cb0;
-  text-decoration: underline;
-}
-
-.payments-header .history-link img {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
+h2 {
+    font-size: 2em; /* Slightly larger heading */
+    color: #273443; /* Darker secondary text */
+    margin-bottom: 18px;
+    border-bottom: 3px solid var(--border-light-darker); /* Thicker, darker border */
+    padding-bottom: 10px;
+    letter-spacing: -0.3px;
 }
 
 .payment-table {
-  border: 1px solid #e0e0e0;
-  width: 100%;
-  border-collapse: collapse;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  animation: slideInUp 0.4s ease-out;
+    border: none; /* Remove outer border */
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px; /* Slightly more rounded */
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* More noticeable shadow */
+    animation: fadeInUp 0.5s ease-out; /* Fade in table rows */
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .payment-table th,
 .payment-table td {
-  border: 1px solid #e0e0e0;
-  padding: 12px 16px;
-  text-align: left;
-  transition: background-color 0.2s ease, color 0.2s ease;
+    border-bottom: 1px solid var(--border-light); /* Only bottom border for rows */
+    padding: 18px 15px; /* Increased padding */
+    text-align: left;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out; /* Added transform to transition */
 }
 
 .payment-table th {
-  background-color: #f0f0f0;
-  color: #2c3e50;
-  font-weight: bold;
-}
-
-.payment-table th:hover {
-  background-color: #e0e0e0;
+    background-color: #c7ced4; /* Darker header background */
+    color: #121b25; /* Lighter header text for contrast */
+    font-weight: 600;
+    letter-spacing: -0.2px;
 }
 
 .payment-table td {
-  color: #555;
+    color: var(--text-primary-dark); /* Slightly darker data text */
 }
 
-.payment-table tr:hover td {
-  background-color: #f8f8f8;
-  color: #2c3e50;
+.payment-table tr:nth-child(even) {
+    background-color: var(--background-light-alt-darker); /* Darker even row background */
+}
+
+
+
+.status {
+    display: inline-block;
+    padding: 10px 15px; /* Increased padding */
+    border-radius: 8px; /* More rounded */
+    font-weight: 600;
+    font-size: 0.95em; /* Slightly larger status text */
+    letter-spacing: -0.1px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle status shadow */
+}
+
+.status.unpaid {
+    background-color: var(--error-light);
+    color: #121b25; /* Darker error text */
+    border: 1px solid var(--error-border);
 }
 
 .pay-button {
-  background-color: #e53e3e;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  font-weight: bold;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #da5050;
+    color: #15181c; /* Lighter button text */
+    border: none;
+    padding: 12px 25px; /* Increased padding */
+    border-radius: 10px; /* More rounded */
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease-in-out; /* More dynamic transition with overshoot */
+    font-weight: 500; /* Bolder button text */
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); /* More prominent button shadow */
+    font-size: 1.1em; /* Slightly larger button text */
 }
 
 .pay-button:hover {
-  background-color: #c53030;
-  transform: scale(1.05);
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.15);
+    background-color: #d24a4a;
+    transform: scale(1.05); /* More noticeable hover scale */
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
 }
+
+.standby-button {
+    background-color: #c7ceda;
+    color: var(--button-disabled-text-darker); /* Darker disabled text */
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    cursor: not-allowed;
+    opacity: 0.8; /* Slightly less transparent */
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.standby-button:hover {
+    opacity: 0.8;
+    transform: none; /* Disable hover transform */
+    box-shadow: none; /* Disable hover shadow */
+}
+
+.past-due td {
+    background-color: var(--error-light-alt-darker) !important; /* Darker past due background */
+    color: #121b25;
+    font-weight: 500; /* Slightly bolder past due text */
+}
+
+.past-due:hover td {
+    background-color: var(--error-light-hover-darker) !important; /* Darker past due hover background */
+    color: var(--error-darker) !important;
+}
+
+
 
 /* FINANCIAL STATEMENT */
 h1 {
