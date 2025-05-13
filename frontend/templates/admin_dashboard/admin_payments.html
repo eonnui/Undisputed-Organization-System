@@ -92,6 +92,22 @@
         .filter-container button:hover {
             background-color: #45a049;
         }
+        /* CSS for sortable headers */
+        th.sortable {
+            cursor: pointer;
+        }
+
+        th.sortable:hover {
+            background-color: #f0f0f0;
+        }
+
+        th.sortable.asc::after {
+            content: " ↑";
+        }
+
+        th.sortable.desc::after {
+            content: " ↓";
+        }
     </style> 
 {% endblock %} 
 
@@ -144,11 +160,11 @@
                             </div> 
                         </div> 
                         </div> 
-                        <th>Year Level</th> 
-                        <th>Section</th> 
-                        <th>Total Paid</th> 
-                        <th>Total Amount</th> 
-                        <th>Status</th> 
+                        <th class="sortable" data-column="year_level">Year Level</th> 
+                        <th class="sortable" data-column="section">Section</th> 
+                        <th class="sortable" data-column="total_paid">Total Paid</th> 
+                        <th class="sortable" data-column="total_amount">Total Amount</th> 
+                        <th class="sortable" data-column="status">Status</th> 
                         <th>List</th> 
                     </tr> 
                     </thead> 
@@ -312,8 +328,10 @@
 
         let selectedAcademicYear = "";
         let selectedSemester = "";
+        let sortColumn = "year_level";
+        let sortDirection = 'desc';
 
-       async function updateMembershipTable() {
+        async function updateMembershipTable() {
             const table = document.getElementById("membership-table").getElementsByTagName('tbody')[0];
             table.innerHTML = ""; // Clear the table
 
@@ -345,7 +363,21 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                const data = await response.json();
+                let data = await response.json();
+
+                // Sort the data if a sort column is selected
+                if (sortColumn) {
+                    data.sort((a, b) => {
+                        const valA = a[sortColumn];
+                        const valB = b[sortColumn];
+
+                        if (sortColumn === 'total_paid' || sortColumn === 'total_amount') {
+                            return (sortDirection === 'asc' ? valA - valB : valB - valA);
+                        } else {
+                            return (sortDirection === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA)));
+                        }
+                    });
+                }
 
                 data.forEach(item => {
                     let row = table.insertRow();
@@ -392,11 +424,40 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Apply initial sort indicator to year_level header
+            const yearLevelHeader = document.querySelector('#membership-table th[data-column="year_level"]');
+            if (yearLevelHeader) {
+                yearLevelHeader.classList.add('desc');
+            }
+
             updateMembershipTable();
             document.querySelectorAll('.update-button').forEach(button => {
                 button.addEventListener('click', function (event) {
                     const itemId = this.dataset.itemId;
                     updatePaymentStatus(event, itemId);
+                    });
+            });
+
+            // Add event listeners to the sortable headers
+            document.querySelectorAll('#membership-table th.sortable').forEach(header => {
+                header.addEventListener('click', function () {
+                    const clickedColumn = this.dataset.column;
+                    if (sortColumn === clickedColumn) {
+                        sortDirection = (sortDirection === 'asc') ? 'desc' : 'asc';
+                    } else {
+                        sortColumn = clickedColumn;
+                        sortDirection = 'asc';
+                    }
+
+                    // Remove sort icons from other headers
+                    document.querySelectorAll('#membership-table th.sortable').forEach(th => {
+                        th.classList.remove('asc', 'desc');
+                    });
+
+                    // Add sort icon to the clicked header
+                    this.classList.add(sortDirection);
+
+                    updateMembershipTable();
                 });
             });
         });
