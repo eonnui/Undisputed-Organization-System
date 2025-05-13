@@ -62,7 +62,36 @@
 
         .action-button-container.disabled { 
             display: none; 
-        }       
+        }
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-container label {
+            font-weight: bold;
+        }
+
+        .filter-container input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .filter-container button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .filter-container button:hover {
+            background-color: #45a049;
+        }
     </style> 
 {% endblock %} 
 
@@ -97,7 +126,7 @@
                                     <li data-value="2023-2024">2023-2024</li> 
                                     <li data-value="2022-2023">2022-2023</li> 
                                 </ul> 
-                            </div> 
+                        </div> 
                         </div> 
                         </div> 
                         <div class="custom-select-wrapper" id="semester-filter-wrapper"> 
@@ -141,8 +170,13 @@
     <div id="payments" class="tab-content"> 
         <div class="payments-page-container"> 
             <h2 class="payments-header">Payments</h2> 
-            <div class="header-actions"> 
-            </div> 
+             <div class="header-actions">
+                    <div class="filter-container">
+                        <label for="student-id-filter">Filter by Student ID:</label>
+                        <input type="text" id="student-id-filter" placeholder="Enter Student ID">
+                        <button onclick="filterPaymentsByStudentId()">Filter</button>
+                    </div>
+                </div>
 
             <div class="payments-table-container"> 
                 
@@ -156,7 +190,7 @@
                     {% endfor %}
 
                     {% for student_number, payments in student_payments.items() %}
-                        <table class="payments-table">
+                        <table class="payments-table" data-student-id="{{ student_number }}">
                             <thead>
                                 <tr>
                                     <th>Student Number</th>
@@ -227,8 +261,14 @@
             for (let i = 0; i < buttons.length; i++) {
                 buttons[i].classList.remove('active');
             }
-            document.getElementById(tabName).classList.add('active');
-            event.currentTarget.classList.add('active');
+            const targetTab = document.getElementById(tabName);
+            const targetButton = Array.from(buttons).find(button => button.textContent.toLowerCase() === tabName.toLowerCase());
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            if (targetButton) {
+                targetButton.classList.add('active');
+            }
         }
 
         // --- Custom Select Logic ---
@@ -351,15 +391,15 @@
             }
         }
 
-document.addEventListener('DOMContentLoaded', function () {
-    updateMembershipTable();
-    document.querySelectorAll('.update-button').forEach(button => {
-        button.addEventListener('click', function (event) {
-            const itemId = this.dataset.itemId;
-            updatePaymentStatus(event, itemId);
+        document.addEventListener('DOMContentLoaded', function () {
+            updateMembershipTable();
+            document.querySelectorAll('.update-button').forEach(button => {
+                button.addEventListener('click', function (event) {
+                    const itemId = this.dataset.itemId;
+                    updatePaymentStatus(event, itemId);
+                });
+            });
         });
-    });
-});
 
         async function updatePaymentStatus(event, itemId) {
             event.preventDefault();
@@ -388,5 +428,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Failed to update status. Please check the console.');
             }
         }
+
+        function filterPaymentsByStudentId() {
+            const filterInput = document.getElementById('student-id-filter');
+            const studentId = filterInput.value.trim();
+            const paymentTables = document.querySelectorAll('#payments .payments-table');
+
+            paymentTables.forEach(table => {
+                const tableStudentId = table.dataset.studentId;
+                if (studentId === "" || tableStudentId === studentId) {
+                    table.style.display = "";
+                } else {
+                    table.style.display = "none";
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for the hash on load
+            if (window.location.hash.startsWith('#payments')) {
+                openTab('payments');
+                const urlParams = new URLSearchParams(window.location.hash.substring(1)); // Remove the '#'
+                const studentIdFromHash = urlParams.get('student_id');
+                if (studentIdFromHash) {
+                    const filterInput = document.getElementById('student-id-filter');
+                    if (filterInput) {
+                        filterInput.value = studentIdFromHash;
+                        // Introduce a slight delay to ensure the payments table is rendered
+                        setTimeout(filterPaymentsByStudentId, 150);
+                    }
+                }
+            }
+        });
     </script>
 {% endblock %}

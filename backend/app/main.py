@@ -293,7 +293,11 @@ async def admin_delete_bulletin_post(
 
 
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
-async def admin_payments(request: Request, db: Session = Depends(get_db)):
+async def admin_payments(
+    request: Request,
+    db: Session = Depends(get_db),
+    student_number: Optional[str] = None,  # Add student_number as an optional query parameter
+):
     """
     Displays all payment items for administrators, with accurate payment status
     respecting the is_past_due and is_not_responsible flags, and student number.
@@ -309,17 +313,25 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
 
+    # Build the query
+    query = db.query(models.PaymentItem)
+
+    # Filter by student_number if provided
+    if student_number:
+        logger.info(f"Filtering payment items by student_number: {student_number}")
+        query = query.join(models.User).filter(models.User.student_number == student_number)
+
     # Fetch all payment items
-    payment_items = db.query(models.PaymentItem).all()
+    payment_items = query.all()
 
     # Determine payment status for each item and fetch student number
     payment_items_with_status = []
     today = date.today()
     for item in payment_items:
         status_text = "Unpaid"  # Default status
-        student_number = None
+        retrieved_student_number = None
         if item.user:
-            student_number = item.user.student_number
+            retrieved_student_number = item.user.student_number
         else:
             logging.warning(f"Payment item ID {item.id} has no associated user.")
 
@@ -333,11 +345,13 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
         # This ensures that if an admin manually sets it to "Unpaid"
         # (and is_past_due is False), it stays "Unpaid".
 
-        payment_items_with_status.append({
-            "item": item,
-            "status": status_text,
-            "student_number": student_number,
-        })
+        payment_items_with_status.append(
+            {
+                "item": item,
+                "status": status_text,
+                "student_number": retrieved_student_number,
+            }
+        )
 
     logging.info("Payment items with status and student number:")
     for payment in payment_items_with_status:
@@ -345,9 +359,8 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
 
     return templates.TemplateResponse(
         "admin_dashboard/admin_payments.html",  # Corrected line
-        {"request": request, "year": "2025", "payment_items": payment_items_with_status, "now": today},
+        {"request": request, "year": "2025", "payment_items": payment_items_with_status, "now": today, "student_number": student_number}, # Pass student_number to the template
     )
-
 
 @router.post("/admin/payment/{payment_item_id}/update_status")
 async def update_payment_status(
@@ -449,7 +462,8 @@ async def admin_membership(
     semester: Optional[str] = None,
 ) -> List[Dict]:
     """
-    Retrieves membership data, optionally filtered by academic year and semester.
+    Retrieves membership data, optionally filtered by academic year and semester,
+    ensuring no duplicate sections are displayed.
 
     Args:
         request: The incoming request object.
@@ -458,8 +472,8 @@ async def admin_membership(
         semester: Optional semester to filter by.
 
     Returns:
-        A list of dictionaries containing membership data. The 'status' field
-        indicates payment status:
+        A list of dictionaries containing membership data, with each unique section represented once.
+        The 'status' field indicates payment status:
         - If filters are applied:   "paid_count/total_count" (e.g., "2/5")
         - If no filters are applied: The total number of users in the section.
 
@@ -475,13 +489,11 @@ async def admin_membership(
         users = query.all()
 
         membership_data = []
-        processed_user_ids = set()
-        grand_total_paid = 0
-        grand_total_amount = 0
-        grand_total_section_count = 0
+        processed_sections = set()
+        # processed_user_ids = set() # Not strictly needed anymore for preventing duplicate sections
 
         for user in users:
-            if user.id not in processed_user_ids:
+            if user.section not in processed_sections:
                 section_total_paid = 0
                 section_total_amount = 0
                 displayed_school_year = None
@@ -490,68 +502,57 @@ async def admin_membership(
                 section_paid_count = 0
 
                 logging.info(
-                    f"User ID: {user.id}, Academic Year Filter: {academic_year}, Semester Filter: {semester}"
+                    f"Processing section: {user.section}, Academic Year Filter: {academic_year}, Semester Filter: {semester}"
                 )
 
-                filtered_payment_items = [
-                    pi for pi in user.payment_items
-                    if (academic_year is None or pi.academic_year == academic_year) and
-                       (semester is None or pi.semester == semester)
-                ]
+                section_users = [u for u in users if u.section == user.section]
 
-                user_total_amount = 0
-                user_total_paid = 0
-                for payment_item in filtered_payment_items:
-                    user_total_amount += payment_item.fee
-                    for payment in payment_item.payments:
-                        if payment.status == 'success':
-                            user_total_paid += payment.amount
+                for other_user in section_users:
+                    filtered_payment_items = [
+                        pi for pi in other_user.payment_items
+                        if (academic_year is None or pi.academic_year == academic_year) and
+                        (semester is None or pi.semester == semester)
+                    ]
 
-                if filtered_payment_items:
-                    displayed_school_year = filtered_payment_items[0].academic_year
-                    displayed_semester = filtered_payment_items[0].semester
+                    other_user_total_paid = 0
+                    other_user_total_amount = 0
+                    for pi in filtered_payment_items:
+                        other_user_total_amount += pi.fee
+                        for p in pi.payments:
+                            if p.status == 'success':
+                                other_user_total_paid += p.amount
 
-                for other_user in users:
-                    if other_user.section == user.section:
-                        section_users_count += 1
+                    section_total_paid += other_user_total_paid
+                    section_total_amount += other_user_total_amount
+                    section_users_count += 1
 
-                        other_user_filtered_payment_items = [
-                            pi for pi in other_user.payment_items
-                            if (academic_year is None or pi.academic_year == academic_year) and
-                               (semester is None or pi.semester == semester)
-                        ]
-                        other_user_total_paid = 0
-                        other_user_total_amount = 0
-                        for pi in other_user_filtered_payment_items:
-                            other_user_total_amount += pi.fee
-                            for p in pi.payments:
-                                if p.status == 'success':
-                                    other_user_total_paid += p.amount
+                    if other_user_total_paid >= other_user_total_amount and other_user_total_amount > 0:
+                        section_paid_count += 1
 
-                        section_total_paid += other_user_total_paid
-                        section_total_amount += other_user_total_amount
-
-                        if other_user_total_paid >= other_user_total_amount and other_user_total_amount > 0:
-                            section_paid_count += 1
+                    if filtered_payment_items and displayed_school_year is None:
+                        displayed_school_year = filtered_payment_items[0].academic_year
+                        displayed_semester = filtered_payment_items[0].semester
 
                 if academic_year is None and semester is None:
                     status = str(section_users_count)
-                    logging.info(f"Status is total section count: {status}")
+                    logging.info(f"Status for section {user.section} is total section count: {status}")
                 elif academic_year is not None and semester is not None:
                     status = f"{section_paid_count}/{section_users_count}"
-                    logging.info(f"Status is paid/total: {status}")
+                    logging.info(f"Status for section {user.section} is paid/total: {status}")
                 else:
                     status = str(section_users_count)
-                    logging.info(f"Status is total section count: {status}")
+                    logging.info(f"Status for section {user.section} is total section count: {status}")
 
+                # Take the data from the first user encountered in this section
+                representative_user = section_users[0]
                 membership_data.append(
                     {
-                        'student_number': user.student_number,
-                        'email': user.email,
-                        'first_name': user.first_name,
-                        'last_name': user.last_name,
-                        'year_level': user.year_level,
-                        'section': user.section,
+                        'student_number': representative_user.student_number,
+                        'email': representative_user.email,
+                        'first_name': representative_user.first_name,
+                        'last_name': representative_user.last_name,
+                        'year_level': representative_user.year_level,
+                        'section': representative_user.section,
                         'status': status,
                         'total_paid': section_total_paid,
                         'total_amount': section_total_amount,
@@ -561,9 +562,9 @@ async def admin_membership(
                         'section_paid_count': section_paid_count
                     }
                 )
-                processed_user_ids.add(user.id)
-        # removed the MembershipResponse
-        logging.info("Successfully fetched and filtered membership data")
+                processed_sections.add(user.section)
+
+        logging.info("Successfully fetched and filtered membership data (unique sections)")
         return membership_data
     except Exception as e:
         logging.error(f"Error fetching membership data: {e}")
@@ -574,22 +575,33 @@ async def admin_membership(
 async def payments_total_members(
     request: Request,
     db: Session = Depends(get_db),
-    section: Optional[str] = None,  # Existing section filter
-    year_level: Optional[str] = None # New year_level filter
+    section: Optional[str] = None,   # Existing section filter
+    year_level: Optional[str] = None, # New year_level filter
+    student_number: Optional[str] = None  # Corrected parameter name
 ):
+    logger.info(f"Request received for /admin/payments/total_members with parameters: section={section}, year_level={year_level}, student_number={student_number}")
     query = db.query(models.User)
 
     if section:
+        logger.info(f"Filtering by section: {section}")
         query = query.filter(models.User.section == section)
 
     if year_level:
+        logger.info(f"Filtering by year_level: {year_level}")
         query = query.filter(models.User.year_level == year_level)
 
+    if student_number:
+        logger.info(f"Filtering by student_number: {student_number}")
+        query = query.filter(models.User.student_number == student_number) # Corrected model attribute
+
     users = query.all()
+    logger.info(f"Retrieved {len(users)} users from the database.")
+    for user in users:
+        logger.info(f"Displaying user: student_number={user.student_number}, first_name={user.first_name}, last_name={user.last_name}, year_level={user.year_level}, section={user.section}")
 
     return templates.TemplateResponse(
         "admin_dashboard/payments/total_members.html",
-        {"request": request, "members": users, "section": section, "year": 2025, "year_level": year_level},
+        {"request": request, "members": users, "section": section, "year": 2025, "year_level": year_level, "student_number": student_number}, # Corrected context key
     )
 
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
