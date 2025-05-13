@@ -291,59 +291,12 @@ async def admin_delete_bulletin_post(
     # Redirect back to the bulletin board page after successful deletion
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
 
-@router.post("/admin/payments", name="admin_add_payment_item")
-async def admin_add_payment_item(
-    request: Request,
-    user_id: int = Form(...),
-    academic_year: str = Form(...),
-    semester: str = Form(...),
-    fee: float = Form(...),
-    due_date: Optional[str] = Form(None),
-    year_level_applicable: Optional[int] = Form(None), # Added year_level_applicable
-    db: Session = Depends(get_db),
-):
-    """Handles the form submission for adding a new payment item."""
-    current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
-    user_role: Optional[str] = request.session.get("user_role")
-
-    if not current_user_id or user_role != "Admin":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated or insufficient permissions")
-
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"User with ID {user_id} not found.")
-
-    due_date_obj = None
-    if due_date:
-        try:
-            due_date_obj = datetime.strptime(due_date, "%Y-%m-%d").date()  # Parse as date
-            logging.info(f"Parsed due_date: {due_date_obj}")
-        except ValueError as e:
-            logging.error(f"Error parsing due date: {e}")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid due date format (YYYY-MM-DD).")
-
-    logging.info(
-        f"Adding new payment item for user_id: {user_id}, academic_year: {academic_year}, semester: {semester}, fee: {fee}, due_date: {due_date_obj}, year_level_applicable: {year_level_applicable}"
-    )
-    new_payment_item = crud.add_payment_item(
-        db,
-        academic_year=academic_year,
-        semester=semester,
-        fee=fee,
-        user_id=user_id,
-        due_date=due_date_obj,
-        year_level_applicable=year_level_applicable, # Pass year_level_applicable
-    )
-    logging.info(f"New payment item successfully added: {new_payment_item}")
-    logging.info(f"New payment item created: {new_payment_item}")
-
-    return RedirectResponse(router.url_path_for("admin_payments"), status_code=status.HTTP_303_SEE_OTHER)
 
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
 async def admin_payments(request: Request, db: Session = Depends(get_db)):
     """
     Displays all payment items for administrators, with accurate payment status
-    respecting the is_past_due and is_not_responsible flags.
+    respecting the is_past_due and is_not_responsible flags, and student number.
     """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
@@ -359,11 +312,17 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
     # Fetch all payment items
     payment_items = db.query(models.PaymentItem).all()
 
-    # Determine payment status for each item, respecting flags
+    # Determine payment status for each item and fetch student number
     payment_items_with_status = []
     today = date.today()
     for item in payment_items:
         status_text = "Unpaid"  # Default status
+        student_number = None
+        if item.user:
+            student_number = item.user.student_number
+        else:
+            logging.warning(f"Payment item ID {item.id} has no associated user.")
+
         if item.is_not_responsible:
             status_text = "Not Responsible"
         elif item.is_paid:
@@ -377,14 +336,15 @@ async def admin_payments(request: Request, db: Session = Depends(get_db)):
         payment_items_with_status.append({
             "item": item,
             "status": status_text,
+            "student_number": student_number,
         })
 
-    logging.info("Payment items with status:")
+    logging.info("Payment items with status and student number:")
     for payment in payment_items_with_status:
-        logging.info(f"  Item ID: {payment['item'].id}, Due Date: {payment['item'].due_date}, Status: {payment['status']}, Academic Year: {payment['item'].academic_year}, Semester: {payment['item'].semester}, Fee: {payment['item'].fee}, User ID: {payment['item'].user_id}, is_past_due: {payment['item'].is_past_due}, is_paid: {payment['item'].is_paid}, is_not_responsible: {payment['item'].is_not_responsible}")
+        logging.info(f"  Item ID: {payment['item'].id}, Due Date: {payment['item'].due_date}, Status: {payment['status']}, Student Number: {payment['student_number']}, Academic Year: {payment['item'].academic_year}, Semester: {payment['item'].semester}, Fee: {payment['item'].fee}, User ID: {payment['item'].user_id}, is_past_due: {payment['item'].is_past_due}, is_paid: {payment['item'].is_paid}, is_not_responsible: {payment['item'].is_not_responsible}")
 
     return templates.TemplateResponse(
-        "admin_dashboard/admin_payments.html",
+        "admin_dashboard/admin_payments.html",  # Corrected line
         {"request": request, "year": "2025", "payment_items": payment_items_with_status, "now": today},
     )
 
@@ -480,6 +440,7 @@ async def update_payment_status(
             detail=f"Failed to update payment item status: {e}",
         )
 
+
 @router.get("/admin/membership/")
 async def admin_membership(
     request: Request,
@@ -487,11 +448,27 @@ async def admin_membership(
     academic_year: Optional[str] = None,
     semester: Optional[str] = None,
 ) -> List[Dict]:
+    """
+    Retrieves membership data, optionally filtered by academic year and semester.
+
+    Args:
+        request: The incoming request object.
+        db: The database session.
+        academic_year: Optional academic year to filter by.
+        semester: Optional semester to filter by.
+
+    Returns:
+        A list of dictionaries containing membership data. The 'status' field
+        indicates payment status:
+        - If filters are applied:   "paid_count/total_count" (e.g., "2/5")
+        - If no filters are applied: The total number of users in the section.
+
+    Raises:
+        HTTPException: 500 if there's an error fetching the data.
+    """
     logging.info(f"Entered /admin/membership/ route with academic_year: {academic_year}, semester: {semester}")
-    logging.info(f"Received academic_year: {academic_year}, semester: {semester}")
 
     try:
-        # Fetch users, eager load payment_items and payments
         query = db.query(models.User).options(
             joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
         )
@@ -499,61 +476,73 @@ async def admin_membership(
 
         membership_data = []
         processed_user_ids = set()
+        grand_total_paid = 0
+        grand_total_amount = 0
+        grand_total_section_count = 0
 
         for user in users:
             if user.id not in processed_user_ids:
-                total_paid = 0
-                total_amount = 0
+                section_total_paid = 0
+                section_total_amount = 0
                 displayed_school_year = None
                 displayed_semester = None
-                section_users_count = 0  # Count of users in the same section
-                section_paid_count = 0    # Count of users in the same section who have paid
+                section_users_count = 0
+                section_paid_count = 0
 
-                logging.info(f"User ID: {user.id}, Academic Year Filter: {academic_year}, Semester Filter: {semester}")
+                logging.info(
+                    f"User ID: {user.id}, Academic Year Filter: {academic_year}, Semester Filter: {semester}"
+                )
 
-                # Filter payment items based on the provided academic year and semester
                 filtered_payment_items = [
                     pi for pi in user.payment_items
                     if (academic_year is None or pi.academic_year == academic_year) and
                        (semester is None or pi.semester == semester)
                 ]
 
+                user_total_amount = 0
+                user_total_paid = 0
                 for payment_item in filtered_payment_items:
-                    logging.info(
-                        f"  Payment Item ID: {payment_item.id}, Academic Year: {payment_item.academic_year}, Semester: {payment_item.semester}, Fee: {payment_item.fee}"
-                    )
-                    total_amount += payment_item.fee
+                    user_total_amount += payment_item.fee
                     for payment in payment_item.payments:
-                        logging.info(f"   Payment ID: {payment.id}, Status: {payment.status}, Amount: {payment.amount}")
                         if payment.status == 'success':
-                            total_paid += payment.amount
-                        else:
-                            logging.info(f"   -> Payment status is '{payment.status}', not adding to total_paid.")
+                            user_total_paid += payment.amount
 
-                    if not displayed_school_year:  # Capture the first matching one for display
-                        displayed_school_year = payment_item.academic_year
-                        displayed_semester = payment_item.semester
-                # Iterate through all users to count users in the same section
+                if filtered_payment_items:
+                    displayed_school_year = filtered_payment_items[0].academic_year
+                    displayed_semester = filtered_payment_items[0].semester
+
                 for other_user in users:
                     if other_user.section == user.section:
                         section_users_count += 1
-                        # Check if the other user has paid.  Use the same filtering logic
-                        other_user_total_paid = 0
+
                         other_user_filtered_payment_items = [
                             pi for pi in other_user.payment_items
                             if (academic_year is None or pi.academic_year == academic_year) and
                                (semester is None or pi.semester == semester)
                         ]
+                        other_user_total_paid = 0
+                        other_user_total_amount = 0
                         for pi in other_user_filtered_payment_items:
+                            other_user_total_amount += pi.fee
                             for p in pi.payments:
                                 if p.status == 'success':
                                     other_user_total_paid += p.amount
-                        if other_user_total_paid >= total_amount and total_amount > 0:
+
+                        section_total_paid += other_user_total_paid
+                        section_total_amount += other_user_total_amount
+
+                        if other_user_total_paid >= other_user_total_amount and other_user_total_amount > 0:
                             section_paid_count += 1
 
-                # Determine membership status based on the filtered totals
-                # Changed this part to show the numbers
-                status = f"{section_paid_count}/{section_users_count}"
+                if academic_year is None and semester is None:
+                    status = str(section_users_count)
+                    logging.info(f"Status is total section count: {status}")
+                elif academic_year is not None and semester is not None:
+                    status = f"{section_paid_count}/{section_users_count}"
+                    logging.info(f"Status is paid/total: {status}")
+                else:
+                    status = str(section_users_count)
+                    logging.info(f"Status is total section count: {status}")
 
                 membership_data.append(
                     {
@@ -564,16 +553,16 @@ async def admin_membership(
                         'year_level': user.year_level,
                         'section': user.section,
                         'status': status,
-                        'total_paid': total_paid,
-                        'total_amount': total_amount,
+                        'total_paid': section_total_paid,
+                        'total_amount': section_total_amount,
                         'academic_year': displayed_school_year,
                         'semester': displayed_semester,
-                        'section_users_count': section_users_count, # Added total count
+                        'section_users_count': section_users_count,
                         'section_paid_count': section_paid_count
                     }
                 )
                 processed_user_ids.add(user.id)
-
+        # removed the MembershipResponse
         logging.info("Successfully fetched and filtered membership data")
         return membership_data
     except Exception as e:

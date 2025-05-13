@@ -1,245 +1,222 @@
-{% extends 'admin_base.html' %}
-{% block title %}Admin Membership and Payments{% endblock %}
-{% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
-    <style>
-        .action-button-container {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-        }
+{% extends 'admin_base.html' %} 
+{% block title %}Admin Membership and Payments{% endblock %} 
+{% block head %} 
+    <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}"> 
+    <link rel="stylesheet" 
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/> 
+    <style> 
+        .action-button-container { 
+            display: flex; 
+            gap: 5px; 
+            align-items: center; 
+        } 
 
-        .action-button-container select {
-            padding: 8px;
-            border: 1px solid var(--accent-light);
-            border-radius: 4px;
-            font-size: 14px;
-            background-color: var(--highlight);
-            color: var(--text-primary);
-        }
+        .action-button-container select { 
+            padding: 8px; 
+            border: 1px solid var(--accent-light); 
+            border-radius: 4px; 
+            font-size: 14px; 
+            background-color: var(--highlight); 
+            color: var(--text-primary); 
+        } 
 
-        .action-button-container button {
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+        .action-button-container button { 
+            background-color: var(--button-bg); 
+            color: var(--button-text); 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 14px; 
+        } 
 
-        .action-button-container button:hover {
-            background-color: var(--hover-effect);
-        }
+        .action-button-container button:hover { 
+            background-color: var(--hover-effect); 
+        } 
 
-        .past-due {
-            color: red;
-        }
+        .past-due { 
+            color: red; 
+        } 
 
-        .unpaid {
-            color: #e6b800;
-        }
+        .unpaid { 
+            color: #e6b800; 
+        } 
 
-        .paid {
-            color: green;
-        }
+        .paid { 
+            color: green; 
+        } 
 
-        .not-responsible {
-            color: #808080; /* Grey */
-        }
+        .not-responsible { 
+            color: #808080; 
+        } 
 
-        .disabled-button {
-            background-color: #cccccc; /* Grey background */
-            color: #666666; /* Darker grey text */
-            cursor: not-allowed; /* Change cursor to indicate disabled */
-        }
+        .disabled-button { 
+            background-color: #cccccc; 
+            color: #666666; 
+            cursor: not-allowed; 
+        } 
 
-        .disabled-button:hover {
-            background-color: #cccccc; /* Keep the same background on hover */
-        }
+        .disabled-button:hover { 
+            background-color: #cccccc; 
+        } 
 
-        .action-button-container.disabled {
-            display: none;
-        }
+        .action-button-container.disabled { 
+            display: none; 
+        }       
+    </style> 
+{% endblock %} 
 
-    </style>
-{% endblock %}
+{% block content %} 
+    <div class="tabs"> 
+        <button class="tab-button active" onclick="openTab('membership')">Membership</button> 
+        <button class="tab-button" onclick="openTab('payments')">Payments</button> 
+    </div> 
 
-{% block content %}
-    <div class="tabs">
-        <button class="tab-button active" onclick="openTab('membership')">Membership</button>
-        <button class="tab-button" onclick="openTab('payments')">Payments</button>
-    </div>
+    <div id="membership" class="tab-content active"> 
+        <div class="payments-page-container"> 
+            <h2 class="payments-header">Membership</h2> 
+            <div class="header-actions"> 
+            </div> 
+            <div class="payments-table-container"> 
+                <table class="payments-table" id="membership-table"> 
+                    <thead> 
+                    <tr> 
+                        <div class="custom-select-wrapper" id="academic-year-filter-wrapper"> 
+                            <div class="custom-select-trigger" id="academic-year-filter-trigger"> 
+                                <span>Academic Year</span> 
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"> 
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg> 
+                            </div> 
+                            <div class="custom-options" id="academic-year-filter-options"> 
+                                <ul role="listbox" id="academic-year-dropdown"> 
+                                    <li data-value="">All</li> 
+                                    <li data-value="2027-2028">2027-2028</li> 
+                                    <li data-value="2026-2027">2026-2027</li> 
+                                    <li data-value="2025-2026">2025-2026</li> 
+                                    <li data-value="2024-2025">2024-2025</li> 
+                                    <li data-value="2023-2024">2023-2024</li> 
+                                    <li data-value="2022-2023">2022-2023</li> 
+                                </ul> 
+                            </div> 
+                        </div> 
+                        </div> 
+                        <div class="custom-select-wrapper" id="semester-filter-wrapper"> 
+                            <div class="custom-select-trigger" id="semester-filter-trigger"> 
+                                <span>Semester</span> 
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"> 
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg> 
+                            </div> 
+                            <div class="custom-options" id="semester-filter-options"> 
+                                <ul role="listbox" id="semester-dropdown"> 
+                                    <li data-value="">All</li> 
+                                    <li data-value="1st">1st</li> 
+                                    <li data-value="2nd">2nd</li> 
+                                </ul> 
+                            </div> 
+                        </div> 
+                        </div> 
+                        <th>Year Level</th> 
+                        <th>Section</th> 
+                        <th>Total Paid</th> 
+                        <th>Total Amount</th> 
+                        <th>Status</th> 
+                        <th>List</th> 
+                    </tr> 
+                    </thead> 
+                    <tbody> 
+                    </tbody> 
+                    <tfoot> <tr>
+                            <td colspan="2">Totals:</td>
+                            <td id="total-paid-sum">0</td>
+                            <td id="total-amount-sum">0</td>
+                            <td id="total-status-summary"></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table> 
+            </div> 
+        </div> 
+    </div> 
 
-    <div id="membership" class="tab-content active">
-        <div class="payments-page-container">
-            <h2 class="payments-header">Membership</h2>
-            <div class="header-actions">
-                <a href="#" class="view-history-link">
-                    <span class="material-symbols-outlined">history</span>
-                    <span>View Payment History</span>
-                </a>
-            </div>
-            <div class="payments-table-container">
-                <table class="payments-table" id="membership-table">
-                    <thead>
-                    <tr>
-                        <div class="custom-select-wrapper" id="academic-year-filter-wrapper">
-                            <div class="custom-select-trigger" id="academic-year-filter-trigger">
-                                <span>Academic Year</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                            <div class="custom-options" id="academic-year-filter-options">
-                                <ul role="listbox" id="academic-year-dropdown">
-                                    <li data-value="">All</li>
-                                    <li data-value="2028-2029">2028-2029</li>
-                                    <li data-value="2027-2028">2027-2028</li>
-                                    <li data-value="2026-2027">2026-2027</li>
-                                    <li data-value="2025-2026">2025-2026</li>
-                                    <li data-value="2024-2025">2024-2025</li>
-                                    <li data-value="2023-2024">2023-2024</li>
-                                    <li data-value="2022-2023">2022-2023</li>
-                                </ul>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="custom-select-wrapper" id="semester-filter-wrapper">
-                            <div class="custom-select-trigger" id="semester-filter-trigger">
-                                <span>Semester</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                            <div class="custom-options" id="semester-filter-options">
-                                <ul role="listbox" id="semester-dropdown">
-                                    <li data-value="">All</li>
-                                    <li data-value="1st">1st</li>
-                                    <li data-value="2nd">2nd</li>
-                                </ul>
-                            </div>
-                        </div>
-                        </div>
-                        <th>Year Level</th>
-                        <th>Section</th>
-                        <th>Total Paid</th>
-                        <th>Total Amount</th>
-                        <th>Status</th>
-                        <th>List</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <div id="payments" class="tab-content"> 
+        <div class="payments-page-container"> 
+            <h2 class="payments-header">Payments</h2> 
+            <div class="header-actions"> 
+            </div> 
 
-    <div id="payments" class="tab-content">
-        <div class="payments-page-container">
-            <h2 class="payments-header">Payments</h2>
-            <div class="header-actions">
-                <a href="#" class="view-history-link">
-                    <span class="material-symbols-outlined">history</span>
-                    <span>View Payment History</span>
-                </a>
-            </div>
-
-            <div class="payment-settings-section">
-                <h2>Add New Payment Item</h2>
-                <form id="add-payment-item-form" method="post" action="{{ url_for('admin_add_payment_item') }}">
-                    <label for="user_id">User ID:</label>
-                    <input type="number" id="user_id" name="user_id" required>
-                    <div id="user_id_error" class="error-message"></div>
-
-                    <label for="academic_year">Academic Year:</label>
-                    <input type="text" id="academic_year" name="academic_year" required>
-                    <div id="academic_year_error" class="error-message"></div>
-
-                    <label for="semester">Semester:</label>
-                    <input type="text" id="semester" name="semester" required>
-                    <div id="semester_error" class="error-message"></div>
-
-                    <label for="fee">Fee :</label>
-                    <input type="number" id="fee" name="fee" required>
-                    <div id="fee_error" class="error-message"></div>
-
-                    <label for="due_date">Due Date:</label>
-                    <input type="date" id="due_date" name="due_date" required>
-                    <div id="due_date_error" class="error-message"></div>
-
-                    <label for="year_level_applicable">Year Level:</label>
-                    <input type="number" id="year_level_applicable" name="year_level_applicable" required>
-                    <div id="year_level_applicable_error" class="error-message"></div>
-
-                    <button type="submit">Add Payment Item</button>
-                </form>
-            </div>
-
-            <div class="payments-table-container">
-                <table class="payments-table" id="payments-table">
-                    <thead>
-                    <tr>
-                        <th>User ID</th>
-                        <th>Academic Year</th>
-                        <th>Semester</th>
-                        <th>Fee</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
+            <div class="payments-table-container"> 
+                
+                    {% set student_payments = {} %}
                     {% for item_with_status in payment_items %}
-                        <tr>
-                            <td>{{ item_with_status.item.user_id }}</td>
-                            <td>{{ item_with_status.item.academic_year }}</td>
-                            <td>{{ item_with_status.item.semester }}</td>
-                            <td>{{ item_with_status.item.fee }}</td>
-                            <td>{{ item_with_status.item.due_date.strftime('%Y-%m-%d') if item_with_status.item.due_date else 'Not Set' }}</td>
-                            <td class="{% if item_with_status.item.is_not_responsible %}not-responsible{% else %}{{ item_with_status.status.lower() }}{% endif %}">
-                                {% if item_with_status.item.is_not_responsible %}
-                                    NR
-                                {% else %}
-                                    {{ item_with_status.status }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if item_with_status.status == "Past Due" %}
-                                    <div class="action-button-container">
-                                        <form method="post" action="/admin/payment/{{ item_with_status.item.id }}/update_status">
-                                            <select name="status" id="status-select-{{ item_with_status.item.id }}">
-                                                <option value="Unpaid" {% if item_with_status.status == "Unpaid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
-                                                    Unpaid
-                                                </option>
-                                                <option value="Paid" {% if item_with_status.status == "Paid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
-                                                    Paid
-                                                </option>
-                                                <option value="NOT RESPONSIBLE" {% if item_with_status.item.is_not_responsible %}selected{% endif %}>
-                                                    Not Responsible
-                                                </option>
-                                            </select>
-                                            <button type="submit" class="update-button"
-                                                    data-item-id="{{ item_with_status.item.id }}">Update</button>
-                                        </form>
-                                    </div>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="7">No payment items found.</td>
-                        </tr>
+                        {% set student_number = item_with_status.student_number %}
+                        {% if student_number not in student_payments %}
+                            {% set _ = student_payments.update({student_number: []}) %}
+                        {% endif %}
+                        {% set _ = student_payments[student_number].append(item_with_status) %}
                     {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 
+                    {% for student_number, payments in student_payments.items() %}
+                        <table class="payments-table">
+                            <thead>
+                                <tr>
+                                    <th>Student Number</th>
+                                    <th>Academic Year</th> 
+                                    <th>Semester</th> 
+                                    <th>Fee</th> 
+                                    <th>Due Date</th> 
+                                    <th>Status</th> 
+                                    <th>Action</th> 
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item_with_status in payments %}
+                                    <tr>
+                                        <td>{{ item_with_status.student_number }}</td>
+                                        <td>{{ item_with_status.item.academic_year }}</td> 
+                                        <td>{{ item_with_status.item.semester }}</td> 
+                                        <td>{{ item_with_status.item.fee }}</td> 
+                                        <td>{{ item_with_status.item.due_date.strftime('%Y-%m-%d') if item_with_status.item.due_date else 'Not Set' }}</td> 
+                                        <td class="{% if item_with_status.item.is_not_responsible %}not-responsible{% else %}{{ item_with_status.status.lower() }}{% endif %}"> 
+                                            {% if item_with_status.item.is_not_responsible %} 
+                                                NR 
+                                            {% else %} 
+                                                {{ item_with_status.status }} 
+                                            {% endif %} 
+                                        </td> 
+                                        <td> 
+                                            {% if item_with_status.status == "Past Due" %} 
+                                                <div class="action-button-container"> 
+                                                    <form method="post"  action="/admin/payment/{{ item_with_status.item.id }}/update_status"> 
+                                                        <select name="status" id="status-select-{{ item_with_status.item.id }}"> 
+                                                            <option value="Unpaid" {% if item_with_status.status == "Unpaid" and not item_with_status.item.is_not_responsible %}selected{% endif %}> 
+                                                                Unpaid 
+                                                            </option> 
+                                                            <option value="Paid" {% if item_with_status.status == "Paid" and not item_with_status.item.is_not_responsible %}selected{% endif %}> 
+                                                                Paid 
+                                                            </option> 
+                                                            <option value="NOT RESPONSIBLE" {% if item_with_status.item.is_not_responsible %}selected{% endif %}> 
+                                                                Not Responsible 
+                                                            </option> 
+                                                        </select> 
+                                                        <button type="submit" class="update-button"  data-item-id="{{ item_with_status.item.id }}">Update 
+                                                        </button> 
+                                                    </form> 
+                                                </div> 
+                                            {% else %} 
+                                                - 
+                                            {% endif %} 
+                                        </td> 
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %} 
+                        <div>No payment items found.</div> 
+                    {% endfor %} 
+                
+            </div> 
+        </div> 
+    </div> 
     <script>
         function openTab(tabName) {
             const tabs = document.querySelectorAll('.tab-content');
@@ -278,7 +255,7 @@
                     } else if (wrapper.id === 'semester-filter-wrapper') {
                         selectedSemester = value;
                     }
-                    updateMembershipTable(); // Call the function here to update table
+                    updateMembershipTable();
                 });
             });
         });
@@ -296,7 +273,7 @@
         let selectedAcademicYear = "";
         let selectedSemester = "";
 
-        async function updateMembershipTable() {
+       async function updateMembershipTable() {
             const table = document.getElementById("membership-table").getElementsByTagName('tbody')[0];
             table.innerHTML = ""; // Clear the table
 
@@ -317,13 +294,18 @@
                 url += "?" + queryParams.join("&");
             }
 
+            let totalPaidSum = 0;
+            let totalAmountSum = 0;
+            let totalPaidMembers = 0;
+            let totalMembersCount = 0;
+            let overallStatus = "";
+
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-
 
                 data.forEach(item => {
                     let row = table.insertRow();
@@ -340,56 +322,48 @@
                     totalAmountCell.textContent = item.total_amount;
                     statusCell.textContent = item.status;
                     listCell.innerHTML = '<a href="/admin/payments/total_members" class="view-history-link">View</a>';
+
+                    totalPaidSum += item.total_paid;
+                    totalAmountSum += item.total_amount;
+
+                    const [paidCountStr, totalCountStr] = item.status.split('/');
+                    if (paidCountStr && totalCountStr) {
+                        totalPaidMembers += parseInt(paidCountStr);
+                        totalMembersCount += parseInt(totalCountStr);
+                    } else if (item.status) {
+                        totalMembersCount += parseInt(item.status);
+                    }
                 });
+
+                if (selectedAcademicYear && selectedSemester) {
+                    overallStatus = `${totalPaidMembers}/${totalMembersCount}`;
+                } else {
+                    overallStatus = `${totalMembersCount}`;
+                }
+
+                document.getElementById('total-paid-sum').textContent = totalPaidSum;
+                document.getElementById('total-amount-sum').textContent = totalAmountSum;
+                document.getElementById('total-status-summary').textContent = overallStatus;
+
             } catch (error) {
                 console.error("Failed to fetch membership data:", error);
                 table.innerHTML = `<tr><td colspan="9">Error loading data. Please check console.</td></tr>`;
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            updateMembershipTable();
-            // Event listener for dynamically added update buttons
-            document.querySelectorAll('.update-button').forEach(button => {
-                button.addEventListener('click', function (event) {
-                    const itemId = this.dataset.itemId;
-                    updatePaymentStatus(event, itemId);
-                });
-            });
+document.addEventListener('DOMContentLoaded', function () {
+    updateMembershipTable();
+    document.querySelectorAll('.update-button').forEach(button => {
+        button.addEventListener('click', function (event) {
+            const itemId = this.dataset.itemId;
+            updatePaymentStatus(event, itemId);
         });
-
-        // Expansion form
-        const form = document.getElementById('add-payment-item-form');
-        const labels = form.querySelectorAll('label');
-        const inputs = form.querySelectorAll('input');
-
-        form.addEventListener('click', () => {
-            form.classList.add('expanded');
-            labels.forEach(label => {
-                label.style.opacity = 1;
-            });
-            inputs.forEach(input => {
-                input.style.opacity = 1;
-            });
-
-        });
-
-        form.addEventListener('focusout', () => {
-            if (!form.querySelector('input:focus')) {
-                form.classList.remove('expanded');
-                labels.forEach(label => {
-                    label.style.opacity = 0;
-                });
-                inputs.forEach(input => {
-                    input.style.opacity = 0;
-                });
-            }
-        });
+    });
+});
 
         async function updatePaymentStatus(event, itemId) {
-            event.preventDefault(); // Prevent the default form submission
+            event.preventDefault();
 
-            const formElement = event.target.closest('form'); // Find the form element
             const statusSelect = document.getElementById(`status-select-${itemId}`);
             const selectedStatus = statusSelect.value;
 
@@ -406,13 +380,9 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                // Update the UI directly
                 const statusCell = event.target.closest('tr').querySelector('td:nth-child(6)');
                 statusCell.textContent = selectedStatus;
                 statusCell.className = selectedStatus.toLowerCase();
-
-
-
             } catch (error) {
                 console.error("Failed to update payment status:", error);
                 alert('Failed to update status. Please check the console.');
