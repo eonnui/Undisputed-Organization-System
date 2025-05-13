@@ -2,36 +2,50 @@
 {% block title %}Total Members{% endblock %}
 {% block content %}
     <div class="payments-page">
-        <h1 class="page-title">List of Members</h1>
+        <h1 class="page-title">List of Members{% if section %} - Section: {{ section|upper }}{% endif %}</h1>
         <div class="data-container" style="margin-left: 20px;">
-            <p class="page-description">This page displays the list of all members.</p>
+            <p class="page-description">This page displays the list of members{% if section %} for section {{ section|upper }}{% else %} across all sections{% endif %}.</p>
             <p class="year-info">Year: {{ year }}</p>
 
             <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
 
-            <table class="member-table">
+            <div>
+                <h2>Filter by Section</h2>
+                <form method="get" action="{{ url_for('payments_total_members') }}">
+                    <label for="section">Select Section:</label>
+                    <select name="section" id="section">
+                        <option value="">All Sections</option>
+                        {% for distinct_section in distinct_sections %}
+                            <option value="{{ distinct_section }}" {% if section == distinct_section %}selected{% endif %}>{{ distinct_section|upper }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Filter</button>
+                </form>
+            </div>
+
+            <table class="member-table" style="margin-top: 20px;">
                 <thead>
                     <tr>
-                        <th colspan="3">List of Members</th>
+                        <th colspan="3">List of Members{% if section %} - Section: {{ section|upper }}{% endif %}</th>
                     </tr>
                     <tr>
                         <th>Last Name</th>
-                        <th>First Name</th>
-                        <th>M.I.</th>
+                        <th>First Name</th>                        
                     </tr>
                 </thead>
                 <tbody>
                     {% for member in members %}
                         <tr>
                             <td>{{ member.last_name }}</td>
-                            <td>{{ member.first_name }}</td>
-                            <td style="text-align: center;">{{ member.name[0] if member.name else '' }}</td>
+                            <td>{{ member.first_name }}</td>                           
                         </tr>
+                    {% else %}
+                        <tr><td colspan="3">No members found{% if section %} in section {{ section|upper }}{% endif %}.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
 
-            <p style="margin-top: 20px; margin-left: 20px;"><strong>Note:</strong> This is the list of all members for the year {{ year }}.</p>
+            <p style="margin-top: 20px; margin-left: 20px;"><strong>Note:</strong> This is the list of members{% if section %} for section {{ section|upper }}{% else %} across all sections{% endif %} for the year {{ year }}.</p>
 
         </div>
     </div>

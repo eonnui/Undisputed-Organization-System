@@ -574,15 +574,22 @@ async def admin_membership(
 async def payments_total_members(
     request: Request,
     db: Session = Depends(get_db),
-    section: Optional[str] = None  # Add section as an optional query parameter
-):   
+    section: Optional[str] = None,  # Existing section filter
+    year_level: Optional[str] = None # New year_level filter
+):
+    query = db.query(models.User)
+
     if section:
-        users = db.query(models.User).filter(models.User.section == section).all()  # Fetch users by section
-    else:
-        users = db.query(models.User).all() #fetch all users
+        query = query.filter(models.User.section == section)
+
+    if year_level:
+        query = query.filter(models.User.year_level == year_level)
+
+    users = query.all()
+
     return templates.TemplateResponse(
         "admin_dashboard/payments/total_members.html",
-        {"request": request, "members": users, "section": section}, # Pass the section to the template
+        {"request": request, "members": users, "section": section, "year": 2025, "year_level": year_level},
     )
 
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)

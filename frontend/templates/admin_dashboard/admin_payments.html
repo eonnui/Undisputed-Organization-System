@@ -321,7 +321,7 @@
                     totalPaidCell.textContent = item.total_paid;
                     totalAmountCell.textContent = item.total_amount;
                     statusCell.textContent = item.status;
-                    listCell.innerHTML = '<a href="/admin/payments/total_members" class="view-history-link">View</a>';
+                    listCell.innerHTML = `<a href="/admin/payments/total_members?year_level=${item.year_level}&section=${item.section}" class="view-history-link">View</a>`;
 
                     totalPaidSum += item.total_paid;
                     totalAmountSum += item.total_amount;
