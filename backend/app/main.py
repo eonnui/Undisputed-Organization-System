@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.logger import logger  
 from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy import func, extract
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
@@ -570,6 +571,144 @@ async def admin_membership(
         logging.error(f"Error fetching membership data: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch membership data")
 
+@router.get("/admin/individual_members/")
+async def admin_individual_members(
+    request: Request,
+    db: Session = Depends(get_db),
+    academic_year: Optional[str] = None,
+    semester: Optional[str] = None,
+) -> List[Dict]:
+    """
+    Retrieves individual membership data, optionally filtered by academic year and semester.
+    This route is specifically for displaying each individual member.
+
+    Args:
+        request: The incoming request object.
+        db: The database session.
+        academic_year: Optional academic year to filter by.
+        semester: Optional semester to filter by.
+
+    Returns:
+        A list of dictionaries containing individual membership data.
+        The 'payment_status' field indicates the payment status of the member
+        for the specified academic year and semester.
+    """
+    logging.info(f"Entered /admin/individual_members/ route with academic_year: {academic_year}, semester: {semester}")
+
+    try:
+        query = db.query(models.User).options(
+            joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
+        )
+
+        if academic_year:
+            query = query.join(models.PaymentItem).filter(models.PaymentItem.academic_year == academic_year)
+        if semester:
+            query = query.join(models.PaymentItem).filter(models.PaymentItem.semester == semester)
+
+        users = query.all()
+
+        membership_data = []
+        for user in users:
+            total_paid = 0
+            total_amount = 0
+            payment_status = "Not Applicable"
+
+            for pi in user.payment_items:
+                if (academic_year is None or pi.academic_year == academic_year) and \
+                   (semester is None or pi.semester == semester):
+                    total_amount += pi.fee
+                    for p in pi.payments:
+                        if p.status == 'success':
+                            total_paid += p.amount
+
+            if total_amount > 0:
+                if total_paid >= total_amount:
+                    payment_status = "Paid"
+                else:
+                    payment_status = "Partially Paid"
+            elif academic_year is None and semester is None:
+                payment_status = "No Dues" # Or some other appropriate status
+
+            membership_data.append(
+                {
+                    'student_number': user.student_number,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'year_level': user.year_level,
+                    'section': user.section,
+                    'total_paid': total_paid,
+                    'total_amount': total_amount,
+                    'payment_status': payment_status,
+                    'academic_year': academic_year,
+                    'semester': semester,
+                }
+            )
+
+        logging.info("Successfully fetched individual membership data")
+        return membership_data
+    except Exception as e:
+        logging.error(f"Error fetching individual membership data: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch individual membership data")
+
+@router.get("/financial_trends")
+def get_financial_trends(db: Session = Depends(get_db)):
+    """
+    Returns monthly trends of total membership fees collected.
+    """
+    financial_data = db.query(
+        func.extract('year', models.Payment.created_at),
+        func.extract('month', models.Payment.created_at),
+        func.sum(models.Payment.amount)
+    ).group_by(
+        func.extract('year', models.Payment.created_at),
+        func.extract('month', models.Payment.created_at)
+    ).order_by(
+        func.extract('year', models.Payment.created_at),
+        func.extract('month', models.Payment.created_at)
+    ).all()
+
+    labels = [f"{year}-{month}" for year, month, total in financial_data]
+    data = [float(total) for year, month, total in financial_data]
+
+    return {"labels": labels, "data": data}
+
+@router.get("/expenses_by_category")
+def get_expenses_by_category(db: Session = Depends(get_db)):
+    """
+    Returns total fees per academic year from PaymentItem.
+    """
+    expenses_data = db.query(
+        models.PaymentItem.academic_year,
+        func.sum(models.PaymentItem.fee)
+    ).group_by(models.PaymentItem.academic_year).all()
+
+    labels = [category if category else "Unknown Year" for category, total in expenses_data]
+    data = [float(total) for category, total in expenses_data]
+
+    return {"labels": labels, "data": data}
+
+@router.get("/fund_distribution")
+def get_fund_distribution(db: Session = Depends(get_db)):
+    """
+    Distributes collected funds based on the academic year of the associated PaymentItem.
+    """
+    fund_allocation = db.query(
+        models.PaymentItem.academic_year,
+        func.sum(models.Payment.amount)
+    ).join(
+        models.Payment, models.PaymentItem.id == models.Payment.payment_item_id
+    ).group_by(models.PaymentItem.academic_year).all()
+
+    distribution_data = {}
+    for academic_year, total_amount in fund_allocation:
+        category = academic_year if academic_year else "General Funds"
+        distribution_data[category] = distribution_data.get(category, 0.0) + float(total_amount)
+
+    labels = list(distribution_data.keys())
+    data = list(distribution_data.values())
+
+    return {"labels": labels, "data": data}
 
 @router.get("/admin/payments/total_members", response_class=HTMLResponse, name="payments_total_members")
 async def payments_total_members(

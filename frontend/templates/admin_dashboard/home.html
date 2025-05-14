@@ -483,162 +483,202 @@ tr:hover td {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Existing chart code...
         const trendCtx = document.getElementById('trendChart').getContext('2d');
-        const trendChart = new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: ['2021-1', '2022-1', '2023-1', '2023-2', '2024-1', '2025-2'],
-                datasets: [{
-                    label: 'Collections',
-                    data: [5000, 18000, 42000, 43000, 45000, 68000],
-                    borderColor: '#4285F4',
-                    backgroundColor: 'transparent',
-                    tension: 0.4,
-                    pointBackgroundColor: '#4285F4',
-                    borderWidth: 3,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    fill: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return value === 0 ? '0k' : value / 1000 + 'k';
-                            },
-                            font: {
-                                size: 14
-                            }
-                        },
-                        grid: {
-                            color: '#e0e0e0',
-                            borderDash: [5, 5],
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false,
-                        },
-                        ticks: {
-                            font: {
-                                size: 14
-                            }
-                        }
-                    }
-                },
-                elements: {
-                    line: {
-                        shadowColor: 'rgba(0, 0, 0, 0.1)',
-                        shadowBlur: 10,
-                        shadowWidth: 3,
-                    },
-                    point: {
-                        shadowColor: 'rgba(0, 0, 0, 0.2)',
-                        shadowBlur: 7,
-                        shadowWidth: 2,
-                    }
-                }
-            }
-        });
-
         const expensesCtx = document.getElementById('expensesChart').getContext('2d');
-        const expensesChart = new Chart(expensesCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Booths', 'Outreach', 'Supplies'],
-                datasets: [{
-                    data: [8500, 9200, 7300],
-                    backgroundColor: '#4285F4',
-                    borderRadius: 8,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+        const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+
+        let trendChart, expensesChart, distributionChart;
+
+        function initializeCharts() {
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Collections',
+                        data: [],
+                        borderColor: '#4285F4',
+                        backgroundColor: 'transparent',
+                        tension: 0.4,
+                        pointBackgroundColor: '#4285F4',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: false,
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                size: 12
-                            }
-                        },
-                        grid: {
-                            color: '#e0e0e0',
-                            borderDash: [3, 3],
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
                         }
                     },
-                    x: {
-                        grid: {
-                            display: false
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value === 0 ? '0' : value / 1000 + 'k';
+                                },
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            grid: {
+                                color: '#e0e0e0',
+                                borderDash: [5, 5],
+                            }
                         },
-                        ticks: {
-                            font: {
-                                size: 12
+                        x: {
+                            grid: {
+                                display: false,
+                            },
+                            ticks: {
+                                font: {
+                                    size: 14
+                                }
                             }
                         }
-                    }
-                },
-                BarThickness: 20,
-            }
-        });
-
-        const distributionCtx = document.getElementById('distributionChart').getContext('2d');
-        const distributionChart = new Chart(distributionCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Activities', 'Operations', 'Reserves'],
-                datasets: [{
-                    data: [60, 25, 15],
-                    backgroundColor: [
-                        '#4285F4',
-                        '#A4C2F4',
-                        '#D2E3FC'
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 10,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '60%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            boxWidth: 12,
-                            font: {
-                                size: 12
-                            }
+                    },
+                    elements: {
+                        line: {
+                            shadowColor: 'rgba(0, 0, 0, 0.1)',
+                            shadowBlur: 10,
+                            shadowWidth: 3,
+                        },
+                        point: {
+                            shadowColor: 'rgba(0, 0, 0, 0.2)',
+                            shadowBlur: 7,
+                            shadowWidth: 2,
                         }
                     }
-                },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true
                 }
-            }
-        });
+            });
 
-        // Membership Fee Tracker Logic
+            expensesChart = new Chart(expensesCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: '#4285F4',
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: '#e0e0e0',
+                                borderDash: [3, 3],
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    BarThickness: 20,
+                }
+            });
+
+            distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#4285F4',
+                            '#A4C2F4',
+                            '#D2E3FC'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                boxWidth: 12,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true
+                    }
+                }
+            });
+        }
+
+        function fetchFinancialData() {
+            Promise.all([
+                fetch('/financial_trends').then(res => res.json()),
+                fetch('/expenses_by_category').then(res => res.json()),
+                fetch('/fund_distribution').then(res => res.json())
+            ])
+            .then(([trendData, expensesData, distributionData]) => {
+                // Update Trend Chart
+                trendChart.data.labels = trendData.labels;
+                trendChart.data.datasets[0].data = trendData.data;
+                trendChart.update();
+
+                // Update Expenses Chart
+                expensesChart.data.labels = expensesData.labels;
+                expensesChart.data.datasets[0].data = expensesData.data;
+                expensesChart.update();
+
+                // Update Distribution Chart
+                distributionChart.data.labels = distributionData.labels;
+                distributionChart.data.datasets[0].data = distributionData.data;
+                distributionChart.update();
+            })
+            .catch(error => {
+                console.error('Error fetching financial data:', error);
+            });
+        }
+
+        // Initialize charts
+        initializeCharts();
+
+        // Fetch initial data and update charts
+        fetchFinancialData();
+
+        // Optionally, refresh data periodically
+        // setInterval(fetchFinancialData, 5000);
+
+        // --- Membership Fee Tracker Logic  ---
         const academicYearSelect = document.querySelectorAll('.filter-select')[0];
         const membershipTableBody = document.querySelector('.tracker-section table tbody');
 
@@ -657,31 +697,30 @@ tr:hover td {
         }
 
         function fetchMembershipData(academicYear = null) {
-            let url = '/admin/membership/';
-            const params = [];
-            if (academicYear && academicYear !== 'Academic Year ▼') {
-                params.push(`academic_year=${academicYear}`);
-            }
-            if (params.length > 0) {
-                url += '?' + params.join('&');
-            }
+          let url = '/admin/individual_members/'; // Changed URL
+          const params = [];
+          if (academicYear && academicYear !== 'Academic Year ▼') {
+              params.push(`academic_year=${academicYear}`);
+          }
+          if (params.length > 0) {
+              url += '?' + params.join('&');
+          }
 
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    populateMembershipTable(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching membership data:', error);
-                    membershipTableBody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
-                });
-        }
-
+          fetch(url)
+              .then(response => {
+                  if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status}`);
+                  }
+                  return response.json();
+              })
+              .then(data => {
+                  populateMembershipTable(data);
+              })
+              .catch(error => {
+                  console.error('Error fetching membership data:', error);
+                  membershipTableBody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
+              });
+      }
         // Initial load of membership data
         fetchMembershipData();
 
@@ -691,8 +730,7 @@ tr:hover td {
             fetchMembershipData(selectedAcademicYear);
         });
 
-
-        // Enhanced select dropdown functionality (remains the same)
+        // Enhanced select dropdown functionality (DO NOT TOUCH)
         document.querySelectorAll('.filter-select').forEach(select => {
             const valueDisplay = select.querySelector('.filter-select-value');
             const optionsContainer = document.createElement('ul');

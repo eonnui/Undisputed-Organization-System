@@ -199,7 +199,7 @@ select {
     font-size: 1rem;
     color: var(--text-primary);
     background-color: #ffffff;
-    transition: border-color 0.2s ease, transform var(--animation-duration) ease;
+    transition: border-color 0.2s ease; /* Removed transform transition */
     font-family: 'Inter', sans-serif;
     width: 100%;
     appearance: none;
@@ -216,7 +216,7 @@ select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
-    transform: scale(1.02); /*Subtle scale*/
+    /* Removed transform on focus */
 }
 
 .select-wrapper {
@@ -311,7 +311,3 @@ button:hover {
     color: var(--text-secondary);
     margin-top: 0.25rem;
 }
-
-/* Corrected student_dashboard.css */
-
-/* Removed empty rulesets */
