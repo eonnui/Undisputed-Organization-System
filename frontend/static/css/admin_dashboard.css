@@ -1,150 +1,5 @@
 /* Home */
 
-.admin-dashboard {
-  padding: 20px;
-  background-color: #f4f6f8;
-  border-radius: 8px;
-}
-
-.dashboard-title {
-  color: #333;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #ddd;
-  padding-bottom: 15px;
-}
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.dashboard-section {
-  background-color: #fff;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-}
-
-.section-title {
-  color: #555;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.section-title i {
-  margin-left: 10px;
-  color: #777;
-}
-
-.admin-card {
-  background-color: #e9ecef;
-  padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background-color 0.3s ease;
-}
-
-.admin-card:hover {
-  background-color: #dee2e6;
-}
-
-.card-info {
-  flex-grow: 1;
-}
-
-.card-title {
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.card-value {
-  color: #007bff;
-  font-size: 1.2em;
-}
-
-.latest-activity-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.latest-activity-item:last-child {
-  border-bottom: none;
-}
-
-.activity-details {
-  flex-grow: 1;
-}
-
-.activity-text {
-  color: #333;
-  margin-bottom: 3px;
-}
-
-.activity-meta {
-  color: #777;
-  font-size: 0.8em;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 15px;
-  color: #888;
-  font-style: italic;
-}
-.membership-payments-container {
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin: 20px;
-}
-
-.membership-payments-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.payment-link-card {
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #333;
-  transition: background-color 0.3s ease;
-}
-
-.payment-link-card:hover {
-  background-color: #e0f7fa;
-  transform: translateY(-2px);
-}
-
-.payment-link-card span {
-  font-size: 1.2em;
-}
-
-.payment-link-card .material-symbols-outlined {
-  font-size: 2em;
-  color: #007bff;
-}
-
 /* Bulletin */
 .bulletin-board-container {
   max-width: 700px;
@@ -864,23 +719,39 @@ color: #7b1fa2;
 .tabs {
     display: flex;
     background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-light);
+    border-bottom: 2px solid var(--border-medium); /* Thicker border */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow */
 }
 
 .tab-button {
     background-color: transparent;
     color: var(--text-secondary);
     border: none;
-    padding: 10px 20px;
+    padding: 12px 24px; /* Slightly larger padding */
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-size: 1.05rem; /* Slightly larger font */
+    transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother transition */
+    position: relative; /* For the active indicator */
+}
+
+.tab-button::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 0%;
+    height: 3px;
+    background-color: var(--accent-dark);
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .tab-button.active {
-    background-color: var(--highlight);
     color: var(--text-primary);
-    border-bottom: 2px solid var(--accent-dark);
+}
+
+.tab-button.active::after {
+    width: 100%;
+    left: 0;
 }
 
 .tab-button:hover {
@@ -890,7 +761,8 @@ color: #7b1fa2;
 
 .tab-content {
     display: none;
-    padding: 20px;
+    padding: 25px; /* Slightly more padding */
+    animation: fadeIn 0.4s ease-out; /* Fade-in animation */
 }
 
 .tab-content.active {
@@ -899,63 +771,46 @@ color: #7b1fa2;
 
 .payments-page-container {
     max-width: 1200px;
-    margin: 20px ;
+    margin: 30px auto; /* Center the container with more top/bottom margin */
     background-color: var(--highlight);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 30px; /* More padding */
+    border-radius: 12px; /* More rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
+    animation: slideInUp 0.5s ease-out; /* Slide-in animation */
 }
 
 .payments-header {
     color: var(--text-primary);
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--border-medium);
-    padding-bottom: 10px;
+    margin-bottom: 25px;
+    border-bottom: 3px solid var(--border-medium); /* Thicker border */
+    padding-bottom: 12px;
 }
 
 .header-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 15px;
-}
-
-.view-history-link {
-    display: inline-flex;
-    align-items: center;
-    color: var(--info);
-    text-decoration: none;
-    padding: 8px 15px;
-    border: 1px solid var(--info);
-    border-radius: 5px;
-    font-size: 0.9rem;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.view-history-link span.material-symbols-outlined {
-    margin-right: 5px;
-}
-
-.view-history-link:hover {
-    background-color: var(--info);
-    color: var(--text-inverse);
+    margin-bottom: 20px;
 }
 
 .payments-table-container {
     overflow-x: auto;
+    border-radius: 8px; /* Match table border radius */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
 }
 
 .payments-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15px;
+    margin-top: 0; /* Remove default top margin */
     background-color: var(--bg-color);
     border: 1px solid var(--border-light);
-    border-radius: 5px;
+    border-radius: 8px; /* Rounded corners for the table */
+    overflow: hidden; /* Hide overflow for rounded corners on cells */
 }
 
 .payments-table th,
 .payments-table td {
-    padding: 12px 15px;
+    padding: 15px 20px; /* More padding */
     text-align: left;
     border-bottom: 1px solid var(--border-light);
 }
@@ -963,7 +818,12 @@ color: #7b1fa2;
 .payments-table th {
     background-color: var(--bg-secondary);
     color: var(--text-primary);
-    font-weight: bold;
+    font-weight: 600; /* Slightly bolder font */
+    letter-spacing: 0.02em; /* Slight letter spacing */
+}
+
+.payments-table tbody tr {
+    transition: background-color 0.3s ease; /* Hover transition on rows */
 }
 
 .payments-table tbody tr:nth-child(even) {
@@ -972,117 +832,27 @@ color: #7b1fa2;
 
 .payments-table tbody tr:hover {
     background-color: var(--highlight);
+    /* Removed transform: translateY(-2px); */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
 }
 
-
-
 .payment-settings-section {
-    margin-top: 30px;
-    padding: 20px;
+    margin-top: 40px;
+    padding: 25px;
     background-color: var(--bg-secondary);
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid var(--border-light);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+    animation: slideInBottom 0.5s ease-out; /* Slide-in animation */
 }
 
 .payment-settings-section h2 {
     color: var(--text-primary);
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--border-medium);
-    padding-bottom: 8px;
-}
-
-#add-payment-item-form {
-    display: flex;
-    flex-direction: column;
-    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-    max-height: 50px;
-    overflow: hidden;
-    padding-bottom: 0;
-    margin-bottom: 0;
-    position: relative; 
-}
-
-#add-payment-item-form.expanded {
-    max-height: 500px;
-    padding-bottom: 20px;
     margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-medium);
+    padding-bottom: 10px;
+    font-size: 1.6rem; /* Slightly larger heading */
 }
-
-
-#add-payment-item-form::before {
-    content: 'Click here to add a new payment item';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    cursor: pointer;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-#add-payment-item-form.expanded::before {
-    opacity: 0;
-}
-
-
-#add-payment-item-form label {
-    display: block;
-    margin-bottom: 5px;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-#add-payment-item-form.expanded label{
-    opacity: 1;
-}
-
-#add-payment-item-form input[type="number"],
-#add-payment-item-form input[type="text"],
-#add-payment-item-form input[type="date"] {
-    width: calc(100% - 12px);
-    padding: 8px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-medium);
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    color: var(--text-primary);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-#add-payment-item-form.expanded input[type="number"],
-#add-payment-item-form input[type="text"],
-#add-payment-item-form.expanded input[type="date"] {
-    opacity: 1;
-}
-
-
-#add-payment-item-form button[type="submit"] {
-    background-color: var(--button-bg);
-    color: var(--button-text);
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
-}
-
-#add-payment-item-form button[type="submit"]:hover {
-    background-color: var(--hover-effect);
-}
-
-.error-message {
-    color: var(--error);
-    font-size: 0.8rem;
-    margin-top: -10px;
-    margin-bottom: 10px;
-}
-
 
 .custom-select-wrapper {
     position: relative;
@@ -1094,12 +864,17 @@ color: #7b1fa2;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
-    font-size: 1rem;
+    padding: 10px 16px;
+    font-size: 1.05rem;
     background-color: var(--bg-color);
     border: 1px solid var(--border-medium);
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.custom-select-trigger:hover {
+    border-color: var(--accent-dark);
 }
 
 .custom-select-trigger span {
@@ -1108,9 +883,14 @@ color: #7b1fa2;
 
 .custom-select-trigger svg {
     position: relative;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     fill: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+
+.custom-select-wrapper.open .custom-select-trigger svg {
+    transform: rotate(180deg);
 }
 
 .custom-options {
@@ -1121,10 +901,12 @@ color: #7b1fa2;
     border: 1px solid var(--border-medium);
     border-top: none;
     background-color: var(--bg-color);
-    border-radius: 0 0 4px 4px;
+    border-radius: 0 0 6px 6px;
     overflow: hidden;
     z-index: 10;
     display: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+    animation: slideDown 0.3s ease-out; /* Slide-down animation */
 }
 
 .custom-options ul {
@@ -1134,15 +916,16 @@ color: #7b1fa2;
 }
 
 .custom-options li {
-    padding: 10px 15px;
-    font-size: 1rem;
+    padding: 12px 18px;
+    font-size: 1.05rem;
     color: var(--text-primary);
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .custom-options li:hover {
     background-color: var(--bg-secondary);
+    color: var(--accent-dark);
 }
 
 .custom-select-wrapper.open .custom-options {
@@ -1152,151 +935,235 @@ color: #7b1fa2;
 .payments-table tbody td a {
     color: var(--text-inverse);
     text-decoration: none;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s ease-in-out; /* Smoother transition with transform */
     background-color: #53575f;
-    padding: 8px 16px;
-    border-radius: 24px;
+    padding: 10px 20px; /* Slightly more padding */
+    border-radius: 28px; /* More rounded */
     font-size: 1rem;
     display: inline-block;
 }
 
 .payments-table tbody td a:hover {
     background-color: #A9A9A9;
-} 
-.member-table {
-      width: 90%;
-      border-collapse: collapse;
-      margin-top: 30px;
-      border-radius: 8px; 
-      overflow: hidden;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); 
-      margin-left: auto;
-      margin-right: auto;
-      animation: slideUp 0.5s ease-out;
-      border: 1px solid #dee2e6;
-  }
+    transform: scale(1.05); /* Subtle scale on hover */
+}
 
-  .member-table th,
-  .member-table td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid #e0e0e0;
-      
-  }
+.page-title {
+    font-size: 2.5em; /* Slightly larger title */
+    color: #343a40;
+    margin-bottom: 25px;
+    text-align: left;
+    margin-left: 20px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.08); /* Softer shadow */
+    animation: fadeInTitle 0.7s ease-out, slideInLeft 0.6s ease-out; /* Added slide-in */
+    opacity: 0;
+    transform: translateX(-20px);
+}
 
-  .member-table th {
-      background-color: #f8f9fa; 
-      color: #303336; 
-      font-weight: 600; 
-      text-align: left;
-      letter-spacing: 0.2px;
-      border-bottom: 2px solid #dee2e6; 
-  }
+@keyframes fadeInTitle {
+    to { opacity: 1; }
+}
 
-  .member-table thead tr:first-child th {
-      text-align: left;
-      background-color: #e9ecef; 
-      font-size: 1em;
-      color: #212529;
-  }
+@keyframes slideInLeft {
+    to { transform: translateX(0); }
+}
 
- 
-  .member-table th:nth-child(1) {
-      width: 30%;
-  }
+.page-description {
+    font-size: 1.1em; /* Slightly larger description */
+    color: #6c757d;
+    margin-bottom: 15px;
+    line-height: 1.6; /* Improved line height */
+    margin-left: 20px;
+    animation: slideInRight 0.6s ease-out;
+    transform: translateX(20px);
+    opacity: 0;
+}
 
-  .member-table th:nth-child(2) {
-      width: 30%; 
-  }
+@keyframes slideInRight {
+    to { transform: translateX(0); opacity: 1; }
+}
 
-  .member-table th:nth-child(3) {
-      width: 30%; 
-  }
+.year-info {
+    font-size: 0.9em;
+    color: #868e96;
+    margin-bottom: 25px;
+    text-align: left;
+    margin-left: 20px;
+    animation: fadeIn 0.8s ease-out;
+    opacity: 0;
+}
 
-  .member-table th:nth-child(4) {
-      width: 10%;
-      text-align: center; 
-  }
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
 
-  .member-table td {
-      color: #41484f; /* Slightly lighter text */
-      transition: background-color 0.3s ease;
-  }
+.action-button-container {
+    display: flex;
+    gap: 10px; /* Slightly larger gap */
+    align-items: center;
+}
 
-  .member-table td:nth-child(4) {
-      text-align: center; /* Center the "View" button cell */
-  }
+.action-button-container select {
+    padding: 10px; /* More padding */
+    border: 1px solid var(--accent-light);
+    border-radius: 6px;
+    font-size: 15px; /* Slightly larger font */
+    background-color: var(--highlight);
+    color: var(--text-primary);
+    transition: border-color 0.3s ease;
+}
 
-  .member-table tbody tr:hover {
-      background-color: #f0f0f5;
-      transform: translateY(-1px); /* Less pronounced hover effect */
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Softer hover shadow */
-  }
+.action-button-container select:focus {
+    outline: none;
+    border-color: var(--accent-dark);
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25); /* Subtle focus ring */
+}
 
-  @media screen and (max-width: 768px) {
-      .member-table {
-          overflow-x: auto;
-          display: block;
-          width: 100%;
-          margin-left: 0;
-          margin-right: 0;
-      }
+.action-button-container button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 10px 16px; /* More padding */
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px; /* Slightly larger font */
+    transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Added box-shadow transition */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+}
 
-      .member-table th,
-      .member-table td {
-          white-space: nowrap;
-          padding: 8px;
-          font-size: 0.85em;
-      }
-  }
+.action-button-container button:hover {
+    background-color: var(--hover-effect);
+    transform: scale(1.02); /* Subtle scale on hover */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Slightly more pronounced shadow on hover */
+}
 
-  .page-title {
-      font-size: 2.2em; /* Slightly smaller title */
-      color: #343a40; /* Darker title color */
-      margin-bottom: 20px;
-      text-align: left;
-      margin-left: 20px;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05); /* Softer shadow */
-      animation: fadeInTitle 0.6s ease-out;
-  }
+.past-due {
+    color: #dc3545; /* More vibrant red */
+    font-weight: 500;
+}
 
-  .page-description {
-      font-size: 1em;
-      color: #6c757d;
-      margin-bottom: 10px;
-      line-height: 1.5;
-      margin-left: 20px;
-      animation: slideInRight 0.5s ease-out;
-  }
+.unpaid {
+    color: #ffc107; /* More vibrant yellow */
+    font-weight: 500;
+}
 
-  .year-info {
-      font-size: 0.85em;
-      color: #868e96;
-      margin-bottom: 20px;
-      text-align: left;
-      margin-left: 20px;
-      animation: fadeIn 0.7s ease-out;
-  }
+.paid {
+    color: #28a745; /* More vibrant green */
+    font-weight: 500;
+}
 
-  @keyframes slideUp {
-      from { opacity: 0; transform: translateY(10px); } /* Less pronounced slide */
-      to { opacity: 1; transform: translateY(0); }
-  }
+.not-responsible {
+    color: #6c757d;
+    font-style: italic;
+}
 
-  @keyframes fadeInTitle {
-      from { opacity: 0; }
-      to { opacity: 1; }
-  }
+.disabled-button {
+    background-color: #e0e0e0;
+    color: #9e9e9e;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
 
-  @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(-10px); } /* Less pronounced slide */
-      to { opacity: 1; transform: translateX(0); }
-  }
+.disabled-button:hover {
+    background-color: #e0e0e0;
+}
 
-  @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-  }
+.action-button-container.disabled {
+    display: none;
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Slightly larger gap */
+    margin-bottom: 15px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.filter-container label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.filter-container input {
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.filter-container input:focus {
+    outline: none;
+    border-color: var(--accent-dark);
+    box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25); /* Subtle focus ring */
+}
+
+.filter-container button {
+    padding: 10px 20px;
+    background-color: #28a745; /* Vibrant green */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.filter-container button:hover {
+    background-color: #218838; /* Darker shade on hover */
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* CSS for sortable headers */
+th.sortable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    position: relative; /* For icon positioning */
+    padding-right: 25px; /* Space for the icon */
+}
+
+th.sortable:hover {
+    background-color: #f8f9fa;
+}
+
+th.sortable::after {
+    content: "\2195"; /* Unicode for up-down arrow */
+    font-size: 0.8em;
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    opacity: 10;
+}
+
+th.sortable.asc::after {
+    content: "\2191"; /* Unicode for up arrow */
+    color: var(--accent-dark);
+    opacity: 10;
+}
+
+th.sortable.desc::after {
+    content: "\2193"; /* Unicode for down arrow */
+    color: var(--accent-dark);
+    opacity: 10;
+}
+
+/* Animations */
+@keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInBottom {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
 /* Financial Statement */
 .dashboard-container {
   max-width: 100%; 

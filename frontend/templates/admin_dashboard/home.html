@@ -3,85 +3,746 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+/* Styles for the header */
+.header {
+  padding: 25px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header-title {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.5s ease-out, pulse 2s infinite alternate;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03); /* Reduced scale */
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.header-button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 6px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; /* Faster transitions */
+}
+
+.header-button:hover {
+  background-color: #45a049;
+  transform: translateY(-1px) scale(1.01); /* Reduced transform and scale */
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2); /* Slightly reduced shadow */
+}
+
+.header-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.header-button.secondary {
+  background-color: #008CBA;
+  color: white;
+}
+
+.header-button.secondary:hover {
+  background-color: #007ba7;
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
+}
+
+.header-button.secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+  width: 100%;
+  perspective: 1000px;
+}
+
+.stat-card {
+  background-color: #f1f1f1;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: auto;
+  min-height: 120px;
+  box-sizing: border-box;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Faster transition */
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px) scale(1.01); /* Reduced scale */
+  box-shadow: 0 4px 9px rgba(0, 0, 0, 0.1); /* Slightly reduced shadow */
+}
+
+.stat-icon {
+  background-color: #fff;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-title {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 8px;
+  word-wrap: break-word;
+  font-weight: 500;
+  opacity: 0;
+  animation: fadeInText 0.3s ease-in forwards 0.2s;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  word-wrap: break-word;
+  transition: color 0.2s ease;
+  opacity: 0;
+  animation: fadeInText 0.3s ease-in forwards 0.4s;
+}
+
+@keyframes fadeInText {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.stat-value:hover {
+  color: #007BFF;
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  width: 100%;
+}
+
+.dashboard-content {
+  grid-template-columns: 1fr 1fr;
+}
+
+.chart-section {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease, opacity 0.2s ease; /* Faster transitions, removed transform */
+  opacity: 0;
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+.chart-section:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Very subtle shadow */
+  opacity: 1;
+}
+
+.chart-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #2c3e50;
+  opacity: 0;
+  animation: fadeInText 0.3s ease-in forwards 0.2s;
+}
+
+.chart-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeInText 0.3s ease-in forwards 0.4s;
+}
+
+.chart-area {
+  height: 300px;
+  width: 95%;
+  margin: 0 auto 20px auto;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in forwards 0.6s;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 250px;
+}
+
+.chart-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+.mini-chart {
+  height: 220px;
+  width: 95%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in forwards 0.6s;
+  position: relative;
+}
+
+.tracker-section {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  transition:  box-shadow 0.2s ease, opacity 0.2s ease; /* Faster transitions, removed transform */
+  opacity: 0;
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+.tracker-section:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Very subtle shadow */
+  opacity: 1;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filter-select {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  box-sizing: border-box;
+  flex: 1 0 auto;
+  min-width: 180px;
+  font-size: 14px;
+  transition: background-color 0.2s ease, max-height 0.3s ease-in-out; /* Removed transform */
+  overflow: hidden;
+  position: relative; /* Add relative positioning */
+}
+
+.filter-select:hover {
+  background-color: #f0f0f0;
+}
+
+
+/* New styles for the options container */
+.filter-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-top: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  max-height: 0;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, max-height 0.3s ease-in-out; /* Added transition for max-height */
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.filter-select.open .filter-select-options {
+  opacity: 1;
+  visibility: visible;
+  max-height: 200px; /* Adjust as needed */
+}
+
+
+.filter-select-options li {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-select-options li:hover {
+  background-color: #f0f0f0;
+}
+
+.filter-select-options li.selected {
+  background-color: #e0e0e0;
+  font-weight: bold;
+}
+
+/* Style for the selected option display */
+.filter-select-value {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in forwards 0.8s;
+}
+
+th {
+  text-align: left;
+  padding: 15px 12px;
+  border-bottom: 1px solid #ddd;
+  color: #333;
+  font-weight: 600;
+  background-color: #f9f9f9;
+  font-size: 14px;
+}
+
+td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #eee;
+  background-color: #fff;
+  font-size: 14px;
+  transition: background-color 0.2s ease, transform 0.1s ease; /* Added transform transition */
+}
+
+tr:nth-child(odd) td {
+  background-color: #f9f9f9;
+}
+
+tr:hover td {
+  background-color: #f0f8ff;
+  transform: translateX(1px); /* Reduced horizontal shift */
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.02); /* Very subtle shadow */
+}
+
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="admin-dashboard">
-    <h1 class="dashboard-title">Admin Dashboard</h1>
-    <div class="dashboard-grid">
-        <div class="dashboard-section overview">
-            <h2 class="section-title">Overview <i class="fas fa-chart-bar"></i></h2>
-            <div class="admin-card">
-                <a href="/admin/payments/total_members" class="card-link" style="text-decoration: none;">
-                    <div class="card-info">
-                        <div class="card-title">Total Students</div>
-                        <div class="card-value">{{ total_students }}</div>
-                    </div>
-                </a>
-            </div>
-            <div class="admin-card">
-                <div class="card-info">
-                    <div class="card-title">Total Events</div>
-                    <div class="card-value">{{ total_events }}</div>
-                </div>
-            </div>
-            <div class="admin-card">
-                <div class="card-info">
-                    <div class="card-title">New Registrations (Last 7 Days)</div>
-                    <div class="card-value">{{ new_registrations }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="dashboard-section latest-announcements">
-            <h2 class="section-title">Latest Announcements <i class="fas fa-bullhorn"></i></h2>
-            <div id="latest-announcements-container">
-                {% if latest_bulletin_posts %}
-                {% for post in latest_bulletin_posts %}
-                <div class="admin-card">
-                    <div class="card-info">
-                        <div class="card-title">{{ post.title }}</div>
-                        <div class="card-meta">Posted on: {{ post.created_at.strftime('%B %d, %Y %I:%M %p') }}</div>
-                        <div class="card-content">{{ post.content | truncate(50) }}</div>
-                        <div class="card-actions">
-                            <a href="{{ url_for('admin_edit_bulletin_post', post_id=post.post_id) }}" class="edit-link">Edit</a>
-                            <form action="{{ url_for('admin_delete_bulletin_post', post_id=post.post_id) }}" method="post" style="display: inline;">
-                                <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this announcement?')">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="empty-state">No recent announcements.</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="dashboard-section upcoming-events-admin">
-            <h2 class="section-title">Upcoming Events <i class="fas fa-calendar-alt"></i></h2>
-            <div id="upcoming-events-admin-container">
-                {% if upcoming_events %}
-                {% for event in upcoming_events %}
-                <div class="admin-card">
-                    <div class="card-info">
-                        <div class="card-title">{{ event.title }} <span class="event-tag tag-{{ event.classification.lower() }}">{{ event.classification }}</span></div>
-                        <div class="card-meta">Date: {{ event.date.strftime('%B %d, %Y %I:%M %p') }} | Location: {{ event.location }}</div>
-                        <div class="card-content">{{ event.description | truncate(50) }}</div>
-                        <div class="card-actions">
-                            <a href="{{ url_for('admin_edit_event', event_id=event.event_id) }}" class="edit-link">Edit</a>
-                            <form action="{{ url_for('admin_delete_event', event_id=event.event_id) }}" method="post" style="display: inline;">
-                                <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this event?')">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="empty-state">No upcoming events.</div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+<div class="header">
+  <h1 class="header-title">Welcome, Admin!</h1>
 </div>
+
+<div class="stats-container">
+  <div class="stat-card">
+    <a href="/admin/payments/total_members" class="card-link"></a>
+    <div class="stat-icon">
+      <i class="fas fa-users"></i>
+    </div>
+    <div class="stat-title">Total Members</div>
+    <div class="stat-value"></div>
+  </div>
+
+  <div class="stat-card">
+    <a href="/Admin/payments" class="card-link"></a>
+    <div class="stat-icon">
+      <i class="fas fa-dollar-sign"></i>
+    </div>
+    <div class="stat-title">Total Membership Fees Collected</div>
+    <div class="stat-value"></div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">
+      <i class="fas fa-calendar-alt"></i>
+    </div>
+    <div class="stat-title">Academic Year</div>
+    <div class="stat-value"></div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <div class="stat-title">Outstanding Dues</div>
+    <div class="stat-value"></div>
+  </div>
+</div>
+
+<div class="dashboard-content">
+  <div class="chart-section">
+    <div class="chart-title">Financial Overview</div>
+    <div class="chart-subtitle">Membership Fee Collection Trends</div>
+    <div class="chart-area">
+      <canvas id="trendChart"></canvas>
+    </div>
+
+    <div class="chart-row">
+      <div class="mini-chart">
+        <div class="chart-subtitle">Expenses by Category</div>
+        <canvas id="expensesChart"></canvas>
+      </div>
+      <div class="mini-chart">
+        <div class="chart-subtitle">Fund Distribution</div>
+        <canvas id="distributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="tracker-section">
+    <div class="chart-title">Membership Fee Tracker</div>
+    <div class="filter-row">
+      <select class="filter-select">
+        <option>Academic Year ▼</option>
+        <option>2027-2028</option>
+        <option>2026-2027</option>
+        <option>2025-2026</option>
+        <option>2024-2025</option>
+        <option>2023-2024</option>
+        <option>2022-2023</option>
+      </select>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Yr. & Sec</th>
+          <th>Amount Paid</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Existing chart code...
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        const trendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['2021-1', '2022-1', '2023-1', '2023-2', '2024-1', '2025-2'],
+                datasets: [{
+                    label: 'Collections',
+                    data: [5000, 18000, 42000, 43000, 45000, 68000],
+                    borderColor: '#4285F4',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    pointBackgroundColor: '#4285F4',
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    fill: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return value === 0 ? '0k' : value / 1000 + 'k';
+                            },
+                            font: {
+                                size: 14
+                            }
+                        },
+                        grid: {
+                            color: '#e0e0e0',
+                            borderDash: [5, 5],
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    line: {
+                        shadowColor: 'rgba(0, 0, 0, 0.1)',
+                        shadowBlur: 10,
+                        shadowWidth: 3,
+                    },
+                    point: {
+                        shadowColor: 'rgba(0, 0, 0, 0.2)',
+                        shadowBlur: 7,
+                        shadowWidth: 2,
+                    }
+                }
+            }
+        });
+
+        const expensesCtx = document.getElementById('expensesChart').getContext('2d');
+        const expensesChart = new Chart(expensesCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Booths', 'Outreach', 'Supplies'],
+                datasets: [{
+                    data: [8500, 9200, 7300],
+                    backgroundColor: '#4285F4',
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#e0e0e0',
+                            borderDash: [3, 3],
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                BarThickness: 20,
+            }
+        });
+
+        const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+        const distributionChart = new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Activities', 'Operations', 'Reserves'],
+                datasets: [{
+                    data: [60, 25, 15],
+                    backgroundColor: [
+                        '#4285F4',
+                        '#A4C2F4',
+                        '#D2E3FC'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            boxWidth: 12,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
+            }
+        });
+
+        // Membership Fee Tracker Logic
+        const academicYearSelect = document.querySelectorAll('.filter-select')[0];
+        const membershipTableBody = document.querySelector('.tracker-section table tbody');
+
+        function populateMembershipTable(data) {
+            membershipTableBody.innerHTML = ''; // Clear existing rows
+            data.forEach(item => {
+                const row = membershipTableBody.insertRow();
+                const nameCell = row.insertCell();
+                const yearSecCell = row.insertCell();
+                const amountPaidCell = row.insertCell();
+
+                nameCell.textContent = `${item.first_name} ${item.last_name}`;
+                yearSecCell.textContent = `${item.year_level} - ${item.section}`;
+                amountPaidCell.textContent = item.total_paid;
+            });
+        }
+
+        function fetchMembershipData(academicYear = null) {
+            let url = '/admin/membership/';
+            const params = [];
+            if (academicYear && academicYear !== 'Academic Year ▼') {
+                params.push(`academic_year=${academicYear}`);
+            }
+            if (params.length > 0) {
+                url += '?' + params.join('&');
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    populateMembershipTable(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching membership data:', error);
+                    membershipTableBody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
+                });
+        }
+
+        // Initial load of membership data
+        fetchMembershipData();
+
+        // Event listeners for filter changes
+        academicYearSelect.addEventListener('change', function() {
+            const selectedAcademicYear = this.value;
+            fetchMembershipData(selectedAcademicYear);
+        });
+
+
+        // Enhanced select dropdown functionality (remains the same)
+        document.querySelectorAll('.filter-select').forEach(select => {
+            const valueDisplay = select.querySelector('.filter-select-value');
+            const optionsContainer = document.createElement('ul');
+            optionsContainer.classList.add('filter-select-options');
+            select.appendChild(optionsContainer);
+
+            const originalSelect = document.createElement('select');
+            originalSelect.style.display = 'none';
+            select.appendChild(originalSelect);
+
+            const defaultOptionText = select.querySelector('option:first-child').textContent;
+            const originalOptions = Array.from(select.querySelectorAll('option'));
+
+            originalOptions.forEach((option, index) => {
+                const li = document.createElement('li');
+                li.textContent = option.textContent;
+                li.dataset.value = option.value;
+                optionsContainer.appendChild(li);
+                const originalOption = document.createElement('option');
+                originalOption.value = option.value;
+                originalOption.textContent = option.textContent;
+                if (index === 0) {
+                    originalOption.selected = true;
+                    valueDisplay.textContent = defaultOptionText;
+                }
+                originalSelect.appendChild(originalOption);
+
+                li.addEventListener('click', function() {
+                    valueDisplay.textContent = this.textContent;
+                    originalSelect.value = this.dataset.value;
+                    originalSelect.dispatchEvent(new Event('change')); // Trigger the change event on the hidden select
+                    select.classList.remove('open');
+                    optionsContainer.style.maxHeight = null; // Reset max-height
+                });
+            });
+
+            valueDisplay.addEventListener('click', function(event) {
+                select.classList.toggle('open');
+                optionsContainer.style.maxHeight = select.classList.contains('open') ? '200px' : null;
+                event.stopPropagation();
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!select.contains(event.target)) {
+                    select.classList.remove('open');
+                    optionsContainer.style.maxHeight = null;
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

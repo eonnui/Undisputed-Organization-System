@@ -4,37 +4,110 @@
 
 {% block content %}
 
-<div class="payments-page">
-
-    <h1 class="page-title">{% if section %} {{ section|upper }}{% endif %}</h1>
-
+<div class="payments-page" style="background-color: #F8FAFC; padding: 20px;">
     <div class="data-container" style="margin-left: 20px;">
-
-        <p class="page-description">{% if section %}  {% else %} Across All Sections{% endif %}</p>
-
-        
-        <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
+        <h1 class="page-title" style="color: #2d3748; margin-bottom: 10px; font-size: 2.2rem; font-weight: bold; opacity: 0; animation: fadeIn 1s ease-in-out forwards;">
+            {% if section %} {{ section|upper }}{% endif %}
+        </h1>
+        <p class="page-description" style="color: #5D6778; margin-bottom: 20px; font-size: 1.2rem; opacity: 0; animation: fadeIn 1s ease-in-out 0.5s forwards;">
+            {% if section %}  {% else %} ACROSS ALL SECTIONS{% endif %}
+        </p>
 
         <style>
+            .member-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 30px;
+                background-color: #FFFFFF;
+                border-radius: 12px;
+                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                animation: slideInUp 0.8s ease-in-out;
+            }
+
+            .member-table thead th {
+                background-color: #F5F7FA;
+                color: #3D4655;
+                padding: 15px;
+                text-align: left;
+                border-bottom: 2px solid #E2E8F0;
+                font-weight: 700;
+                font-size: 1.2rem;
+            }
+
+            .member-table tbody td {
+                padding: 15px;
+                text-align: left;
+                border-bottom: 1px solid #E2E8F0;
+                color: #2d3748;
+                transition: background-color 0.3s ease;
+            }
+
+            .member-table tbody tr:hover {
+                background-color: #F8FAFC;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .member-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
             .view-button {
-                background-color: var(--button-bg);
-                color: var(--button-text);
+                background-color: #53575f;
+                color: #FFFFFF;
                 border: none;
-                padding: 8px 12px;
-                border-radius: 4px;
+                padding: 12px 20px;
+                border-radius: 28px;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: 1.1rem;
                 text-decoration: none;
+                transition: all 0.3s ease;
+                box-shadow: 0 3px 7px rgba(0, 0, 0, 0.1);
             }
 
             .view-button:hover {
-                background-color: var(--hover-effect);
+                background-color: #777a80;
+                transform: translateY(-2px) scale(1.05);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
             }
+
+            .no-members {
+                padding: 20px;
+                text-align: center;
+                color: #5D6778;
+                font-size: 1.2rem;
+                background-color: #FFFFFF;
+                border-radius: 12px;
+                margin-top: 30px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+                animation: fadeIn 1s ease-in-out;
+            }
+
+            /* Animations */
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideInUp {
+                from {
+                    transform: translateY(50px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+
         </style>
 
-       
-
-        <table class="member-table" style="margin-top: 20px;">
+        <table class="member-table">
             <thead>
                 <tr>
                     <th>Student Number</th>
@@ -45,22 +118,22 @@
             </thead>
             <tbody>
                 {% for member in members %}
-                    <tr>
-                        <td>{{ member.student_number }}</td>
-                        <td>{{ member.last_name }}</td>
-                        <td>{{ member.first_name }}</td>
-                        <td>
-                            <a href="/Admin/payments?student_number={{ member.student_number }}#payments" class="view-button">View</a>
-                        </td>
-                    </tr>
+                <tr>
+                    <td>{{ member.student_number }}</td>
+                    <td>{{ member.last_name }}</td>
+                    <td>{{ member.first_name }}</td>
+                    <td>
+                        <a href="/Admin/payments?student_number={{ member.student_number }}#payments" class="view-button">View</a>
+                    </td>
+                </tr>
                 {% else %}
-                    <tr><td colspan="4">No members found{% if section %} in section {{ section|upper }}{% endif %}.</td></tr>
+                <tr>
+                    <td colspan="4" class="no-members">No members found{% if section %} in section {{ section|upper }}{% endif %}.</td>
+                </tr>
                 {% endfor %}
             </tbody>
-        </table>     
-
+        </table>
     </div>
-
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -69,12 +142,9 @@
             const studentNumber = urlParams.get('student_number');
 
             if (studentNumber) {
-                // Construct the URL with the hash to target the payments tab
                 window.location.href = `/Admin/payments?student_number=${studentNumber}#payments`;
             }
         }
-
-        // Call the navigation function on page load
         navigateToPaymentsTab();
     });
 </script>
