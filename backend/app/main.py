@@ -661,13 +661,13 @@ async def admin_individual_members(
 @router.get("/financial_trends")
 def get_financial_trends(db: Session = Depends(get_db)):
     """
-    Returns monthly trends of total membership fees collected.
+    Returns monthly trends of total successful membership fees collected.
     """
     financial_data = db.query(
         func.extract('year', models.Payment.created_at),
         func.extract('month', models.Payment.created_at),
         func.sum(models.Payment.amount)
-    ).group_by(
+    ).filter(models.Payment.status == "success").group_by(
         func.extract('year', models.Payment.created_at),
         func.extract('month', models.Payment.created_at)
     ).order_by(
@@ -698,14 +698,17 @@ def get_expenses_by_category(db: Session = Depends(get_db)):
 @router.get("/fund_distribution")
 def get_fund_distribution(db: Session = Depends(get_db)):
     """
-    Distributes collected funds based on the academic year of the associated PaymentItem.
+    Distributes collected *successful* funds based on the academic year
+    of the associated PaymentItem.
     """
     fund_allocation = db.query(
         models.PaymentItem.academic_year,
         func.sum(models.Payment.amount)
     ).join(
         models.Payment, models.PaymentItem.id == models.Payment.payment_item_id
-    ).group_by(models.PaymentItem.academic_year).all()
+    ).filter(models.Payment.status == "success").group_by(
+        models.PaymentItem.academic_year
+    ).all()
 
     distribution_data = {}
     for academic_year, total_amount in fund_allocation:
