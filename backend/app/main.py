@@ -4,12 +4,12 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.logger import logger  
 from sqlalchemy.orm import Session, joinedload, selectinload
-from sqlalchemy import func, extract
+from sqlalchemy import func, and_
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
 from datetime import datetime, date,  timedelta
-from typing import List, Optional, Dict # Added Dict
+from typing import List, Optional, Dict 
 from io import BytesIO 
 from PIL import Image 
 import os
@@ -600,10 +600,16 @@ async def admin_individual_members(
             joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
         )
 
+        # Construct the filter conditions list.  This allows us to combine them correctly.
+        filters = []
         if academic_year:
-            query = query.join(models.PaymentItem).filter(models.PaymentItem.academic_year == academic_year)
+            filters.append(models.PaymentItem.academic_year == academic_year)
         if semester:
-            query = query.join(models.PaymentItem).filter(models.PaymentItem.semester == semester)
+            filters.append(models.PaymentItem.semester == semester)
+
+        # Join PaymentItem only once, and apply all filters in a single filter() call.
+        if filters:
+            query = query.join(models.PaymentItem).filter(*filters)
 
         users = query.all()
 
@@ -611,9 +617,10 @@ async def admin_individual_members(
         for user in users:
             total_paid = 0
             total_amount = 0
-            payment_status = "Not Applicable"
+            payment_status = "Not Applicable"  # Default, will be overridden
 
             for pi in user.payment_items:
+                #  moved the filtering logic here
                 if (academic_year is None or pi.academic_year == academic_year) and \
                    (semester is None or pi.semester == semester):
                     total_amount += pi.fee
@@ -627,7 +634,7 @@ async def admin_individual_members(
                 else:
                     payment_status = "Partially Paid"
             elif academic_year is None and semester is None:
-                payment_status = "No Dues" # Or some other appropriate status
+                payment_status = "No Dues"
 
             membership_data.append(
                 {
@@ -650,7 +657,7 @@ async def admin_individual_members(
     except Exception as e:
         logging.error(f"Error fetching individual membership data: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch individual membership data")
-
+    
 @router.get("/financial_trends")
 def get_financial_trends(db: Session = Depends(get_db)):
     """
@@ -709,6 +716,71 @@ def get_fund_distribution(db: Session = Depends(get_db)):
     data = list(distribution_data.values())
 
     return {"labels": labels, "data": data}
+
+@router.get("/admin/outstanding_dues/")
+async def admin_outstanding_dues(
+    request: Request,
+    db: Session = Depends(get_db),
+    academic_year: Optional[str] = None,
+    semester: Optional[str] = None,
+) -> List[Dict]:
+    """
+    Retrieves the total outstanding dues amount, optionally filtered by academic year and semester.
+    This version uses case-insensitive comparison for academic year and semester.
+
+    Args:
+        request: The incoming request object.
+        db: The database session.
+        academic_year: Optional academic year to filter by.
+        semester: Optional semester to filter by.
+
+    Returns:
+        A list containing a single dictionary with the total outstanding dues amount.
+        Returns an empty list if no data found.
+
+    Raises:
+        HTTPException: 500 if there's an error fetching the data.
+    """
+    logging.info(f"Entered /admin/outstanding_dues/ route with academic_year: {academic_year}, semester: {semester}")
+
+    try:
+        # Query PaymentItems, filtering by academic year and semester (case-insensitive)
+        query = db.query(models.PaymentItem).filter(
+            and_(
+                (academic_year is None or func.lower(models.PaymentItem.academic_year) == academic_year.lower()),
+                (semester is None or func.lower(models.PaymentItem.semester) == semester.lower())
+            )
+        ).options(joinedload(models.PaymentItem.payments))
+
+        payment_items = query.all()
+        logging.info(f"Number of PaymentItems found: {len(payment_items)}")
+
+        total_outstanding_amount = 0
+
+        for item in payment_items:
+            logging.info(f"Processing PaymentItem ID: {item.id}, Fee: {item.fee}, Academic Year: {item.academic_year}, Semester: {item.semester}")
+            total_paid_for_item = 0
+            logging.info(f"  Number of Payments for this item: {len(item.payments)}")
+            for payment in item.payments:
+                logging.info(f"    Payment ID: {payment.id}, Amount: {payment.amount}, Status: {payment.status}")
+                if payment.status == 'success':
+                    total_paid_for_item += payment.amount
+                    logging.info(f"    Successful payment found, total_paid_for_item updated to: {total_paid_for_item}")
+
+            outstanding_for_item = item.fee - total_paid_for_item
+            logging.info(f"  Total paid for item: {total_paid_for_item}, Outstanding for item: {outstanding_for_item}")
+
+            if outstanding_for_item > 0:
+                total_outstanding_amount += outstanding_for_item
+                logging.info(f"  Outstanding amount added to total, current total_outstanding_amount: {total_outstanding_amount}")
+            else:
+                logging.info(f"  No outstanding amount for this item.")
+
+        logging.info(f"Total outstanding dues: {total_outstanding_amount}")
+        return [{"total_outstanding_amount": total_outstanding_amount}]
+    except Exception as e:
+        logging.error(f"Error fetching outstanding dues data: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch outstanding dues data")
 
 @router.get("/admin/payments/total_members", response_class=HTMLResponse, name="payments_total_members")
 async def payments_total_members(
