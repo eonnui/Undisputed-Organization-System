@@ -725,14 +725,15 @@ async def admin_outstanding_dues(
     semester: Optional[str] = None,
 ) -> List[Dict]:
     """
-    Retrieves the total outstanding dues amount, optionally filtered by academic year and semester.
-    This version uses case-insensitive comparison for academic year and semester.
+    Retrieves the total outstanding dues amount, filtered by academic year and CURRENT semester.
+    This version uses case-insensitive comparison for academic year. The semester
+    is always the *current* semester, determined by the server.
 
     Args:
         request: The incoming request object.
         db: The database session.
-        academic_year: Optional academic year to filter by.
-        semester: Optional semester to filter by.
+        academic_year: Optional academic year to filter by. If None, defaults to current academic year.
+        semester:  Optional semester to filter by. This is now IGNORED for the outstanding dues calculation.
 
     Returns:
         A list containing a single dictionary with the total outstanding dues amount.
@@ -744,11 +745,28 @@ async def admin_outstanding_dues(
     logging.info(f"Entered /admin/outstanding_dues/ route with academic_year: {academic_year}, semester: {semester}")
 
     try:
-        # Query PaymentItems, filtering by academic year and semester (case-insensitive)
+        # Determine the current semester
+        today = datetime.now()
+        month = today.month
+        if 6 <= month <= 11:
+            current_semester = "1st"
+        else:
+            current_semester = "2nd"
+        logging.info(f"Current semester determined as: {current_semester}")
+
+        # Determine the current academic year if not provided
+        if not academic_year:
+            current_year = today.year
+            start_year = current_year - 1 if today.month < 6 else current_year
+            end_year = start_year + 1
+            academic_year = f"{start_year}-{end_year}"
+            logging.info(f"Academic year defaulted to: {academic_year}")
+
+        # Query PaymentItems, filtering by academic year and the *current* semester (case-insensitive on year)
         query = db.query(models.PaymentItem).filter(
             and_(
-                (academic_year is None or func.lower(models.PaymentItem.academic_year) == academic_year.lower()),
-                (semester is None or func.lower(models.PaymentItem.semester) == semester.lower())
+                func.lower(models.PaymentItem.academic_year) == academic_year.lower(),
+                models.PaymentItem.semester == current_semester,
             )
         ).options(joinedload(models.PaymentItem.payments))
 
@@ -758,12 +776,14 @@ async def admin_outstanding_dues(
         total_outstanding_amount = 0
 
         for item in payment_items:
-            logging.info(f"Processing PaymentItem ID: {item.id}, Fee: {item.fee}, Academic Year: {item.academic_year}, Semester: {item.semester}")
+            logging.info(
+                f"Processing PaymentItem ID: {item.id}, Fee: {item.fee}, Academic Year: {item.academic_year}, Semester: {item.semester}"
+            )
             total_paid_for_item = 0
             logging.info(f"  Number of Payments for this item: {len(item.payments)}")
             for payment in item.payments:
                 logging.info(f"    Payment ID: {payment.id}, Amount: {payment.amount}, Status: {payment.status}")
-                if payment.status == 'success':
+                if payment.status == "success":
                     total_paid_for_item += payment.amount
                     logging.info(f"    Successful payment found, total_paid_for_item updated to: {total_paid_for_item}")
 
@@ -772,7 +792,9 @@ async def admin_outstanding_dues(
 
             if outstanding_for_item > 0:
                 total_outstanding_amount += outstanding_for_item
-                logging.info(f"  Outstanding amount added to total, current total_outstanding_amount: {total_outstanding_amount}")
+                logging.info(
+                    f"  Outstanding amount added to total, current total_outstanding_amount: {total_outstanding_amount}"
+                )
             else:
                 logging.info(f"  No outstanding amount for this item.")
 
