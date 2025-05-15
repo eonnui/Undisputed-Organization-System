@@ -831,7 +831,7 @@ tr:hover td {
 
           // Optional: Modify the link
           const statCard = document.querySelector('.stat-card:nth-child(4)');
-          const unpaidLinkHref = `/admin/payments/unpaid?academic_year=${currentAcademicYear}&semester=${currentSemester}&show=amount`;
+          const unpaidLinkHref = `/Admin/payments`;
           if (!statCard.querySelector('.card-link')) {
             const cardLink = document.createElement('a');
             cardLink.href = unpaidLinkHref;
