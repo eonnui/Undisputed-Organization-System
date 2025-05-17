@@ -11,6 +11,24 @@ event_participants = Table(
     Column('student_id', Integer, ForeignKey('users.id'), primary_key=True)
 )
 
+# New Organization Model
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    theme_color = Column(String, nullable=True)
+    admins = relationship("Admin", secondary="organization_admins", back_populates="organizations")
+    students = relationship("User", back_populates="organization")
+
+# Association table for organizations and admins (many-to-many)
+organization_admins = Table(
+    'organization_admins',
+    Base.metadata,
+    Column('organization_id', Integer, ForeignKey('organizations.id'), primary_key=True),
+    Column('admin_id', Integer, ForeignKey('admins.admin_id'), primary_key=True)
+)
+
 class Event(Base):
     __tablename__ = "events"
 
@@ -34,7 +52,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_number = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
-    organization = Column(String)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True) # Foreign key to Organization
+    organization = relationship("Organization", back_populates="students")
     first_name = Column(String)
     last_name = Column(String)
     hashed_password = Column(String)
@@ -70,6 +89,7 @@ class Admin(Base):
     role = Column(String)
     bulletin_board_posts = relationship("BulletinBoard", back_populates="admin")
     events = relationship("Event", back_populates="admin")
+    organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")
 
 class BulletinBoard(Base):
     __tablename__ = "bulletin_board"
@@ -115,4 +135,3 @@ class PaymentItem(Base):
 
     user = relationship("User", back_populates="payment_items")
     payments = relationship("Payment", back_populates="payment_item")
-
