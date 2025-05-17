@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentForm = 'login';
     let registrationSuccessMessage = '';
     let forgotPasswordIdentifier = ''; // Store student number or email for code verification
+    let organizations = []; // Store fetched organizations
 
     function renderLoginForm() {
         return `
@@ -41,6 +42,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderSignupForm() {
+        let organizationOptions = '<option value="" disabled selected>Select your organization</option>';
+        if (organizations.length > 0) {
+            organizations.forEach(org => {
+                organizationOptions += `<option value="${org.id}">${org.name}</option>`;
+            });
+        } else {
+            organizationOptions = '<option value="" disabled>Loading organizations...</option>'; // Or some loading message
+        }
+
         return `
             <div class="wrapper">
                 <h1>SIGN UP</h1>
@@ -61,9 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label for="signup-organization">Select Organization</label>
                         <div class="select-wrapper">
                             <select id="signup-organization">
-                                <option value="" disabled selected>Select your organization</option>
-                                <option value="org1">Organization 1</option>
-                                <option value="org2">Organization 2</option>
+                                ${organizationOptions}
                             </select>
                         </div>
                         <div class="error-message" id="signup-organization-error"></div>
@@ -253,30 +261,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleLogin(e) {
         e.preventDefault();
-    
-        const identifier = document.getElementById('login-student-number').value; //  Use identifier
+
+        const identifier = document.getElementById('login-student-number').value; //  Use identifier
         const password = document.getElementById('login-password').value;
-    
+
         // Clear previous errors
         displayError('login-student-number', ''); // consistent error display
         displayError('login-password', '');
-    
+
         let isValid = true;
-    
+
         if (!identifier) { // Changed to identifier
             displayError('login-student-number', 'Student number or Email is required.'); // generic message
             isValid = false;
         }
-    
+
         if (!password) {
             displayError('login-password', 'Password is required.');
             isValid = false;
         }
-    
+
         if (!isValid) {
             return; // Stop the login process if any validation fails
         }
-    
+
         try {
             const response = await fetch('/api/login/', {
                 method: 'POST',
@@ -288,9 +296,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     password: password,
                 }),
             });
-    
+
             const data = await response.json();
-    
+
             if (!response.ok) {
                 if (data.detail) {
                     displayError('login-password', data.detail); // Show error from backend
@@ -299,33 +307,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return;
             }
-    
+
             displayNotification('Login successful!', 'success');
-            //  Redirect based on user_role from the response.
+            //  Redirect based on user_role from the response.
             if (data.user_role === 'admin') {
                 window.location.href = '/admin_dashboard'; // Or wherever admins go
             } else {
-                window.location.href = '/home'; //  Regular users
+                window.location.href = '/home'; //  Regular users
             }
-    
+
         } catch (error) {
             displayNotification('An unexpected error occurred. Please try again.', 'error');
             console.error("Login error:", error);
         }
     }
-    
+
 
     async function handleSignup(e) {
         e.preventDefault();
-    
+
         const studentNumber = document.getElementById('signup-student-number').value;
         const email = document.getElementById('signup-email').value;
-        const organization = document.getElementById('signup-organization').value;
+        const organizationId = document.getElementById('signup-organization').value; // Changed to ID
         const firstName = document.getElementById('signup-first-name').value;
         const lastName = document.getElementById('signup-last-name').value;
         const password = document.getElementById('signup-password').value;
         const confirmPassword = document.getElementById('signup-confirm-password').value;
-    
+
         // Clear previous errors
         displayError('signup-student-number', '');
         displayError('signup-email', '');
@@ -334,10 +342,10 @@ document.addEventListener('DOMContentLoaded', function() {
         displayError('signup-last-name', '');
         displayError('signup-password', '');
         displayError('signup-confirm-password', '');
-    
+
         // Validation checks
         let isValid = true;
-    
+
         if (isNaN(studentNumber) || studentNumber === "") {
             displayError('signup-student-number', 'Student number must be a number.');
             isValid = false;
@@ -345,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-student-number', 'Student number must be 9 digits.');
             isValid = false;
         }
-    
+
         if (!email) {
             displayError('signup-email', 'Email is required.');
             isValid = false;
@@ -353,12 +361,12 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-email', 'Invalid email format.');
             isValid = false;
         }
-    
-        if (!organization) {
+
+        if (!organizationId) { // Changed to organizationId
             displayError('signup-organization', 'Please select an organization.');
             isValid = false;
         }
-    
+
         if (!firstName) {
             displayError('signup-first-name', 'First name is required.');
             isValid = false;
@@ -366,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-first-name', 'First name should only contain letters and spaces.');
             isValid = false;
         }
-    
+
         if (!lastName) {
             displayError('signup-last-name', 'Last name is required.');
             isValid = false;
@@ -374,31 +382,31 @@ document.addEventListener('DOMContentLoaded', function() {
             displayError('signup-last-name', 'Last name should only contain letters and spaces.');
             isValid = false;
         }
-    
+
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
         if (!passwordRegex.test(password)) {
             displayError('signup-password', 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one number.');
             isValid = false;
         }
-    
+
         if (password !== confirmPassword) {
             displayError('signup-confirm-password', 'Passwords do not match.');
             isValid = false;
         }
-    
+
         if (!isValid) {
             return; // Stop the signup process if any validation fails
         }
-    
+
         const userData = {
             student_number: studentNumber,
             email: email,
-            organization: organization,
+            organization_id: organizationId, // Changed to organization_id
             first_name: firstName,
             last_name: lastName,
             password: password
         };
-    
+
         try {
             const response = await fetch('/api/signup/', {
                 method: 'POST',
@@ -407,11 +415,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(userData)
             });
-    
+
             const data = await response.json();
-    
+
             if (!response.ok) {
-                // **FIX:  Check for specific error messages from the backend**
+                // **FIX:  Check for specific error messages from the backend**
                 if (data.detail === 'Student number already registered') {
                     displayError('signup-student-number', 'This student number is already registered.');
                 } else if (data.detail === 'Email already registered') {
@@ -420,36 +428,63 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayError('signup-first-name', 'This first and last name combination is already registered.');
                     displayError('signup-last-name', ''); // Clear any previous last name error
                 }
-                 else {
+                else {
                     // For *any other* error from the backend, show a generic message
                     displayNotification(data.detail || 'Signup failed. Please try again.', 'error');
                 }
                 return; // Stop the signup process
             }
-    
+
             // Success Message for Login Form (You might want to move this)
             registrationSuccessMessage = 'Registration successful! Please log in.';
-    
+
             // Redirect to Login (You might want to move this)
             currentForm = 'login';
             render();
-    
+
         } catch (error) {
             // This catch block handles network errors and other exceptions
             console.error("Signup error:", error);
             displayNotification('An unexpected error occurred during signup. Please try again.', 'error');
         }
     }
-    
-    function displayError(inputElementId, message) {
-        // Your existing function to display the error message
-        const errorElement = document.getElementById(`${inputElementId}-error`); // Example ID
+
+    function displayError(inputId, message) {
+        const errorElement = document.getElementById(inputId + '-error');
         if (errorElement) {
             errorElement.textContent = message;
         }
     }
-    
-    
+
+    function displayNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type} show`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(()=> notification.remove(), 300); //remove element after the animation
+        }, 3000);
+    }
+
+    async function fetchOrganizations() {
+        try {
+            const response = await fetch('/api/organizations/'); //  Endpoint
+            if (!response.ok) {
+                throw new Error('Failed to fetch organizations');
+            }
+            const data = await response.json();
+            organizations = data; // Store the organizations
+            render(); // Re-render to update the dropdown
+        } catch (error) {
+            console.error("Error fetching organizations:", error);
+            displayNotification('Failed to load organizations. Please try again later.', 'error');
+            //  Fallback.
+            organizations = [];
+            render();
+        }
+    }
 
 
     async function handleForgotPassword(e) {
@@ -555,24 +590,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function displayError(inputId, message) {
-        const errorElement = document.getElementById(inputId + '-error');
-        if (errorElement) {
-            errorElement.textContent = message;
-        }
-    }
-
-    function displayNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type} show`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(()=> notification.remove(), 300); //remove element after the animation
-        }, 3000);
-    }
-
     render(); // Initial render
+    fetchOrganizations(); // Fetch organizations on page load, and then render.
 });

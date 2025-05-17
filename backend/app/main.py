@@ -1264,6 +1264,15 @@ async def settings(request: Request, db: Session = Depends(get_db)):
         {"request": request, "year": "2025", "user": user, "formatted_birthdate": formatted_birthdate},
     )
 
+# Endpoint to get all organizations
+@app.get("/api/organizations/", response_model=List[schemas.Organization])
+async def get_organizations(db: Session = Depends(get_db)):
+    """
+    Retrieves a list of all organizations from the database.
+    """
+    organizations = db.query(models.Organization).all()
+    return organizations
+
 # Endpoint for signup
 @app.post("/api/signup/")
 async def signup(

@@ -1,6 +1,14 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+
+class Organization(BaseModel):
+    id: int
+    name: str
+    theme_color: Optional[str] = None
+
+    class Config:
+        orm_mode = True
 
 class UserBase(BaseModel):
     student_number: str
@@ -18,7 +26,7 @@ class User(UserBase):
     id: int
     organization: str
     first_name: str
-    last_name: str
+    last_name: bool
     is_active: bool
     name: Optional[str]
     campus: Optional[str]
