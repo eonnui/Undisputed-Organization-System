@@ -18,7 +18,8 @@ class Organization(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     theme_color = Column(String, nullable=True)
-    custom_palette = Column(Text, nullable=True) # <--- ADD THIS LINE
+    custom_palette = Column(Text, nullable=True)
+    logo_url = Column(String, nullable=True) # <--- ADDED THIS LINE
     admins = relationship("Admin", secondary="organization_admins", back_populates="organizations")
     students = relationship("User", back_populates="organization")
 
@@ -35,7 +36,7 @@ class Event(Base):
 
     event_id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
-    classification = Column(String)    # Renamed 'tagged' to 'classification' for clarity
+    classification = Column(String)
     description = Column(Text)
     date = Column(DateTime)
     location = Column(String)
@@ -53,7 +54,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_number = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
-    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True) # Foreign key to Organization
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     organization = relationship("Organization", back_populates="students")
     first_name = Column(String)
     last_name = Column(String)
@@ -75,11 +76,11 @@ class User(Base):
     guardian_contact = Column(String, nullable=True)
     registration_form = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
-    is_verified = Column(Boolean, default=False)    # Added for verification status
-    verified_by = Column(String, nullable=True)    # Add this field
-    verification_date = Column(DateTime, nullable=True)    # add this
-    payments = relationship("Payment", back_populates="user") # Relationship to the Payment model
-    payment_items = relationship("PaymentItem", back_populates="user") # Relationship to the PaymentItem model
+    is_verified = Column(Boolean, default=False)
+    verified_by = Column(String, nullable=True)
+    verification_date = Column(DateTime, nullable=True)
+    payments = relationship("Payment", back_populates="user")
+    payment_items = relationship("PaymentItem", back_populates="user")
 
 class Admin(Base):
     __tablename__ = "admins"
@@ -105,7 +106,6 @@ class BulletinBoard(Base):
     image_path = Column(String(255), nullable=True)
     admin = relationship("Admin", back_populates="bulletin_board_posts")
 
-# Add the Payment model here
 class Payment(Base):
     __tablename__ = "payments"
     id = Column(Integer, primary_key=True, index=True)
@@ -113,8 +113,8 @@ class Payment(Base):
     amount = Column(Float, nullable=False)
     paymaya_payment_id = Column(String, unique=True, nullable=True)
     status = Column(String, default="pending")
-    created_at = Column(Date, default=func.current_date())    # Use func.current_date
-    updated_at = Column(Date, onupdate=func.current_date())    # Use func.current_date
+    created_at = Column(Date, default=func.current_date())
+    updated_at = Column(Date, onupdate=func.current_date())
     payment_item_id = Column(Integer, ForeignKey("payment_items.id"), nullable=True)
     payment_item = relationship("PaymentItem", back_populates="payments")
     user = relationship("User", back_populates="payments")
@@ -123,16 +123,16 @@ class PaymentItem(Base):
     __tablename__ = "payment_items"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    academic_year = Column(String, nullable=True)    # Make nullable to handle cases where it might not be immediately known
-    semester = Column(String, nullable=True)    # Make nullable for flexibility
+    academic_year = Column(String, nullable=True)
+    semester = Column(String, nullable=True)
     fee = Column(Float, nullable=False)
     created_at = Column(Date, default=func.current_date())
     updated_at = Column(Date, onupdate=func.current_date())
     is_paid = Column(Boolean, default=False)
     due_date = Column(Date, nullable=True)
-    year_level_applicable = Column(Integer, nullable=True)    # Added year_level_applicable
-    is_past_due = Column(Boolean, default=False) # Added is_past_due
-    is_not_responsible = Column(Boolean, default=False)    # Added this field
+    year_level_applicable = Column(Integer, nullable=True)
+    is_past_due = Column(Boolean, default=False)
+    is_not_responsible = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="payment_items")
     payments = relationship("Payment", back_populates="payment_item")

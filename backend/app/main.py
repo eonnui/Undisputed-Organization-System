@@ -1059,33 +1059,53 @@ async def home(
 ):
     """
     Handles the /home route, displaying either the student or admin dashboard
-    depending on the user's role stored in the session.
+    depending on the user's role stored in the session, and passes the
+    organization's logo URL to the template.
     """
-    user_id = request.session.get("user_id") or request.session.get("admin_id") # changed
+    user_id = request.session.get("user_id")
+    admin_id = request.session.get("admin_id") # Assuming admin_id is stored separately if admin logs in
     user_role = request.session.get("user_role")
 
-    if not user_id or not user_role:
-        #  Redirect to login if the user is not logged in.
-        return templates.TemplateResponse("index.html", {"request": request, "error": "Please log in to access this page."}) #adjust to your login template
+    current_year = "2025" # You might want to make this dynamic
+    # Define a default logo URL in case no organization logo is found
+    # Ensure you have a 'default_logo.png' in frontend/static/images/
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url # Initialize logo_url with the default
+
+    if not (user_id or admin_id) or not user_role:
+        return templates.TemplateResponse("index.html", {"request": request, "error": "Please log in to access this page."})
+
     if user_role == "Admin":
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if admin and admin.organizations:
+            # If an admin can manage multiple organizations, you need logic to pick one.
+            # For simplicity, we'll use the logo of the first organization they are associated with.
+            # Adjust this if your admin flow requires selecting an organization or a generic admin logo.
+            first_org = admin.organizations[0]
+            if first_org.logo_url:
+                logo_url = first_org.logo_url
+        
         # Logic for admin dashboard
-        # Fetch data needed for admin dashboard
         latest_bulletin_posts = (
             db.query(models.BulletinBoard)
             .order_by(models.BulletinBoard.created_at.desc())
             .limit(5)
             .all()
         )
-        # You might have different templates for admin and student
         return templates.TemplateResponse(
-            "admin_dashboard/home.html",  #  Admin template
+            "admin_dashboard/home.html",  # Admin template
             {
                 "request": request,
-                "year": "2025",
+                "year": current_year,
                 "bulletin_posts": latest_bulletin_posts,
+                "logo_url": logo_url, # Pass the dynamically determined logo URL
             },
         )
-    elif user_role == "user":
+    elif user_role == "user": # Assuming 'user' role refers to a student
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
+        
         # Logic for student dashboard
         latest_bulletin_posts = (
             db.query(models.BulletinBoard)
@@ -1108,18 +1128,18 @@ async def home(
             },
         ]
         return templates.TemplateResponse(
-            "student_dashboard/home.html",  #  Student template
+            "student_dashboard/home.html",  # Student template
             {
                 "request": request,
-                "year": "2025",
+                "year": current_year,
                 "bulletin_posts": latest_bulletin_posts,
                 "faqs": temporary_faqs,
+                "logo_url": logo_url, # Pass the dynamically determined logo URL
             },
         )
     else:
         # Handle unexpected roles (optional, but good practice)
         raise HTTPException(status_code=403, detail="Invalid user role")
-
 
 
 
