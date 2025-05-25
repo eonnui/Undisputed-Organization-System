@@ -972,7 +972,7 @@ async def paymaya_create_payment(
     Creates a PayMaya payment request. Handles cases where the amount is
     provided directly or needs to be retrieved from a payment item.
     """
-    public_api_key = "pk-rpwb5YR6EfnKiMsldZqY4hgpvJjuy8hhxW2bVAAiz2N"
+    public_api_key = "pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah"
     encoded_key = base64.b64encode(f"{public_api_key}:".encode()).decode()
     url = "https://pg-sandbox.paymaya.com/payby/v2/paymaya/payments"
     headers = {
@@ -1023,11 +1023,11 @@ async def paymaya_create_payment(
     }
 
     try:
+        logger.info("Sending request to PayMaya API")
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         payment_data = response.json()
-        paymaya_payment_id = payment_data.get("paymentId")
-
+        paymaya_payment_id = payment_data.get("checkoutId")
         # Update your database record with the PayMaya payment ID
         crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
 
@@ -1657,29 +1657,84 @@ async def login(request: Request, form_data: schemas.UserLogin, db: Session = De
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+#HELPER
+# Helper function to get user's organization ID
+async def get_user_organization_id(request: Request, db: Session) -> int:
+    """
+    Retrieves the organization ID of the currently authenticated user or admin.
+    Raises HTTPException if not authenticated or not associated with an organization.
+    """
+    user_id = request.session.get("user_id")
+    admin_id = request.session.get("admin_id")
+    organization_id = None
 
+    if user_id:
+        # User (student) is logged in
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization_id:
+            organization_id = user.organization_id
+    elif admin_id:
+        # Admin is logged in
+        # Eagerly load organizations for the admin to avoid N+1 queries
+        admin = db.query(models.Admin).options(joinedload(models.Admin.organizations)).filter(models.Admin.admin_id == admin_id).first()
+        if admin and admin.organizations:
+            # For admins, we'll use the ID of their first associated organization
+            # You might need a more sophisticated logic if admins operate across multiple orgs
+            organization_id = admin.organizations[0].id
+
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User/Admin not associated with an organization or not authenticated."
+        )
+    return organization_id
+
+# Helper function to get an entity's (BulletinBoard or Event) organization ID via its admin
+def get_entity_organization_id(db: Session, admin_id: int) -> int:
+    """
+    Retrieves the organization ID associated with a given admin ID.
+    Raises HTTPException if admin not found or not associated with an organization.
+    """
+    admin = db.query(models.Admin).options(joinedload(models.Admin.organizations)).filter(models.Admin.admin_id == admin_id).first()
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin for this entity not found.")
+    if not admin.organizations:
+        raise HTTPException(status_code=500, detail="Admin is not associated with any organization.")
+    # Assuming an entity belongs to the first organization of its creating admin
+    return admin.organizations[0].id
 
 # Endpoint for hearting a post
 @app.post("/bulletin/heart/{post_id}")
-async def heart_post(post_id: int, request: Request, db: Session = Depends(get_db)):
-    form_data = await request.form()
-    action = form_data.get('action')
-    user_id = 1  # Removed hardcoded user ID
-    user_id = request.session.get("user_id")  # Get user ID from session
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
+async def heart_post(
+    post_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    action: str = Form(...) # Use Form to get data from form-urlencoded
+):
+    # Get user's organization ID
+    user_org_id = await get_user_organization_id(request, db)
 
-    post = db.query(models.BulletinBoard).filter(models.BulletinBoard.post_id == post_id).first()
+    # Eagerly load the admin relationship to get admin.organizations
+    post = db.query(models.BulletinBoard).options(joinedload(models.BulletinBoard.admin)).filter(models.BulletinBoard.post_id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+
+    # Get the organization ID of the post via its admin
+    post_org_id = get_entity_organization_id(db, post.admin_id)
+
+    # Ensure the post belongs to the user's organization
+    if post_org_id != user_org_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only interact with posts from your own organization."
+        )
 
     if action == 'heart':
         post.heart_count += 1
     elif action == 'unheart' and post.heart_count > 0:
         post.heart_count -= 1
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action. Must be 'heart' or 'unheart'.")
 
     db.commit()
     db.refresh(post)
@@ -1689,22 +1744,37 @@ async def heart_post(post_id: int, request: Request, db: Session = Depends(get_d
 # Endpoint for joining an event
 @app.post("/Events/join/{event_id}")
 async def join_event(event_id: int, request: Request, db: Session = Depends(get_db)):
-    # current_user_id = 1 # Removed hardcoded user ID
-    current_user_id = request.session.get("user_id")  # Get user ID from session
-    if not current_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
+    # Get user's organization ID
+    user_org_id = await get_user_organization_id(request, db)
 
-    event = db.query(models.Event).options(joinedload(models.Event.participants)).filter(
-        models.Event.event_id == event_id).first()
+    # Eagerly load participants and admin relationship
+    event = db.query(models.Event).options(
+        joinedload(models.Event.participants),
+        joinedload(models.Event.admin)
+    ).filter(models.Event.event_id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
+    # Get the organization ID of the event via its admin
+    event_org_id = get_entity_organization_id(db, event.admin_id)
+
+    # Ensure the event belongs to the user's organization
+    if event_org_id != user_org_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only join events from your own organization."
+        )
+
+    # Retrieve the user object using the user_id from the session
+    current_user_id = request.session.get("user_id")
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not authenticated."
+        )
     user = db.query(models.User).filter(models.User.id == current_user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found.")
 
     if user in event.participants:
         raise HTTPException(status_code=400, detail="You are already joined in this event.")
@@ -1720,22 +1790,37 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
 # Endpoint for leaving an event
 @app.post("/Events/leave/{event_id}")
 async def leave_event(event_id: int, request: Request, db: Session = Depends(get_db)):
-    # current_user_id = 1 # Removed hardcoded user ID
-    current_user_id = request.session.get("user_id")  # Get user ID from session
-    if not current_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
+    # Get user's organization ID
+    user_org_id = await get_user_organization_id(request, db)
 
-    event = db.query(models.Event).options(joinedload(models.Event.participants)).filter(
-        models.Event.event_id == event_id).first()
+    # Eagerly load participants and admin relationship
+    event = db.query(models.Event).options(
+        joinedload(models.Event.participants),
+        joinedload(models.Event.admin)
+    ).filter(models.Event.event_id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
+    # Get the organization ID of the event via its admin
+    event_org_id = get_entity_organization_id(db, event.admin_id)
+
+    # Ensure the event belongs to the user's organization
+    if event_org_id != user_org_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only leave events from your own organization."
+        )
+
+    # Retrieve the user object using the user_id from the session
+    current_user_id = request.session.get("user_id")
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not authenticated."
+        )
     user = db.query(models.User).filter(models.User.id == current_user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found.")
 
     if user not in event.participants:
         raise HTTPException(status_code=400, detail="You are not joined in this event.")
@@ -1747,12 +1832,32 @@ async def leave_event(event_id: int, request: Request, db: Session = Depends(get
 
 # Endpoint for upcoming events summary
 @app.get("/api/events/upcoming_summary")
-async def get_upcoming_events_summary(db: Session = Depends(get_db)):
+async def get_upcoming_events_summary(request: Request, db: Session = Depends(get_db)):
+    # Get user's organization ID
+    user_org_id = await get_user_organization_id(request, db)
+
     now = datetime.now()
-    upcoming_events = db.query(models.Event).filter(models.Event.date >= now).order_by(
-        models.Event.date).limit(5).all()
+    
+    # Fetch all upcoming events and their associated admins (with organizations)
+    upcoming_events_with_admins = db.query(models.Event).options(
+        joinedload(models.Event.admin).joinedload(models.Admin.organizations)
+    ).filter(models.Event.date >= now).order_by(models.Event.date).all()
+
+    # Filter events in Python based on the admin's organization
+    filtered_events = []
+    for event in upcoming_events_with_admins:
+        if event.admin and event.admin.organizations:
+            # Check if any of the admin's organizations match the user's organization
+            admin_org_ids = [org.id for org in event.admin.organizations]
+            if user_org_id in admin_org_ids:
+                filtered_events.append(event)
+    
+    # Limit to 5 after filtering
+    limited_events = filtered_events[:5]
+
     return [{"title": event.title, "date": event.date.isoformat(), "location": event.location,
-             "classification": event.classification} for event in upcoming_events]
+             "classification": event.classification} for event in limited_events]
+
 
 def generate_email(first_name: str, last_name: str) -> str:
     """Generates the email address based on the provided format."""
