@@ -974,7 +974,7 @@ async def paymaya_create_payment(
     """
     public_api_key = "pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah"
     encoded_key = base64.b64encode(f"{public_api_key}:".encode()).decode()
-    url = "https://pg-sandbox.paymaya.com/payby/v2/paymaya/payments"
+    url = "https://pg-sandbox.paymaya.com/checkout/v1/checkouts"
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
@@ -1025,8 +1025,10 @@ async def paymaya_create_payment(
     try:
         logger.info("Sending request to PayMaya API")
         response = requests.post(url, headers=headers, json=payload)
+        logger.info(f"Paymaya API response status: {response.status_code}")
         response.raise_for_status()
         payment_data = response.json()
+        logger.info(f"Paymaya API response data: {payment_data}")
         paymaya_payment_id = payment_data.get("checkoutId")
         # Update your database record with the PayMaya payment ID
         crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
