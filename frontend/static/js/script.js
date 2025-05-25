@@ -5,6 +5,71 @@ document.addEventListener('DOMContentLoaded', function() {
     let forgotPasswordIdentifier = ''; // Store student number or email for code verification
     let organizations = []; // Store fetched organizations
 
+    // --- START: applyUserTheme function (added/updated) ---
+    async function applyUserTheme() {
+        console.log("Attempting to apply user theme...");
+        try {
+            // 1. Make an API request to your backend to get user details
+            //    No Authorization header needed if session middleware handles authentication.
+            const response = await fetch('/get_user_data', { // Use your actual endpoint URL
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                // Handle HTTP errors (e.g., 401 Unauthorized if session is invalid, 404 Not Found)
+                const errorData = await response.json();
+                console.error('Failed to fetch user data:', errorData.detail || response.statusText);
+                // If user is not authenticated (e.g., 401), you might want to redirect to login
+                if (response.status === 401) {
+                    console.log("User not authenticated. Redirecting to login or showing login form.");
+                    // Example: If you have a function to show login form
+                    // currentForm = 'login';
+                    // render();
+                }
+                return;
+            }
+
+            const userData = await response.json();
+            console.log('User data received for theme application:', userData);
+
+            // 2. Access the theme_color from the organization object
+            //    Ensure userData.organization exists and has theme_color
+            const themeColor = userData.organization ? userData.organization.theme_color : null;
+            const organizationName = userData.organization ? userData.organization.name : 'Guest';
+
+            if (themeColor) {
+                // 3. Apply the theme_color as a CSS Custom Property (Variable)
+                //    This sets a variable --organization-theme-color on the <html> element
+                //    which can then be used throughout your CSS.
+                document.documentElement.style.setProperty('--organization-theme-color', themeColor);
+                console.log(`Applied theme color: ${themeColor} for organization: ${organizationName}`);
+
+                // Optional: Update a specific element's text with the organization name
+                const orgNameDisplay = document.getElementById('organizationNameDisplay');
+                if (orgNameDisplay) {
+                    orgNameDisplay.textContent = organizationName;
+                }
+
+            } else {
+                console.log("No organization or theme color found for this user. Applying default theme.");
+                // Optionally apply a default theme or remove any existing custom theme
+                document.documentElement.style.removeProperty('--organization-theme-color');
+                const orgNameDisplay = document.getElementById('organizationNameDisplay');
+                if (orgNameDisplay) {
+                    orgNameDisplay.textContent = 'No Organization'; // Or a default like 'Guest'
+                }
+            }
+
+        } catch (error) {
+            console.error('An unexpected error occurred during theme application:', error);
+        }
+    }
+    // --- END: applyUserTheme function ---
+
+
     function renderLoginForm() {
         return `
             <div class="wrapper">
@@ -45,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let organizationOptions = '<option value="" disabled selected>Select your organization</option>';
         if (organizations.length > 0) {
             organizations.forEach(org => {
+                // Keep value as ID, but we will extract the name on submit
                 organizationOptions += `<option value="${org.id}">${org.name}</option>`;
             });
         } else {
@@ -262,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleLogin(e) {
         e.preventDefault();
 
-        const identifier = document.getElementById('login-student-number').value; //  Use identifier
+        const identifier = document.getElementById('login-student-number').value; // Use identifier
         const password = document.getElementById('login-password').value;
 
         // Clear previous errors
@@ -309,11 +375,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             displayNotification('Login successful!', 'success');
-            //  Redirect based on user_role from the response.
+            // After successful login, apply the theme.
+            // The backend session should now be set.
+            await applyUserTheme(); // <--- CALL applyUserTheme HERE after successful login
+
+            // Redirect based on user_role from the response.
             if (data.user_role === 'admin') {
                 window.location.href = '/admin_dashboard'; // Or wherever admins go
             } else {
-                window.location.href = '/home'; //  Regular users
+                window.location.href = '/home'; // Regular users
             }
 
         } catch (error) {
@@ -328,7 +398,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const studentNumber = document.getElementById('signup-student-number').value;
         const email = document.getElementById('signup-email').value;
-        const organizationId = document.getElementById('signup-organization').value; // Changed to ID
+        // --- START FRONTEND ADJUSTMENT ---
+        // Get the selected <option> element
+        const organizationSelect = document.getElementById('signup-organization');
+        // Get the text content (name) of the selected option, not its value (ID)
+        const organizationName = organizationSelect.options[organizationSelect.selectedIndex].textContent;
+        // --- END FRONTEND ADJUSTMENT ---
         const firstName = document.getElementById('signup-first-name').value;
         const lastName = document.getElementById('signup-last-name').value;
         const password = document.getElementById('signup-password').value;
@@ -362,10 +437,13 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
 
-        if (!organizationId) { // Changed to organizationId
+        // --- START FRONTEND ADJUSTMENT ---
+        // Check if a valid organization name was selected
+        if (!organizationName || organizationSelect.selectedIndex === 0) { // Also check if default option is selected
             displayError('signup-organization', 'Please select an organization.');
             isValid = false;
         }
+        // --- END FRONTEND ADJUSTMENT ---
 
         if (!firstName) {
             displayError('signup-first-name', 'First name is required.');
@@ -401,7 +479,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const userData = {
             student_number: studentNumber,
             email: email,
-            organization_id: organizationId, // Changed to organization_id
+            // --- START FRONTEND ADJUSTMENT ---
+            organization: organizationName, // Send the organization NAME here
+            // --- END FRONTEND ADJUSTMENT ---
             first_name: firstName,
             last_name: lastName,
             password: password
@@ -419,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (!response.ok) {
-                // **FIX:  Check for specific error messages from the backend**
+                // **FIX:  Check for specific error messages from the backend**
                 if (data.detail === 'Student number already registered') {
                     displayError('signup-student-number', 'This student number is already registered.');
                 } else if (data.detail === 'Email already registered') {
@@ -427,6 +507,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (data.detail === 'First and last name combination already registered') { // ADDED THIS
                     displayError('signup-first-name', 'This first and last name combination is already registered.');
                     displayError('signup-last-name', ''); // Clear any previous last name error
+                } else if (data.detail && data.detail.includes("Organization")) {
+                    displayError('signup-organization', data.detail);
                 }
                 else {
                     // For *any other* error from the backend, show a generic message
@@ -464,34 +546,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setTimeout(() => {
             notification.classList.remove('show');
-            setTimeout(()=> notification.remove(), 300); //remove element after the animation
+            setTimeout(()=> notification.remove(), 300);
         }, 3000);
     }
 
+    // organizations array is already defined globally at the top
+    // let organizations = [];
+
     async function fetchOrganizations() {
         try {
-            const response = await fetch('/api/organizations/'); //  Endpoint
+            const response = await fetch('/api/organizations/');
             if (!response.ok) {
                 throw new Error('Failed to fetch organizations');
             }
             const data = await response.json();
-            organizations = data; // Store the organizations
-            render(); // Re-render to update the dropdown
+            organizations = data;
+            render();
         } catch (error) {
             console.error("Error fetching organizations:", error);
             displayNotification('Failed to load organizations. Please try again later.', 'error');
-            //  Fallback.
             organizations = [];
             render();
         }
     }
 
-
     async function handleForgotPassword(e) {
         e.preventDefault();
         const identifier = document.getElementById('forgot-password-identifier').value;
 
-        // Clear previous error
         displayError('forgot-password-identifier', '');
 
         if (!identifier) {
@@ -590,6 +672,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    render(); // Initial render
-    fetchOrganizations(); // Fetch organizations on page load, and then render.
+    // --- CALL applyUserTheme on initial page load ---
+    applyUserTheme(); // Call this immediately after DOMContentLoaded
+
+    render(); // Initial render of the forms
+    fetchOrganizations(); // Fetch organizations for signup form
 });

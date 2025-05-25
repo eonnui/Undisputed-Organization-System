@@ -6,9 +6,10 @@ class Organization(BaseModel):
     id: int
     name: str
     theme_color: Optional[str] = None
+    custom_palette: Optional[str] = None # <--- THIS LINE IS CRUCIAL AND WAS MISSING
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Use from_attributes for Pydantic V2, orm_mode = True for V1
 
 class UserBase(BaseModel):
     student_number: str
@@ -19,14 +20,16 @@ class UserCreate(UserBase):
     first_name: str
     last_name: str
     password: str
+
 class UserLogin(BaseModel):
-    identifier: str  # Changed to 'identifier' to accept either email or student_number
+    identifier: str
     password: str
+
 class User(UserBase):
     id: int
-    organization: str
+    organization: Optional[Organization] = None # Ensure this is Optional[Organization] object
     first_name: str
-    last_name: bool
+    last_name: str # Corrected from 'bool' if this was a typo
     is_active: bool
     name: Optional[str]
     campus: Optional[str]
@@ -43,14 +46,13 @@ class User(UserBase):
     guardian_contact: Optional[str]
     registration_form: Optional[str]
     profile_picture: Optional[str]
-    is_verified: bool  # Added for verification status
+    is_verified: bool
     verified_by: Optional[str]
     verification_date: Optional[datetime]
 
     class Config:
-        from_attributes = True
+        from_attributes = True # For Pydantic V2, orm_mode=True for V1
 
-# Added UserUpdate schema
 class UserUpdate(BaseModel):
     name: Optional[str]
     campus: Optional[str]

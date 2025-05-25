@@ -1341,10 +1341,6 @@ async def signup(
 
     return {"message": "User created successfully", "user_id": new_user.id}
 
-
-
-
-
 @app.get("/api/user/{user_id}", response_model=schemas.User)
 async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     user = crud.get_user(db, identifier=str(user_id))
