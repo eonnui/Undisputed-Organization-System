@@ -1146,36 +1146,66 @@ async def home(
 # Endpoint for bulletin board
 @app.get("/BulletinBoard", response_class=HTMLResponse, name="bulletin_board")
 async def bulletin_board(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
+
     posts = db.query(models.BulletinBoard).order_by(models.BulletinBoard.created_at.desc()).all()
     hearted_posts = []
     return templates.TemplateResponse(
         "student_dashboard/bulletin_board.html",
-        {"request": request, "year": "2025", "posts": posts, "hearted_posts": hearted_posts}
+        {"request": request, "year": "2025", "posts": posts, "hearted_posts": hearted_posts, "logo_url": logo_url}
     )
-
 
 # Endpoint for events
 @app.get("/Events", response_class=HTMLResponse, name="events")
 async def events(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
+
     events_list = db.query(models.Event).options(joinedload(models.Event.participants)).order_by(models.Event.date).all()
-    # current_user_id = 1 # Removed hardcoded user ID
-    current_user_id = request.session.get("user_id")  # Get user ID from session
+    current_user_id = request.session.get("user_id")
     if not current_user_id:
-        current_user_id = 0  # set to 0 or handle unauthenticated user as you prefer
+        current_user_id = 0
     for event in events_list:
         event.participant_ids = [user.id for user in event.participants]
     return templates.TemplateResponse(
         "student_dashboard/events.html",
-        {"request": request, "year": "2025", "events": events_list, "current_user_id": current_user_id}
+        {"request": request, "year": "2025", "events": events_list, "current_user_id": current_user_id, "logo_url": logo_url}
     )
 
 # Endpoint for payments
 @app.get("/Payments", response_class=HTMLResponse, name="payments")
 async def payments(request: Request, db: Session = Depends(get_db)):
-    """
-    Renders the payments page with data for a student, displaying past due and unpaid payment items
-    based on the is_paid, is_past_due, and is_not_responsible flags.  Payment items are ordered by academic year.
-    """
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user_for_logo = db.query(models.User).filter(models.User.id == user_id).first()
+        if user_for_logo and user_for_logo.organization and user_for_logo.organization.logo_url:
+            logo_url = user_for_logo.organization.logo_url
+
     logging.info("Entering /Payments route")
     user_identifier = request.session.get("user_id") or request.session.get("admin_id")
     logging.info(f"User identifier: {user_identifier}")
@@ -1185,6 +1215,8 @@ async def payments(request: Request, db: Session = Depends(get_db)):
         logging.warning("User not authenticated, redirecting to /")
         return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
+    # Note: `current_user` here is still determined for payments based on `user_identifier`
+    # which can be admin_id. If you only want payments for students, you'll need to refine this.
     current_user = db.query(models.User).filter(models.User.id == user_identifier).first()
     if not current_user:
         logging.error(f"User not found with identifier: {user_identifier}")
@@ -1193,13 +1225,11 @@ async def payments(request: Request, db: Session = Depends(get_db)):
     logging.info(f"Current user: {current_user}")
 
     try:
-        # Fetch payment items for the current user that are NOT marked as not responsible,
-        # ordered by academic year.
         payment_items = (
             db.query(models.PaymentItem)
             .filter(models.PaymentItem.user_id == user_identifier)
-            .filter(models.PaymentItem.is_not_responsible == False)  # Exclude items where is_not_responsible is True
-            .order_by(models.PaymentItem.academic_year)  # Order by academic year
+            .filter(models.PaymentItem.is_not_responsible == False)
+            .order_by(models.PaymentItem.academic_year)
             .all()
         )
         logging.info(f"Payment items: {payment_items}")
@@ -1216,11 +1246,11 @@ async def payments(request: Request, db: Session = Depends(get_db)):
 
         logging.info("Past due items (before template):")
         for item in past_due_items:
-            logging.info(f"  Item ID: {item.id}, Due Date: {item.due_date}, Academic Year: {item.academic_year}, Semester: {item.semester}")
+            logging.info(f"   Item ID: {item.id}, Due Date: {item.due_date}, Academic Year: {item.academic_year}, Semester: {item.semester}")
 
         logging.info("Unpaid upcoming items (before template):")
         for item in unpaid_upcoming_items:
-            logging.info(f"  Item ID: {item.id}, Due Date: {item.due_date}, Academic Year: {item.academic_year}, Semester: {item.semester}")
+            logging.info(f"   Item ID: {item.id}, Due Date: {item.due_date}, Academic Year: {item.academic_year}, Semester: {item.semester}")
 
         return templates.TemplateResponse(
             "student_dashboard/payments.html",
@@ -1229,6 +1259,7 @@ async def payments(request: Request, db: Session = Depends(get_db)):
                 "past_due_items": past_due_items,
                 "unpaid_upcoming_items": unpaid_upcoming_items,
                 "current_user": current_user,
+                "logo_url": logo_url,
             },
         )
     except Exception as e:
@@ -1240,17 +1271,36 @@ async def payments(request: Request, db: Session = Depends(get_db)):
 
 # Endpoint for financial statement
 @app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
-async def financial_statement(request: Request):
-    return templates.TemplateResponse("student_dashboard/financial_statement.html", {"request": request, "year": "2025"})
+async def financial_statement(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
 
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
+
+    return templates.TemplateResponse("student_dashboard/financial_statement.html", {"request": request, "year": "2025", "logo_url": logo_url})
 
 
 @app.get("/Settings", response_class=HTMLResponse, name="settings")
 async def settings(request: Request, db: Session = Depends(get_db)):
-    """
-    Renders the settings page, including the user's birthdate in the correct format.
-    """
-    # Get the current user's data to pre-populate the form
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user_for_logo = db.query(models.User).filter(models.User.id == user_id).first()
+        if user_for_logo and user_for_logo.organization and user_for_logo.organization.logo_url:
+            logo_url = user_for_logo.organization.logo_url
+            
     current_user_id = request.session.get("user_id")
     if not current_user_id:
         raise HTTPException(
@@ -1264,8 +1314,7 @@ async def settings(request: Request, db: Session = Depends(get_db)):
     formatted_birthdate = ""
     if user.birthdate:
         try:
-            # Try converting from a common format (adjust if yours is different)
-            birthdate_object = datetime.strptime(user.birthdate, "%Y-%m-%d %H:%M:%S")  # Handle "2025-05-23 00:00:00" format
+            birthdate_object = datetime.strptime(user.birthdate, "%Y-%m-%d %H:%M:%S")
             formatted_birthdate = birthdate_object.strftime("%Y-%m-%d")
         except ValueError:
             try:
@@ -1277,11 +1326,11 @@ async def settings(request: Request, db: Session = Depends(get_db)):
                     formatted_birthdate = birthdate_object.strftime("%Y-%m-%d")
                 except ValueError:
                     print(f"Warning: Could not parse birthdate string: {user.birthdate}")
-                    formatted_birthdate = user.birthdate  # Use the original string as a fallback
+                    formatted_birthdate = user.birthdate
 
     return templates.TemplateResponse(
         "student_dashboard/settings.html",
-        {"request": request, "year": "2025", "user": user, "formatted_birthdate": formatted_birthdate},
+        {"request": request, "year": "2025", "user": user, "formatted_birthdate": formatted_birthdate, "logo_url": logo_url},
     )
 
 # Endpoint to get all organizations
