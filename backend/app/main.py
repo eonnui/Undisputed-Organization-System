@@ -144,13 +144,13 @@ async def admin_post_bulletin(
             detail="Internal server error during post creation",
         )
 
-@router.get("/admin_settings/", response_class=HTMLResponse, name="admin_settings") # Added a trailing slash
+@router.get("/admin_settings/", response_class=HTMLResponse, name="admin_settings")
 async def admin_settings(request: Request, db: Session = Depends(get_db)):
     """Displays the admin settings, including payment settings."""
 
-    # --- Placeholder Authentication and Authorization ---
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
+    admin_id = request.session.get("admin_id") # Get admin_id for logo fetching
 
     if not current_user_id:
         raise HTTPException(
@@ -160,13 +160,23 @@ async def admin_settings(request: Request, db: Session = Depends(get_db)):
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
 
-     
+    # --- Logo Handling (Admin Part) ---
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+    if admin_id:
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if admin and admin.organizations:
+            first_org = admin.organizations[0]
+            if first_org.logo_url:
+                logo_url = first_org.logo_url
+    # --- End Logo Handling ---
 
     return templates.TemplateResponse(
         "admin_dashboard/admin_settings.html",
         {
             "request": request,
-            "year": "2025",  # Keep this, assuming it's a global constant           
+            "year": "2025",
+            "logo_url": logo_url, # Pass the logo URL
         },
     )
 
@@ -297,7 +307,7 @@ async def admin_delete_bulletin_post(
 async def admin_payments(
     request: Request,
     db: Session = Depends(get_db),
-    student_number: Optional[str] = None,  # Add student_number as an optional query parameter
+    student_number: Optional[str] = None,
 ):
     """
     Displays all payment items for administrators, with accurate payment status
@@ -305,6 +315,7 @@ async def admin_payments(
     """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
+    admin_id = request.session.get("admin_id") # Get admin_id for logo fetching
 
     if not current_user_id:
         raise HTTPException(
@@ -314,22 +325,29 @@ async def admin_payments(
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
 
-    # Build the query
+    # --- Logo Handling (Admin Part) ---
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+    if admin_id:
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if admin and admin.organizations:
+            first_org = admin.organizations[0]
+            if first_org.logo_url:
+                logo_url = first_org.logo_url
+    # --- End Logo Handling ---
+
     query = db.query(models.PaymentItem)
 
-    # Filter by student_number if provided
     if student_number:
         logger.info(f"Filtering payment items by student_number: {student_number}")
         query = query.join(models.User).filter(models.User.student_number == student_number)
 
-    # Fetch all payment items
     payment_items = query.all()
 
-    # Determine payment status for each item and fetch student number
     payment_items_with_status = []
     today = date.today()
     for item in payment_items:
-        status_text = "Unpaid"  # Default status
+        status_text = "Unpaid"
         retrieved_student_number = None
         if item.user:
             retrieved_student_number = item.user.student_number
@@ -342,9 +360,6 @@ async def admin_payments(
             status_text = "Paid"
         elif item.is_past_due:
             status_text = "Past Due"
-        # If none of the above conditions are met, it remains "Unpaid".
-        # This ensures that if an admin manually sets it to "Unpaid"
-        # (and is_past_due is False), it stays "Unpaid".
 
         payment_items_with_status.append(
             {
@@ -356,12 +371,20 @@ async def admin_payments(
 
     logging.info("Payment items with status and student number:")
     for payment in payment_items_with_status:
-        logging.info(f"  Item ID: {payment['item'].id}, Due Date: {payment['item'].due_date}, Status: {payment['status']}, Student Number: {payment['student_number']}, Academic Year: {payment['item'].academic_year}, Semester: {payment['item'].semester}, Fee: {payment['item'].fee}, User ID: {payment['item'].user_id}, is_past_due: {payment['item'].is_past_due}, is_paid: {payment['item'].is_paid}, is_not_responsible: {payment['item'].is_not_responsible}")
+        logging.info(f"   Item ID: {payment['item'].id}, Due Date: {payment['item'].due_date}, Status: {payment['status']}, Student Number: {payment['student_number']}, Academic Year: {payment['item'].academic_year}, Semester: {payment['item'].semester}, Fee: {payment['item'].fee}, User ID: {payment['item'].user_id}, is_past_due: {payment['item'].is_past_due}, is_paid: {payment['item'].is_paid}, is_not_responsible: {payment['item'].is_not_responsible}")
 
     return templates.TemplateResponse(
-        "admin_dashboard/admin_payments.html",  # Corrected line
-        {"request": request, "year": "2025", "payment_items": payment_items_with_status, "now": today, "student_number": student_number}, # Pass student_number to the template
+        "admin_dashboard/admin_payments.html",
+        {
+            "request": request,
+            "year": "2025",
+            "payment_items": payment_items_with_status,
+            "now": today,
+            "student_number": student_number,
+            "logo_url": logo_url, # Pass the logo URL
+        },
     )
+
 
 @router.post("/admin/payment/{payment_item_id}/update_status")
 async def update_payment_status(
@@ -466,20 +489,10 @@ async def admin_membership(
     Retrieves membership data, optionally filtered by academic year and semester,
     ensuring no duplicate sections are displayed.
 
-    Args:
-        request: The incoming request object.
-        db: The database session.
-        academic_year: Optional academic year to filter by.
-        semester: Optional semester to filter by.
-
-    Returns:
-        A list of dictionaries containing membership data, with each unique section represented once.
-        The 'status' field indicates payment status:
-        - If filters are applied:   "paid_count/total_count" (e.g., "2/5")
-        - If no filters are applied: The total number of users in the section.
-
-    Raises:
-        HTTPException: 500 if there's an error fetching the data.
+    Note: This route returns JSON data (`List[Dict]`) directly, not an HTML template.
+    Therefore, the logo URL is not passed to its return value. If this route were
+    to render an HTML template, the logo handling would be included as in the
+    other admin routes.
     """
     logging.info(f"Entered /admin/membership/ route with academic_year: {academic_year}, semester: {semester}")
 
@@ -491,7 +504,6 @@ async def admin_membership(
 
         membership_data = []
         processed_sections = set()
-        # processed_user_ids = set() # Not strictly needed anymore for preventing duplicate sections
 
         for user in users:
             if user.section not in processed_sections:
@@ -544,7 +556,6 @@ async def admin_membership(
                     status = str(section_users_count)
                     logging.info(f"Status for section {user.section} is total section count: {status}")
 
-                # Take the data from the first user encountered in this section
                 representative_user = section_users[0]
                 membership_data.append(
                     {
@@ -811,11 +822,25 @@ async def admin_outstanding_dues(
 async def payments_total_members(
     request: Request,
     db: Session = Depends(get_db),
-    section: Optional[str] = None,   # Existing section filter
-    year_level: Optional[str] = None, # New year_level filter
-    student_number: Optional[str] = None  # Corrected parameter name
+    section: Optional[str] = None,
+    year_level: Optional[str] = None,
+    student_number: Optional[str] = None
 ):
     logger.info(f"Request received for /admin/payments/total_members with parameters: section={section}, year_level={year_level}, student_number={student_number}")
+
+    admin_id = request.session.get("admin_id") # Get admin_id for logo fetching
+
+    # --- Logo Handling (Admin Part) ---
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+    if admin_id:
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if admin and admin.organizations:
+            first_org = admin.organizations[0]
+            if first_org.logo_url:
+                logo_url = first_org.logo_url
+    # --- End Logo Handling ---
+
     query = db.query(models.User)
 
     if section:
@@ -828,7 +853,7 @@ async def payments_total_members(
 
     if student_number:
         logger.info(f"Filtering by student_number: {student_number}")
-        query = query.filter(models.User.student_number == student_number) # Corrected model attribute
+        query = query.filter(models.User.student_number == student_number)
 
     users = query.all()
     logger.info(f"Retrieved {len(users)} users from the database.")
@@ -837,7 +862,15 @@ async def payments_total_members(
 
     return templates.TemplateResponse(
         "admin_dashboard/payments/total_members.html",
-        {"request": request, "members": users, "section": section, "year": 2025, "year_level": year_level, "student_number": student_number}, # Corrected context key
+        {
+            "request": request,
+            "members": users,
+            "section": section,
+            "year": 2025,
+            "year_level": year_level,
+            "student_number": student_number,
+            "logo_url": logo_url, # Pass the logo URL
+        },
     )
 
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
@@ -845,16 +878,37 @@ def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
     """
     Displays the admin bulletin board page with recent posts.
     """
+    admin_id = request.session.get("admin_id") # Get admin_id for logo fetching
+
+    # --- Logo Handling (Admin Part) ---
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+    if admin_id:
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if admin and admin.organizations:
+            first_org = admin.organizations[0]
+            if first_org.logo_url:
+                logo_url = first_org.logo_url
+    # --- End Logo Handling ---
+
     posts: List[models.BulletinBoard] = db.query(models.BulletinBoard).order_by(
         models.BulletinBoard.created_at.desc()).all()
-    return templates.TemplateResponse("admin_dashboard/admin_bulletin_board.html", {"request": request, "posts": posts})
+    return templates.TemplateResponse(
+        "admin_dashboard/admin_bulletin_board.html",
+        {
+            "request": request,
+            "posts": posts,
+            "logo_url": logo_url, # Pass the logo URL
+        },
+    )
 
 @router.get("/admin/events", response_class=HTMLResponse, name="admin_events")
 async def admin_events(request: Request, db: Session = Depends(get_db)):
     """
     Displays the list of events to the admin.
     """
-    admin_id = request.session.get("admin_id")  # Get admin ID from the session
+    admin_id = request.session.get("admin_id")
+
     if not admin_id:
         return RedirectResponse(url="/admin/login", status_code=status.HTTP_302_FOUND)
 
@@ -864,15 +918,49 @@ async def admin_events(request: Request, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND, detail="Admin user not found"
         )
 
-    events = db.query(models.Event).all()  # Fetch ALL events from the database
+    # --- Logo Handling (Admin Part) ---
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+    if admin_id: # This check is redundant here as admin_id is already confirmed to exist above
+        if admin and admin.organizations:
+            first_org = admin.organizations[0]
+            if first_org.logo_url:
+                logo_url = first_org.logo_url
+    # --- End Logo Handling ---
+
+    events = db.query(models.Event).all()
     return templates.TemplateResponse(
-        "admin_dashboard/admin_events.html", {"request": request, "events": events}  # Pass the events to the template
+        "admin_dashboard/admin_events.html",
+        {
+            "request": request,
+            "events": events,
+            "logo_url": logo_url, # Pass the logo URL
+        },
     )
 
 @router.get("/admin/financial_statement", response_class=HTMLResponse, name="admin_financial_statement")
-async def admin_financial_statement(request: Request):
-    return templates.TemplateResponse("admin_dashboard/admin_financial_statement.html", {"request": request, "year": "2025"})
+async def admin_financial_statement(request: Request, db: Session = Depends(get_db)):
+    admin_id = request.session.get("admin_id") # Get admin_id for logo fetching
 
+    # --- Logo Handling (Admin Part) ---
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+    if admin_id:
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if admin and admin.organizations:
+            first_org = admin.organizations[0]
+            if first_org.logo_url:
+                logo_url = first_org.logo_url
+    # --- End Logo Handling ---
+
+    return templates.TemplateResponse(
+        "admin_dashboard/admin_financial_statement.html",
+        {
+            "request": request,
+            "year": "2025",
+            "logo_url": logo_url, # Pass the logo URL
+        },
+    )
 # ---------------------- PayMaya Sandbox Integration ----------------------
 @router.post("/payments/paymaya/create", response_class=JSONResponse, name="paymaya_create_payment")
 async def paymaya_create_payment(
@@ -1453,25 +1541,78 @@ async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@app.get("/get_user_data", response_model=schemas.User)
+@app.get("/get_user_data", response_model=schemas.UserDataResponse)
 async def get_user_data(request: Request, db: Session = Depends(get_db)):
     print("get_user_data function called")
-    try:
-        user_identifier = request.session.get("user_id") or request.session.get("admin_id")
-        print(f"User identifier from session: {user_identifier}, type: {type(user_identifier)}")
-        if not user_identifier:
-            raise HTTPException(status_code=401, detail="User not authenticated")
+    
+    user_id = request.session.get("user_id")
+    admin_id = request.session.get("admin_id")
 
-        user = db.query(models.User).filter(models.User.id == user_identifier).first()
-        print(f"User data from db.query: {user}")
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+    print(f"Session user_id: {user_id}, Session admin_id: {admin_id}")
 
-        return user
+    current_user_obj = None
+    organization_data = None
+    first_name = None
+    profile_picture = None
 
-    except Exception as e:
-        print(f"Error in get_user_data: {e}")
-        raise
+    if user_id:
+        # User (student) is logged in
+        current_user_obj = db.query(models.User).filter(models.User.id == user_id).first()
+        if current_user_obj:
+            first_name = current_user_obj.first_name
+            profile_picture = current_user_obj.profile_picture
+            if current_user_obj.organization:
+                organization_data = schemas.Organization(
+                    id=current_user_obj.organization.id,
+                    name=current_user_obj.organization.name,
+                    theme_color=current_user_obj.organization.theme_color,
+                    custom_palette=current_user_obj.organization.custom_palette,
+                    logo_url=current_user_obj.organization.logo_url
+                )
+        print(f"Retrieved User object: {current_user_obj}")
+
+    elif admin_id:
+        # Admin is logged in
+        current_user_obj = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        if current_user_obj:
+            # Admins have a 'name' field, map to 'first_name' for consistency
+            first_name = current_user_obj.name 
+            # Admins might not have a profile_picture column, so it will be None unless added
+            profile_picture = None # Assuming no profile picture for admin unless you add it to models.Admin
+            
+            # Admins can be linked to multiple organizations (many-to-many).
+            # For theme, we typically use one primary organization. Let's use the first one found.
+            if current_user_obj.organizations:
+                first_org = current_user_obj.organizations[0] # Take the first organization
+                organization_data = schemas.Organization(
+                    id=first_org.id,
+                    name=first_org.name,
+                    theme_color=first_org.theme_color,
+                    custom_palette=first_org.custom_palette,
+                    logo_url=first_org.logo_url
+                )
+        print(f"Retrieved Admin object: {current_user_obj}")
+
+    if not current_user_obj:
+        # If neither user nor admin found for the IDs in session
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Authenticated user/admin not found in database for provided session ID."
+        )
+    
+    # If no ID found in session at all
+    if not user_id and not admin_id:
+         raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No authenticated user or admin ID found in session."
+        )
+
+    # Return the data formatted as UserDataResponse
+    return schemas.UserDataResponse(
+        first_name=first_name,
+        profile_picture=profile_picture,
+        organization=organization_data
+    )
 
 # Endpoint for login
 @app.post("/api/login/")

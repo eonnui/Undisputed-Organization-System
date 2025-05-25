@@ -7,9 +7,20 @@ class Organization(BaseModel):
     name: str
     theme_color: Optional[str] = None
     custom_palette: Optional[str] = None # <--- THIS LINE IS CRUCIAL AND WAS MISSING
+    logo_url: Optional[str] = None # <-- MAKE SURE THIS IS HERE NOW
+
 
     class Config:
         from_attributes = True # Use from_attributes for Pydantic V2, orm_mode = True for V1
+
+class UserDataResponse(BaseModel):
+    first_name: Optional[str] = None
+    profile_picture: Optional[str] = None
+    organization: Optional[Organization] = None
+
+    class Config:
+        from_attributes = True # orm_mode = True for Pydantic V1.x
+
 
 class UserBase(BaseModel):
     student_number: str

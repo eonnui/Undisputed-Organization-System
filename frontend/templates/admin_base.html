@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %} Organization System - Home {% endblock %}</title>
+    <title>{% block title %} Organization System - Admin {% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='css/admin_base.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Poppins:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -15,7 +15,7 @@
     <div class="sidebar">
         <div class="logo">
             <a href="{{ url_for('home') }}">
-                <img src="{{ url_for('static', path='images/logo.jpg') }}" alt="Your Logo">
+                <img src="{{ logo_url }}" alt="Organization Logo">                
             </a>
         </div>
         <nav>
@@ -24,7 +24,7 @@
                     <li class="{% if request.path == url_for('home') %}selected{% endif %}"><a href="{{ url_for('home') }}"><span class="material-symbols-outlined">home</span> <span class="nav-text">Home</span></a></li>
                     <li class="{% if request.path == url_for('admin_bulletin_board') %}selected{% endif %}"><a href="{{ url_for('admin_bulletin_board') }}"><span class="material-symbols-outlined">breaking_news</span> <span class="nav-text">Bulletin Board</span></a></li>
                     <li class="{% if request.path == url_for('admin_events') %}selected{% endif %}"><a href="{{ url_for('admin_events') }}"><span class="material-symbols-outlined">event</span> <span class="nav-text">Events</span></a></li>
-                    <li class="{% if request.path == url_for('admin_payments') %}selected{% endif %}"><a href="{{ url_for('admin_payments') }}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership & Payments</span></a></li>                    
+                    <li class="{% if request.path == url_for('admin_payments') %}selected{% endif %}"><a href="{{ url_for('admin_payments') }}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership & Payments</span></a></li>                  
                     <li class="{% if request.path == url_for('admin_financial_statement') %}selected{% endif %}"><a href="{{ url_for('admin_financial_statement') }}"><span class="material-symbols-outlined">request_quote</span> <span class="nav-text">Financial Statement</span></a></li>
                 </ul>
             </div>
@@ -49,8 +49,9 @@
                 </div>
                 <div class="profile-container">
                     <button class="profile-btn" aria-haspopup="true" aria-expanded="false" aria-controls="profile-dropdown">
-                        <span class="material-symbols-outlined">account_circle</span>
-                        ADMIN CSC
+                        {# MODIFIED: Added img and span with IDs for user profile pic and name #}
+                        <img id="user-profile-pic" src="{{ url_for('static', path='images/your_image_name.jpg') }}" alt="Profile Picture" class="profile-pic-placeholder">
+                        <span id="profile-name">Loading...</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
                         
@@ -69,122 +70,8 @@
             <p>&copy; {{ year }} Organization System</p>
         </footer>
     </div>
-    <script src="{{ url_for('static', path='js/script.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-            const menuToggle = document.getElementById('menu-toggle');
-            const menuText = document.querySelector('.top-bar .menu-text');
-            const navItems = document.querySelectorAll('.sidebar nav ul li a');
-            const logo = document.querySelector('.sidebar .logo');
-            let isCollapsed = false;
-
-            // Function to handle dropdown toggle and accessibility
-            function setupDropdown(buttonSelector, dropdownId) {
-                const button = document.querySelector(buttonSelector);
-                const dropdown = document.getElementById(dropdownId);
-
-                if (!button || !dropdown) {
-                    console.error(`Dropdown elements not found for button: ${buttonSelector}, dropdown: ${dropdownId}`);
-                    return;
-                }
-
-                // Toggle dropdown visibility and update aria attributes
-                function toggleDropdown() {
-                    const isExpanded = dropdown.classList.toggle('show');
-                    button.setAttribute('aria-expanded', isExpanded);
-                    if (isExpanded) {
-                        // Focus the first interactive element in the dropdown
-                        const firstInteractive = dropdown.querySelector('a, button');
-                        if (firstInteractive) {
-                            firstInteractive.focus();
-                        }
-                    } else {
-                        button.focus(); // Return focus to the button
-                    }
-                }
-
-                // Handle keyboard navigation for accessibility
-                function handleKeyboardNavigation(event) {
-                    if (event.key === 'ArrowDown') {
-                        event.preventDefault();
-                        toggleDropdown();
-                    } else if (event.key === 'Escape' && dropdown.classList.contains('show')) {
-                        toggleDropdown();
-                    } else if (event.key === 'Tab' && dropdown.classList.contains('show')) {
-                        const focusableElements = dropdown.querySelectorAll('a, button');
-                        if (focusableElements.length > 0) {
-                            const firstFocusable = focusableElements[0];
-                            const lastFocusable = focusableElements[focusableElements.length - 1];
-                            const currentFocus = document.activeElement;
-
-                            if (event.shiftKey && currentFocus === firstFocusable) {
-                                event.preventDefault();
-                                lastFocusable.focus();
-                            } else if (!event.shiftKey && currentFocus === lastFocusable) {
-                                event.preventDefault();
-                                firstFocusable.focus();
-                            }
-                        }
-                    }
-                }
-
-                // Event listeners
-                button.setAttribute('aria-haspopup', 'true');
-                button.setAttribute('aria-expanded', 'false');
-                button.addEventListener('click', toggleDropdown);
-                button.addEventListener('keydown', handleKeyboardNavigation);
-            }
-
-            // Setup dropdown for the profile menu
-            setupDropdown('.profile-btn', 'profile-dropdown');
-
-            // Setup dropdown for the notifications menu
-            setupDropdown('.notification-btn', 'notifications-dropdown');
-
-            // Close dropdowns when clicking outside
-            window.addEventListener('click', function(event) {
-                document.querySelectorAll('.dropdown-content.show').forEach(openDropdown => {
-                    const relatedButton = document.querySelector(`[aria-controls="${openDropdown.id}"]`);
-                    if (relatedButton && !event.target.matches(relatedButton) && !openDropdown.contains(event.target)) {
-                        openDropdown.classList.remove('show');
-                        relatedButton.setAttribute('aria-expanded', 'false');
-                    }
-                });
-            });
-
-            // Sidebar toggle functionality
-            menuToggle.addEventListener('click', () => {
-                if (isCollapsed) {
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('collapsed');
-                    menuText.textContent = 'Menu';
-                    navItems.forEach(navItem => {
-                        const navTextSpan = navItem.querySelector('.nav-text');
-                        if (navTextSpan) {
-                            navTextSpan.style.display = 'inline-block';
-                        }
-                    });
-                    logo.style.opacity = 1;
-                    logo.style.pointerEvents = 'auto';
-                } else {
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('collapsed');
-                    menuText.textContent = '';
-                    navItems.forEach(navItem => {
-                        const navTextSpan = navItem.querySelector('.nav-text');
-                        if (navTextSpan) {
-                            navTextSpan.style.display = 'none';
-                        }
-                    });
-                    logo.style.opacity = 0;
-                    logo.style.pointerEvents = 'none';
-                }
-                isCollapsed = !isCollapsed;
-            });
-        });
-    </script>
+    {# Link to your main JavaScript file #}
+    <script src="{{ url_for('static', path='js/admin.js') }}"></script> 
     {% block scripts %}
     {% endblock %}
 </body>
