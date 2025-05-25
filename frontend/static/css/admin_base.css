@@ -14,9 +14,35 @@
     --scrollbar-width: 8px; 
     --scrollbar-track-color: transparent;
 
+    /* Dark fallback colors that will be overridden by database values */
+    --org-sidebar-bg-color: #0f0f0f;
+    --org-sidebar-border-color: #333;
+    --org-text-inverse: #ffffff;
+    --org-text-primary: #ffffff;
+    --org-text-secondary: #cccccc;   
+    --org-menu-button-hover-bg: #333;
+    --org-nav-item-bg: #2d2d2d;
+    --org-nav-item-hover-bg: #404040;
+    --org-nav-item-selected-bg: #4a4a4a;
+    --org-nav-icon-color: #ffffff;
+    --org-nav-hover-accent-color: #ffffff;
+    --org-nav-selected-border-color: #ffffff;
+    --org-logo-border-color: #666;
+    --org-profile-pic-border-color: #666;
+    --org-dropdown-bg: #2d2d2d;
+    --org-dropdown-border: #333;
+    --org-dropdown-item-hover-bg: #404040;
+    --org-border-light: #333;
+    --org-border-medium: #666;
+    --org-focus-border: #0066cc;
+    --org-error: #ff4444;
+    --scrollbar-color: #666;
+
     /* Legacy variable for single theme_color fallback (if still needed) */
-    --organization-theme-color: var(--org-button-bg); /* Points to a primary org color */
+    --organization-theme-color: var(--org-button-bg, #0066cc); /* Points to a primary org color with fallback */
+    --org-button-bg: #0066cc; /* Add this if it doesn't exist elsewhere */
 }
+
 
 body {
     min-height: 100vh;
