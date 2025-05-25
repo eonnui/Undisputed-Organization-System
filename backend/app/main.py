@@ -958,19 +958,29 @@ async def paymaya_create_payment(
 async def payment_success(
     request: Request,
     paymentId: int = Query(...),
-    paymentItemId: int = Query(...),  # Extract paymentItemId from query
+    paymentItemId: int = Query(...),
     db: Session = Depends(get_db),
 ):
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
+
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if not payment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
 
-    # Link the Payment to the PaymentItem by setting payment_item_id
     updated_payment = crud.update_payment(
         db, payment_id=payment.id, status="success", payment_item_id=paymentItemId
     )
 
-    # Mark the associated PaymentItem as paid
     payment_item = crud.get_payment_item_by_id(db, payment_item_id=paymentItemId)
     if payment_item:
         logging.info(f"Attempting to mark payment item {paymentItemId} as paid.")
@@ -981,9 +991,9 @@ async def payment_success(
                 "request": request,
                 "payment_id": payment.paymaya_payment_id,
                 "payment_item_id": paymentItemId,
-                "payment": payment,  # Pass the Payment object
-                "payment_item": payment_item,  # Pass the PaymentItem object
-                # "updated": updated_payment, # You might not need this for display
+                "payment": payment,
+                "payment_item": payment_item,
+                "logo_url": logo_url,  # Pass logo_url here
             }
         )
     else:
@@ -994,6 +1004,18 @@ async def payment_success(
     
 @router.get("/Failure", response_class=HTMLResponse, name="payment_failure")
 async def payment_failure(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
+
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if payment:
         crud.update_payment(db, payment_id=payment.id, status="failed")
@@ -1003,7 +1025,8 @@ async def payment_failure(request: Request, paymentId: int = Query(...), db: Ses
             {
                 "request": request,
                 "payment_id": payment.paymaya_payment_id,
-                "payment_item": payment_item,  # Pass payment_item for details
+                "payment_item": payment_item,
+                "logo_url": logo_url,  # Pass logo_url here
             },
         )
     else:
@@ -1011,6 +1034,18 @@ async def payment_failure(request: Request, paymentId: int = Query(...), db: Ses
 
 @router.get("/Cancel", response_class=HTMLResponse, name="payment_cancel")
 async def payment_cancel(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    # ONLY apply logo logic if the user role is "user" (student)
+    if user_role == "user":
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
+
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if payment:
         crud.update_payment(db, payment_id=payment.id, status="cancelled")
@@ -1020,7 +1055,8 @@ async def payment_cancel(request: Request, paymentId: int = Query(...), db: Sess
             {
                 "request": request,
                 "payment_id": payment.paymaya_payment_id,
-                "payment_item": payment_item,  # Pass payment_item for details
+                "payment_item": payment_item,
+                "logo_url": logo_url,  # Pass logo_url here
             },
         )
     else:
