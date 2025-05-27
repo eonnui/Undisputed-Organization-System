@@ -4,13 +4,13 @@
 
 {% block content %}
 
-<div class="payments-page" style="background-color: #F8FAFC; padding: 20px;">
+<div class="payments-page" style="background-color: var(--org-bg-color); padding: 20px;">
     <div class="data-container" style="margin-left: 20px;">
-        <h1 class="page-title" style="color: #2d3748; margin-bottom: 10px; font-size: 2.2rem; font-weight: bold; opacity: 0; animation: fadeIn 1s ease-in-out forwards;">
+        <h1 class="page-title" style="color: var(--org-text-primary); margin-bottom: 10px; font-size: 2.2rem; font-weight: bold; opacity: 0; animation: fadeIn 1s ease-in-out forwards;">
             {% if section %} {{ section|upper }}{% endif %}
         </h1>
-        <p class="page-description" style="color: #5D6778; margin-bottom: 20px; font-size: 1.2rem; opacity: 0; animation: fadeIn 1s ease-in-out 0.5s forwards;">
-            {% if section %}  {% else %} ACROSS ALL SECTIONS{% endif %}
+        <p class="page-description" style="color: var(--org-text-secondary); margin-bottom: 20px; font-size: 1.2rem; opacity: 0; animation: fadeIn 1s ease-in-out 0.5s forwards;">
+            {% if section %} {% else %} ACROSS ALL SECTIONS{% endif %}
         </p>
 
         <style>
@@ -18,19 +18,19 @@
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 30px;
-                background-color: #FFFFFF;
+                background-color: var(--org-card-bg);
                 border-radius: 12px;
-                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 6px 15px rgba(var(--org-shadow-base-rgb), 0.1);
                 overflow: hidden;
                 animation: slideInUp 0.8s ease-in-out;
             }
 
             .member-table thead th {
-                background-color: #F5F7FA;
-                color: #3D4655;
+                background-color: var(--org-hover-bg);
+                color: var(--org-text-primary);
                 padding: 15px;
                 text-align: left;
-                border-bottom: 2px solid #E2E8F0;
+                border-bottom: 2px solid var(--org-border-medium);
                 font-weight: 700;
                 font-size: 1.2rem;
             }
@@ -38,14 +38,14 @@
             .member-table tbody td {
                 padding: 15px;
                 text-align: left;
-                border-bottom: 1px solid #E2E8F0;
-                color: #2d3748;
+                border-bottom: 1px solid var(--org-border-medium);
+                color: var(--org-text-primary);
                 transition: background-color 0.3s ease;
             }
 
             .member-table tbody tr:hover {
-                background-color: #F8FAFC;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                background-color: var(--org-hover-bg-light);
+                box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.1);
             }
 
             .member-table tbody tr:last-child td {
@@ -53,8 +53,8 @@
             }
 
             .view-button {
-                background-color: #53575f;
-                color: #FFFFFF;
+                background-color: var(--org-primary-hover);
+                color: var(--org-button-text);
                 border: none;
                 padding: 8px 18px;
                 border-radius: 28px;
@@ -62,32 +62,32 @@
                 font-size: 1.1rem;
                 text-decoration: none;
                 transition: all 0.3s ease;
-                box-shadow: 0 3px 7px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 3px 7px rgba(var(--org-shadow-base-rgb), 0.1);
             }
 
             .view-button:hover {
-                background-color: #777a80;
+                background-color: var(--org-hover-effect);
                 transform: translateY(-2px) scale(1.05);
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+                box-shadow: 0 5px 10px rgba(var(--org-shadow-base-rgb), 0.2);
             }
 
             .no-members {
                 padding: 20px;
                 text-align: center;
-                color: #5D6778;
+                color: var(--org-text-secondary);
                 font-size: 1.2rem;
-                background-color: #FFFFFF;
+                background-color: var(--org-card-bg);
                 border-radius: 12px;
                 margin-top: 30px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+                box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.08);
                 animation: fadeIn 1s ease-in-out;
             }
 
-            /* Animations */
             @keyframes fadeIn {
                 from {
                     opacity: 0;
                 }
+
                 to {
                     opacity: 1;
                 }
@@ -98,13 +98,12 @@
                     transform: translateY(50px);
                     opacity: 0;
                 }
+
                 to {
                     transform: translateY(0);
                     opacity: 1;
                 }
             }
-
-
         </style>
 
         <table class="member-table">
