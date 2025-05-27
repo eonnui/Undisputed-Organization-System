@@ -294,6 +294,7 @@ async def admin_payments(
     """
     Displays all payment items for administrators, with accurate payment status
     respecting the is_past_due and is_not_responsible flags, and student number.
+    Filters payment items by the admin's organization.
     """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
@@ -309,17 +310,23 @@ async def admin_payments(
 
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     logo_url = default_logo_url
+    
+    admin_org_id = None
     if admin_id:
         admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
         if admin and admin.organizations:
             first_org = admin.organizations[0]
             if first_org.logo_url:
                 logo_url = first_org.logo_url
+            admin_org_id = first_org.id # Get the admin's organization ID
 
-    query = db.query(models.PaymentItem)
+    query = db.query(models.PaymentItem).join(models.User)
+
+    if admin_org_id:
+        query = query.filter(models.User.organization_id == admin_org_id) # Filter by organization
 
     if student_number:
-        query = query.join(models.User).filter(models.User.student_number == student_number)
+        query = query.filter(models.User.student_number == student_number)
 
     payment_items = query.all()
 
@@ -357,6 +364,7 @@ async def admin_payments(
             "logo_url": logo_url,
         },
     )
+
 
 
 @router.post("/admin/payment/{payment_item_id}/update_status")
@@ -447,12 +455,19 @@ async def admin_membership(
 ) -> List[Dict]:
     """
     Retrieves membership data, optionally filtered by academic year and semester,
-    ensuring no duplicate sections are displayed.
+    ensuring no duplicate sections are displayed. Filters members by the admin's organization.
     """
     try:
+        admin_id = request.session.get("admin_id")
+        if not admin_id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+
+        admin_org_id = get_entity_organization_id(db, admin_id)
+
         query = db.query(models.User).options(
             joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
-        )
+        ).filter(models.User.organization_id == admin_org_id) # Filter by organization
+        
         users = query.all()
 
         membership_data = []
@@ -526,6 +541,7 @@ async def admin_membership(
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch membership data")
 
+
 @router.get("/admin/individual_members/")
 async def admin_individual_members(
     request: Request,
@@ -536,11 +552,18 @@ async def admin_individual_members(
     """
     Retrieves individual membership data, optionally filtered by academic year and semester.
     This route is specifically for displaying each individual member.
+    Filters individual members by the admin's organization.
     """
     try:
+        admin_id = request.session.get("admin_id")
+        if not admin_id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+
+        admin_org_id = get_entity_organization_id(db, admin_id)
+
         query = db.query(models.User).options(
             joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
-        )
+        ).filter(models.User.organization_id == admin_org_id) # Filter by organization
 
         filters = []
         if academic_year:
@@ -549,6 +572,10 @@ async def admin_individual_members(
             filters.append(models.PaymentItem.semester == semester)
 
         if filters:
+            # Apply filters only if payment items are loaded, otherwise it might cause issues
+            # if a user has no payment items for the given filter but belongs to the org.
+            # This logic needs to be carefully considered if a user can exist without payment items.
+            # For now, assuming payment items are always present if filters are applied.
             query = query.join(models.PaymentItem).filter(*filters)
 
         users = query.all()
@@ -594,17 +621,29 @@ async def admin_individual_members(
         return membership_data
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch individual membership data")
+
     
 @router.get("/financial_trends")
-def get_financial_trends(db: Session = Depends(get_db)):
+async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
     """
-    Returns monthly trends of total successful membership fees collected.
+    Returns monthly trends of total successful membership fees collected, filtered by the admin's organization.
     """
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+
+    admin_org_id = get_entity_organization_id(db, admin_id)
+
     financial_data = db.query(
         func.extract('year', models.Payment.created_at),
         func.extract('month', models.Payment.created_at),
         func.sum(models.Payment.amount)
-    ).filter(models.Payment.status == "success").group_by(
+    ).join(
+        models.Payment.user # Join with User to access organization_id
+    ).filter(
+        models.Payment.status == "success",
+        models.User.organization_id == admin_org_id # Filter by organization
+    ).group_by(
         func.extract('year', models.Payment.created_at),
         func.extract('month', models.Payment.created_at)
     ).order_by(
@@ -618,14 +657,26 @@ def get_financial_trends(db: Session = Depends(get_db)):
     return {"labels": labels, "data": data}
 
 @router.get("/expenses_by_category")
-def get_expenses_by_category(db: Session = Depends(get_db)):
+async def get_expenses_by_category(request: Request, db: Session = Depends(get_db)):
     """
-    Returns total fees per academic year from PaymentItem.
+    Returns total fees per academic year from PaymentItem, filtered by the admin's organization.
     """
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+
+    admin_org_id = get_entity_organization_id(db, admin_id)
+
     expenses_data = db.query(
         models.PaymentItem.academic_year,
         func.sum(models.PaymentItem.fee)
-    ).group_by(models.PaymentItem.academic_year).all()
+    ).join(
+        models.PaymentItem.user # Join with User to access organization_id
+    ).filter(
+        models.User.organization_id == admin_org_id # Filter by organization
+    ).group_by(
+        models.PaymentItem.academic_year
+    ).all()
 
     labels = [category if category else "Unknown Year" for category, total in expenses_data]
     data = [float(total) for category, total in expenses_data]
@@ -633,17 +684,28 @@ def get_expenses_by_category(db: Session = Depends(get_db)):
     return {"labels": labels, "data": data}
 
 @router.get("/fund_distribution")
-def get_fund_distribution(db: Session = Depends(get_db)):
+async def get_fund_distribution(request: Request, db: Session = Depends(get_db)):
     """
     Distributes collected *successful* funds based on the academic year
-    of the associated PaymentItem.
+    of the associated PaymentItem, filtered by the admin's organization.
     """
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+
+    admin_org_id = get_entity_organization_id(db, admin_id)
+
     fund_allocation = db.query(
         models.PaymentItem.academic_year,
         func.sum(models.Payment.amount)
     ).join(
         models.Payment, models.PaymentItem.id == models.Payment.payment_item_id
-    ).filter(models.Payment.status == "success").group_by(
+    ).join(
+        models.PaymentItem.user # Join with User to access organization_id
+    ).filter(
+        models.Payment.status == "success",
+        models.User.organization_id == admin_org_id # Filter by organization
+    ).group_by(
         models.PaymentItem.academic_year
     ).all()
 
@@ -656,6 +718,7 @@ def get_fund_distribution(db: Session = Depends(get_db)):
     data = list(distribution_data.values())
 
     return {"labels": labels, "data": data}
+
 
 @router.get("/admin/outstanding_dues/")
 async def admin_outstanding_dues(
@@ -719,18 +782,24 @@ async def payments_total_members(
     year_level: Optional[str] = None,
     student_number: Optional[str] = None
 ):
+    """
+    Displays total members, filtered by the admin's organization, and optionally by section, year level, or student number.
+    """
     admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+
+    admin_org_id = get_entity_organization_id(db, admin_id)
 
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     logo_url = default_logo_url
-    if admin_id:
-        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
-        if admin and admin.organizations:
-            first_org = admin.organizations[0]
-            if first_org.logo_url:
-                logo_url = first_org.logo_url
+    admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+    if admin and admin.organizations:
+        first_org = admin.organizations[0]
+        if first_org.logo_url:
+            logo_url = first_org.logo_url
 
-    query = db.query(models.User)
+    query = db.query(models.User).filter(models.User.organization_id == admin_org_id) # Filter by organization
 
     if section:
         query = query.filter(models.User.section == section)
