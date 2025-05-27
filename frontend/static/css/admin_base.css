@@ -123,8 +123,8 @@ body {
     object-fit: cover;
     width: 150px;
     height: 150px;
-    border: 2px solid var(--org-logo-border-color); /* Updated from hardcoded */
-    box-shadow: var(--org-shadow-sm); /* Updated */
+    border: 4px solid var(--org-logo-border-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar nav {
@@ -150,7 +150,7 @@ body {
         opacity 0.3s ease;
     position: relative;
     width: 100%;
-    box-shadow: var(--org-shadow-sm); /* Updated */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     border-radius: var(--org-radius-md); /* Updated */
     opacity: 1;
 }
