@@ -779,13 +779,12 @@ async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
     )
 
 # Admin Events Page Route
-@router.get("/admin/events", response_class=HTMLResponse, name="admin_events")
+@router.get('/admin/events', response_class=HTMLResponse)
 async def admin_events(request: Request, db: Session = Depends(get_db)):
     """
-    Displays the list of events to the admin, filtered by the admin's organization.
+    Displays the admin events page with a list of events.
     """
     admin_id = request.session.get("admin_id")
-
     if not admin_id:
         return RedirectResponse(url="/admin/login", status_code=status.HTTP_302_FOUND)
 
@@ -803,11 +802,12 @@ async def admin_events(request: Request, db: Session = Depends(get_db)):
         if first_org.logo_url:
             logo_url = first_org.logo_url
 
-    events = []
+    events: List[models.Event] = []
     if admin_org_id:
         events = db.query(models.Event).join(models.Admin).join(models.Admin.organizations).filter(
             models.Organization.id == admin_org_id
-        ).all()
+        ).order_by(models.Event.created_at.desc()).all()
+
     return templates.TemplateResponse(
         "admin_dashboard/admin_events.html",
         {
@@ -1183,38 +1183,27 @@ async def events(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
     user_role = request.session.get("user_role")
 
-    if not user_id: # Ensure user is authenticated
-        return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+    if user_role == "user":
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user and user.organization and user.organization.logo_url:
+            logo_url = user.organization.logo_url
 
     user_org_id = None
     try:
         user_org_id = await get_user_organization_id(request, db)
     except HTTPException:
-        pass
+        pass # If no organization found, events will be empty
 
-    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
-    logo_url = default_logo_url
-
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if user and user.organization and user.organization.logo_url:
-        logo_url = user.organization.logo_url
-
-    events_list = []
+    events = []
     if user_org_id:
-        events_list = db.query(models.Event).options(
-            joinedload(models.Event.participants)
-        ).join(models.Admin).join(models.Admin.organizations).filter(
+        events = db.query(models.Event).join(models.Admin).join(models.Admin.organizations).filter(
             models.Organization.id == user_org_id
-        ).order_by(models.Event.date).all()
-    
-    current_user_id = request.session.get("user_id")
-    if not current_user_id:
-        current_user_id = 0 # Or handle as unauthenticated
-    for event in events_list:
-        event.participant_ids = [user.id for user in event.participants]
+        ).order_by(models.Event.created_at.desc()).all()
+
     return templates.TemplateResponse(
-        "student_dashboard/events.html",
-        {"request": request, "year": "2025", "events": events_list, "current_user_id": current_user_id, "logo_url": logo_url}
+        "student_dashboard/events.html", {"request": request, "year": "2025", "events": events, "logo_url": logo_url}
     )
 
 # Payments Page Route (for users)

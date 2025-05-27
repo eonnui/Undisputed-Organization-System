@@ -42,6 +42,7 @@ class Event(Base):
     location = Column(String)
     admin_id = Column(Integer, ForeignKey("admins.admin_id"))
     max_participants = Column(Integer)
+    created_at = Column(DateTime, default=func.now()) # <--- ADDED THIS LINE
     participants = relationship("User", secondary=event_participants, back_populates="joined_events")
     admin = relationship("Admin", back_populates="events")
 
