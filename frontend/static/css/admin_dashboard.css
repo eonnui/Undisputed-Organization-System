@@ -787,237 +787,180 @@ tr:hover td {
     border: 1px solid var(--org-border-medium); /* Simplified border */
     display: flex;
     flex-direction: column;
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: slideUp 0.5s ease-out 0.2s forwards;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
+    transform: translateY(0);
 }
 
-.create-event-container:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(var(--org-shadow-base-rgb), 0.15);
-}
-
-.create-event-header {
-    margin-bottom: 1rem;
-}
-
+/* Event creation form fields */
 .create-event-input {
-    width: calc(100% - 0.5rem);
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--org-border-medium); /* Simplified border */
-    border-radius: 20px;
-    font-size: 1rem;
-    color: var(--org-text-primary); /* Changed from --text-primary */
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--org-border-light);
+    border-radius: 6px;
+    background-color: var(--org-input-bg);
+    color: var(--org-text-primary);
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: slideUp 0.5s ease-out 0.3s forwards;
-}
-
-.create-event-input:focus {
-    outline: none;
-    border-color: var(--org-primary); /* Changed from --primary-color */
-    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3); /* Uses shadow base */
+    text-align: left;
 }
 
 .create-event-form-fields {
-    margin-top: 1rem;
-    display: none;
-    animation: slideIn 0.5s ease-in-out;
+    display: none; /* Hidden by default, shown by JavaScript */
+    padding-top: 1rem;
 }
 
 .create-event-form-fields label {
     display: block;
-    margin-bottom: 0.4rem;
-    color: var(--org-text-secondary); /* Changed from --text-secondary */
+    margin-bottom: 0.5rem;
     font-weight: 500;
-    font-size: 0.95rem;
+    color: var(--org-text-primary); /* Changed from --text-primary */
+    font-size: 0.9rem;
 }
 
 .create-event-form-fields input[type="text"],
-.create-event-form-fields input[type="date"],
 .create-event-form-fields input[type="number"],
-.create-event-form-fields textarea {
-    width: calc(100% - 0.75rem);
-    padding: 0.6rem;
-    margin-bottom: 0.9rem;
-    border: 1px solid var(--org-border-medium); /* Simplified border */
+.create-event-form-fields input[type="date"],
+.create-event-form-fields input[type="datetime-local"],
+.create-event-form-fields textarea,
+.create-event-form-fields select { /* ADDED 'select' HERE */
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--org-border-light);
     border-radius: 6px;
-    font-size: 1rem;
-    color: var(--org-text-primary); /* Changed from --text-primary */
-    box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    background-color: var(--org-input-bg);
+    color: var(--org-text-primary);
+    font-size: 0.95rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.create-event-form-fields textarea {
-    min-height: 4rem;
-    resize: vertical;
-}
-
-.create-event-form-fields input[type="text"]:focus,
-.create-event-form-fields input[type="date"]:focus,
-.create-event-form-fields input[type="number"]:focus,
-.create-event-form-fields textarea:focus {
+.create-event-form-fields input:focus,
+.create-event-form-fields textarea:focus,
+.create-event-form-fields select:focus { /* ADDED 'select:focus' HERE */
+    border-color: var(--org-accent-color-dark);
+    box-shadow: 0 0 0 3px rgba(var(--org-accent-color-rgb), 0.2);
     outline: none;
-    border-color: var(--org-primary); /* Changed from --primary-color */
-    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3); /* Uses shadow base */
 }
 
-.create-event-form-fields .form-row {
+/* Form row for multiple inputs on the same line */
+.form-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 0.9rem;
+    margin-bottom: 1rem;
 }
 
-.create-event-form-fields .form-row > div {
+.form-row > div {
     flex: 1;
+    min-width: 150px;
 }
+
 
 .create-event-submit-button {
-    padding: 0.75rem 1.25rem;
+    background-color: var(--org-accent-color);
+    color: var(--button-text-light);
+    padding: 0.8rem 1.5rem;
     border: none;
-    border-radius: 8px;
-    background-color: var(--org-button-bg); /* Changed from #2c3e50 to a dynamic primary button color */
-    color: var(--org-button-text);
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-    font-family: 'Inter', sans-serif;
-    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    align-self: flex-end;
     margin-top: 1rem;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: slideUp 0.5s ease-out 0.4s forwards;
 }
 
 .create-event-submit-button:hover {
-    background-color: var(--org-hover-effect); /* Changed to dynamic hover effect */
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12);
+    background-color: var(--org-accent-color-dark);
 }
 
 .back-to-events {
     display: none;
     margin-top: 1rem;
-    color: var(--org-primary); /* Changed from --primary-color */
+    color: var(--org-text-secondary);
     text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: color 0.15s ease;
-    text-align: center;
+    font-size: 0.9rem;
 }
 
 .back-to-events:hover {
-    color: var(--org-info); /* Changed from --info-color */
+    text-decoration: underline;
 }
 
-
+/* Existing Events Section */
 .existing-events-title {
-    font-size: 1.5rem;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--org-text-primary);
     margin-top: 2rem;
-    margin-bottom: 1.25rem;
-    color: var(--org-text-primary); /* Changed from --text-primary */
-    font-weight: 700;
-    border-bottom: 2px solid var(--org-border-medium); /* Changed from --border-color */
-    padding-bottom: 0.5rem;
-    animation: slideIn 0.5s ease-in-out;
+    margin-bottom: 1.5rem;
+    text-shadow: 1px 1px 3px rgba(var(--org-shadow-base-rgb), 0.05);
 }
 
 .event-card {
-    background-color: var(--org-card-bg); /* Changed from --card-bg */
+    background-color: var(--org-card-bg);
     border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
-    padding: 1.25rem;
-    margin-bottom: 1.25rem;
-    border: 1px solid var(--org-event-item-border); /* Changed to specific event item border */
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--org-border-medium);
     display: flex;
     flex-direction: column;
-    animation: fadeInUp 0.5s ease-in-out;
-}
-
-.event-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.15);
 }
 
 .event-header {
     display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
 }
 
 .event-title {
-    font-size: 1.2rem;
+    font-size: 1.3em;
     font-weight: 600;
-    color: var(--org-text-primary); /* Changed from --text-primary */
-    margin-bottom: 0.3rem;
-    flex: 1;
+    color: var(--org-text-primary);
+    margin: 0;
 }
 
 .event-tag {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
+    padding: 0.3em 0.8em;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: bold;
     text-transform: uppercase;
+    color: var(--tag-text-color);
+    background-color: var(--tag-background-color);
 }
 
+/* Example tag colors (adjust as needed in your dynamic theming) */
 .tag-academic {
-    background-color: var(--org-academic-tag-bg);
-    color: var(--org-academic-tag-text);
+    background-color: rgba(var(--org-accent-color-rgb), 0.1);
+    color: var(--org-accent-color-dark);
+}
+
+.tag-social {
+    background-color: rgba(var(--org-success-color-rgb), 0.1);
+    color: var(--org-success-color-dark);
 }
 
 .tag-sports {
-    background-color: var(--org-sports-tag-bg);
-    color: var(--org-sports-tag-text);
-}
-
-.tag-arts {
-    background-color: var(--org-arts-tag-bg);
-    color: var(--org-arts-tag-text);
-}
-
-.tag-music {
-    background-color: var(--org-music-tag-bg);
-    color: var(--org-music-tag-text);
-}
-
-.tag-esports {
-    background-color: var(--org-esports-tag-bg);
-    color: var(--org-esports-tag-text);
-}
-
-.tag-cultural {
-    background-color: var(--org-cultural-tag-bg);
-    color: var(--org-cultural-tag-text);
+    background-color: rgba(var(--org-info-color-rgb), 0.1);
+    color: var(--org-info-color-dark);
 }
 
 .event-meta {
-    font-size: 0.9rem;
-    color: var(--org-event-meta-color); /* Changed from --text-secondary */
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--org-text-secondary);
+    margin-bottom: 0.8rem;
 }
 
 .event-meta span {
-    display: block;
+    margin-right: 1rem;
 }
 
 .event-description {
-    font-size: 1rem;
-    margin-bottom: 1.25rem;
-    color: var(--org-event-description-color); /* Changed from --text-primary */
+    font-size: 0.9rem;
+    color: var(--org-event-description-color);
     line-height: 1.7;
     white-space: pre-line;
 }
@@ -1031,7 +974,7 @@ tr:hover td {
 
 .participants-count {
     font-size: 0.8rem;
-    color: var(--org-participants-count-color); /* Changed from --text-secondary */
+    color: var(--org-participants-count-color);
 }
 
 .delete-button {
@@ -1040,14 +983,14 @@ tr:hover td {
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    background-color: var(--org-leave-button-bg); /* Changed to dynamic leave/delete button */
+    background-color: var(--org-leave-button-bg);
     color: var(--org-button-text);
     transition: background-color 0.15s ease;
     border: none;
 }
 
 .delete-button:hover {
-    background-color: var(--org-leave-button-hover-bg); /* Changed to dynamic leave/delete button hover */
+    background-color: var(--org-leave-button-hover-bg);
 }
 
 @keyframes fadeIn {
@@ -1071,32 +1014,6 @@ tr:hover td {
         opacity: 1;
     }
 }
-
-@keyframes fadeInUp {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-
-@keyframes slideUp {
-    from {
-        transform: translateY(10px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
 /* Membership and Payments */
 .tabs {
     display: flex;

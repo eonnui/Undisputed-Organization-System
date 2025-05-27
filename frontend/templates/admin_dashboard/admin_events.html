@@ -20,15 +20,24 @@
             <input type="text" id="title" name="title" required><br>
 
             <label for="classification">Classification:</label>
-            <input type="text" id="classification" name="classification"><br>
+            {# MODIFIED: Changed to a dropdown (select) for classification #}
+            <select id="classification" name="classification">
+                <option value="Academic">Academic</option>
+                <option value="Sports">Sports</option>
+                <option value="Arts">Arts</option>
+                <option value="Music">Music</option>
+                <option value="Esports">Esports</option>
+                <option value="Cultural">Cultural</option>
+            </select><br>
 
             <label for="description">Description:</label>
             <textarea id="description" name="description" rows="3"></textarea><br>
 
             <div class="form-row">
                 <div>
-                    <label for="date">Date (YYYY-MM-DD):</label>
-                    <input type="date" id="date" name="date" required>
+                    {# MODIFIED: Changed input type to datetime-local to capture both date and time #}
+                    <label for="date">Date and Time:</label>
+                    <input type="datetime-local" id="date" name="date" required>
                 </div>
                 <div>
                     <label for="location">Location:</label>
@@ -55,8 +64,9 @@
             <span class="event-tag tag-{{ event.classification|lower }}">{{ event.classification }}</span>
         </div>
         <div class="event-meta">
-            <span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') }}</span>
-            <span><i>Time:</i> {{ event.date.strftime('%I:%M %p') }}</span>
+            {# Ensure event.date is a datetime object before formatting #}
+            <span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') if event.date else 'N/A' }}</span>
+            <span><i>Time:</i> {{ event.date.strftime('%I:%M %p') if event.date else 'N/A' }}</span>
             <span><i>Location:</i> {{ event.location }}</span>
         </div>
         <p class="event-description">{{ event.description }}</p>

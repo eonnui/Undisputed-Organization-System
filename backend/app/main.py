@@ -173,7 +173,7 @@ async def admin_create_event(
     title: str = Form(...),
     classification: str = Form(...),
     description: str = Form(...),
-    date: str = Form(...),
+    date: str = Form(...), # This is the date string from the form (e.g., "2025-05-27T14:30")
     location: str = Form(...),
     max_participants: int = Form(...),
     db: Session = Depends(get_db)
@@ -193,21 +193,38 @@ async def admin_create_event(
         )
 
     try:
-        event_date = datetime.strptime(date, "%Y-%m-%d")
+        # Parse the datetime-local format (YYYY-MM-DDTHH:MM)
+        event_date = datetime.strptime(date, "%Y-%m-%dT%H:%M") # <--- MODIFIED THIS LINE
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid date format. Please use %Y-%m-%d.",
+            detail="Invalid date and time format. Please use YYYY-MM-DDTHH:MM (e.g., 2025-05-27T14:30).",
+        )
+
+    # Ensure admin_org_id is correctly retrieved
+    admin_org_id = None
+    try:
+        admin_org_id = get_entity_organization_id(db, admin_id)
+    except HTTPException:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin not associated with an organization.",
+        )
+
+    if not admin_org_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin not associated with an organization.",
         )
 
     db_event = models.Event(
         title=title,
         classification=classification,
         description=description,
-        date=event_date,
+        date=event_date, # Use the parsed datetime object
         location=location,
-        admin_id=admin_id,
         max_participants=max_participants,
+        admin_id=admin_id, # Assign the admin who created it
     )
     db.add(db_event)
     db.commit()
