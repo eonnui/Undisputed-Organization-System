@@ -1636,6 +1636,7 @@ async def settings(request: Request, db: Session = Depends(get_db)):
     logo_url = default_logo_url
 
     if user_role == "user":
+        # Ensure that the organization relationship is eager-loaded or handled if needed for logo
         user_for_logo = db.query(models.User).filter(models.User.id == user_id).first()
         if user_for_logo and user_for_logo.organization and user_for_logo.organization.logo_url:
             logo_url = user_for_logo.organization.logo_url
@@ -1646,9 +1647,14 @@ async def settings(request: Request, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
+    # Ensure user is loaded to get is_verified status
     user = db.query(models.User).filter(models.User.id == current_user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # --- DEBUGGING STEP: Print the value of user.is_verified here ---
+    print(f"DEBUG: In /Settings route, user.is_verified for user {user.id} is: {user.is_verified}")
+    # --- END DEBUGGING STEP ---
 
     formatted_birthdate = ""
     if user.birthdate:
@@ -1666,10 +1672,14 @@ async def settings(request: Request, db: Session = Depends(get_db)):
                 except ValueError:
                     formatted_birthdate = user.birthdate # Fallback if no known format matches
 
+    # Set the verification_status for the template
+    user.verification_status = "Verified" if user.is_verified else "Not Verified"
+
     return templates.TemplateResponse(
         "student_dashboard/settings.html",
         {"request": request, "year": "2025", "user": user, "formatted_birthdate": formatted_birthdate, "logo_url": logo_url},
     )
+
 
 # Get Organizations API Route
 @app.get("/api/organizations/", response_model=List[schemas.Organization])
@@ -1759,12 +1769,15 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
     organization_data = None
     first_name = None
     profile_picture = None
+    is_verified_status = None # Initialize for user's verification status
 
     if user_id:
         current_user_obj = db.query(models.User).filter(models.User.id == user_id).first()
         if current_user_obj:
             first_name = current_user_obj.first_name
             profile_picture = current_user_obj.profile_picture
+            is_verified_status = current_user_obj.is_verified # Get user's is_verified status
+            logger.info(f"User ID {user_id} verification status: {is_verified_status}")
             if current_user_obj.organization:
                 organization_data = schemas.Organization(
                     id=current_user_obj.organization.id,
@@ -1779,6 +1792,7 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
         if current_user_obj:
             first_name = current_user_obj.name 
             profile_picture = None # Admins might not have profile pictures
+            # Admins don't have is_verified, so this remains None for them
             
             if current_user_obj.organizations:
                 first_org = current_user_obj.organizations[0]
@@ -1797,7 +1811,7 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
         )
     
     if not user_id and not admin_id:
-         raise HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No authenticated user or admin ID found in session."
         )
@@ -1805,7 +1819,8 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
     return schemas.UserDataResponse(
         first_name=first_name,
         profile_picture=profile_picture,
-        organization=organization_data
+        organization=organization_data,
+        is_verified=is_verified_status # Pass the is_verified status in the response
     )
 
 @app.post("/api/login/")
@@ -2048,7 +2063,7 @@ async def update_profile(
 ):
     """
     Updates the user's profile information, including handling the registration form file upload
-    and extracting data from it.  It also updates the user's payment items, setting the academic year
+    and extracting data from it. It also updates the user's payment items, setting the academic year
     and due date dynamically based on the user's year level.
     """
     current_user_id = request.session.get("user_id")
@@ -2216,6 +2231,9 @@ async def update_profile(
                 user.email = generate_email(
                     user.first_name.replace(" ", ""), user.last_name
                 )
+            
+            # Set is_verified to True after successful registration form processing
+            user.is_verified = True
 
         except Exception as e:
             raise HTTPException(
@@ -2334,6 +2352,10 @@ async def update_profile(
     try:
         db.commit() # Commit all changes to the database
         db.refresh(user) # Refresh the user object to get the latest data
+
+        # Add the verification_status attribute to the user object for frontend consumption
+        user.verification_status = "Verified" if user.is_verified else "Not Verified"
+
         return {"message": "Profile updated successfully", "user": user}
     except Exception as e:
         db.rollback() # Rollback in case of any error during commit

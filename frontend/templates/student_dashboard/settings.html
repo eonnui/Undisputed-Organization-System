@@ -41,7 +41,7 @@
                         {% if user.birthdate %}
                             {{ user.birthdate.split(' ')[0] }}
                         {% else %}
-                             
+                                
                         {% endif %}
                     </span>
                     <span class="material-symbols-outlined edit-icon" id="editBirthDate">edit</span>
@@ -63,6 +63,7 @@
                     </select>
                 </div>
                 <div class="error-message" id="genderError"></div>
+            </div>
             <div class="form-group">
                 <label>Address</label>
                 <input type="text" id="address" name="address" value="{{ user.address if user.address else '' }}"
@@ -101,7 +102,7 @@
                     </div>
                 <div class="error-message" id="guardianContactError"></div>
             </div>
-    
+        
             <div class="button-group">
                 <button type="button" class="clear" id="clearStudentInfoForm">Clear</button>
                 <button type="submit" class="update">Update Information</button>
@@ -174,4 +175,5 @@
     </div>
 </div>
 <script src="../../static/js/settings.js"></script>
+<script src="../../static/js/script.js"></script>
 {% endblock %}

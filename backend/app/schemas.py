@@ -18,6 +18,7 @@ class UserDataResponse(BaseModel):
     first_name: Optional[str] = None
     profile_picture: Optional[str] = None
     organization: Optional[Organization] = None
+    is_verified: Optional[bool] = None 
 
     class Config:
         from_attributes = True # orm_mode = True for Pydantic V1.x

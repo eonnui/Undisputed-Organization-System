@@ -63,6 +63,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
+            // --- NEW: Update Registration Status based on /get_user_data response ---
+            const registrationStatusDisplay = document.getElementById('registrationStatus');
+            if (registrationStatusDisplay && typeof userData.is_verified === 'boolean') {
+                const statusString = userData.is_verified ? "Verified" : "Not Verified";
+                // Call the setRegistrationStatus function from settings.js
+                // Ensure settings.js is loaded BEFORE script.js in your HTML
+                if (typeof setRegistrationStatus === 'function') {
+                    setRegistrationStatus(statusString);
+                } else {
+                    // Fallback if setRegistrationStatus is not found (less ideal, but ensures update)
+                    registrationStatusDisplay.textContent = statusString;
+                    registrationStatusDisplay.className = userData.is_verified ? 'verified' : 'unverified';
+                    console.warn("setRegistrationStatus function not found. Ensure settings.js is loaded before this script.");
+                }
+            }
+            // --- END NEW ---
+
         } catch (error) {
             console.error('An unexpected error occurred during theme application:', error);
         }
