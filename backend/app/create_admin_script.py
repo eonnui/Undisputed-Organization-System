@@ -68,7 +68,7 @@ def generate_custom_palette(theme_color_hex):
     # Base template derived from the "Samahan ng Sikolohiya" example.
     # You can modify this template or create more if needed.
     base_palette = {
-        "--org-bg-color": "#fdf5f5",
+        "--org-bg-color": "#fdf5f5", # Original default light background color
         "--org-login-bg": "#5c1011",
         "--org-button-bg": "#9a1415",
         "--org-button-text": "#FFFFFF",
@@ -222,7 +222,7 @@ def generate_custom_palette(theme_color_hex):
     theme_rgb = hex_to_rgb(theme_color_hex)
 
     # Derive new colors based on the theme_color
-    dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.7)  # 30% darker
+    dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.7) # 30% darker
     darker_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.5) # 50% darker
     light_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.2) # 20% lighter
     lighter_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.6) # 60% lighter
@@ -233,10 +233,31 @@ def generate_custom_palette(theme_color_hex):
     light_theme_hex = rgb_to_hex(light_theme_rgb)
     lighter_theme_hex = rgb_to_hex(lighter_theme_rgb)
 
+    # Calculate the very light background color by blending with white
+    whiteness_factor = .9 # Adjust this (e.g., 0.9 to 0.98) for desired lightness
+    very_light_bg_rgb = (
+        int(theme_rgb[0] * (1 - whiteness_factor) + 255 * whiteness_factor),
+        int(theme_rgb[1] * (1 - whiteness_factor) + 255 * whiteness_factor),
+        int(theme_rgb[2] * (1 - whiteness_factor) + 255 * whiteness_factor)
+    )
+    # Ensure values are clamped to 0-255
+    very_light_bg_rgb = (
+        max(0, min(255, very_light_bg_rgb[0])),
+        max(0, min(255, very_light_bg_rgb[1])),
+        max(0, min(255, very_light_bg_rgb[2]))
+    )
+    very_light_bg_hex = rgb_to_hex(very_light_bg_rgb) # This is the new light background color
+
+    # --- NEW LOGIC: Replace all occurrences of the original default light background ---
+    original_default_light_bg = "#fdf5f5" # Get this from your base_palette definition
+    for key, value in custom_palette.items():
+        if value == original_default_light_bg:
+            custom_palette[key] = very_light_bg_hex
+
     # Determine contrast text color for buttons/primary elements
     button_text_color = get_contrast_text_color(theme_color_hex)
 
-    # Update relevant variables in the custom_palette
+    # Update specific relevant variables in the custom_palette that are linked to the theme
     custom_palette["--org-primary"] = theme_color_hex
     custom_palette["--org-button-bg"] = theme_color_hex
     custom_palette["--org-hover-effect"] = dark_theme_hex
@@ -297,6 +318,8 @@ def generate_custom_palette(theme_color_hex):
     # Read-only inputs
     custom_palette["--org-read-only-input-bg"] = lighter_theme_hex
 
+    # Set --org-highlight to be the same as the very light background color
+    custom_palette["--org-highlight"] = very_light_bg_hex
 
     # Ensure the main primary color is always the theme color
     custom_palette["--org-primary"] = theme_color_hex
@@ -312,7 +335,7 @@ def generate_logo_url(org_name: str) -> tuple[str, str]:
     and a suggested filename based on the organization name.
     Returns a tuple: (logo_url, suggested_filename).
     """
-    formatted_name = org_name.lower().replace(" ", "_") # Use underscores for filenames
+    formatted_name = org_name.lower().replace(" ", "_") 
     
     # Define a default image extension, e.g., ".png"
     default_extension = ".png"
