@@ -957,6 +957,8 @@ async def admin_financial_statement(request: Request, db: Session = Depends(get_
         },
     )
 
+
+# Create organization route
 @router.post("/admin/organizations/", response_model=schemas.Organization, status_code=status.HTTP_201_CREATED)
 async def create_organization_route(
     request: Request,
@@ -978,10 +980,24 @@ async def create_organization_route(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Organization with name '{organization.name}' already exists."
         )
+
+    # NEW: Check if the primary course code already exists for an organization
+    # This assumes you want a unique primary course code per organization.
+    # If an organization can have multiple primary courses, you'd adjust this logic.
+    existing_course_org = db.query(models.Organization).filter(
+        models.Organization.primary_course_code == organization.primary_course_code
+    ).first()
+    if existing_course_org:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Organization with primary course code '{organization.primary_course_code}' already exists."
+        )
+
     try:
         # Generate custom_palette from theme_color
+        # Ensure crud.generate_custom_palette is defined or imported
         custom_palette = crud.generate_custom_palette(organization.theme_color)
-        
+
         # Generate a suggested filename for the logo based on the organization name
         suggested_filename = f"{organization.name.lower().replace(' ', '_')}_logo.png"
         logo_upload_path = f"/static/images/{suggested_filename}" # Keeping the path as provided by user
@@ -989,6 +1005,7 @@ async def create_organization_route(
         new_org = models.Organization(
             name=organization.name,
             theme_color=organization.theme_color,
+            primary_course_code=organization.primary_course_code, # NEW: Pass primary_course_code
             custom_palette=custom_palette,
             logo_url=logo_upload_path # Store the generated path
         )

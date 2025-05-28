@@ -19,7 +19,8 @@ class Organization(Base):
     name = Column(String, unique=True, index=True)
     theme_color = Column(String, nullable=True)
     custom_palette = Column(Text, nullable=True)
-    logo_url = Column(String, nullable=True) # <--- ADDED THIS LINE
+    logo_url = Column(String, nullable=True) 
+    primary_course_code = Column(String, nullable=True, unique=True, index=True)
     admins = relationship("Admin", secondary="organization_admins", back_populates="organizations")
     students = relationship("User", back_populates="organization")
 
@@ -42,7 +43,7 @@ class Event(Base):
     location = Column(String)
     admin_id = Column(Integer, ForeignKey("admins.admin_id"))
     max_participants = Column(Integer)
-    created_at = Column(DateTime, default=func.now()) # <--- ADDED THIS LINE
+    created_at = Column(DateTime, default=func.now())
     participants = relationship("User", secondary=event_participants, back_populates="joined_events")
     admin = relationship("Admin", back_populates="events")
 
@@ -81,7 +82,8 @@ class User(Base):
     verified_by = Column(String, nullable=True)
     verification_date = Column(DateTime, nullable=True)
     payments = relationship("Payment", back_populates="user")
-    payment_items = relationship("PaymentItem", back_populates="user")
+    # Added cascade='all, delete-orphan' to the relationship in User model
+    payment_items = relationship("PaymentItem", back_populates="user", cascade="all, delete-orphan")
 
 class Admin(Base):
     __tablename__ = "admins"
@@ -90,7 +92,7 @@ class Admin(Base):
     email = Column(String, unique=True, index=True)
     password = Column(String)
     role = Column(String)
-    position = Column(String, nullable=True) # <--- ADDED THIS LINE
+    position = Column(String, nullable=True)
     bulletin_board_posts = relationship("BulletinBoard", back_populates="admin")
     events = relationship("Event", back_populates="admin")
     organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")
@@ -124,7 +126,8 @@ class Payment(Base):
 class PaymentItem(Base):
     __tablename__ = "payment_items"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # Added ondelete='CASCADE' to the ForeignKey definition
+    user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), nullable=False)
     academic_year = Column(String, nullable=True)
     semester = Column(String, nullable=True)
     fee = Column(Float, nullable=False)

@@ -1,27 +1,43 @@
-# schemas.py
-
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
-class Organization(BaseModel):
-    id: int
+class OrganizationBase(BaseModel):
     name: str
     theme_color: Optional[str] = None
+    primary_course_code: Optional[str] = None
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+class Organization(OrganizationBase):
+    id: int
     custom_palette: Optional[str] = None
     logo_url: Optional[str] = None
 
     class Config:
-        from_attributes = True # Use from_attributes for Pydantic V2, orm_mode = True for V1
+        from_attributes = True
+
+class OrganizationDisplay(BaseModel):
+    id: int
+    name: str
+    theme_color: str
+    custom_palette: str
+    logo_url: Optional[str] = None
+    primary_course_code: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 
 class UserDataResponse(BaseModel):
     first_name: Optional[str] = None
     profile_picture: Optional[str] = None
     organization: Optional[Organization] = None
-    is_verified: Optional[bool] = None 
+    is_verified: Optional[bool] = None
 
     class Config:
-        from_attributes = True # orm_mode = True for Pydantic V1.x
+        from_attributes = True
 
 
 class UserBase(BaseModel):
@@ -40,7 +56,7 @@ class UserLogin(BaseModel):
 
 class User(UserBase):
     id: int
-    organization: Optional[Organization] = None # Ensure this is Optional[Organization] object
+    organization: Optional[Organization] = None
     first_name: str
     last_name: str
     is_active: bool
@@ -64,7 +80,7 @@ class User(UserBase):
     verification_date: Optional[datetime]
 
     class Config:
-        from_attributes = True # For Pydantic V2, orm_mode=True for V1
+        from_attributes = True
 
 class UserUpdate(BaseModel):
     name: Optional[str]
@@ -83,39 +99,22 @@ class UserUpdate(BaseModel):
     registration_form: Optional[str]
     profile_picture: Optional[str]
 
-# --- New Pydantic Schemas for Admin Organization and Admin Management ---
-class OrganizationCreate(BaseModel):
-    name: str
-    theme_color: str
-
 class AdminCreate(BaseModel):
     email: str
     password: str
     name: Optional[str] = "Admin"
-    position: str # <--- ADD THIS LINE
+    position: str
     organization_id: Optional[int] = None
 
-# Added Admin schema to represent the Admin model in responses
 class Admin(BaseModel):
     admin_id: int
     name: str
     email: EmailStr
     role: str
-    position: str # <--- ADD THIS LINE as well, if Admin responses should include position
-    # Do NOT include password here for security reasons
+    position: str
 
     class Config:
-        from_attributes = True # For Pydantic V2, orm_mode=True for V1
+        from_attributes = True
 
 class OrganizationThemeUpdate(BaseModel):
     new_theme_color: str
-
-class OrganizationDisplay(BaseModel):
-    id: int
-    name: str
-    theme_color: str
-    custom_palette: str
-    logo_url: Optional[str] = None
-
-    class Config:
-        from_attributes = True # Changed to from_attributes for Pydantic V2

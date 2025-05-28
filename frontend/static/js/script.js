@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let registrationSuccessMessage = '';
     let forgotPasswordIdentifier = ''; // Store student number or email for code verification
     let organizations = []; // Store fetched organizations
+    // NEW: Add a mapping for course to organization ID directly in JavaScript for client-client-side lookup
+    let courseToOrganizationMap = {}; // Will be populated after fetching organizations
 
     // --- START: applyUserTheme function (added/updated) ---
     async function applyUserTheme() {
@@ -124,21 +126,25 @@ document.addEventListener('DOMContentLoaded', function() {
                             Admin Registration
                         </button>
                     </div>
-                    </form>
+                </form>
             </div>
         `;
     }
 
     function renderSignupForm() {
-        let organizationOptions = '<option value="" disabled selected>Select your organization</option>';
+        // Dynamically generate course options from the fetched organizations
+        let courseOptionsHtml = '<option value="" disabled selected>Select your Course</option>';
+        // Ensure organizations array is populated before rendering options
         if (organizations.length > 0) {
             organizations.forEach(org => {
-                // Keep value as ID, but we will extract the name on submit
-                organizationOptions += `<option value="${org.id}">${org.name}</option>`;
+                if (org.primary_course_code) {
+                    courseOptionsHtml += `<option value="${org.primary_course_code}">${org.primary_course_code}</option>`;
+                }
             });
         } else {
-            organizationOptions = '<option value="" disabled>Loading organizations...</option>'; // Or some loading message
+            courseOptionsHtml += '<option value="" disabled>Loading courses...</option>';
         }
+
 
         return `
             <div class="wrapper">
@@ -157,13 +163,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="input-group">
-                        <label for="signup-organization">Select Organization</label>
+                        <label for="signup-course">Select Course</label>
                         <div class="select-wrapper">
-                            <select id="signup-organization">
-                                ${organizationOptions}
+                            <select id="signup-course" required>
+                                ${courseOptionsHtml}
                             </select>
                         </div>
-                        <div class="error-message" id="signup-organization-error"></div>
+                        <div class="error-message" id="signup-course-error"></div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signup-organization-display">Assigned Organization</label>
+                        <input type="text" id="signup-organization-display" value="Please select a course" readonly />
+                        <input type="hidden" id="signup-organization-id" name="organizationId" />
+                        <input type="hidden" id="signup-organization-name-hidden" name="organizationName" /> <div class="error-message" id="signup-organization-error"></div>
                     </div>
 
                     <div class="input-group">
@@ -329,6 +342,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="error-message" id="admin-signup-theme-color-error"></div>
                         </div>
+
+                        <div class="input-group">
+                            <label for="admin-signup-primary-course">Primary Course Code (e.g., BSBA)</label>
+                            <input type="text" id="admin-signup-primary-course" name="primaryCourse" placeholder="Enter primary course code" ${isNewOrganizationChecked ? 'required' : ''} />
+                            <div class="error-message" id="admin-signup-primary-course-error"></div>
+                        </div>
                     </div>
 
                     <div id="existing-org-fields" style="${existingOrgFieldsStyle}">
@@ -368,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button type="button" class="view-password-button" data-target="admin-signup-password">Show</button>
                         </div>
                         <div class="error-message" id="admin-signup-password-error"></div>
-                        </div>
+                    </div>
                     <div class="input-group">
                         <label for="admin-signup-confirm-password">Confirm Password</label>
                         <div class="password-input-wrapper">
@@ -458,6 +477,29 @@ document.addEventListener('DOMContentLoaded', function() {
             render();
         });
         document.getElementById('signup-form')?.addEventListener('submit', handleSignup);
+
+        // NEW: Event listener for course selection
+        document.getElementById('signup-course')?.addEventListener('change', function() {
+            const selectedCourseCode = this.value;
+            const organizationDisplayInput = document.getElementById('signup-organization-display');
+            const organizationIdInput = document.getElementById('signup-organization-id');
+            // NEW: Get reference to the hidden organization name input
+            const organizationNameHiddenInput = document.getElementById('signup-organization-name-hidden');
+            const organizationError = document.getElementById('signup-organization-error');
+
+            if (selectedCourseCode && courseToOrganizationMap[selectedCourseCode]) {
+                const org = courseToOrganizationMap[selectedCourseCode];
+                organizationDisplayInput.value = org.name;
+                organizationIdInput.value = org.id;
+                organizationNameHiddenInput.value = org.name; // NEW: Set the organization name in the hidden field
+                displayError('signup-organization', ''); // Clear error
+            } else {
+                organizationDisplayInput.value = "No organization found for this course.";
+                organizationIdInput.value = "";
+                organizationNameHiddenInput.value = ""; // NEW: Clear the hidden organization name
+                displayError('signup-organization', 'Invalid course selected or no organization mapped.');
+            }
+        });
     }
 
     function setupEventListenersForForgotPasswordForm() {
@@ -566,12 +608,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const studentNumber = document.getElementById('signup-student-number').value;
         const email = document.getElementById('signup-email').value;
-        // --- START FRONTEND ADJUSTMENT ---
-        // Get the selected <option> element
-        const organizationSelect = document.getElementById('signup-organization');
-        // Get the text content (name) of the selected option, not its value (ID)
-        const organizationName = organizationSelect.options[organizationSelect.selectedIndex].textContent;
-        // --- END FRONTEND ADJUSTMENT ---
+        // Get the selected course code
+        const course = document.getElementById('signup-course').value;
+        // Get the organization ID from the hidden field (still useful for client-side logic)
+        const organizationId = document.getElementById('signup-organization-id').value;
+        // NEW: Get the organization name from the hidden field
+        const organizationName = document.getElementById('signup-organization-name-hidden').value;
+
         const firstName = document.getElementById('signup-first-name').value;
         const lastName = document.getElementById('signup-last-name').value;
         const password = document.getElementById('signup-password').value;
@@ -580,7 +623,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear previous errors
         displayError('signup-student-number', '');
         displayError('signup-email', '');
-        displayError('signup-organization', '');
+        displayError('signup-course', '');
+        displayError('signup-organization', ''); // Clear organization error (if any)
         displayError('signup-first-name', '');
         displayError('signup-last-name', '');
         displayError('signup-password', '');
@@ -605,13 +649,14 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
 
-        // --- START FRONTEND ADJUSTMENT ---
-        // Check if a valid organization name was selected
-        if (!organizationName || organizationSelect.selectedIndex === 0) { // Also check if default option is selected
-            displayError('signup-organization', 'Please select an organization.');
+        // Validate course selection and ensure organization name is present
+        if (!course) {
+            displayError('signup-course', 'Please select your course.');
+            isValid = false;
+        } else if (!organizationName) { // Check for organizationName instead of organizationId
+            displayError('signup-organization', 'No organization name found for the selected course.');
             isValid = false;
         }
-        // --- END FRONTEND ADJUSTMENT ---
 
         if (!firstName) {
             displayError('signup-first-name', 'First name is required.');
@@ -647,9 +692,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const userData = {
             student_number: studentNumber,
             email: email,
-            // --- START FRONTEND ADJUSTMENT ---
-            organization: organizationName, // Send the organization NAME here
-            // --- END FRONTEND ADJUSTMENT ---
+            // REMOVED: course: course, // The backend schema doesn't have a 'course' field directly in UserCreate
+            organization: organizationName, // CHANGED: Send the organization NAME (string)
             first_name: firstName,
             last_name: lastName,
             password: password
@@ -677,8 +721,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayError('signup-last-name', ''); // Clear any previous last name error
                 } else if (data.detail && data.detail.includes("Organization")) {
                     displayError('signup-organization', data.detail);
-                }
-                else {
+                } else if (data.detail && data.detail.includes("Invalid course")) { // NEW: Handle invalid course error
+                    displayError('signup-course', data.detail);
+                } else {
                     // For *any other* error from the backend, show a generic message
                     displayNotification(data.detail || 'Signup failed. Please try again.', 'error');
                 }
@@ -686,7 +731,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Success Message for Login Form (You might want to move this)
-            registrationSuccessMessage = 'Registration successful! Please log in.';
+            registrationSuccessMessage = `Registration successful!
+Please log in.`; // FIXED: Using template literal for multi-line string
 
             // Redirect to Login (You might want to move this)
             currentForm = 'login';
@@ -714,7 +760,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setTimeout(() => {
             notification.classList.remove('show');
-            setTimeout(()=> notification.remove(), 300);
+            setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
 
@@ -729,7 +775,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const data = await response.json();
             organizations = data;
-            render();
+            // Dynamically populate courseToOrganizationMap based on fetched organizations
+            courseToOrganizationMap = {}; // Clear previous map
+            data.forEach(org => {
+                if (org.primary_course_code) {
+                    courseToOrganizationMap[org.primary_course_code] = org;
+                }
+            });
+            render(); // Re-render the form to update the dropdown
         } catch (error) {
             console.error("Error fetching organizations:", error);
             displayNotification('Failed to load organizations. Please try again later.', 'error');
@@ -857,6 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const orgNameInput = document.getElementById('admin-signup-org-name');
         const themeColorTextInput = document.getElementById('admin-signup-theme-color-text'); // Changed ID
         const themeColorPickerInput = document.getElementById('admin-signup-theme-color-picker'); // Changed ID
+        const primaryCourseInput = document.getElementById('admin-signup-primary-course'); // NEW: Get primary course input
         const selectOrgInput = document.getElementById('admin-signup-select-organization');
 
         // Event listeners for the radio buttons to toggle form sections and 'required' attributes
@@ -873,6 +927,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (orgNameInput) orgNameInput.required = true;
                     if (themeColorTextInput) themeColorTextInput.required = true; // Use text input for required
                     if (themeColorPickerInput) themeColorPickerInput.required = false; // Picker is not required
+                    if (primaryCourseInput) primaryCourseInput.required = true; // NEW: Set primary course as required
 
                     // Remove 'required' for existing organization fields
                     if (selectOrgInput) selectOrgInput.required = false;
@@ -887,6 +942,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (orgNameInput) orgNameInput.required = false;
                     if (themeColorTextInput) themeColorTextInput.required = false; // Use text input for required
                     if (themeColorPickerInput) themeColorPickerInput.required = false; // Picker is not required
+                    if (primaryCourseInput) primaryCourseInput.required = false; // NEW: Remove primary course required
 
                     // Set 'required' for existing organization fields
                     if (selectOrgInput) selectOrgInput.required = true;
@@ -894,6 +950,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Clear errors for the hidden section to prevent stale messages
                     displayError('admin-signup-org-name', '');
                     displayError('admin-signup-theme-color', '');
+                    displayError('admin-signup-primary-course', ''); // NEW: Clear primary course error
                 }
             });
         });
@@ -903,6 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (orgNameInput) orgNameInput.required = initialNewOrgChecked;
         if (themeColorTextInput) themeColorTextInput.required = initialNewOrgChecked;
         if (themeColorPickerInput) themeColorPickerInput.required = false; // Picker is never required
+        if (primaryCourseInput) primaryCourseInput.required = initialNewOrgChecked; // NEW: Initial required for primary course
         if (selectOrgInput) selectOrgInput.required = !initialNewOrgChecked;
 
         // Add event listener for color picker to update text input
@@ -966,6 +1024,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear all previous error messages
         displayError('admin-signup-org-name', '');
         displayError('admin-signup-theme-color', ''); // This is for the combined error display
+        displayError('admin-signup-primary-course', ''); // NEW: Clear primary course error
         displayError('admin-signup-select-organization', '');
         displayError('admin-signup-email', '');
         displayError('admin-signup-first-name', '');
@@ -1028,6 +1087,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isNewOrganization) {
                 const orgName = document.getElementById('admin-signup-org-name').value;
                 const themeColor = document.getElementById('admin-signup-theme-color-text').value; // Get value from text input
+                const primaryCourse = document.getElementById('admin-signup-primary-course').value; // NEW: Get primary course
 
                 // Validation for theme color format
                 const hexColorRegex = /^#([0-9A-F]{3}){1,2}$/i;
@@ -1042,13 +1102,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayError('admin-signup-theme-color', 'Invalid hex color format (e.g., #RRGGBB or #RGB).');
                     isValid = false;
                 }
+                if (!primaryCourse) { // NEW: Validate primary course
+                    displayError('admin-signup-primary-course', 'Primary course code is required.');
+                    isValid = false;
+                }
+
 
                 if (!isValid) return; // Stop if new org fields are invalid
 
                 // Step 1: Create Organization
                 const orgPayload = {
                     name: orgName,
-                    theme_color: themeColor
+                    theme_color: themeColor,
+                    primary_course_code: primaryCourse // NEW: Include primary course in payload
                 };
 
                 const orgResponse = await fetch('/admin/organizations/', {

@@ -1,28 +1,51 @@
 from sqlalchemy.orm import Session
-from . import models, schemas  # Import your models and schemas
+from . import models, schemas
 from passlib.context import CryptContext
-from datetime import datetime, date  # Import both datetime and date
+from datetime import datetime, date
 import logging
 from sqlalchemy.sql import exists
-from typing import Optional, Tuple # Added Tuple for type hints
-import json # Added json import for generate_custom_palette
+from typing import Optional, Tuple
+import json
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def get_organization_by_name(db: Session, organization_name: str):
-    """
-    Retrieves an Organization by its name.
-    """
     return db.query(models.Organization).filter(models.Organization.name == organization_name).first()
 
+def get_organization_by_primary_course_code(db: Session, primary_course_code: str):
+    return db.query(models.Organization).filter(models.Organization.primary_course_code == primary_course_code).first()
+
+def create_organization(db: Session, organization: schemas.OrganizationCreate):
+    existing_org_by_name = get_organization_by_name(db, organization.name)
+    if existing_org_by_name:
+        logging.warning(f"Organization with name '{organization.name}' already exists.")
+        return existing_org_by_name
+
+    if organization.primary_course_code:
+        existing_org_by_code = get_organization_by_primary_course_code(db, organization.primary_course_code)
+        if existing_org_by_code:
+            logging.warning(f"Organization with primary_course_code '{organization.primary_course_code}' already exists.")
+            return existing_org_by_code
+
+    custom_palette_json = generate_custom_palette(organization.theme_color)
+
+    db_organization = models.Organization(
+        name=organization.name,
+        theme_color=organization.theme_color,
+        custom_palette=custom_palette_json,
+        logo_url=organization.logo_url,
+        primary_course_code=organization.primary_course_code
+    )
+    db.add(db_organization)
+    db.commit()
+    db.refresh(db_organization)
+    logging.info(f"Created organization: {organization.name} with theme: {organization.theme_color} and primary course code: {organization.primary_course_code}")
+    return db_organization
+
 def create_user(db: Session, user: schemas.UserCreate):
-    """
-    Creates a new user, correctly linking to an organization by ID.
-    """
     user_exists = db.query(exists().where(models.User.student_number == user.student_number)).scalar()
     if user_exists:
         existing_user = db.query(models.User).filter(models.User.student_number == user.student_number).first()
@@ -31,36 +54,26 @@ def create_user(db: Session, user: schemas.UserCreate):
 
     hashed_password = pwd_context.hash(user.password)
 
-    # Look up the Organization object by name to get its ID
     organization_obj = None
     organization_id_to_assign = None
-    if user.organization: # user.organization is the name string from the frontend/schema
+    if user.organization:
+        # Check if user.organization refers to a name or primary_course_code
         organization_obj = get_organization_by_name(db, user.organization)
+        if not organization_obj:
+            organization_obj = get_organization_by_primary_course_code(db, user.organization)
+
         if organization_obj:
             organization_id_to_assign = organization_obj.id
         else:
             logging.warning(f"Organization '{user.organization}' not found during user creation. User will be created without an assigned organization (organization_id will be NULL).")
-            # You might want to raise an HTTPException here if an organization is mandatory
-            # from fastapi import HTTPException
-            # raise HTTPException(status_code=400, detail=f"Organization '{user.organization}' not found.")
 
     db_user = models.User(
         student_number=user.student_number,
         email=user.email,
-        # Assign the ID to the foreign key column (organization_id), NOT the relationship attribute (organization)
         organization_id=organization_id_to_assign,
         first_name=user.first_name,
         last_name=user.last_name,
         hashed_password=hashed_password,
-        # Other fields from schemas.UserCreate which might not be directly in models.User but are part of the schema
-        # If your schemas.UserCreate has more fields than the direct columns in models.User,
-        # you need to explicitly map them or adjust schemas.UserCreate.
-        # Assuming UserCreate fields map directly to User model columns:
-        # name=user.name, # If name is in UserCreate
-        # campus=user.campus, # If campus is in UserCreate
-        # etc.
-        # Based on your schemas.UserCreate, these are the fields:
-        # student_number, email, organization (handled above), first_name, last_name, password (hashed)
     )
 
     db.add(db_user)
@@ -69,18 +82,14 @@ def create_user(db: Session, user: schemas.UserCreate):
     logging.info(f"Created user with student_number: {user.student_number}, email: {user.email}")
     return db_user
 
-# --- Helper functions for color manipulation (from ad.txt) ---
 def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
-    """Converts a hex color string (#RRGGBB) to an RGB tuple (R, G, B)."""
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 def rgb_to_hex(rgb_color: Tuple[int, int, int]) -> str:
-    """Converts an RGB tuple (R, G, B) to a hex color string (#RRGGBB)."""
     return '#%02x%02x%02x' % rgb_color
 
 def adjust_rgb_lightness(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
-    """Adjusts the lightness of an RGB color by a factor (e.g., 0.8 for darker, 1.2 for lighter)."""
     r, g, b = rgb
     r = int(max(0, min(255, r * factor)))
     g = int(max(0, min(255, g * factor)))
@@ -88,18 +97,11 @@ def adjust_rgb_lightness(rgb: Tuple[int, int, int], factor: float) -> Tuple[int,
     return (r, g, b)
 
 def get_contrast_text_color(bg_hex: str) -> str:
-    """Returns #FFFFFF or #000000 based on the perceived lightness of the background color."""
     r, g, b = hex_to_rgb(bg_hex)
-    # Calculate perceived lightness (luminance)
     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return "#000000" if luminance > 0.5 else "#FFFFFF"
 
 def generate_custom_palette(theme_color_hex: str) -> str:
-    """
-    Generates a full custom CSS variable palette based on a primary theme color.
-    Uses a predefined template and adjusts relevant colors.
-    """
-    # Base template derived from the "Samahan ng Sikolohiya" example.
     base_palette = {
         "--org-bg-color": "#fdf5f5",
         "--org-login-bg": "#5c1011",
@@ -325,13 +327,7 @@ def generate_custom_palette(theme_color_hex: str) -> str:
 
     return json.dumps(custom_palette, indent=2)
 
-# --- END FIX FOR AttributeError ---
-
-
 def get_user(db: Session, identifier: str):
-    """
-    Retrieves a user by student_number or email.
-    """
     user = db.query(models.User).filter(models.User.student_number == identifier).first()
     if not user:
         user = db.query(models.User).filter(models.User.email == identifier).first()
@@ -339,9 +335,6 @@ def get_user(db: Session, identifier: str):
 
 
 def authenticate_user(db: Session, identifier: str, password: str) -> models.User | None:
-    """
-    Authenticates a user (student or admin) based on student number or email.
-    """
     user = get_user(db, identifier)
     if not user:
         logging.warning(f"User with identifier: {identifier} not found.")
@@ -354,9 +347,6 @@ def authenticate_user(db: Session, identifier: str, password: str) -> models.Use
 
 
 def authenticate_admin_by_email(db: Session, email: str, password: str) -> models.Admin | None:
-    """
-    Authenticates an admin user by email.
-    """
     admin = db.query(models.Admin).filter(models.Admin.email == email).first()
     if not admin:
         logging.warning(f"Admin with email: {email} not found.")
@@ -368,9 +358,7 @@ def authenticate_admin_by_email(db: Session, email: str, password: str) -> model
     return admin
 
 
-# Payment CRUD operations
 def create_payment(db: Session, user_id: int, amount: float):
-    """Creates a new payment record."""
     db_payment = models.Payment(
         user_id=user_id,
         amount=amount,
@@ -385,7 +373,6 @@ def create_payment(db: Session, user_id: int, amount: float):
 
 
 def get_payment_by_id(db: Session, payment_id: int):
-    """Retrieves a payment record by its ID."""
     payment = db.query(models.Payment).filter(models.Payment.id == payment_id).first()
     if payment:
         logging.info(f"Retrieved payment with id: {payment_id}")
@@ -402,7 +389,6 @@ def update_payment(
     status: Optional[str] = None,
     payment_item_id: Optional[int] = None,
 ):
-    """Updates a payment record's PayMaya ID, status, and/or payment_item_id."""
     db_payment = db.query(models.Payment).filter(models.Payment.id == payment_id).first()
     if db_payment:
         if paymaya_payment_id is not None:
@@ -433,7 +419,6 @@ def add_payment_item(
     year_level_applicable: Optional[int] = None,
     is_past_due: bool = False,
 ):
-    """Adds a new payment item to the database."""
     db_payment_item = models.PaymentItem(
         academic_year=academic_year,
         semester=semester,
@@ -452,14 +437,12 @@ def add_payment_item(
 
 
 def get_all_payment_items(db: Session):
-    """Retrieves all unpaid payment items from the database."""
     payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.is_paid == False).all()
     logging.info(f"Retrieved all unpaid payment items. Count: {len(payment_items)}")
     return payment_items
 
 
 def get_payment_item_by_id(db: Session, payment_item_id: int):
-    """Retrieves a specific payment item by its ID."""
     payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
     if payment_item:
         logging.info(f"Retrieved payment item with id: {payment_item_id}")
@@ -469,7 +452,6 @@ def get_payment_item_by_id(db: Session, payment_item_id: int):
 
 
 def mark_payment_item_as_paid(db: Session, payment_item_id: int):
-    """Marks a payment item as paid."""
     db_payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
     if db_payment_item:
         db_payment_item.is_paid = True
