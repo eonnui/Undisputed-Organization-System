@@ -90,6 +90,7 @@ class Admin(Base):
     email = Column(String, unique=True, index=True)
     password = Column(String)
     role = Column(String)
+    position = Column(String, nullable=True) # <--- ADDED THIS LINE
     bulletin_board_posts = relationship("BulletinBoard", back_populates="admin")
     events = relationship("Event", back_populates="admin")
     organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")

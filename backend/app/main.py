@@ -17,6 +17,8 @@ import re
 import requests
 import base64
 import logging
+import bcrypt
+import shutil
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -65,6 +67,9 @@ def generate_secure_filename(original_filename: str) -> str:
     _, file_extension = os.path.splitext(original_filename)
     random_prefix = secrets.token_hex(16)
     return f"{random_prefix}{file_extension}"
+
+UPLOAD_BASE_DIRECTORY = Path(__file__).parent.parent.parent / "frontend" / "static" / "images"
+UPLOAD_BASE_DIRECTORY.mkdir(parents=True, exist_ok=True) # Ensure the directory exists
 
 # Admin Bulletin Board Post Route
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
@@ -153,21 +158,33 @@ async def admin_settings(request: Request, db: Session = Depends(get_db)):
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
 
+    # Default logo URL if no organization logo is found
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
-    logo_url = default_logo_url
+
+    organization_id = None # Initialize organization_id
+    current_theme_color = "#6B00B9" # Default theme color
+    logo_url = default_logo_url # Initialize the logo_url that admin_base expects
+
     if admin_id:
         admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
         if admin and admin.organizations:
-            first_org = admin.organizations[0]
+            first_org = admin.organizations[0] # Assuming an admin manages the first organization in the list
+            organization_id = first_org.id # Get the organization ID
+            
             if first_org.logo_url:
-                logo_url = first_org.logo_url
+                logo_url = first_org.logo_url # Assign the organization's specific logo URL to logo_url
+            
+            if first_org.theme_color:
+                current_theme_color = first_org.theme_color # Get the current theme color
 
     return templates.TemplateResponse(
-        "admin_dashboard/admin_settings.html",
+        "admin_dashboard/admin_settings.html", # Ensure this path is correct for your template
         {
             "request": request,
             "year": "2025",
-            "logo_url": logo_url,
+            "organization_id": organization_id, # Pass organization_id to the template
+            "current_theme_color": current_theme_color, # Pass current theme color
+            "logo_url": logo_url # Changed this from "organization_logo_url" to "logo_url"
         },
     )
 
@@ -939,6 +956,230 @@ async def admin_financial_statement(request: Request, db: Session = Depends(get_
             "logo_url": logo_url,
         },
     )
+
+@router.post("/admin/organizations/", response_model=schemas.Organization, status_code=status.HTTP_201_CREATED)
+async def create_organization_route(
+    request: Request,
+    organization: schemas.OrganizationCreate, # Use schema from schemas.py
+    db: Session = Depends(get_db)
+):
+    """
+    Creates a new organization in the database with an auto-generated custom palette and logo URL.
+    This route is intended for initial setup and does NOT require admin authentication.
+    """
+    # Removed current_admin_id check to allow unauthenticated access for initial setup.
+
+    # Check if the organization name already exists
+    existing_organization = db.query(models.Organization).filter(
+        models.Organization.name == organization.name
+    ).first()
+    if existing_organization:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Organization with name '{organization.name}' already exists."
+        )
+    try:
+        # Generate custom_palette from theme_color
+        custom_palette = crud.generate_custom_palette(organization.theme_color)
+        
+        # Generate a suggested filename for the logo based on the organization name
+        suggested_filename = f"{organization.name.lower().replace(' ', '_')}_logo.png"
+        logo_upload_path = f"/static/images/{suggested_filename}" # Keeping the path as provided by user
+
+        new_org = models.Organization(
+            name=organization.name,
+            theme_color=organization.theme_color,
+            custom_palette=custom_palette,
+            logo_url=logo_upload_path # Store the generated path
+        )
+        db.add(new_org)
+        db.commit()
+        db.refresh(new_org)
+
+        # Inform the user about the required logo upload
+        print(f"\n**Action Required:** Please upload the organization logo to your web server at the path: **{new_org.logo_url}**")
+        print(f"The suggested filename for the image file is: **{suggested_filename}**")
+
+        return new_org
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating organization: {e}"
+        )
+    
+@router.post("/admin/admins/", response_model=schemas.Admin, status_code=status.HTTP_201_CREATED)
+async def create_admin_user_route(
+    request: Request,
+    admin_data: schemas.AdminCreate, # Use schema from schemas.py
+    db: Session = Depends(get_db)
+):
+    """
+    Creates a new admin user in the database. This route is intended for initial setup
+    and does NOT require existing admin authentication.
+    """
+    # Removed current_admin_id check to allow unauthenticated access for initial setup.
+
+    # Check if the email already exists
+    existing_admin = db.query(models.Admin).filter(models.Admin.email == admin_data.email).first()
+    if existing_admin:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Admin with email '{admin_data.email}' already exists."
+        )
+    try:
+        hashed_password = bcrypt.hashpw(
+            admin_data.password.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8")
+
+        new_admin = models.Admin(
+            name=admin_data.name,
+            email=admin_data.email,
+            password=hashed_password,
+            role="Admin", # Force role to Admin for this route
+            position=admin_data.position # <--- THIS LINE WAS ADDED/CONFIRMED FOR FIX
+        )
+        db.add(new_admin)
+        db.flush() # Flush to get admin_id before linking organization
+
+        if admin_data.organization_id:
+            organization = db.get(models.Organization, admin_data.organization_id)
+            if organization:
+                new_admin.organizations.append(organization)
+            else:
+                # Log a warning but don't fail the admin creation if org not found
+                print(f"Warning: Organization with ID {admin_data.organization_id} not found. Admin created without organization link.")
+        
+        db.commit()
+        db.refresh(new_admin)
+        return new_admin
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating admin user: {e}"
+        )
+
+
+@router.put("/admin/organizations/{org_id}/theme", response_model=Dict[str, str])
+async def update_organization_theme_color_route(
+    request: Request,
+    org_id: int,
+    theme_update: schemas.OrganizationThemeUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Updates the theme color of an existing organization and regenerates its custom palette.
+    Requires admin authentication.
+    """
+    current_admin_id = request.session.get("admin_id")
+    if not current_admin_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated as admin",
+        )
+
+    try:
+        organization = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+        if not organization:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Organization with ID {org_id} not found."
+            )
+        organization.theme_color = theme_update.new_theme_color
+        # Use crud.generate_custom_palette
+        organization.custom_palette = crud.generate_custom_palette(theme_update.new_theme_color)
+        db.add(organization)
+        db.commit()
+        db.refresh(organization)
+        return {"message": f"Organization '{organization.name}' (ID: {org_id}) theme color updated to {theme_update.new_theme_color} and palette regenerated successfully."}
+    except HTTPException:
+        raise # Re-raise HTTPExceptions
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating organization theme color: {e}"
+        )
+
+@router.put("/admin/organizations/{org_id}/logo", response_model=Dict[str, str])
+async def update_organization_logo_route(
+    request: Request,
+    org_id: int,
+    logo_file: UploadFile = File(...), # Expect a file upload
+    db: Session = Depends(get_db)
+):
+    """
+    Uploads and updates the logo for an existing organization.
+    The logo will be named based on the organization's name and saved
+    as /static/images/{organization_name_slug}_logo.{extension}.
+    Requires admin authentication.
+    """
+    current_admin_id = request.session.get("admin_id")
+    if not current_admin_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated as admin",
+        )
+
+    organization = db.query(models.Organization).filter(models.Organization.id == org_id).first()
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Organization with ID {org_id} not found."
+        )
+
+    # --- Implement your desired naming convention here ---
+    # 1. Slugify the organization name
+    organization_name_slug = organization.name.lower().replace(' ', '_')
+    # Remove any characters that might cause issues in a URL or filename
+    organization_name_slug = ''.join(e for e in organization_name_slug if e.isalnum() or e == '_')
+
+    # 2. Get the actual file extension from the uploaded file
+    file_extension = Path(logo_file.filename).suffix.lower()
+    
+    # 3. Ensure allowed image file types
+    allowed_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg']
+    if file_extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file type. Only {', '.join(allowed_extensions)} are allowed."
+        )
+
+    # 4. Construct the final suggested filename as requested
+    suggested_filename = f"{organization_name_slug}_logo{file_extension}"
+    
+    # 5. Define the full server-side path where the file will be stored
+    file_path = UPLOAD_BASE_DIRECTORY / suggested_filename
+
+    try:
+        # Save the uploaded file to the constructed path
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(logo_file.file, buffer)
+        
+        # Construct the URL path to serve the image, exactly as desired
+        logo_url = f"/static/images/{suggested_filename}"
+
+        # Update the organization's logo_url in the database
+        organization.logo_url = logo_url
+        db.add(organization)
+        db.commit()
+        db.refresh(organization)
+
+        return {"message": f"Organization '{organization.name}' (ID: {org_id}) logo updated successfully to {logo_url}."}
+
+    except HTTPException:
+        raise # Re-raise HTTPExceptions
+    except Exception as e:
+        db.rollback()
+        # Clean up the partially uploaded file if an error occurred after saving
+        if file_path.exists():
+            os.remove(file_path)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating organization logo: {e}"
+        )
+
 
 # PayMaya Create Payment Route
 @router.post("/payments/paymaya/create", response_class=JSONResponse, name="paymaya_create_payment")

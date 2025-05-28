@@ -447,9 +447,32 @@ def update_organization_theme_color(db, org_id: int, new_theme_color: str):
         print(f"Organization '{organization.name}' (ID: {org_id}) theme color updated to {new_theme_color} and palette regenerated successfully.")
         return True
     except Exception as e:
-        print(f"Error updating organization theme color: {e}")
+        print(f"An unexpected error occurred during theme color update: {e}")
         db.rollback()
         return False
+
+# --- NEW: Function to update an admin's position ---
+def update_admin_position(db, admin_id: int, new_position: str):
+    """
+    Updates the position of an existing admin.
+    """
+    try:
+        admin = db.get(Admin, admin_id)
+        if not admin:
+            print(f"Error: Admin with ID {admin_id} not found.")
+            return False
+        
+        admin.position = new_position
+        db.add(admin)
+        db.commit()
+        db.refresh(admin)
+        print(f"Admin '{admin.name}' (ID: {admin_id}) position updated to '{new_position}' successfully.")
+        return True
+    except Exception as e:
+        print(f"An unexpected error occurred during admin position update: {e}")
+        db.rollback()
+        return False
+
 
 def main():
     check_database_url()
@@ -459,9 +482,10 @@ def main():
         print("1. Create a NEW organization and its first admin.")
         print("2. Create an admin for an EXISTING organization.")
         print("3. Edit theme color for an EXISTING organization.")
-        print("4. Exit")
+        print("4. Update an admin's position.") # NEW MENU OPTION
+        print("5. Exit") # Updated exit option
 
-        choice = input("Enter your choice (1, 2, 3, or 4): ")
+        choice = input("Enter your choice (1, 2, 3, 4, or 5): ") # Updated prompt
 
         if choice == '1':
             org_name = input("Enter NEW organization name: ")
@@ -473,6 +497,8 @@ def main():
             admin_email = input("Enter admin email: ")
             admin_password = getpass.getpass("Enter admin password: ")
             admin_name = input("Enter admin name (optional, default 'Admin'): ") or "Admin"
+            # NEW: Prompt for position during initial admin creation
+            admin_position = input("Enter admin position (e.g., President, Secretary, etc.): ")
 
             db = SessionLocal()
             try:
@@ -480,7 +506,8 @@ def main():
                 if organization:
                     print(f"\n**Action Required:** Please upload the organization logo to your web server at the path: **{organization.logo_url}**")
                     print(f"The suggested filename for the image file is: **{suggested_filename}**")
-                    admin = create_admin_user(db, admin_email, admin_password, admin_name, organization_id=organization.id)
+                    # Pass position to create_admin_user
+                    admin = create_admin_user(db, admin_email, admin_password, admin_name, organization_id=organization.id, position=admin_position)
                     if admin:
                         print(f"Admin '{admin_email}' successfully linked to organization '{org_name}'.")
                     else:
@@ -492,7 +519,9 @@ def main():
                 db.rollback()
             finally:
                 db.close()
-            break
+            # Removed break here to allow continuous use of the menu
+            # If you want it to exit after this operation, uncomment the break below
+            # break
 
         elif choice == '2':
             db = SessionLocal()
@@ -524,8 +553,12 @@ def main():
                 admin_email = input(f"Enter admin email for '{selected_organization.name}': ")
                 admin_password = getpass.getpass("Enter admin password: ")
                 admin_name = input("Enter admin name (optional, default 'Admin'): ") or "Admin"
+                # NEW: Prompt for position when adding admin to existing org
+                admin_position = input("Enter admin position (e.g., President, Secretary, etc.): ")
 
-                admin = create_admin_user(db, admin_email, admin_password, admin_name, organization_id=selected_organization.id)
+
+                # Pass position to create_admin_user
+                admin = create_admin_user(db, admin_email, admin_password, admin_name, organization_id=selected_organization.id, position=admin_position)
                 if admin:
                     print(f"Admin '{admin_email}' successfully added to organization '{selected_organization.name}'.")
                 else:
@@ -535,7 +568,9 @@ def main():
                 db.rollback()
             finally:
                 db.close()
-            break
+            # Removed break here to allow continuous use of the menu
+            # If you want it to exit after this operation, uncomment the break below
+            # break
         
         elif choice == '3':
             db = SessionLocal()
@@ -577,13 +612,59 @@ def main():
                 db.rollback()
             finally:
                 db.close()
-            break
+            # Removed break here to allow continuous use of the menu
+            # If you want it to exit after this operation, uncomment the break below
+            # break
 
-        elif choice == '4':
+        elif choice == '4': # NEW OPTION: Update Admin Position
+            db = SessionLocal()
+            try:
+                admins = db.query(Admin).all()
+                if not admins:
+                    print("No admins found.")
+                    db.close()
+                    continue
+                
+                print("\n--- Existing Admins ---")
+                for admin in admins:
+                    print(f"ID: {admin.admin_id}, Name: {admin.name}, Email: {admin.email}, Current Position: {admin.position if admin.position else 'N/A'}")
+
+                admin_id_input = input("Enter the ID of the admin to update their position: ")
+                try:
+                    selected_admin_id = int(admin_id_input)
+                except ValueError:
+                    print("Invalid admin ID. Please enter a number.")
+                    db.close()
+                    continue
+                
+                admin_to_edit = db.get(Admin, selected_admin_id)
+                if not admin_to_edit:
+                    print(f"Admin with ID {selected_admin_id} not found.")
+                    db.close()
+                    continue
+
+                new_position = input(f"Enter the NEW position for '{admin_to_edit.name}' (e.g., President, Secretary, etc.): ")
+                if not new_position:
+                    print("Position cannot be empty.")
+                    db.close()
+                    continue
+
+                update_admin_position(db, selected_admin_id, new_position)
+
+            except Exception as e:
+                print(f"An unexpected error occurred during admin position update: {e}")
+                db.rollback()
+            finally:
+                db.close()
+            # Removed break here to allow continuous use of the menu
+            # If you want it to exit after this operation, uncomment the break below
+            # break
+
+        elif choice == '5': # Updated exit choice
             print("Exiting setup.")
             break
         else:
-            print("Invalid choice. Please enter 1, 2, 3, or 4.")
+            print("Invalid choice. Please enter 1, 2, 3, 4, or 5.") # Updated prompt
 
 if __name__ == "__main__":
     main()

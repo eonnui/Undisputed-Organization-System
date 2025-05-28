@@ -4,7 +4,8 @@ from passlib.context import CryptContext
 from datetime import datetime, date  # Import both datetime and date
 import logging
 from sqlalchemy.sql import exists
-from typing import Optional
+from typing import Optional, Tuple # Added Tuple for type hints
+import json # Added json import for generate_custom_palette
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -67,6 +68,262 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     logging.info(f"Created user with student_number: {user.student_number}, email: {user.email}")
     return db_user
+
+# --- Helper functions for color manipulation (from ad.txt) ---
+def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+    """Converts a hex color string (#RRGGBB) to an RGB tuple (R, G, B)."""
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+def rgb_to_hex(rgb_color: Tuple[int, int, int]) -> str:
+    """Converts an RGB tuple (R, G, B) to a hex color string (#RRGGBB)."""
+    return '#%02x%02x%02x' % rgb_color
+
+def adjust_rgb_lightness(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+    """Adjusts the lightness of an RGB color by a factor (e.g., 0.8 for darker, 1.2 for lighter)."""
+    r, g, b = rgb
+    r = int(max(0, min(255, r * factor)))
+    g = int(max(0, min(255, g * factor)))
+    b = int(max(0, min(255, b * factor)))
+    return (r, g, b)
+
+def get_contrast_text_color(bg_hex: str) -> str:
+    """Returns #FFFFFF or #000000 based on the perceived lightness of the background color."""
+    r, g, b = hex_to_rgb(bg_hex)
+    # Calculate perceived lightness (luminance)
+    luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return "#000000" if luminance > 0.5 else "#FFFFFF"
+
+def generate_custom_palette(theme_color_hex: str) -> str:
+    """
+    Generates a full custom CSS variable palette based on a primary theme color.
+    Uses a predefined template and adjusts relevant colors.
+    """
+    # Base template derived from the "Samahan ng Sikolohiya" example.
+    base_palette = {
+        "--org-bg-color": "#fdf5f5",
+        "--org-login-bg": "#5c1011",
+        "--org-button-bg": "#9a1415",
+        "--org-button-text": "#FFFFFF",
+        "--org-hover-effect": "#7a1012",
+        "--org-accent-light": "#d32f2f",
+        "--org-accent-dark": "#5c0b0b",
+        "--org-highlight": "#ffebee",
+        "--org-text-primary": "#212121",
+        "--org-text-secondary": "#757575",
+        "--org-text-inverse": "#FFFFFF",
+        "--org-hover-dark": "#424242",
+        "--org-hover-accent": "#b71c1c",
+        "--org-focus-border": "transparent",
+        "--org-success": "#4CAF50",
+        "--org-error": "#F44336",
+        "--org-warning": "#FFC107",
+        "--org-info": "#2196F3",
+        "--org-bg-secondary": "#FFFFFF",
+        "--org-bg-dark": "#1a1a1a",
+        "--org-border-light": "transparent",
+        "--org-border-medium": "transparent",
+        "--org-nav-item-bg": "transparent",
+        "--org-nav-item-hover-bg": "rgba(154, 20, 21, 0.05)",
+        "--org-nav-item-selected-bg": "rgba(154, 20, 21, 0.1)",
+        "--org-sidebar-bg-color": "#a83232",
+        "--org-sidebar-border-color": "transparent",
+        "--org-logo-border-color": "transparent",
+        "--org-nav-icon-color": "#FFFFFF",
+        "--org-nav-hover-accent-color": "#fdf5f5",
+        "--org-nav-selected-border-color": "transparent",
+        "--org-top-bar-border-color": "transparent",
+        "--org-menu-button-hover-bg": "rgba(0, 0, 0, 0.05)",
+        "--org-profile-pic-border-color": "transparent",
+        "--org-dropdown-bg": "#FFFFFF",
+        "--org-dropdown-border": "transparent",
+        "--org-dropdown-item-hover-bg": "#f5f5f5",
+        "--org-dashboard-bg-color": "#fdf5f5",
+        "--org-dashboard-title-color": "#5c0b0b",
+        "--org-shadow-base-rgb": "0, 0, 0",
+        "--org-card-bg": "#FFFFFF",
+        "--org-announcement-card-bg": "#fefefe",
+        "--org-dashboard-accent-primary": "#d32f2f",
+        "--org-announcement-text-color": "#212121",
+        "--org-announcement-meta-color": "#757575",
+        "--org-view-details-hover": "#b71c1c",
+        "--org-event-placeholder-color": "#9e9e9e",
+        "--org-faq-border-color": "transparent",
+        "--org-faq-item-bg": "#fefefe",
+        "--org-faq-question-hover-bg": "#f5f5f5",
+        "--org-faq-answer-color": "#424242",
+        "--org-empty-state-color": "#9e9e9e",
+        "--org-empty-state-bg": "#fefefe",
+        "--org-post-card-border": "transparent",
+        "--org-profile-image-bg": "#e0e0e0",
+        "--org-post-info-color": "#5a5a5a",
+        "--org-post-date-color": "#9e9e9e",
+        "--org-post-content-color": "#333333",
+        "--org-post-actions-color": "#757575",
+        "--org-heart-hover-color": "#e57373",
+        "--org-heart-button-color": "#e53935",
+        "--org-pinned-bg": "#FFC107",
+        "--org-event-meta-color": "#757575",
+        "--org-event-description-color": "#424242",
+        "--org-event-item-border": "transparent",
+        "--org-event-item-hover-bg": "#f5f5f5",
+        "--org-event-tag-bg": "#ffebee",
+        "--org-event-tag-text": "#b71c1c",
+        "--org-academic-tag-bg": "#fbe9e7",
+        "--org-academic-tag-text": "#c62828",
+        "--org-sports-tag-bg": "#e8f5e9",
+        "--org-sports-tag-text": "#388e3c",
+        "--org-arts-tag-bg": "#fffde7",
+        "--org-arts-tag-text": "#f9a825",
+        "--org-music-tag-bg": "#ffecb3",
+        "--org-music-tag-text": "#f57f17",
+        "--org-esports-tag-bg": "#e0f7fa",
+        "--org-esports-tag-text": "#00838f",
+        "--org-cultural-tag-bg": "#f3e5f5",
+        "--org-cultural-tag-text": "#7b1fa2",
+        "--org-join-btn-bg": "#43a047",
+        "--org-join-btn-hover-bg": "#388e3c",
+        "--org-leave-btn-bg": "#e53935",
+        "--org-leave-btn-hover-bg": "#d32f2f",
+        "--org-event-full-bg": "#9e9e9e",
+        "--org-event-full-text": "#FFFFFF",
+        "--org-join-button-bg": "#43a047",
+        "--org-join-button-hover-bg": "#45a049",
+        "--org-leave-button-bg": "#f44336",
+        "--org-leave-button-hover-bg": "#d32f2f",
+        "--org-full-button-bg": "#bdbdbd",
+        "--org-full-button-text": "#424242",
+        "--org-participants-count-color": "#757575",
+        "--org-payments-container-bg": "#fdf5f5",
+        "--org-border-light-darker": "transparent",
+        "--org-text-primary-darker": "#000000",
+        "--org-table-header-bg-payments": "#fbc4cb",
+        "--org-table-header-text-payments": "#333333",
+        "--org-table-data-text": "#333333",
+        "--org-background-light-alt-darker": "#fefafa",
+        "--org-status-unpaid-bg": "#ffebee",
+        "--org-status-unpaid-text": "#b71c1c",
+        "--org-error-border": "transparent",
+        "--org-pay-button-bg-payments": "#e53935",
+        "--org-pay-button-hover-bg-payments": "#d32f2f",
+        "--org-standby-button-bg-payments": "#bdbdbd",
+        "--org-button-disabled-text-darker": "#757575",
+        "--org-past-due-bg": "#ffebee",
+        "--org-past-due-text": "#b71c1c",
+        "--org-past-due-hover-bg": "#ffcdd2",
+        "--org-past-due-hover-text": "#b71c1c",
+        "--org-surface": "#FFFFFF",
+        "--org-radius-lg": "12px",
+        "--org-shadow-md": "0 4px 10px rgba(0, 0, 0, 0.12)",
+        "--org-transition": "all 0.3s ease-in-out",
+        "--org-shadow-lg": "0 6px 15px rgba(0, 0, 0, 0.18)",
+        "--org-primary": "#9a1415",
+        "--org-radius-md": "8px",
+        "--org-shadow-sm": "0 2px 5px rgba(0, 0, 0, 0.08)",
+        "--org-text-light": "#FFFFFF",
+        "--org-secondary-color": "#f5f5f5",
+        "--org-primary-light": "#ffcdd2",
+        "--org-primary-hover": "#b71c1c",
+        "--org-settings-section-bg": "#f5f5f5",
+        "--org-settings-title-color": "#212121",
+        "--org-button-group-button-update-bg": "#a83232",
+        "--org-button-group-button-update-hover-bg": "#862828",
+        "--org-button-group-button-clear-bg": "#FFFFFF",
+        "--org-button-group-button-clear-hover-bg": "transparent",
+        "--org-profile-picture-border": "transparent",
+        "--org-change-profile-pic-bg": "#a83232",
+        "--org-change-profile-pic-hover-bg": "#862828",
+        "--org-student-info-section-bg": "#FFFFFF",
+        "--org-verified-bg": "#4CAF50",
+        "--org-verified-text": "#FFFFFF",
+        "--org-unverified-bg": "#FFC107",
+        "--org-unverified-text": "#212121",
+        "--org-registration-form-section-bg": "#FFFFFF",
+        "--org-edit-icon-bg": "#FFFFFF",
+        "--org-edit-icon-hover-bg": "#f5f5f5",
+        "--org-read-only-input-bg": "#fdf5f5",
+        "--org-read-only-input-text": "#757575",
+        "--org-form-group-label-color": "#212121",
+        "--org-form-group-input-border": "transparent",
+        "--org-form-group-input-focus-border": "transparent"
+    }
+
+    custom_palette = base_palette.copy()
+    theme_rgb = hex_to_rgb(theme_color_hex)
+
+    dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.7)
+    darker_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.5)
+    light_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.2)
+    lighter_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.6)
+
+    dark_theme_hex = rgb_to_hex(dark_theme_rgb)
+    darker_theme_hex = rgb_to_hex(darker_theme_rgb)
+    light_theme_hex = rgb_to_hex(light_theme_rgb)
+    lighter_theme_hex = rgb_to_hex(lighter_theme_rgb)
+
+    whiteness_factor = .9
+    very_light_bg_rgb = (
+        int(theme_rgb[0] * (1 - whiteness_factor) + 255 * whiteness_factor),
+        int(theme_rgb[1] * (1 - whiteness_factor) + 255 * whiteness_factor),
+        int(theme_rgb[2] * (1 - whiteness_factor) + 255 * whiteness_factor)
+    )
+    very_light_bg_rgb = (
+        max(0, min(255, very_light_bg_rgb[0])),
+        max(0, min(255, very_light_bg_rgb[1])),
+        max(0, min(255, very_light_bg_rgb[2]))
+    )
+    very_light_bg_hex = rgb_to_hex(very_light_bg_rgb)
+
+    custom_palette["--org-bg-color"] = very_light_bg_hex
+    custom_palette["--org-secondary-color"] = very_light_bg_hex
+    custom_palette["--org-dashboard-bg-color"] = very_light_bg_hex
+    custom_palette["--org-payments-container-bg"] = very_light_bg_hex
+    custom_palette["--org-nav-hover-accent-color"] = very_light_bg_hex
+    custom_palette["--org-settings-section-bg"] = very_light_bg_hex
+    custom_palette["--org-read-only-input-bg"] = very_light_bg_hex
+
+    button_text_color = get_contrast_text_color(theme_color_hex)
+
+    custom_palette["--org-primary"] = theme_color_hex
+    custom_palette["--org-button-bg"] = theme_color_hex
+    custom_palette["--org-hover-effect"] = dark_theme_hex
+    custom_palette["--org-accent-light"] = light_theme_hex
+    custom_palette["--org-accent-dark"] = darker_theme_hex
+    custom_palette["--org-hover-accent"] = dark_theme_hex
+    custom_palette["--org-primary-hover"] = dark_theme_hex
+    custom_palette["--org-primary-light"] = lighter_theme_hex
+    custom_palette["--org-dashboard-accent-primary"] = light_theme_hex
+
+    custom_palette["--org-login-bg"] = darker_theme_hex
+    custom_palette["--org-sidebar-bg-color"] = dark_theme_hex
+    custom_palette["--org-nav-item-hover-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.05)"
+    custom_palette["--org-nav-item-selected-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.1)"
+    custom_palette["--org-nav-icon-color"] = button_text_color
+
+    custom_palette["--org-button-text"] = button_text_color
+    custom_palette["--org-dashboard-title-color"] = darker_theme_hex
+    custom_palette["--org-text-light"] = button_text_color
+
+    custom_palette["--org-event-tag-bg"] = lighter_theme_hex
+    custom_palette["--org-event-tag-text"] = dark_theme_hex
+
+    custom_palette["--org-academic-tag-bg"] = adjust_rgb_lightness(hex_to_rgb(theme_color_hex), 1.4)
+    custom_palette["--org-academic-tag-text"] = darker_theme_hex
+
+    custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
+    custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex)
+
+    custom_palette["--org-settings-title-color"] = darker_theme_hex
+
+    custom_palette["--org-button-group-button-update-bg"] = dark_theme_hex
+    custom_palette["--org-button-group-button-update-hover-bg"] = darker_theme_hex
+    custom_palette["--org-change-profile-pic-bg"] = dark_theme_hex
+    custom_palette["--org-change-profile-pic-hover-bg"] = darker_theme_hex
+
+    custom_palette["--org-highlight"] = very_light_bg_hex
+    custom_palette["--org-primary"] = theme_color_hex
+
+    return json.dumps(custom_palette, indent=2)
 
 # --- END FIX FOR AttributeError ---
 
