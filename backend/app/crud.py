@@ -300,7 +300,7 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-nav-item-selected-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.1)"
     custom_palette["--org-nav-icon-color"] = button_text_color
 
-    custom_palette["--org-button-text"] = button_text_color
+    custom_palette["--org-button-text"] = "#FFFFFF"
     custom_palette["--org-dashboard-title-color"] = darker_theme_hex
     custom_palette["--org-text-light"] = button_text_color
 
