@@ -168,6 +168,7 @@ def generate_custom_palette(theme_color_hex):
         "--org-table-header-text-payments": "#333333",
         "--org-table-data-text": "#333333",
         "--org-background-light-alt-darker": "#fefafa",
+        # These values are now fixed as per user's request
         "--org-status-unpaid-bg": "#ffebee",
         "--org-status-unpaid-text": "#b71c1c",
         "--org-error-border": "transparent",
@@ -248,11 +249,15 @@ def generate_custom_palette(theme_color_hex):
     )
     very_light_bg_hex = rgb_to_hex(very_light_bg_rgb) # This is the new light background color
 
-    # --- NEW LOGIC: Replace all occurrences of the original default light background ---
-    original_default_light_bg = "#fdf5f5" # Get this from your base_palette definition
-    for key, value in custom_palette.items():
-        if value == original_default_light_bg:
-            custom_palette[key] = very_light_bg_hex
+    # --- NEW LOGIC: Ensure all specified variables are connected to very_light_bg_hex ---
+    custom_palette["--org-bg-color"] = very_light_bg_hex
+    custom_palette["--org-secondary-color"] = very_light_bg_hex
+    custom_palette["--org-dashboard-bg-color"] = very_light_bg_hex
+    custom_palette["--org-payments-container-bg"] = very_light_bg_hex
+    custom_palette["--org-nav-hover-accent-color"] = very_light_bg_hex
+    custom_palette["--org-settings-section-bg"] = very_light_bg_hex
+    custom_palette["--org-read-only-input-bg"] = very_light_bg_hex
+
 
     # Determine contrast text color for buttons/primary elements
     button_text_color = get_contrast_text_color(theme_color_hex)
@@ -273,7 +278,7 @@ def generate_custom_palette(theme_color_hex):
     custom_palette["--org-sidebar-bg-color"] = dark_theme_hex
     custom_palette["--org-nav-item-hover-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.05)"
     custom_palette["--org-nav-item-selected-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.1)"
-    custom_palette["--org-nav-hover-accent-color"] = lighter_theme_hex # Assuming this is a very light version of primary text
+    # custom_palette["--org-nav-hover-accent-color"] is now set to very_light_bg_hex
     custom_palette["--org-nav-icon-color"] = button_text_color # Icons on primary-like background
 
     # Button/Text colors related to primary/accents
@@ -289,24 +294,23 @@ def generate_custom_palette(theme_color_hex):
     custom_palette["--org-academic-tag-text"] = darker_theme_hex
 
     # Payments specific colors
-    custom_palette["--org-payments-container-bg"] = custom_palette["--org-bg-color"] # Re-use global background
+    # custom_palette["--org-payments-container-bg"] is now set to very_light_bg_hex
     custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
     custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex) # Text on light header
 
-    custom_palette["--org-status-unpaid-bg"] = lighter_theme_hex
-    custom_palette["--org-status-unpaid-text"] = dark_theme_hex
-
-    custom_palette["--org-pay-button-bg-payments"] = theme_color_hex
-    custom_palette["--org-pay-button-hover-bg-payments"] = dark_theme_hex
-
-    custom_palette["--org-past-due-bg"] = lighter_theme_hex
-    custom_palette["--org-past-due-text"] = dark_theme_hex
-    custom_palette["--org-past-due-hover-bg"] = adjust_rgb_lightness(hex_to_rgb(lighter_theme_hex), 0.9) # Slightly darker hover
-    custom_palette["--org-past-due-hover-text"] = dark_theme_hex
-
+    # The following variables are now explicitly set to the user-defined fixed values
+    # and will not be dynamically updated based on the theme color.
+    # --org-status-unpaid-bg: #ffebee
+    # --org-status-unpaid-text: #b71c1c
+    # --org-pay-button-bg-payments: #e53935
+    # --org-pay-button-hover-bg-payments: #d32f2f
+    # --org-past-due-bg: #ffebee
+    # --org-past-due-text: #b71c1c
+    # --org-past-due-hover-bg: #ffcdd2
+    # --org-past-due-hover-text: #b71c1c
 
     # Update for settings section
-    custom_palette["--org-settings-section-bg"] = lighter_theme_hex
+    # custom_palette["--org-settings-section-bg"] is now set to very_light_bg_hex
     custom_palette["--org-settings-title-color"] = darker_theme_hex
 
     # Update for button groups in settings
@@ -316,7 +320,7 @@ def generate_custom_palette(theme_color_hex):
     custom_palette["--org-change-profile-pic-hover-bg"] = darker_theme_hex
 
     # Read-only inputs
-    custom_palette["--org-read-only-input-bg"] = lighter_theme_hex
+    # custom_palette["--org-read-only-input-bg"] is now set to very_light_bg_hex
 
     # Set --org-highlight to be the same as the very light background color
     custom_palette["--org-highlight"] = very_light_bg_hex
