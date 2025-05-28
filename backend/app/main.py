@@ -16,6 +16,7 @@ import secrets
 import re
 import requests
 import base64
+import logging
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -45,6 +46,10 @@ router = APIRouter()
 
 # Initialize Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=BASE_DIR / "frontend" / "templates")
+
+# Configure logging for this module
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG) # Set to DEBUG to capture all messages
 
 
 # Dependency to get a database session
@@ -725,54 +730,63 @@ async def admin_outstanding_dues(
     request: Request,
     db: Session = Depends(get_db),
     academic_year: Optional[str] = None,
-    semester: Optional[str] = None,
 ) -> List[Dict]:
     """
-    Retrieves the total outstanding dues amount, filtered by academic year and CURRENT semester.
+    Retrieves the total outstanding dues amount, filtered by academic year,
+    CURRENT semester, and the admin's organization.
     This version uses case-insensitive comparison for academic year. The semester
     is always the *current* semester, determined by the server.
     """
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+
+    admin_org_id = get_entity_organization_id(db, admin_id)
+    if not admin_org_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin organization not found or accessible")
+
     try:
         today = datetime.now()
         month = today.month
-        if 6 <= month <= 11:
-            current_semester = "1st"
-        else:
-            current_semester = "2nd"
+        
+        current_semester = "1st" if 6 <= month <= 11 else "2nd"
 
-        if not academic_year:
+        resolved_academic_year = academic_year
+        if not resolved_academic_year:
             current_year = today.year
             start_year = current_year - 1 if today.month < 6 else current_year
             end_year = start_year + 1
-            academic_year = f"{start_year}-{end_year}"
+            resolved_academic_year = f"{start_year}-{end_year}"
 
-        query = db.query(models.PaymentItem).filter(
+        # Join PaymentItem directly to User and filter by organization, academic year, and semester
+        query = db.query(models.PaymentItem).join(
+            models.User, models.PaymentItem.user_id == models.User.id
+        ).filter(
             and_(
-                func.lower(models.PaymentItem.academic_year) == academic_year.lower(),
+                func.lower(models.PaymentItem.academic_year) == resolved_academic_year.lower(),
                 models.PaymentItem.semester == current_semester,
+                models.User.organization_id == admin_org_id,
+                models.PaymentItem.is_not_responsible == False # Only consider those responsible
             )
-        ).options(joinedload(models.PaymentItem.payments))
+        )
+        
+        relevant_payment_items = query.all()
+        
+        total_outstanding_amount = 0.0
 
-        payment_items = query.all()
-
-        total_outstanding_amount = 0
-
-        for item in payment_items:
-            total_paid_for_item = 0
-            for payment in item.payments:
-                if payment.status == "success":
-                    total_paid_for_item += payment.amount
-
-            outstanding_for_item = item.fee - total_paid_for_item
-
-            if outstanding_for_item > 0:
-                total_outstanding_amount += outstanding_for_item
-            else:
-                pass
+        for item in relevant_payment_items:
+            # If the PaymentItem is not marked as paid, add its fee to the outstanding total
+            if not item.is_paid:
+                total_outstanding_amount += item.fee
 
         return [{"total_outstanding_amount": total_outstanding_amount}]
-    except Exception as e:
+
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to fetch outstanding dues data")
+
+
 
 @router.get("/admin/payments/total_members", response_class=HTMLResponse, name="payments_total_members")
 async def payments_total_members(
