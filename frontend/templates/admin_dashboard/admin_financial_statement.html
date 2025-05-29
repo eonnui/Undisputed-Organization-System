@@ -1,4 +1,3 @@
-
 {% extends 'admin_base.html' %}
 
 {% block title %}Admin Financial Statement Dashboard{% endblock %}
@@ -6,394 +5,561 @@
 {% block head %}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
-  <h2 class="dashboard-header">Admin Financial Statement Dashboard</h2>
+    <h2 class="dashboard-header">Admin Financial Statement Dashboard - Year <span id="current-year"></span></h2>
 
-  <div class="quick-stats-container">
-    <div class="stat-card">
-      <h3>Total Current Balance</h3>
-      <p>₱[Total Current Balance]</p>
-    </div>
-    <div class="stat-card">
-      <h3>Total Revenue (YTD)</h3>
-      <p>₱[Total Revenue YTD]</p>
-    </div>
-    <div class="stat-card">
-      <h3>Total Expenses (YTD)</h3>
-      <p>₱[Total Expenses YTD]</p>
-    </div>
-    <div class="stat-card">
-      <h3>Net Income (YTD)</h3>
-      <p>₱[Net Income YTD]</p>
-    </div>
-  </div>
-
-  <div class="summary-info-container">
-    <p><strong>Overall Balance Turnover:</strong> ₱[Balance Turnover]</p>
-    <p><strong>Total Funds Available:</strong> ₱[Total Funds Available]</p>
-    <p><strong>Reporting Date:</strong> [Reporting Date]</p>
-  </div>
-
-  <div class="report-toggle-container">
-    <span class="report-toggle-label">Quick View:</span>
-    <div class="report-toggle-buttons">
-      <button class="report-toggle-button active" onclick="toggleView('overview')">Overview</button>
-      <button class="report-toggle-button" onclick="toggleView('revenues')">Revenues</button>
-      <button class="report-toggle-button" onclick="toggleView('expenses')">Expenses</button>
-      <button class="report-toggle-button" onclick="toggleView('monthly')">Monthly</button>
-      <button class="report-toggle-button" onclick="toggleView('accounts')">Accounts</button>
-    </div>
-  </div>
-
-  <div id="overview" class="report-card active">
-    <div class="report-header">
-      <h2>Financial Overview</h2>
-      <p>Key Financial Indicators</p>
-    </div>
-    <div class="report-body">
-      <div class="overview-charts-container">
-        <div class="chart-container">
-          <h3>Revenue vs. Expenses (YTD)</h3>
-          <canvas id="revenue-expense-chart" class="chart-canvas" ></canvas>
+    <div class="quick-stats-container">
+        <div class="stat-card">
+            <h3>Total Current Balance</h3>
+            <p id="total-current-balance">₱0.00</p>
         </div>
-        <div class="chart-container">
-          <h3>Net Income Trend (Last 12 Months)</h3>
-          <canvas id="net-income-trend-chart" class="chart-canvas" ></canvas>
+        <div class="stat-card">
+            <h3>Total Revenue (YTD)</h3>
+            <p id="total-revenue-ytd">₱0.00</p>
         </div>
-      </div>
-      <div class="key-metrics-container">
-        <div class="metric-card">
-          <h4>Top Revenue Source</h4>
-          <p>[Highest Revenue Source] (₱[Highest Revenue Amount])</p>
+        <div class="stat-card">
+            <h3>Total Expenses (YTD)</h3>
+            <p id="total-expenses-ytd">₱0.00</p>
         </div>
-        <div class="metric-card">
-          <h4>Largest Expense</h4>
-          <p>[Largest Expense Category] (₱[Largest Expense Amount])</p>
+        <div class="stat-card">
+            <h3>Net Income (YTD)</h3>
+            <p id="net-income-ytd" class="positive">₱0.00</p>
         </div>
-        <div class="metric-card">
-          <h4>Profit Margin (YTD)</h4>
-          <p>[Profit Margin YTD]%</p>
+    </div>
+
+    <div class="summary-info-container">
+        <p><strong>Overall Balance Turnover:</strong> <span id="balance-turnover">0.00</span></p>
+        <p><strong>Total Funds Available:</strong> <span id="total-funds-available">₱0.00</p>
+        <p><strong>Reporting Date:</strong> <span id="reporting-date">Loading...</span></p>
+    </div>
+
+    <div class="report-toggle-container">
+        <span class="report-toggle-label">Quick View:</span>
+        <div class="report-toggle-buttons">
+            <button class="report-toggle-button active" onclick="toggleView('overview')">Overview</button>
+            <button class="report-toggle-button" onclick="toggleView('revenues')">Revenues</button>
+            <button class="report-toggle-button" onclick="toggleView('expenses')">Expenses</button>
+            <button class="report-toggle-button" onclick="toggleView('monthly')">Monthly</button>
+            <button class="report-toggle-button" onclick="toggleView('accounts')">Accounts</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <div id="revenues" class="report-card">
-    <div class="report-header">
-      <h2>Revenue Breakdown</h2>
-      <p>Detailed Income Sources</p>
+    <div id="overview" class="report-card active">
+        <div class="report-header">
+            <h2>Financial Overview</h2>
+            <p>Key Financial Indicators</p>
+        </div>
+        <div class="report-body">
+            <div class="overview-charts-container">
+                <div class="chart-container">
+                    <h3>Revenue vs. Expenses (YTD)</h3>
+                    <canvas id="revenue-expense-chart" class="chart-canvas"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Net Income Trend (Last 12 Months)</h3>
+                    <canvas id="net-income-trend-chart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+            <div class="key-metrics-container">
+                <div class="metric-card">
+                    <h4>Top Revenue Source</h4>
+                    <p id="top-revenue-source">Loading...</p>
+                </div>
+                <div class="metric-card">
+                    <h4>Largest Expense</h4>
+                    <p id="largest-expense">Loading...</p>
+                </div>
+                <div class="metric-card">
+                    <h4>Profit Margin (YTD)</h4>
+                    <p id="profit-margin-ytd">0.00%</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="report-body">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Source</th>
-            <th>Amount (₱)</th>
-            <th>Trend</th>
-            <th>% of Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>[Revenue Source 1]</td>
-            <td class="amount">₱[Revenue 1 Amount]</td>
-            <td><span class="trend">[Revenue 1 Trend]</span></td>
-            <td>[Revenue 1 Percentage]%</td>
-          </tr>
-          <tr>
-            <td>[Revenue Source 2]</td>
-            <td class="amount">₱[Revenue 2 Amount]</td>
-            <td><span class="trend">[Revenue 2 Trend]</span></td>
-            <td>[Revenue 2 Percentage]%</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <th>Total Revenue:</th>
-            <th class="amount">₱[Total Revenue YTD]</th>
-            <th></th>
-            <th>100%</th>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </div>
 
-  <div id="expenses" class="report-card">
-    <div class="report-header">
-      <h2>Expense Breakdown</h2>
-      <p>Detailed Expenditures</p>
+    <div id="revenues" class="report-card">
+        <div class="report-header">
+            <h2>Revenue Breakdown</h2>
+            <p>Detailed Income Sources</p>
+        </div>
+        <div class="report-body">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Amount (₱)</th>
+                        <th>Trend</th>
+                        <th>% of Total</th>
+                    </tr>
+                </thead>
+                <tbody id="revenues-breakdown-body">
+                    </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Total Revenue:</th>
+                        <th class="amount" id="total-revenue-footer">₱0.00</th>
+                        <th></th>
+                        <th>100%</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
-    <div class="report-body">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Amount (₱)</th>
-            <th>Trend</th>
-            <th>% of Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>[Expense Category 1]</td>
-            <td class="amount">₱[Expense 1 Amount]</td>
-            <td><span class="trend">[Expense 1 Trend]</span></td>
-            <td>[Expense 1 Percentage]%</td>
-          </tr>
-          <tr>
-            <td>[Expense Category 2]</td>
-            <td class="amount">₱[Expense 2 Amount]</td>
-            <td><span class="trend">[Expense 2 Trend]</span></td>
-            <td>[Expense 2 Percentage]%</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <th>Total Expenses:</th>
-            <th class="amount">₱[Total Expenses YTD]</th>
-            <th></th>
-            <th>100%</th>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </div>
 
-  <div id="monthly" class="report-card">
-    <div class="report-header">
-      <h2>Monthly Summary</h2>
-      <p>Income and Expenses by Month</p>
+    <div id="expenses" class="report-card">
+        <div class="report-header">
+            <h2>Expense Breakdown</h2>
+            <p>Detailed Expenditures</p>
+        </div>
+        <div class="report-body">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Amount (₱)</th>
+                        <th>Trend</th>
+                        <th>% of Total</th>
+                    </tr>
+                </thead>
+                <tbody id="expenses-breakdown-body">
+                    </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Total Expenses:</th>
+                        <th class="amount" id="total-expenses-footer">₱0.00</th>
+                        <th></th>
+                        <th>100%</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
-    <div class="report-body">
-      <div class="monthly-summary-table">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th>Revenue (₱)</th>
-              <th>Expenses (₱)</th>
-              <th>Net Income (₱)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>January</td>
-              <td class="amount positive">₱[January Revenue]</td>
-              <td class="amount negative">₱[January Expenses]</td>
-              <td class="amount [January Net Income Class]">₱[January Net Income]</td>
-            </tr>
-            <tr>
-              <td>February</td>
-              <td class="amount positive">₱[February Revenue]</td>
-              <td class="amount negative">₱[February Expenses]</td>
-              <td class="amount [February Net Income Class]">₱[February Net Income]</td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <th>Year Total:</th>
-              <th class="amount positive">₱[Total Revenue YTD]</th>
-              <th class="amount negative">₱[Total Expenses YTD]</th>
-              <th class="amount [Net Income YTD Class]">₱[Net Income YTD]</th>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
 
-  <div id="accounts" class="report-card">
-    <div class="report-header">
-      <h2>Account Balances</h2>
-      <p>Current Balances in All Accounts</p>
+    <div id="monthly" class="report-card">
+        <div class="report-header">
+            <h2>Monthly Summary</h2>
+            <p>Income and Expenses by Month</p>
+        </div>
+        <div class="report-body">
+            <div class="monthly-summary-table">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Revenue (₱)</th>
+                            <th>Expenses (₱)</th>
+                            <th>Net Income (₱)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthly-summary-body">
+                        </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>Year Total:</th>
+                            <th class="amount positive" id="monthly-total-revenue-footer">₱0.00</th>
+                            <th class="amount negative" id="monthly-total-expenses-footer">₱0.00</th>
+                            <th class="amount" id="monthly-net-income-footer">₱0.00</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
     </div>
-    <div class="report-body">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Account</th>
-            <th>Balance (₱)</th>
-            <th>Last Transaction</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>[Account Name 1]</td>
-            <td class="amount">₱[Account 1 Balance]</td>
-            <td>[Account 1 Last Transaction]</td>
-            <td class="[Account 1 Status Lowercase]">[Account 1 Status]</td>
-          </tr>
-          <tr>
-            <td>[Account Name 2]</td>
-            <td class="amount">₱[Account 2 Balance]</td>
-            <td>[Account 2 Last Transaction]</td>
-            <td class="[Account 2 Status Lowercase]">[Account 2 Status]</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <th>Total Balance:</th>
-            <th class="amount">₱[Total Current Balance]</th>
-            <th></th>
-            <th></th>
-          </tr>
-        </tfoot>
-      </table>
+
+    <div id="accounts" class="report-card">
+        <div class="report-header">
+            <h2>Account Balances</h2>
+            <p>Current Balances in All Accounts</p>
+        </div>
+        <div class="report-body">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Balance (₱)</th>
+                        <th>Last Transaction</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="accounts-balances-body">
+                    </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Total Balance:</th>
+                        <th class="amount" id="total-accounts-balance-footer">₱0.00</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  function toggleView(viewId) {
-    const reportCards = document.querySelectorAll('.report-card');
-    const toggleButtons = document.querySelectorAll('.report-toggle-button');
+    // Global variables to hold chart instances
+    let revenueExpenseChart;
+    let netIncomeTrendChart;
 
-    reportCards.forEach(card => {
-      card.classList.remove('active');
-      if (card.id === viewId) {
-        card.classList.add('active');
-      }
-    });
+    /**
+     * Toggles the display of different report sections and updates active button state.
+     * @param {string} viewId - The ID of the report card to display (e.g., 'overview', 'revenues').
+     */
+    function toggleView(viewId) {
+        const reportCards = document.querySelectorAll('.report-card');
+        const toggleButtons = document.querySelectorAll('.report-toggle-button');
 
-    toggleButtons.forEach(button => {
-      button.classList.remove('active');
-      if (button.textContent.toLowerCase().includes(viewId)) {
-        button.classList.add('active');
-      }
-    });
-
-    // --- Initialize Charts (Conceptual) ---
-    if (viewId === 'overview') {
-      //  Replace this with your actual chart rendering code using Chart.js
-      //  Example (Conceptual):
-      const revenueExpenseCtx = document.getElementById('revenue-expense-chart');
-      if (revenueExpenseCtx) {
-        new Chart(revenueExpenseCtx, {
-          type: 'bar',
-          data: {
-            labels: ['Revenue', 'Expenses'],
-            datasets: [{
-              label: 'Year-to-Date (₱)',
-              data: [1000000, 750000], // Example Data
-              backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.1)', // Light grid lines
-                  lineWidth: 0.5
-                }
-              },
-              x: {
-                grid: {
-                  display: false
-                }}
-            },
-            plugins: {
-              legend: {
-                position: 'bottom',
-              },
-              tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                borderColor: 'rgba(0, 0, 0, 0.8)',
-                borderWidth: 1,
-                animationDuration: 200
-              }
-            },
-            animation: {
-              duration: 1000,
-              easing: 'easeInOutQuart'
-            }
-          }
+        // Hide all report cards and deactivate all buttons
+        reportCards.forEach(card => {
+            card.classList.remove('active');
         });
-      }
-
-      const netIncomeCtx = document.getElementById('net-income-trend-chart');
-      if (netIncomeCtx) {
-        new Chart(netIncomeCtx, {
-          type: 'line',
-          data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-            datasets: [{
-              label: 'Net Income (₱)',
-              data: [50000, 60000, 70000, 80000, 90000, 100000, 110000, 120000, 130000, 140000, 150000, 160000], // Example Data
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 3,
-              fill: false,
-              pointRadius: 6,
-              pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-              pointHoverRadius: 8,
-              pointHoverBackgroundColor: 'rgba(75, 192, 192, 1)',
-              tension: 0.4, // Add some curve
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.1)',
-                  lineWidth: 0.5
-                },
-              },
-              x: {
-                grid: {
-                  color: 'rgba(0, 0, 0, 0.1)',
-                  lineWidth: 0.5
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                position: 'bottom'
-              },
-              tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                borderColor: 'rgba(0, 0, 0, 0.8)',
-                borderWidth: 1,
-                animationDuration: 200,
-                yAlign: 'bottom',
-                intersect: false
-              }
-            },
-            animation: {
-              duration: 1200,
-              easing: 'easeInOutCubic'
-            },
-            elements: {
-              line: {
-                capStyle: 'round',
-                joinStyle: 'round',
-              }
-            }
-          }
+        toggleButtons.forEach(button => {
+            button.classList.remove('active');
         });
-      }
+
+        // Show the selected report card and activate its button
+        const selectedCard = document.getElementById(viewId);
+        if (selectedCard) {
+            selectedCard.classList.add('active');
+        }
+        const selectedButton = Array.from(toggleButtons).find(button =>
+            button.textContent.toLowerCase().includes(viewId)
+        );
+        if (selectedButton) {
+            selectedButton.classList.add('active');
+        }
+
+        // Re-render charts if the overview is activated and data is available
+        if (viewId === 'overview' && window.financialData) {
+            renderCharts(window.financialData);
+        }
     }
-  }
 
-  // Initially show the overview
-  document.addEventListener('DOMContentLoaded', function () {
-    toggleView('overview');
-  });
+    /**
+     * Renders the Chart.js graphs using the fetched financial data.
+     * @param {object} data - The financial data object fetched from the API.
+     */
+    function renderCharts(data) {
+        // Destroy existing chart instances if they exist to prevent duplicates
+        if (revenueExpenseChart) {
+            revenueExpenseChart.destroy();
+        }
+        if (netIncomeTrendChart) {
+            netIncomeTrendChart.destroy();
+        }
+
+        // Revenue vs. Expenses Chart
+        const revenueExpenseCtx = document.getElementById('revenue-expense-chart');
+        if (revenueExpenseCtx) {
+            revenueExpenseChart = new Chart(revenueExpenseCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Revenue', 'Expenses'],
+                    datasets: [{
+                        label: 'Year-to-Date (₱)',
+                        // Data from API is already cleaned/formatted, so parseFloat is needed
+                        data: [
+                            parseFloat(data.total_revenue_ytd.replace(/,/g, '')),
+                            parseFloat(data.total_expenses_ytd.replace(/,/g, ''))
+                        ],
+                        backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
+                        borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                lineWidth: 0.5
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₱' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(0, 0, 0, 0.8)',
+                            borderWidth: 1,
+                            animationDuration: 200,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        // Net Income Trend Chart
+        const netIncomeCtx = document.getElementById('net-income-trend-chart');
+        if (netIncomeCtx) {
+            netIncomeTrendChart = new Chart(netIncomeCtx, {
+                type: 'line',
+                data: {
+                    labels: data.chart_net_income_labels,
+                    datasets: [{
+                        label: 'Net Income (₱)',
+                        data: data.chart_net_income_data,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 3,
+                        fill: true,
+                        pointRadius: 6,
+                        pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                lineWidth: 0.5
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '₱' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                lineWidth: 0.5
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(0, 0, 0, 0.8)',
+                            borderWidth: 1,
+                            animationDuration: 200,
+                            yAlign: 'bottom',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ₱' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeInOutCubic'
+                    },
+                    elements: {
+                        line: {
+                            capStyle: 'round',
+                            joinStyle: 'round',
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Populates the HTML elements with the fetched financial data.
+     * @param {object} data - The financial data object fetched from the API.
+     */
+    function populateDashboard(data) {
+        // Update quick stats
+        document.getElementById('current-year').textContent = data.year;
+        document.getElementById('total-current-balance').textContent = `₱${data.total_current_balance}`;
+        document.getElementById('total-revenue-ytd').textContent = `₱${data.total_revenue_ytd}`;
+        document.getElementById('total-expenses-ytd').textContent = `₱${data.total_expenses_ytd}`;
+        const netIncomeYTDElement = document.getElementById('net-income-ytd');
+        netIncomeYTDElement.textContent = `₱${data.net_income_ytd}`;
+        // Apply positive/negative class based on value
+        if (parseFloat(data.net_income_ytd.replace(/,/g, '')) >= 0) {
+            netIncomeYTDElement.classList.add('positive');
+            netIncomeYTDElement.classList.remove('negative');
+        } else {
+            netIncomeYTDElement.classList.add('negative');
+            netIncomeYTDElement.classList.remove('positive');
+        }
+
+        // Update summary info
+        document.getElementById('balance-turnover').textContent = data.balance_turnover;
+        document.getElementById('total-funds-available').textContent = `₱${data.total_funds_available}`;
+        document.getElementById('reporting-date').textContent = data.reporting_date;
+
+        // Update key metrics
+        document.getElementById('top-revenue-source').textContent = `${data.top_revenue_source_name} (₱${data.top_revenue_source_amount})`;
+        document.getElementById('largest-expense').textContent = `${data.largest_expense_category} (₱${data.largest_expense_amount})`;
+        document.getElementById('profit-margin-ytd').textContent = `${data.profit_margin_ytd}%`;
+
+        // Populate Revenue Breakdown Table
+        const revenuesBreakdownBody = document.getElementById('revenues-breakdown-body');
+        revenuesBreakdownBody.innerHTML = ''; // Clear existing rows
+        data.revenues_breakdown.forEach(item => {
+            const row = revenuesBreakdownBody.insertRow();
+            row.innerHTML = `
+                <td>${item.source}</td>
+                <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td><span class="trend ${item.trend.toLowerCase()}">${item.trend}</span></td>
+                <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
+            `;
+        });
+        document.getElementById('total-revenue-footer').textContent = `₱${data.total_revenue_ytd}`;
+
+
+        // Populate Expense Breakdown Table
+        const expensesBreakdownBody = document.getElementById('expenses-breakdown-body');
+        expensesBreakdownBody.innerHTML = ''; // Clear existing rows
+        data.expenses_breakdown.forEach(item => {
+            const row = expensesBreakdownBody.insertRow();
+            row.innerHTML = `
+                <td>${item.category}</td>
+                <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td><span class="trend ${item.trend.toLowerCase()}">${item.trend}</span></td>
+                <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
+            `;
+        });
+        document.getElementById('total-expenses-footer').textContent = `₱${data.total_expenses_ytd}`;
+
+
+        // Populate Monthly Summary Table
+        const monthlySummaryBody = document.getElementById('monthly-summary-body');
+        monthlySummaryBody.innerHTML = ''; // Clear existing rows
+        let totalMonthlyRevenue = 0;
+        let totalMonthlyExpenses = 0;
+        let totalMonthlyNetIncome = 0;
+
+        data.monthly_summary.forEach(item => {
+            const row = monthlySummaryBody.insertRow();
+            const netIncomeClass = parseFloat(item.net_income) >= 0 ? 'positive' : 'negative';
+            row.innerHTML = `
+                <td>${item.month}</td>
+                <td class="amount positive">₱${item.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="amount negative">₱${item.expenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="amount ${netIncomeClass}">₱${item.net_income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            `;
+            totalMonthlyRevenue += item.revenue;
+            totalMonthlyExpenses += item.expenses;
+            totalMonthlyNetIncome += item.net_income;
+        });
+
+        // Update monthly summary footer
+        document.getElementById('monthly-total-revenue-footer').textContent = `₱${totalMonthlyRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('monthly-total-expenses-footer').textContent = `₱${totalMonthlyExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        const monthlyNetIncomeFooter = document.getElementById('monthly-net-income-footer');
+        monthlyNetIncomeFooter.textContent = `₱${totalMonthlyNetIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        if (totalMonthlyNetIncome >= 0) {
+            monthlyNetIncomeFooter.classList.add('positive');
+            monthlyNetIncomeFooter.classList.remove('negative');
+        } else {
+            monthlyNetIncomeFooter.classList.add('negative');
+            monthlyNetIncomeFooter.classList.remove('positive');
+        }
+
+
+        // Populate Account Balances Table
+        const accountsBalancesBody = document.getElementById('accounts-balances-body');
+        accountsBalancesBody.innerHTML = ''; // Clear existing rows
+        let totalAccountBalance = 0;
+        data.accounts_balances.forEach(item => {
+            const row = accountsBalancesBody.insertRow();
+            const statusClass = item.status.toLowerCase() + '-status';
+            row.innerHTML = `
+                <td>${item.account}</td>
+                <td class="amount">₱${item.balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>${item.last_transaction}</td>
+                <td class="${statusClass}">${item.status}</td>
+            `;
+            totalAccountBalance += item.balance;
+        });
+        document.getElementById('total-accounts-balance-footer').textContent = `₱${totalAccountBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+        // Store data globally for access by toggleView and other functions
+        window.financialData = data;
+
+        // Render charts initially for the overview tab
+        renderCharts(data);
+    }
+
+    /**
+     * Fetches financial data from the API and populates the dashboard.
+     */
+    async function fetchFinancialData() {
+        try {
+            // *** IMPORTANT CHANGE HERE ***
+            // Now fetching from the new API endpoint for JSON data
+            const response = await fetch('/api/admin/financial_data');
+            if (!response.ok) {
+                // If the response is not OK (e.g., 401 Unauthorized, 500 Server Error)
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData && errorData.detail) {
+                        errorMessage += ` - Detail: ${errorData.detail}`;
+                    }
+                } catch (jsonError) {
+                    // Ignore if response is not JSON
+                }
+                throw new Error(errorMessage);
+            }
+            const data = await response.json();
+            console.log("Fetched data:", data); // For debugging
+            populateDashboard(data);
+        } catch (error) {
+            console.error("Error fetching financial data:", error);
+            // Display an error message on the dashboard
+            document.querySelector('.dashboard-container').innerHTML = `
+                <div style="text-align: center; color: red; font-size: 1.2em; padding: 50px;">
+                    Failed to load financial data. Please ensure you are logged in and authorized, then try again later. <br>
+                    Error: ${error.message}
+                </div>
+            `;
+        }
+    }
+
+    // Initialize the dashboard when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchFinancialData(); // Fetch and populate data
+        toggleView('overview'); // Ensure overview is shown initially
+    });
 </script>
 {% endblock %}

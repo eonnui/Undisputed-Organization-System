@@ -22,6 +22,7 @@ import bcrypt
 import shutil
 import calendar
 import random
+from dateutil.relativedelta import relativedelta
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -938,64 +939,105 @@ async def admin_events(request: Request, db: Session = Depends(get_db)):
     )
 
 # Admin Financial Statement Page Route
+# 1. Existing route to serve the HTML dashboard page (no change here)
 @router.get("/admin/financial_statement", response_class=HTMLResponse, name="admin_financial_statement")
-async def admin_financial_statement(request: Request, db: Session = Depends(get_db)):
+async def admin_financial_statement_page(request: Request, db: Session = Depends(get_db)):
     admin_id = request.session.get("admin_id")
 
+    # Basic authentication check for rendering the page
+    if not admin_id:
+        # Redirect to login or show an unauthorized message
+        # For a full application, you'd use a proper redirect or authentication middleware
+        return templates.TemplateResponse(
+            "admin_dashboard/unauthorized.html", # Or redirect using RedirectResponse
+            {"request": request, "message": "You must be logged in as an admin to view this page."}
+        )
+
+    # Optional: Fetch admin and organization details for logo etc.
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     logo_url = default_logo_url
-    if admin_id:
-        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
-        if admin and admin.organizations:
-            first_org = admin.organizations[0]
-            if first_org.logo_url:
-                logo_url = first_org.logo_url
+    admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+    if admin and admin.organizations:
+        first_org = admin.organizations[0]
+        if first_org.logo_url:
+            logo_url = first_org.logo_url
 
-    # --- Financial Data Calculations ---
+    return templates.TemplateResponse(
+        "admin_dashboard/admin_financial_statement.html",
+        {
+            "request": request,
+            "year": str(datetime.now().year),
+            "logo_url": logo_url,
+            # IMPORTANT: Do NOT pass all financial_data here if you intend to fetch it via AJAX.
+            # Only pass data needed for the initial page render that doesn't change with AJAX.
+            # The JavaScript will fetch the dynamic financial_data separately.
+        },
+    )
+
+# 2. NEW route to serve the financial data as JSON (this is what your JS will call)
+@router.get("/api/admin/financial_data", response_class=JSONResponse, name="admin_financial_data_api")
+async def admin_financial_data_api(request: Request, db: Session = Depends(get_db)):
+    admin_id = request.session.get("admin_id")
+
+    if not admin_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    organization = db.query(models.Organization).\
+        join(models.organization_admins).\
+        filter(models.organization_admins.c.admin_id == admin_id).\
+        first()
+
+    if not organization:
+        raise HTTPException(status_code=403, detail="Admin not linked to an organization or organization not found.")
+    
+    organization_id = organization.id
+    organization_name = organization.name
+
     current_year = datetime.now().year
     today = datetime.now().date()
 
-    # 1. Total Revenue (YTD)
-    # Sum of fees from paid payment items within the current year
-    total_revenue_ytd_query = db.query(func.sum(models.PaymentItem.fee)). \
+    total_revenue_ytd_query = db.query(func.sum(models.PaymentItem.fee)).\
+        join(models.User).\
         filter(
-            extract('year', models.PaymentItem.created_at) == current_year,
-            models.PaymentItem.is_paid == True
+            and_(
+                extract('year', models.PaymentItem.created_at) == current_year,
+                models.PaymentItem.is_paid == True,
+                models.User.organization_id == organization_id
+            )
         ).scalar()
     total_revenue_ytd = float(total_revenue_ytd_query) if total_revenue_ytd_query else 0.0
 
-    # 2. Simulate Total Expenses (YTD) - Since there's no explicit Expense model
-    # If there's no revenue, there are no simulated expenses.
-    total_expenses_ytd = 0.0
-    if total_revenue_ytd > 0:
-        simulated_expense_percentage = random.uniform(0.4, 0.7) # Expenses are 40-70% of revenue
-        total_expenses_ytd = round(total_revenue_ytd * simulated_expense_percentage, 2)
+    total_expenses_ytd_query = db.query(func.sum(models.Expense.amount)).\
+        filter(
+            and_(
+                extract('year', models.Expense.incurred_at) == current_year,
+                models.Expense.organization_id == organization_id
+            )
+        ).scalar()
+    total_expenses_ytd = float(total_expenses_ytd_query) if total_expenses_ytd_query else 0.0
 
-    # 3. Net Income (YTD)
     net_income_ytd = total_revenue_ytd - total_expenses_ytd
 
-    # 4. Total Current Balance & Total Funds Available
-    # For simplicity, current balance is net income YTD. In a real system, this would be
-    # actual cash on hand, which might differ from YTD net income.
     total_current_balance = net_income_ytd
     total_funds_available = total_current_balance
 
-    # 5. Overall Balance Turnover
-    # Simplified: Revenue / Current Balance. Handle division by zero.
-    balance_turnover = round(total_revenue_ytd / total_current_balance, 2) if total_current_balance != 0 else 0.0
+    balance_turnover = 0.0
+    if total_current_balance > 0:
+        balance_turnover = round(total_revenue_ytd / total_current_balance, 2)
 
-    # 6. Reporting Date
     reporting_date = today.strftime("%B %d, %Y")
 
-    # 7. Top Revenue Source & Highest Revenue Amount
-    # Group by academic_year and semester to find the highest earning category
     top_revenue_source_query = db.query(
         models.PaymentItem.academic_year,
         models.PaymentItem.semester,
         func.sum(models.PaymentItem.fee).label('total_fee')
-    ).filter(
-        extract('year', models.PaymentItem.created_at) == current_year,
-        models.PaymentItem.is_paid == True
+    ).join(models.User).\
+    filter(
+        and_(
+            extract('year', models.PaymentItem.created_at) == current_year,
+            models.PaymentItem.is_paid == True,
+            models.User.organization_id == organization_id
+        )
     ).group_by(
         models.PaymentItem.academic_year,
         models.PaymentItem.semester
@@ -1013,25 +1055,39 @@ async def admin_financial_statement(request: Request, db: Session = Depends(get_
             "amount": round(float(top_revenue_source_query.total_fee), 2)
         }
 
-    # 8. Largest Expense Category & Amount (Simulated)
-    # Simulate a largest expense category and amount. If no total expenses, then 0.
+    largest_expense_query = db.query(
+        models.Expense.category,
+        func.sum(models.Expense.amount).label('total_amount')
+    ).filter(
+        and_(
+            extract('year', models.Expense.incurred_at) == current_year,
+            models.Expense.organization_id == organization_id
+        )
+    ).group_by(
+        models.Expense.category
+    ).order_by(
+        func.sum(models.Expense.amount).desc()
+    ).first()
+
     largest_expense_category = "N/A"
     largest_expense_amount = 0.0
-    if total_expenses_ytd > 0:
-        largest_expense_category = "Operational Costs"
-        largest_expense_amount = round(total_expenses_ytd * random.uniform(0.2, 0.4), 2) # 20-40% of total expenses
+    if largest_expense_query:
+        largest_expense_category = largest_expense_query.category
+        largest_expense_amount = round(float(largest_expense_query.total_amount), 2)
 
-    # 9. Profit Margin (YTD)
     profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
 
-    # 10. Revenue Breakdown Table Data
     revenues_breakdown_query = db.query(
         models.PaymentItem.academic_year,
         models.PaymentItem.semester,
         func.sum(models.PaymentItem.fee).label('total_fee')
-    ).filter(
-        extract('year', models.PaymentItem.created_at) == current_year,
-        models.PaymentItem.is_paid == True
+    ).join(models.User).\
+    filter(
+        and_(
+            extract('year', models.PaymentItem.created_at) == current_year,
+            models.PaymentItem.is_paid == True,
+            models.User.organization_id == organization_id
+        )
     ).group_by(
         models.PaymentItem.academic_year,
         models.PaymentItem.semester
@@ -1046,11 +1102,10 @@ async def admin_financial_statement(request: Request, db: Session = Depends(get_
         revenues_breakdown.append({
             "source": source_name,
             "amount": round(float(item.total_fee), 2),
-            "trend": "Stable", # Placeholder, requires historical data
+            "trend": "Stable",
             "percentage": percentage
         })
     if not revenues_breakdown and total_revenue_ytd > 0:
-        # Fallback if no categorized revenue but total revenue exists
         revenues_breakdown.append({
             "source": "General Collected Fees",
             "amount": total_revenue_ytd,
@@ -1058,114 +1113,150 @@ async def admin_financial_statement(request: Request, db: Session = Depends(get_
             "percentage": 100.0
         })
 
-    # 11. Expense Breakdown Table Data (Simulated)
+    expenses_breakdown_query = db.query(
+        models.Expense.category,
+        func.sum(models.Expense.amount).label('total_amount')
+    ).filter(
+        and_(
+            extract('year', models.Expense.incurred_at) == current_year,
+            models.Expense.organization_id == organization_id
+        )
+    ).group_by(
+        models.Expense.category
+    ).all()
+
     expenses_breakdown = []
-    if total_expenses_ytd > 0:
-        # Generate a few dummy expense categories
-        expense_categories = ["Salaries", "Utilities", "Rent", "Supplies", "Marketing", "Miscellaneous"]
-        remaining_expenses = total_expenses_ytd
-        for i, category in enumerate(expense_categories):
-            if remaining_expenses <= 0:
-                break
-            # Distribute expenses randomly, ensuring sum doesn't exceed total_expenses_ytd
-            amount = round(random.uniform(0.05, 0.25) * total_expenses_ytd, 2)
-            if i == len(expense_categories) - 1: # Last category takes the remainder
-                amount = remaining_expenses
-            else:
-                amount = min(amount, remaining_expenses) # Ensure we don't go over
-            
-            if amount > 0:
-                expenses_breakdown.append({
-                    "category": category,
-                    "amount": amount,
-                    "trend": "Stable", # Placeholder
-                    "percentage": round((amount / total_expenses_ytd) * 100, 2) if total_expenses_ytd != 0 else 0.0
-                })
-                remaining_expenses -= amount
-        
-        # Adjust percentages to sum to 100% if there are rounding errors
-        if expenses_breakdown and total_expenses_ytd > 0:
-            current_sum_percentage = sum(item['percentage'] for item in expenses_breakdown)
-            if current_sum_percentage != 100 and current_sum_percentage != 0: # Avoid division by zero
-                adjustment_factor = 100 / current_sum_percentage
-                for item in expenses_breakdown:
-                    item['percentage'] = round(item['percentage'] * adjustment_factor, 2)
+    for item in expenses_breakdown_query:
+        percentage = round((float(item.total_amount) / total_expenses_ytd) * 100, 2) if total_expenses_ytd != 0 else 0.0
+        expenses_breakdown.append({
+            "category": item.category,
+            "amount": round(float(item.total_amount), 2),
+            "trend": "Stable",
+            "percentage": percentage
+        })
+    if expenses_breakdown and total_expenses_ytd > 0:
+        current_sum_percentage = sum(item['percentage'] for item in expenses_breakdown)
+        if current_sum_percentage != 100 and current_sum_percentage != 0:
+            adjustment_factor = 100 / current_sum_percentage
+            for item in expenses_breakdown:
+                item['percentage'] = round(item['percentage'] * adjustment_factor, 2)
 
-
-    # 12. Monthly Summary Table Data & Chart Data
     monthly_summary = []
     chart_net_income_trend_data = []
     chart_net_income_trend_labels = []
 
-    for month_num in range(1, 13):
-        month_name = datetime(current_year, month_num, 1).strftime('%b') # e.g., 'Jan'
-        chart_net_income_trend_labels.append(month_name)
+    for i in range(12):
+        target_date = today - relativedelta(months=11 - i)
 
-        # Calculate actual revenue for the month
-        monthly_revenue_query = db.query(func.sum(models.PaymentItem.fee)). \
+        target_month_num = target_date.month
+        target_year = target_date.year
+
+        month_name_full = target_date.strftime('%B')
+        month_name_abbr = target_date.strftime('%b')
+        chart_net_income_trend_labels.append(month_name_abbr)
+
+        monthly_revenue_query = db.query(func.sum(models.PaymentItem.fee)).\
+            join(models.User).\
             filter(
-                extract('year', models.PaymentItem.created_at) == current_year,
-                extract('month', models.PaymentItem.created_at) == month_num,
-                models.PaymentItem.is_paid == True
+                and_(
+                    extract('year', models.PaymentItem.created_at) == target_year,
+                    extract('month', models.PaymentItem.created_at) == target_month_num,
+                    models.PaymentItem.is_paid == True,
+                    models.User.organization_id == organization_id
+                )
             ).scalar()
         monthly_revenue = float(monthly_revenue_query) if monthly_revenue_query else 0.0
 
-        # Simulate monthly expenses. If total_expenses_ytd is 0, monthly expenses are also 0.
-        monthly_expenses = 0.0
-        if total_expenses_ytd > 0:
-            base_monthly_expense = total_expenses_ytd / 12
-            monthly_expenses = round(base_monthly_expense * random.uniform(0.8, 1.2), 2) # +/- 20% variation
+        monthly_expenses_query = db.query(func.sum(models.Expense.amount)).\
+            filter(
+                and_(
+                    extract('year', models.Expense.incurred_at) == target_year,
+                    extract('month', models.Expense.incurred_at) == target_month_num,
+                    models.Expense.organization_id == organization_id
+                )
+                
+            ).scalar()
+        monthly_expenses = float(monthly_expenses_query) if monthly_expenses_query else 0.0
 
         monthly_net_income = monthly_revenue - monthly_expenses
         net_income_class = "positive" if monthly_net_income >= 0 else "negative"
 
         monthly_summary.append({
-            "month": datetime(current_year, month_num, 1).strftime('%B'), # Full month name
+            "month": month_name_full,
             "revenue": monthly_revenue,
             "expenses": monthly_expenses,
             "net_income": monthly_net_income,
             "net_income_class": net_income_class
         })
+        
         chart_net_income_trend_data.append(round(monthly_net_income, 2))
 
-    # 13. Account Balances Table Data (Simulated)
-    # If total_current_balance is 0, ensure account balances are also 0 or minimal.
     accounts_balances = []
-    if total_current_balance > 0:
+    if total_current_balance >= 0:
         accounts_balances = [
             {
                 "account": "Main Operating Account",
-                "balance": total_current_balance,
+                "balance": round(total_current_balance * 0.7, 2),
                 "last_transaction": today.strftime("%Y-%m-%d"),
                 "status": "Active"
             },
             {
                 "account": "Savings Account",
-                "balance": round(total_current_balance * 0.15, 2), # 15% of current balance
+                "balance": round(total_current_balance * 0.2, 2),
                 "last_transaction": (today - timedelta(days=random.randint(10, 60))).strftime("%Y-%m-%d"),
                 "status": "Active"
             },
             {
                 "account": "Petty Cash",
-                "balance": round(random.uniform(1000, 5000), 2),
+                "balance": round(total_current_balance * 0.1, 2),
                 "last_transaction": (today - timedelta(days=random.randint(1, 7))).strftime("%Y-%m-%d"),
                 "status": "Active"
             }
         ]
+        if accounts_balances:
+            current_sum_balances = sum(acc['balance'] for acc in accounts_balances)
+            if abs(current_sum_balances - total_current_balance) > 0.01:
+                accounts_balances[-1]['balance'] += (total_current_balance - current_sum_balances)
+                accounts_balances[-1]['balance'] = round(accounts_balances[-1]['balance'], 2)
     else:
         accounts_balances = [
             {
                 "account": "Main Operating Account",
-                "balance": 0.0,
+                "balance": total_current_balance,
                 "last_transaction": today.strftime("%Y-%m-%d"),
-                "status": "Inactive"
+                "status": "Critical"
             }
         ]
 
+    paid_members_query = db.query(func.count(models.User.id.distinct())).\
+        join(models.PaymentItem).\
+        filter(
+            and_(
+                extract('year', models.PaymentItem.created_at) == current_year,
+                models.PaymentItem.is_paid == True,
+                models.User.organization_id == organization_id
+            )
+        ).scalar()
+    num_paid_members = paid_members_query if paid_members_query else 0
 
-    # Prepare data for the template
+    total_members_query = db.query(func.count(models.User.id)).\
+        filter(
+            and_(
+                models.User.is_active == True,
+                models.User.organization_id == organization_id
+            )
+        ).scalar()
+    total_members = total_members_query if total_members_query else 0
+
+    num_unpaid_members = total_members - num_paid_members
+    if num_unpaid_members < 0:
+        num_unpaid_members = 0
+
     financial_data = {
-        "total_current_balance": f"{total_current_balance:,.2f}", # Format with commas
+        "organization_id": organization_id,
+        "organization_name": organization_name,
+        "year": str(current_year),
+        "total_current_balance": f"{total_current_balance:,.2f}",
         "total_revenue_ytd": f"{total_revenue_ytd:,.2f}",
         "total_expenses_ytd": f"{total_expenses_ytd:,.2f}",
         "net_income_ytd": f"{net_income_ytd:,.2f}",
@@ -1184,17 +1275,12 @@ async def admin_financial_statement(request: Request, db: Session = Depends(get_
         "chart_revenue_data": [total_revenue_ytd, total_expenses_ytd],
         "chart_net_income_data": chart_net_income_trend_data,
         "chart_net_income_labels": chart_net_income_trend_labels,
+        "num_paid_members": num_paid_members,
+        "num_unpaid_members": num_unpaid_members,
+        "total_members": total_members
     }
 
-    return templates.TemplateResponse(
-        "admin_dashboard/admin_financial_statement.html",
-        {
-            "request": request,
-            "year": str(current_year), # Pass current year as string
-            "logo_url": logo_url,
-            **financial_data # Unpack the financial_data dictionary into the context
-        },
-    )
+    return JSONResponse(content=financial_data)
 
 
 # Create organization route

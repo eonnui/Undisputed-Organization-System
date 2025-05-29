@@ -1785,12 +1785,12 @@ th.sortable.desc::after {
 }
 
 .chart-canvas {
-    background-color: #ffffff; /* Consider if this should also be a theme variable */
+    background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    width: 100%; 
-    height: auto; 
-    display: block; 
+    width: 100%;
+    height: 400px !important;
+    display: block;
     box-sizing: border-box;
 }
 

@@ -141,3 +141,17 @@ class PaymentItem(Base):
 
     user = relationship("User", back_populates="payment_items")
     payments = relationship("Payment", back_populates="payment_item")
+
+
+class Expense(Base):
+    __tablename__ = "expenses"
+    id = Column(Integer, primary_key=True, index=True)
+    description = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    category = Column(String, nullable=True) # e.g., "Salaries", "Utilities", "Rent"
+    incurred_at = Column(Date, default=func.current_date())
+    created_at = Column(DateTime, default=func.now())
+    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True) # Who recorded the expense
+    admin = relationship("Admin") # Define relationship if needed
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
+    organization = relationship("Organization")
