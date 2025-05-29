@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
-# Association table for events and participants (many-to-many)
 event_participants = Table(
     'event_participants',
     Base.metadata,
@@ -11,7 +10,6 @@ event_participants = Table(
     Column('student_id', Integer, ForeignKey('users.id'), primary_key=True)
 )
 
-# New Organization Model
 class Organization(Base):
     __tablename__ = "organizations"
 
@@ -24,7 +22,6 @@ class Organization(Base):
     admins = relationship("Admin", secondary="organization_admins", back_populates="organizations")
     students = relationship("User", back_populates="organization")
 
-# Association table for organizations and admins (many-to-many)
 organization_admins = Table(
     'organization_admins',
     Base.metadata,
@@ -82,7 +79,6 @@ class User(Base):
     verified_by = Column(String, nullable=True)
     verification_date = Column(DateTime, nullable=True)
     payments = relationship("Payment", back_populates="user")
-    # Added cascade='all, delete-orphan' to the relationship in User model
     payment_items = relationship("PaymentItem", back_populates="user", cascade="all, delete-orphan")
 
 class Admin(Base):
@@ -126,7 +122,6 @@ class Payment(Base):
 class PaymentItem(Base):
     __tablename__ = "payment_items"
     id = Column(Integer, primary_key=True, index=True)
-    # Added ondelete='CASCADE' to the ForeignKey definition
     user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), nullable=False)
     academic_year = Column(String, nullable=True)
     semester = Column(String, nullable=True)
@@ -142,16 +137,15 @@ class PaymentItem(Base):
     user = relationship("User", back_populates="payment_items")
     payments = relationship("Payment", back_populates="payment_item")
 
-
 class Expense(Base):
     __tablename__ = "expenses"
     id = Column(Integer, primary_key=True, index=True)
     description = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
-    category = Column(String, nullable=True) # e.g., "Salaries", "Utilities", "Rent"
+    category = Column(String, nullable=True)
     incurred_at = Column(Date, default=func.current_date())
     created_at = Column(DateTime, default=func.now())
-    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True) # Who recorded the expense
-    admin = relationship("Admin") # Define relationship if needed
+    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True)
+    admin = relationship("Admin")
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     organization = relationship("Organization")

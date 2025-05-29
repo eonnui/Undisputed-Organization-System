@@ -1975,6 +1975,7 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     today: date = date.today()
     current_year: int = today.year
 
+    # Payment Items (Revenue)
     all_user_payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user_id).all()
     paid_user_payment_items = [item for item in all_user_payment_items if item.is_paid]
     unpaid_user_payment_items = [item for item in all_user_payment_items if not item.is_paid]
@@ -1983,6 +1984,7 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     total_outstanding_fees: float = sum(item.fee for item in unpaid_user_payment_items)
     total_past_due_fees: float = sum(item.fee for item in unpaid_user_payment_items if item.due_date and item.due_date < today)
 
+    # Collected Fees by Category
     collected_fees_by_category: defaultdict[str, float] = defaultdict(float)
     for item in paid_user_payment_items:
         category_name = "Miscellaneous Fees"
@@ -1995,6 +1997,7 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         collected_fees_by_category[category_name] += item.fee
     collected_fees_list = [{"category": k, "amount": v} for k, v in collected_fees_by_category.items()]
 
+    # Outstanding Fees by Category
     outstanding_fees_by_category: defaultdict[str, float] = defaultdict(float)
     for item in unpaid_user_payment_items:
         category_name = "Miscellaneous Fees"
@@ -2007,38 +2010,85 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         outstanding_fees_by_category[category_name] += item.fee
     outstanding_fees_list = [{"category": k, "amount": v} for k, v in outstanding_fees_by_category.items()]
 
-    total_expenses: float = 0.00
-    expenses_by_category: list = []
+    # Expenses Data
+    # Get expenses for the user's organization (if they have one)
+    expense_query = db.query(models.Expense)
+    if user_obj.organization_id:
+        # Filter by organization if user belongs to one
+        all_expenses = expense_query.filter(models.Expense.organization_id == user_obj.organization_id).all()
+    else:
+        # If no organization, get expenses without organization_id (could be personal or general expenses)
+        all_expenses = expense_query.filter(models.Expense.organization_id.is_(None)).all()
 
+    total_expenses: float = sum(expense.amount for expense in all_expenses)
+
+    # Group expenses by category
+    expenses_by_category: defaultdict[str, float] = defaultdict(float)
+    for expense in all_expenses:
+        category_name = expense.category if expense.category else "Uncategorized"
+        expenses_by_category[category_name] += expense.amount
+    expenses_by_category_list = [{"category": k, "amount": v} for k, v in expenses_by_category.items()]
+
+    # Financial calculations
     current_balance: float = total_revenue - total_expenses
     net_income: float = total_revenue - total_expenses
 
+    # Financial Summary Items (for detailed breakdown)
     financial_summary_items: list[dict[str, float | str]] = []
+    
+    # Add revenue items
     for item in collected_fees_list:
         financial_summary_items.append({
             "event_item": item["category"],
             "inflows": item["amount"],
             "outflows": 0.00
         })
+    
+    # Add expense items
+    for item in expenses_by_category_list:
+        financial_summary_items.append({
+            "event_item": f"Expenses - {item['category']}",
+            "inflows": 0.00,
+            "outflows": item["amount"]
+        })
 
+    # Monthly Data
     monthly_data: dict[str, dict[str, float]] = {}
     months_full = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ]
+    
+    # Monthly revenue
     user_payments_by_month_current_year: defaultdict[str, float] = defaultdict(float)
     for item in paid_user_payment_items:
         if item.created_at and item.created_at.year == current_year:
             month_index = item.created_at.month - 1
             user_payments_by_month_current_year[months_full[month_index].lower()] += item.fee
 
-    for month_name_lower in [m.lower() for m in months_full]:
+    # Monthly expenses
+    expenses_by_month_current_year: defaultdict[str, float] = defaultdict(float)
+    for expense in all_expenses:
+        if expense.incurred_at and expense.incurred_at.year == current_year:
+            month_index = expense.incurred_at.month - 1
+            expenses_by_month_current_year[months_full[month_index].lower()] += expense.amount
+
+    # Calculate running balance for each month
+    running_balance = 0.00
+    for i, month_name in enumerate(months_full):
+        month_name_lower = month_name.lower()
         inflows_this_month = user_payments_by_month_current_year.get(month_name_lower, 0.00)
+        outflows_this_month = expenses_by_month_current_year.get(month_name_lower, 0.00)
+        
+        starting_balance = running_balance
+        ending_balance = starting_balance + inflows_this_month - outflows_this_month
+        running_balance = ending_balance
+        
         monthly_data[month_name_lower] = {
-            "starting_balance": 0.00,
+            "starting_balance": starting_balance,
             "inflows": inflows_this_month,
-            "outflows": 0.00,
-            "ending_balance": inflows_this_month
+            "outflows": outflows_this_month,
+            "ending_balance": ending_balance
         }
 
     current_date_str: str = today.strftime("%B %d, %Y")
@@ -2052,7 +2102,7 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         "net_income": net_income,
         "collected_fees_by_category": collected_fees_list,
         "outstanding_fees_by_category": outstanding_fees_list,
-        "expenses_by_category": expenses_by_category,
+        "expenses_by_category": expenses_by_category_list,
         "financial_summary_items": financial_summary_items,
         "monthly_data": monthly_data,
         "current_date": current_date_str
