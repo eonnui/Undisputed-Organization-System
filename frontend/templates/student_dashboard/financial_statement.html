@@ -14,32 +14,39 @@
         <div class="quick-stats">
             <div class="stat-card">
                 <h3>Current Balance</h3>
-                <p>₱35,929.00</p>
+                <p>₱{{ "%.2f"|format(financial_data.current_balance) }}</p>
             </div>
             <div class="stat-card positive">
                 <h3>Total Revenue</h3>
-                <p>₱57,657.00</p>
+                <p>₱{{ "%.2f"|format(financial_data.total_revenue) }}</p>
             </div>
             <div class="stat-card negative">
                 <h3>Total Expenses</h3>
-                <p>₱51,077.50</p>
+                <p>₱{{ "%.2f"|format(financial_data.total_expenses) }}</p>
             </div>
             <div class="stat-card">
                 <h3>Net Income</h3>
-                <p>₱6,579.50</p>
+                <p>₱{{ "%.2f"|format(financial_data.net_income) }}</p>
+            </div>
+            <div class="stat-card info">
+                <h3>Total Outstanding Fees</h3>
+                <p>₱{{ "%.2f"|format(financial_data.total_outstanding_fees) }}</p>
+            </div>
+            <div class="stat-card warning">
+                <h3>Total Past Due Fees</h3>
+                <p>₱{{ "%.2f"|format(financial_data.total_past_due_fees) }}</p>
             </div>
         </div>
 
         <div class="summary-info">
-            <p>Total Balance Turnover: <span id="total-turnover">₱57,657.00</span></p>
-            <p>Current Balance: <span id="current-balance">₱35,929.00</span></p>
-            <p>Current Date: <span id="current-date">April 12, 2025</span></p>
+            <p>Current Date: <span id="current-date">{{ financial_data.current_date }}</span></p>
         </div>
 
         <div class="toggle-container">
             <span class="toggle-label">Quick View:</span>
             <div class="toggle-buttons">
-                <button id="toggle-revenues" class="toggle-btn active" onclick="toggleDashboardView('revenues')">Revenues</button>
+                <button id="toggle-revenues" class="toggle-btn active" onclick="toggleDashboardView('revenues')">Collected Fees</button>
+                <button id="toggle-outstanding" class="toggle-btn" onclick="toggleDashboardView('outstanding')">Outstanding Fees</button>
                 <button id="toggle-expenses" class="toggle-btn" onclick="toggleDashboardView('expenses')">Expenses</button>
                 <button id="toggle-summary" class="toggle-btn" onclick="toggleDashboardView('summary')">Summary</button>
                 <button id="toggle-monthly" class="toggle-btn" onclick="toggleDashboardView('monthly')">Monthly</button>
@@ -48,39 +55,52 @@
 
         <div id="dashboard-revenues" class="report-card active">
             <div class="report-header">
-                <h2>Statement of Revenues</h2>
-                <p>September 2023 - January 2024</p>
+                <h2>Statement of Collected Fees</h2>
+                <p>As of {{ financial_data.current_date }}</p>
             </div>
             <div class="report-body">
                 <table>
                     <thead>
                         <tr>
-                            <th>Revenue Source</th>
+                            <th>Fee Category</th>
                             <th class="amount">Amount (₱)</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Membership Fee Collection</td>
-                            <td class="amount">22,756.00</td>
-                        </tr>
-                        <tr>
-                            <td>IGP Org Shirt</td>
-                            <td class="amount">28,280.00</td>
-                        </tr>
-                        <tr>
-                            <td>IGP Foundation Day</td>
-                            <td class="amount">2,606.00</td>
-                        </tr>
-                        <tr>
-                            <td>IGP CS Advance</td>
-                            <td class="amount">4,015.00</td>
-                        </tr>
+                    <tbody id="revenues-data-table">
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL REVENUES:</th>
-                            <th class="amount">57,657.00</th>
+                            <th>TOTAL COLLECTED FEES:</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_revenue) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div id="dashboard-outstanding" class="report-card">
+            <div class="report-header">
+                <h2>Statement of Outstanding Fees</h2>
+                <p>As of {{ financial_data.current_date }}</p>
+            </div>
+            <div class="report-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fee Category</th>
+                            <th class="amount">Amount (₱)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="outstanding-data-table">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>TOTAL OUTSTANDING FEES:</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_outstanding_fees) }}</th>
+                        </tr>
+                        <tr>
+                            <th>TOTAL PAST DUE FEES:</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_past_due_fees) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -90,7 +110,7 @@
         <div id="dashboard-expenses" class="report-card">
             <div class="report-header">
                 <h2>Statement of Expenses</h2>
-                <p>September 2023 - January 2024</p>
+                <p>As of {{ financial_data.current_date }}</p>
             </div>
             <div class="report-body">
                 <table>
@@ -100,40 +120,12 @@
                             <th class="amount">Amount (₱)</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Food</td>
-                            <td class="amount">4,936.50</td>
-                        </tr>
-                        <tr>
-                            <td>Supplies</td>
-                            <td class="amount">4,530.00</td>
-                        </tr>
-                        <tr>
-                            <td>Transportation</td>
-                            <td class="amount">1,275.00</td>
-                        </tr>
-                        <tr>
-                            <td>Rent</td>
-                            <td class="amount">715.00</td>
-                        </tr>
-                        <tr>
-                            <td>Representation</td>
-                            <td class="amount">36,281.00</td>
-                        </tr>
-                        <tr>
-                            <td>Miscellaneous</td>
-                            <td class="amount">1,240.00</td>
-                        </tr>
-                        <tr>
-                            <td>Token</td>
-                            <td class="amount">2,100.00</td>
-                        </tr>
+                    <tbody id="expenses-data-table">
                     </tbody>
                     <tfoot>
                         <tr>
                             <th>TOTAL EXPENSES:</th>
-                            <th class="amount">51,077.50</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_expenses) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -143,63 +135,28 @@
         <div id="dashboard-summary" class="report-card">
             <div class="report-header">
                 <h2>Financial Summary</h2>
-                <p>September 2023 - January 2024</p>
+                <p>As of {{ financial_data.current_date }}</p>
             </div>
             <div class="report-body">
                 <table>
                     <thead>
                         <tr>
-                            <th>Event/IGP</th>
+                            <th>Event/Item</th>
                             <th class="amount">INFLOWS (₱)</th>
                             <th class="amount">OUTFLOWS (₱)</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Turnover Balance</td>
-                            <td class="amount">18,387.00</td>
-                            <td class="amount">--</td>
-                        </tr>
-                        <tr>
-                            <td>Table and Bulletin Design</td>
-                            <td class="amount">--</td>
-                            <td class="amount">1,013.00</td>
-                        </tr>
-                        <tr>
-                            <td>Organization Shirt</td>
-                            <td class="amount">28,280.00</td>
-                            <td class="amount">24,230.00</td>
-                        </tr>
-                        <tr>
-                            <td>1st Semester Membership Collection</td>
-                            <td class="amount">22,756.00</td>
-                            <td class="amount">--</td>
-                        </tr>
-                        <tr>
-                            <td>Student Leadership Training Program</td>
-                            <td class="amount">--</td>
-                            <td class="amount">540.00</td>
-                        </tr>
-                        <tr>
-                            <td>Local Sportsfest</td>
-                            <td class="amount">--</td>
-                            <td class="amount">6,935.50</td>
-                        </tr>
-                        <tr>
-                            <td>Film and Fair</td>
-                            <td class="amount">--</td>
-                            <td class="amount">8,709.00</td>
-                        </tr>
+                    <tbody id="summary-data-table">
                     </tbody>
                     <tfoot>
                         <tr>
                             <th>TOTALS:</th>
-                            <th class="amount">69,423.00</th>
-                            <th class="amount">41,427.50</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_revenue) }}</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_expenses) }}</th>
                         </tr>
                         <tr>
                             <th>NET BALANCE:</th>
-                            <th class="amount" colspan="2">35,929.00</th>
+                            <th class="amount" colspan="2">₱{{ "%.2f"|format(financial_data.net_income) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -209,7 +166,7 @@
         <div id="dashboard-monthly" class="report-card">
             <div class="report-header">
                 <h2>Monthly Cash Flow Overview</h2>
-                <p>Annual Overview (2023-2024)</p>
+                <p>Annual Overview ({{ year }})</p>
             </div>
             <div class="report-body">
                 <div class="monthly-toggles">
@@ -234,17 +191,9 @@
                         </tr>
                     </thead>
                     <tbody id="monthly-data-table">
-                        <tr class="inflows-row">
-                            <td>Starting Balance</td>
-                            <td class="amount">35,929.00</td>
-                        </tr>
-                        <tr class="outflows-row">
-                            <td>Ending Balance</td>
-                            <td class="amount">--</td>
-                        </tr>
-                        </tbody>
+                    </tbody>
                 </table>
-                <a href="#" class="view-detail-link">
+                <a href="{{ url_for('static', path='html/student_dashboard/detailed_monthly_report.html') }}?month=january" id="view-detailed-monthly-report-link" class="view-detail-link">
                     <span class="material-symbols-outlined">visibility</span>
                     View Detailed Monthly Report
                 </a>
@@ -256,23 +205,131 @@
 
 {% block scripts %}
 <script>
-    let lastActiveMonth = 'january'; // Store the last active month
+    // This line is crucial: it passes your backend financial data to the frontend JavaScript
+    let financialData = JSON.parse('{{ financial_data | tojson | safe }}');
+    let currentYear = '{{ year }}'; // Add single quotes around {{ year }}
+    let lastActiveMonth = 'may'; // Set default to 'may' as per your logs
+
+    function formatCurrency(amount) {
+        return `₱${amount.toFixed(2)}`;
+    }
+
+    // Function to populate the quick stats (though Jinja does initial render, good for updates)
+    function populateQuickStats() {
+        document.querySelector('.quick-stats .stat-card:nth-child(1) p').textContent = formatCurrency(financialData.current_balance);
+        document.querySelector('.quick-stats .stat-card:nth-child(2) p').textContent = formatCurrency(financialData.total_revenue);
+        document.querySelector('.quick-stats .stat-card:nth-child(3) p').textContent = formatCurrency(financialData.total_expenses);
+        document.querySelector('.quick-stats .stat-card:nth-child(4) p').textContent = formatCurrency(financialData.net_income);
+        document.querySelector('.quick-stats .stat-card:nth-child(5) p').textContent = formatCurrency(financialData.total_outstanding_fees);
+        document.querySelector('.quick-stats .stat-card:nth-child(6) p').textContent = formatCurrency(financialData.total_past_due_fees);
+
+        document.getElementById('current-date').textContent = financialData.current_date;
+    }
+
+    // Function to populate the Collected Fees table
+    function populateRevenuesTable() {
+        const tableBody = document.getElementById('revenues-data-table');
+        tableBody.innerHTML = ''; // Clear existing rows
+        if (financialData.collected_fees_by_category && financialData.collected_fees_by_category.length > 0) {
+            financialData.collected_fees_by_category.forEach(item => {
+                let row = tableBody.insertRow();
+                let categoryCell = row.insertCell();
+                let amountCell = row.insertCell();
+                categoryCell.textContent = item.category;
+                amountCell.textContent = formatCurrency(item.amount);
+                amountCell.classList.add('amount');
+            });
+        } else {
+            let row = tableBody.insertRow();
+            let cell = row.insertCell();
+            cell.colSpan = 2;
+            cell.textContent = 'No collected fees to display.';
+            cell.style.textAlign = 'center';
+        }
+    }
+
+    // Function to populate the Outstanding Fees table
+    function populateOutstandingTable() {
+        const tableBody = document.getElementById('outstanding-data-table');
+        tableBody.innerHTML = ''; // Clear existing rows
+        if (financialData.outstanding_fees_by_category && financialData.outstanding_fees_by_category.length > 0) {
+            financialData.outstanding_fees_by_category.forEach(item => {
+                let row = tableBody.insertRow();
+                let categoryCell = row.insertCell();
+                let amountCell = row.insertCell();
+                categoryCell.textContent = item.category;
+                amountCell.textContent = formatCurrency(item.amount);
+                amountCell.classList.add('amount');
+            });
+        } else {
+            let row = tableBody.insertRow();
+            let cell = row.insertCell();
+            cell.colSpan = 2;
+            cell.textContent = 'No outstanding fees to display.';
+            cell.style.textAlign = 'center';
+        }
+    }
+
+    // Function to populate the Expenses table
+    function populateExpensesTable() {
+        const tableBody = document.getElementById('expenses-data-table');
+        tableBody.innerHTML = ''; // Clear existing rows
+        if (financialData.expenses_by_category && financialData.expenses_by_category.length > 0) {
+            financialData.expenses_by_category.forEach(item => {
+                let row = tableBody.insertRow();
+                let categoryCell = row.insertCell();
+                let amountCell = row.insertCell();
+                categoryCell.textContent = item.category;
+                amountCell.textContent = formatCurrency(item.amount);
+                amountCell.classList.add('amount');
+            });
+        } else {
+            let row = tableBody.insertRow();
+            let cell = row.insertCell();
+            cell.colSpan = 2;
+            cell.textContent = 'No expenses to display.';
+            cell.style.textAlign = 'center';
+        }
+    }
+
+    // Function to populate the Financial Summary table
+    function populateSummaryTable() {
+        const tableBody = document.getElementById('summary-data-table');
+        tableBody.innerHTML = ''; // Clear existing rows
+        if (financialData.financial_summary_items && financialData.financial_summary_items.length > 0) {
+            financialData.financial_summary_items.forEach(item => {
+                let row = tableBody.insertRow();
+                let eventItemCell = row.insertCell();
+                let inflowsCell = row.insertCell();
+                let outflowsCell = row.insertCell();
+                eventItemCell.textContent = item.event_item;
+                inflowsCell.textContent = formatCurrency(item.inflows);
+                outflowsCell.textContent = formatCurrency(item.outflows);
+                inflowsCell.classList.add('amount');
+                outflowsCell.classList.add('amount');
+            });
+        } else {
+            let row = tableBody.insertRow();
+            let cell = row.insertCell();
+            cell.colSpan = 3;
+            cell.textContent = 'No summary data to display.';
+            cell.style.textAlign = 'center';
+        }
+    }
 
     function toggleDashboardView(viewId) {
         console.log('toggleDashboardView called with:', viewId);
         const reportCards = document.querySelectorAll('.report-card');
-        const toggleButtons = document.querySelectorAll('.toggle-btn');
+        const toggleButtons = document.querySelectorAll('.toggle-buttons .toggle-btn');
         const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
 
         reportCards.forEach(card => {
             card.classList.remove('active');
             if (card.id === `dashboard-${viewId}`) {
                 card.classList.add('active');
-                console.log('dashboard-monthly is now active');
                 if (viewId === 'monthly') {
                     console.log('Calling showMonthlyData with lastActiveMonth:', lastActiveMonth);
                     showMonthlyData(lastActiveMonth);
-
                     // Ensure the correct monthly button has the active class when switching back
                     monthlyButtons.forEach(button => {
                         button.classList.remove('active');
@@ -297,119 +354,98 @@
         lastActiveMonth = month; // Update the last active month
 
         const monthlyDataTable = document.getElementById('monthly-data-table');
+        const viewDetailedLink = document.getElementById('view-detailed-monthly-report-link');
+
         if (!monthlyDataTable) {
             console.error('monthly-data-table element not found!');
             return;
         }
         monthlyDataTable.innerHTML = ''; // Clear previous data
 
-        // Dummy data - replace with actual data fetching
-        let startingBalance = 35929.00;
-        let inflows = 0;
-        let outflows = 0;
-
-        switch (month.toLowerCase()) {
-            case 'january':
-                inflows = 12500.00;
-                outflows = 8200.00;
-                break;
-            case 'february':
-                inflows = 9800.00;
-                outflows = 11500.00;
-                break;
-            case 'march':
-                inflows = 15200.00;
-                outflows = 7800.00;
-                break;
-            case 'april':
-                inflows = 11000.00;
-                outflows = 9500.00;
-                break;
-            case 'may':
-                inflows = 13000.00;
-                outflows = 8800.00;
-                break;
-            case 'june':
-                inflows = 16000.00;
-                outflows = 10500.00;
-                break;
-            case 'july':
-                inflows = 10500.00;
-                outflows = 7200.00;
-                break;
-            case 'august':
-                inflows = 14200.00;
-                outflows = 9100.00;
-                break;
-            case 'september':
-                inflows = 11800.00;
-                outflows = 8500.00;
-                break;
-            case 'october':
-                inflows = 12800.00;
-                outflows = 10200.00;
-                break;
-            case 'november':
-                inflows = 9500.00;
-                outflows = 7800.00;
-                break;
-            case 'december':
-                inflows = 15500.00;
-                outflows = 11200.00;
-                break;
-            default:
-                inflows = 0.00;
-                outflows = 0.00;
-                break;
+        // Update the 'View Detailed Monthly Report' link with the current month AND YEAR
+        if (viewDetailedLink) {
+            viewDetailedLink.href = `/student_dashboard/detailed_monthly_report_page?month=${month}&year=${currentYear}`; // <-- KEY FIX HERE
         }
 
-        let endingBalance = startingBalance + inflows - outflows;
+        // --- Use financialData.monthly_data to populate values ---
+        const monthlyStats = financialData.monthly_data[month];
 
-        let startingBalanceRow = monthlyDataTable.insertRow();
-        let startingBalanceCellLabel = startingBalanceRow.insertCell();
-        let startingBalanceCellAmount = startingBalanceRow.insertCell();
-        startingBalanceCellLabel.textContent = 'Starting Balance';
-        startingBalanceCellAmount.textContent = `₱${startingBalance.toFixed(2)}`;
-        startingBalanceCellAmount.classList.add('amount');
+        if (monthlyStats) {
+            let startingBalanceRow = monthlyDataTable.insertRow();
+            let startingBalanceCellLabel = startingBalanceRow.insertCell();
+            let startingBalanceCellAmount = startingBalanceRow.insertCell();
+            startingBalanceCellLabel.textContent = 'Starting Balance';
+            startingBalanceCellAmount.textContent = formatCurrency(monthlyStats.starting_balance);
+            startingBalanceCellAmount.classList.add('amount');
 
-        let inflowsRow = monthlyDataTable.insertRow();
-        let inflowsCellLabel = inflowsRow.insertCell();
-        let inflowsCellAmount = inflowsRow.insertCell();
-        inflowsCellLabel.textContent = 'Total Inflows';
-        inflowsCellAmount.textContent = `₱${inflows.toFixed(2)}`;
-        inflowsCellAmount.classList.add('amount');
+            let inflowsRow = monthlyDataTable.insertRow();
+            let inflowsCellLabel = inflowsRow.insertCell();
+            let inflowsCellAmount = inflowsRow.insertCell();
+            inflowsCellLabel.textContent = 'Total Inflows';
+            inflowsCellAmount.textContent = formatCurrency(monthlyStats.inflows);
+            inflowsCellAmount.classList.add('amount');
 
-        let outflowsRow = monthlyDataTable.insertRow();
-        let outflowsCellLabel = outflowsRow.insertCell();
-        let outflowsCellAmount = outflowsRow.insertCell();
-        outflowsCellLabel.textContent = 'Total Outflows';
-        outflowsCellAmount.textContent = `₱${outflows.toFixed(2)}`;
-        outflowsCellAmount.classList.add('amount');
+            let outflowsRow = monthlyDataTable.insertRow();
+            let outflowsCellLabel = outflowsRow.insertCell();
+            let outflowsCellAmount = outflowsRow.insertCell();
+            outflowsCellLabel.textContent = 'Total Outflows';
+            outflowsCellAmount.textContent = formatCurrency(monthlyStats.outflows);
+            outflowsCellAmount.classList.add('amount');
 
-        let endingBalanceRow = monthlyDataTable.insertRow();
-        let endingBalanceCellLabel = endingBalanceRow.insertCell();
-        let endingBalanceCellAmount = endingBalanceRow.insertCell();
-        endingBalanceCellLabel.textContent = 'Ending Balance';
-        endingBalanceCellAmount.textContent = `₱${endingBalance.toFixed(2)}`;
-        endingBalanceCellAmount.classList.add('amount');
-        endingBalanceRow.classList.add('outflows-row'); // Use outflows-row for styling the ending balance
+            let endingBalanceRow = monthlyDataTable.insertRow();
+            let endingBalanceCellLabel = endingBalanceRow.insertCell();
+            let endingBalanceCellAmount = endingBalanceRow.insertCell();
+            endingBalanceCellLabel.textContent = 'Ending Balance';
+            endingBalanceCellAmount.textContent = formatCurrency(monthlyStats.ending_balance);
+            endingBalanceCellAmount.classList.add('amount');
+            endingBalanceRow.classList.add('outflows-row');
+        } else {
+            let row = monthlyDataTable.insertRow();
+            let cell = row.insertCell();
+            cell.colSpan = 2;
+            cell.textContent = `No data available for ${month}.`;
+            cell.style.textAlign = 'center';
+        }
+
+        // Update active monthly button after data is displayed
+        const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
+        monthlyButtons.forEach(button => {
+            button.classList.remove('active');
+            if (button.textContent.toLowerCase() === month) {
+                button.classList.add('active');
+            }
+        });
     }
 
-    // Add event listeners to the month buttons
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOMContentLoaded event fired');
+
+        // Initial population of all sections
+        populateQuickStats();
+        populateRevenuesTable();
+        populateOutstandingTable();
+        populateExpensesTable();
+        populateSummaryTable();
+
+        // Initialize monthly view with the pre-set lastActiveMonth (e.g., 'may' from your logs)
+        showMonthlyData(lastActiveMonth);
+
+        // Add event listeners for month buttons
         const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
         monthlyButtons.forEach(button => {
             button.addEventListener('click', function() {
-                // Remove active class from other buttons
-                monthlyButtons.forEach(btn => btn.classList.remove('active'));
-                // Add active class to the clicked button
-                this.classList.add('active');
                 showMonthlyData(this.textContent.toLowerCase());
             });
         });
 
-        showMonthlyData(lastActiveMonth); // Initialize with the default active month
+        // Set initial active button for the main toggle
+        const initialActiveView = document.querySelector('.toggle-buttons .toggle-btn.active');
+        if (initialActiveView) {
+            toggleDashboardView(initialActiveView.id.replace('toggle-', ''));
+        } else {
+            // Default to 'revenues' if no active class is initially set
+            toggleDashboardView('revenues');
+        }
     });
 </script>
 {% endblock %}

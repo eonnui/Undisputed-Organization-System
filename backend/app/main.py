@@ -11,6 +11,7 @@ from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict
 from io import BytesIO
 from PIL import Image
+from collections import defaultdict
 import os
 import secrets
 import re
@@ -19,6 +20,7 @@ import base64
 import logging
 import bcrypt
 import shutil
+import calendar
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -1630,18 +1632,239 @@ async def payments(request: Request, db: Session = Depends(get_db)):
 # Financial Statement Page Route (for users)
 @app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
 async def financial_statement(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
-    user_role = request.session.get("user_role")
+    user_id: int | None = request.session.get("user_id")
+    user_role: str | None = request.session.get("user_role")
+
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=302)
+
+    user_obj: models.User | None = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user_obj:
+        request.session.pop("user_id", None)
+        request.session.pop("user_role", None)
+        return RedirectResponse(url="/login", status_code=302)
+
+    default_logo_url: str = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url: str = default_logo_url
+    if user_obj.organization and user_obj.organization.logo_url:
+        logo_url = user_obj.organization.logo_url
+
+    today: date = date.today()
+    current_year: int = today.year
+
+    all_user_payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user_id).all()
+    paid_user_payment_items = [item for item in all_user_payment_items if item.is_paid]
+    unpaid_user_payment_items = [item for item in all_user_payment_items if not item.is_paid]
+
+    total_revenue: float = sum(item.fee for item in paid_user_payment_items)
+    total_outstanding_fees: float = sum(item.fee for item in unpaid_user_payment_items)
+    total_past_due_fees: float = sum(item.fee for item in unpaid_user_payment_items if item.due_date and item.due_date < today)
+
+    collected_fees_by_category: defaultdict[str, float] = defaultdict(float)
+    for item in paid_user_payment_items:
+        category_name = "Miscellaneous Fees"
+        if item.academic_year and item.semester:
+            category_name = f"AY {item.academic_year} - {item.semester} Fees"
+        elif item.academic_year:
+            category_name = f"AY {item.academic_year} Fees"
+        elif item.semester:
+            category_name = f"{item.semester} Semester Fees"
+        collected_fees_by_category[category_name] += item.fee
+    collected_fees_list = [{"category": k, "amount": v} for k, v in collected_fees_by_category.items()]
+
+    outstanding_fees_by_category: defaultdict[str, float] = defaultdict(float)
+    for item in unpaid_user_payment_items:
+        category_name = "Miscellaneous Fees"
+        if item.academic_year and item.semester:
+            category_name = f"AY {item.academic_year} - {item.semester} Fees"
+        elif item.academic_year:
+            category_name = f"AY {item.academic_year} Fees"
+        elif item.semester:
+            category_name = f"{item.semester} Semester Fees"
+        outstanding_fees_by_category[category_name] += item.fee
+    outstanding_fees_list = [{"category": k, "amount": v} for k, v in outstanding_fees_by_category.items()]
+
+    total_expenses: float = 0.00
+    expenses_by_category: list = []
+
+    current_balance: float = total_revenue - total_expenses
+    net_income: float = total_revenue - total_expenses
+
+    financial_summary_items: list[dict[str, float | str]] = []
+    for item in collected_fees_list:
+        financial_summary_items.append({
+            "event_item": item["category"],
+            "inflows": item["amount"],
+            "outflows": 0.00
+        })
+
+    monthly_data: dict[str, dict[str, float]] = {}
+    months_full = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ]
+    user_payments_by_month_current_year: defaultdict[str, float] = defaultdict(float)
+    for item in paid_user_payment_items:
+        if item.created_at and item.created_at.year == current_year:
+            month_index = item.created_at.month - 1
+            user_payments_by_month_current_year[months_full[month_index].lower()] += item.fee
+
+    for month_name_lower in [m.lower() for m in months_full]:
+        inflows_this_month = user_payments_by_month_current_year.get(month_name_lower, 0.00)
+        monthly_data[month_name_lower] = {
+            "starting_balance": 0.00,
+            "inflows": inflows_this_month,
+            "outflows": 0.00,
+            "ending_balance": inflows_this_month
+        }
+
+    current_date_str: str = today.strftime("%B %d, %Y")
+
+    financial_data: dict = {
+        "total_revenue": total_revenue,
+        "total_outstanding_fees": total_outstanding_fees,
+        "total_past_due_fees": total_past_due_fees,
+        "total_expenses": total_expenses,
+        "current_balance": current_balance,
+        "net_income": net_income,
+        "collected_fees_by_category": collected_fees_list,
+        "outstanding_fees_by_category": outstanding_fees_list,
+        "expenses_by_category": expenses_by_category,
+        "financial_summary_items": financial_summary_items,
+        "monthly_data": monthly_data,
+        "current_date": current_date_str
+    }
+
+    return templates.TemplateResponse(
+        "student_dashboard/financial_statement.html",
+        {
+            "request": request,
+            "year": current_year,
+            "logo_url": logo_url,
+            "financial_data": financial_data
+        }
+    )
+
+
+# It receives month and year as query parameters.
+@app.get("/student_dashboard/detailed_monthly_report_page", response_class=HTMLResponse)
+async def detailed_monthly_report_page(
+    request: Request,
+    month: str = Query(...),
+    year: int = Query(...),
+    db: Session = Depends(get_db)
+):
+    user_id: int | None = request.session.get("user_id")
+    user_role: str | None = request.session.get("user_role")
 
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     logo_url = default_logo_url
 
-    if user_role == "user":
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if user and user.organization and user.organization.logo_url:
-            logo_url = user.organization.logo_url
+    if user_role == "user" and user_id:
+        user_for_logo = db.query(models.User).filter(models.User.id == user_id).first()
+        if user_for_logo and user_for_logo.organization and user_for_logo.organization.logo_url:
+            logo_url = user_for_logo.organization.logo_url
 
-    return templates.TemplateResponse("student_dashboard/financial_statement.html", {"request": request, "year": "2025", "logo_url": logo_url})
+    return templates.TemplateResponse(
+        "student_dashboard/detailed_monthly_report.html",
+        {"request": request, "month": month, "year": year, "logo_url": logo_url}
+    )
+
+
+@app.get("/api/detailed_monthly_report", response_class=JSONResponse)
+async def get_detailed_monthly_report_json(
+    request: Request,
+    month: str = Query(...),
+    year: int = Query(...),
+    db: Session = Depends(get_db)
+):
+    user_id: int | None = request.session.get("user_id")
+    user_role: str | None = request.session.get("user_role")
+
+    if not user_id or user_role != "user":
+        raise HTTPException(status_code=403, detail="Not authenticated or authorized to view this data.")
+
+    user_obj: models.User | None = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user_obj:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    month_name_lower: str = month.lower()
+    month_map: dict[str, int] = {
+        'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+        'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12
+    }
+    month_number: int | None = month_map.get(month_name_lower)
+
+    if month_number is None:
+        raise HTTPException(status_code=400, detail="Invalid month specified.")
+
+    report_year: int = year
+    start_date: date = date(report_year, month_number, 1)
+    end_of_month_day: int = calendar.monthrange(report_year, month_number)[1]
+    end_date: date = date(report_year, month_number, end_of_month_day)
+
+    monthly_payment_items: list[models.PaymentItem] = db.query(models.PaymentItem).filter(
+        models.PaymentItem.user_id == user_id,
+        models.PaymentItem.created_at >= start_date,
+        models.PaymentItem.created_at < (end_date + timedelta(days=1))
+    ).all()
+
+    transactions: list[dict] = []
+    total_inflows_month: float = 0.00
+    total_outflows_month: float = 0.00
+    total_outstanding_month: float = 0.00
+    total_past_due_month: float = 0.00
+
+    for item in monthly_payment_items:
+        amount_inflow: float = 0.00
+        amount_outflow: float = 0.00
+        status: str = ""
+        description: str = "Fee Payment"
+
+        if item.academic_year and item.semester:
+            description = f"AY {item.academic_year} - {item.semester} Fee"
+        elif item.academic_year:
+            description = f"AY {item.academic_year} Fee"
+        elif item.semester:
+            description = f"{item.semester} Semester Fee"
+
+        if item.is_paid:
+            amount_inflow = item.fee
+            total_inflows_month += item.fee
+            status = "Paid"
+        else:
+            total_outstanding_month += item.fee
+            status = "Unpaid"
+            if item.due_date and item.due_date < date.today():
+                status = "Past Due"
+                total_past_due_month += item.fee
+
+        transactions.append({
+            "date": item.created_at.strftime("%Y-%m-%d") if item.created_at else "N/A",
+            "description": description,
+            "inflow": amount_inflow,
+            "outflow": amount_outflow,
+            "status": status,
+            "original_fee": item.fee
+        })
+
+    starting_balance_month: float = 0.00
+    ending_balance_month: float = starting_balance_month + total_inflows_month - total_outflows_month
+
+    return JSONResponse(content={
+        "month_name": month.capitalize(),
+        "year": report_year,
+        "current_date": date.today().strftime("%B %d, %Y"),
+        "starting_balance": starting_balance_month,
+        "total_inflows": total_inflows_month,
+        "total_outflows": total_outflows_month,
+        "total_outstanding": total_outstanding_month,
+        "total_past_due": total_past_due_month,
+        "ending_balance": ending_balance_month,
+        "transactions": transactions,
+        "user_name": f"{user_obj.first_name} {user_obj.last_name}" if user_obj else "N/A"
+    })
+
 
 # Settings Page Route (for users)
 @app.get("/Settings", response_class=HTMLResponse, name="settings")

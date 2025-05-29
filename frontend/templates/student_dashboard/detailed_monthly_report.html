@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}Detailed Monthly Cash Flow{% endblock %}
+
+{% block content %}
+<div class="monthly-cashflow-detailed">
+    <h2 id="detailed-month-title">MONTH</h2>
+    <p>Monthly Cash Flow</p>
+    <p id="detailed-month-date">For the month of --</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Particulars</th>
+                <th>Status</th> {# Changed from Schedule No. to Status as per backend data #}
+                <th class="amount">Original Fee</th> {# Added Original Fee for clarity #}
+                <th class="amount">Cash Received</th>
+                <th class="amount">Cash Disbursed</th>
+                <th class="amount">Running Balance</th> {# This will remain 0 unless full cash flow is implemented #}
+            </tr>
+        </thead>
+        <tbody id="detailed-monthly-data-body">
+            {# Dynamic content will be inserted here by JavaScript #}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3">TOTAL - MONTH OF <span id="detailed-month-footer">--</span></th>
+                {# These columns align with the new header order #}
+                <th class="amount" id="footer-original-fee">₱0.00</th> {# For total original fees (paid + outstanding) #}
+                <th class="amount" id="footer-cash-received">₱0.00</th>
+                <th class="amount" id="footer-cash-disbursed">₱0.00</th>
+                <th class="amount" id="footer-running-balance">₱0.00</th> {# This will show total inflows for the month #}
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<style>
+.monthly-cashflow-detailed {
+    margin-top: 20px;
+    background-color: var(--org-card-bg);
+    padding: 20px;
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-sm);
+}
+
+.monthly-cashflow-detailed h2 {
+    font-size: 1.5em;
+    color: var(--org-dashboard-title-color);
+    margin-bottom: 5px;
+}
+
+.monthly-cashflow-detailed p {
+    color: var(--org-text-secondary);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.monthly-cashflow-detailed table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.monthly-cashflow-detailed th, .monthly-cashflow-detailed td {
+    border: 1px solid var(--org-border-medium);
+    padding: 8px;
+    text-align: left;
+    color: var(--org-table-data-text);
+}
+
+.monthly-cashflow-detailed th {
+    background-color: var(--org-table-header-bg-payments);
+    font-weight: bold;
+    color: var(--org-table-header-text-payments);
+}
+
+.monthly-cashflow-detailed .amount {
+    text-align: right;
+}
+
+.monthly-cashflow-detailed .inflows-row td,
+.monthly-cashflow-detailed .outflows-row td {
+    background-color: var(--org-highlight);
+    font-weight: bold;
+    text-align: left;
+    padding: 8px;
+}
+
+.monthly-cashflow-detailed tfoot th {
+    font-weight: bold;
+    text-align: left;
+    padding-top: 10px;
+    border-top: 2px solid var(--org-accent-dark);
+    color: var(--org-table-header-text-payments);
+}
+
+.monthly-cashflow-detailed tfoot .amount {
+    font-weight: bold;
+    color: var(--org-table-header-text-payments);
+}
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const month = urlParams.get('month');
+        const year = urlParams.get('year'); 
+        
+        const detailedMonthTitle = document.getElementById('detailed-month-title');
+        const detailedMonthDate = document.getElementById('detailed-month-date');
+        const detailedMonthlyDataTableBody = document.getElementById('detailed-monthly-data-body');
+        const detailedMonthFooter = document.getElementById('detailed-month-footer');
+        
+        const footerOriginalFee = document.getElementById('footer-original-fee');
+        const footerCashReceived = document.getElementById('footer-cash-received');
+        const footerCashDisbursed = document.getElementById('footer-cash-disbursed');
+        const footerRunningBalance = document.getElementById('footer-running-balance');
+        
+        if (month && year) {
+            const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+            detailedMonthTitle.textContent = capitalizedMonth;
+            detailedMonthFooter.textContent = capitalizedMonth;
+            detailedMonthDate.textContent = `For the month of ${capitalizedMonth} ${year}`;
+
+            const apiUrl = `/api/detailed_monthly_report?month=${month}&year=${year}`;
+            
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            console.error('API Error:', errorData.detail || 'Unknown API Error');
+                            if (response.status === 403) {
+                                window.location.href = '/login';
+                                throw new Error('Authentication/Authorization issue. Redirecting...');
+                            }
+                            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                        }).catch(() => {
+                            return response.text().then(text => {
+                                console.error('Non-JSON error response received from API:', text);
+                                throw new Error(`HTTP error! status: ${response.status}. Server returned unexpected content.`);
+                            });
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.transactions) {
+                        // CRITICAL FIX: Changed 'total_original_fees' to 'total_outstanding'
+                        // to match the key provided by your backend.
+                        // Also added a new 'total_all_original_fees' from the backend.
+                        populateDetailedTable(data.transactions, {
+                            original_total: data.total_all_original_fees, // This is the new field
+                            received: data.total_inflows,
+                            disbursed: data.total_outflows,
+                            running: data.ending_balance
+                        });
+                    } else {
+                        console.warn('No transaction data found in API response:', data);
+                        populateDetailedTable([], { original_total: 0, received: 0, disbursed: 0, running: 0 });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching detailed monthly data:', error);
+                    detailedMonthlyDataTableBody.innerHTML = `<tr>
+                        <td>--</td>
+                        <td colspan="6" style="text-align: center;">Error loading data: ${error.message}. Please try again.</td>
+                    </tr>`;
+                    footerOriginalFee.textContent = '₱0.00';
+                    footerCashReceived.textContent = '₱0.00';
+                    footerCashDisbursed.textContent = '₱0.00';
+                    footerRunningBalance.textContent = '₱0.00';
+                });
+
+        } else {
+            detailedMonthTitle.textContent = 'No Month Selected';
+            detailedMonthDate.textContent = 'Please select a month and year from the dashboard.';
+            populateDetailedTable([], { original_total: 0, received: 0, disbursed: 0, running: 0 });
+        }
+    });
+
+    function populateDetailedTable(transactions, totals) {
+        const detailedMonthlyDataTableBody = document.getElementById('detailed-monthly-data-body');
+        const footerOriginalFee = document.getElementById('footer-original-fee');
+        const footerCashReceived = document.getElementById('footer-cash-received');
+        const footerCashDisbursed = document.getElementById('footer-cash-disbursed');
+        const footerRunningBalance = document.getElementById('footer-running-balance');
+        
+        detailedMonthlyDataTableBody.innerHTML = ''; // Clear existing content
+
+        if (transactions.length === 0) {
+            const row = detailedMonthlyDataTableBody.insertRow();
+            row.insertCell().textContent = '--';
+            row.insertCell().textContent = 'No detailed data available for this month.';
+            row.insertCell().textContent = '';
+            row.insertCell().textContent = '₱0.00';
+            row.insertCell().textContent = '₱0.00';
+            row.insertCell().textContent = '₱0.00';
+            row.insertCell().textContent = '₱0.00';
+            
+            row.cells[3].classList.add('amount'); 
+            row.cells[4].classList.add('amount');
+            row.cells[5].classList.add('amount');
+            row.cells[6].classList.add('amount');
+        } else {
+            transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            transactions.forEach(item => {
+                const row = detailedMonthlyDataTableBody.insertRow();
+                row.insertCell().textContent = item.date || 'N/A';
+                row.insertCell().textContent = item.description || 'N/A';
+                row.insertCell().textContent = item.status || 'N/A';
+
+                // Robustly handle potential undefined/null values for financial data
+                const originalFee = typeof item.original_fee === 'number' ? item.original_fee : 0;
+                const inflow = typeof item.inflow === 'number' ? item.inflow : 0;
+                const outflow = typeof item.outflow === 'number' ? item.outflow : 0;
+
+                row.insertCell().textContent = `₱${originalFee.toFixed(2)}`;
+                row.insertCell().textContent = `₱${inflow.toFixed(2)}`;
+                row.insertCell().textContent = `₱${outflow.toFixed(2)}`;
+                row.insertCell().textContent = ''; 
+
+                row.cells[3].classList.add('amount');
+                row.cells[4].classList.add('amount');
+                row.cells[5].classList.add('amount');
+                row.cells[6].classList.add('amount');
+            });
+        }
+
+        // Robustly handle potential undefined/null values for footer totals
+        const totalOriginalFee = typeof totals.original_total === 'number' ? totals.original_total : 0;
+        const totalReceived = typeof totals.received === 'number' ? totals.received : 0;
+        const totalDisbursed = typeof totals.disbursed === 'number' ? totals.disbursed : 0;
+        const totalRunning = typeof totals.running === 'number' ? totals.running : 0;
+
+        footerOriginalFee.textContent = `₱${totalOriginalFee.toFixed(2)}`;
+        footerCashReceived.textContent = `₱${totalReceived.toFixed(2)}`;
+        footerCashDisbursed.textContent = `₱${totalDisbursed.toFixed(2)}`;
+        footerRunningBalance.textContent = `₱${totalRunning.toFixed(2)}`;
+    }
+</script>
+{% endblock %}
