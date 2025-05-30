@@ -12,7 +12,7 @@
     --error-color: #dc2626;
     --success-color: #16a34a;
     --info-color: #0ea5e9;
-    --animation-duration: 0.3s; /* Shortened animation duration */
+    --animation-duration: 0.3s; 
 }
 
 body {
@@ -80,7 +80,7 @@ h1 {
     }
 
     to {
-        transform: scale(1.04); /*Subtle pulse*/
+        transform: scale(1.04); 
     }
 }
 
@@ -159,7 +159,7 @@ input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
-    transform: scale(1.02); /*Subtle scale*/
+    transform: scale(1.02); 
 }
 
 .password-input-wrapper {
@@ -188,7 +188,7 @@ input:focus {
 
 .view-password-button:hover {
     color: var(--primary-color);
-    opacity: 0.7; /* Further reduced opacity */
+    opacity: 0.7; 
 }
 
 
@@ -215,8 +215,7 @@ select {
 select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
-    /* Removed transform on focus */
+    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);    
 }
 
 .select-wrapper {
@@ -238,7 +237,7 @@ button {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: transform var(--animation-duration) ease, box-shadow 0.2s ease; /*Removed background-color*/
+    transition: transform var(--animation-duration) ease, box-shadow 0.2s ease; 
     font-family: 'Inter', sans-serif;
     position: relative;
     overflow: hidden;
@@ -247,8 +246,8 @@ button {
 
 
 button:hover {
-    transform: translateY(-2px) scale(1.04); /* Reduced scale and translateY */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Even more subtle shadow */
+    transform: translateY(-2px) scale(1.04); 
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
 }
 
 
@@ -265,13 +264,13 @@ button:hover {
     margin-top: 0.5rem;
     text-align: right;
     display: inline-block;
-    transition: color var(--animation-duration) ease, opacity var(--animation-duration) ease; /* Added opacity */
+    transition: color var(--animation-duration) ease, opacity var(--animation-duration) ease; 
 }
 
 .forgot-password:hover {
     color: var(--primary-color);
     text-decoration: none;
-    opacity: 0.7; /* Further reduced opacity */
+    opacity: 0.7; 
 }
 
 .form-switch {
@@ -290,13 +289,13 @@ button:hover {
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0;
-    transition: color var(--animation-duration) ease, opacity 0.3s ease; /* Added opacity */
+    transition: color var(--animation-duration) ease, opacity 0.3s ease; 
 }
 
 .link-button:hover {
     color: var(--primary-color);
     text-decoration: none;
-    opacity: 0.7; /* Further reduced opacity */
+    opacity: 0.7; 
 }
 
 .error-message {

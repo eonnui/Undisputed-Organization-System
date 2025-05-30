@@ -1,12 +1,12 @@
 /* Home */
 .header {
-    padding: 25px;
+    padding: 10px;
     text-align: left;
     border-bottom: 1px solid var(--org-border-medium);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
 }
 
 .header-title {
@@ -14,7 +14,7 @@
     font-weight: bold;
     color: var(--org-text-primary);
     margin: 0;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
     animation: fadeIn 0.5s ease-out;
 }

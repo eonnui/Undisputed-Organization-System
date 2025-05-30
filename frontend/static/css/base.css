@@ -4,16 +4,14 @@
     padding: 0;
 }
 
+/* Theme variables and dimensions */
 :root {
-    /* Dimensions and durations - Keep these as they are, they aren't theme colors */
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 60px;
     --sidebar-transition-duration: 0.3s;
     --crazy-animation-duration: 0.7s;
     --scrollbar-width: 8px; 
     --scrollbar-track-color: transparent;
-
-    /* Dark fallback colors that will be overridden by database values */
     --org-sidebar-bg-color: #0f0f0f;
     --org-sidebar-border-color: #333;
     --org-text-inverse: #ffffff;
@@ -36,13 +34,9 @@
     --org-focus-border: #0066cc;
     --org-error: #ff4444;
     --scrollbar-color: #666;
-
-    /* Legacy variable for single theme_color fallback (if still needed) */
-    --organization-theme-color: var(--org-button-bg, #0066cc); /* Points to a primary org color with fallback */
-    --org-button-bg: #0066cc; /* Add this if it doesn't exist elsewhere */
+    --organization-theme-color: var(--org-button-bg, #0066cc);
+    --org-button-bg: #0066cc;
 }
-
-/* All other styles outside of :root are already using var(--org-...) or are structural */
 
 body {
     min-height: 100vh;
@@ -51,6 +45,7 @@ body {
     display: flex;
 }
 
+/* Sidebar styles */
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--org-sidebar-bg-color);
@@ -254,6 +249,7 @@ body {
     margin-bottom: 30px;
 }
 
+/* Main content styles */
 .main-content {
     flex-grow: 1;
     display: flex;
@@ -266,6 +262,7 @@ body {
     margin-left: var(--sidebar-collapsed-width);
 }
 
+/* Top bar styles */
 .top-bar {
     background-color: var(--org-top-bar-bg);
     padding: 15px 20px;
@@ -279,7 +276,7 @@ body {
 }
 
 .main-content.collapsed .top-bar {
-    padding-left: calc(var(--sidebar-collapsed-width) + 20px); /* Use calc for CSS variables */
+    padding-left: calc(var(--sidebar-collapsed-width) + 20px);
 }
 
 .top-bar .menu-icon {
@@ -370,6 +367,7 @@ body {
     color: var(--org-text-primary);
 }
 
+/* Dropdown styles */
 .dropdown-content {
     display: none;
     position: absolute;
@@ -423,6 +421,7 @@ body {
     border-bottom: none;
 }
 
+/* Main content area */
 .content {
     padding: 20px;
     flex-grow: 1;
