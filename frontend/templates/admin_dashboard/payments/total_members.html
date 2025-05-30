@@ -2,111 +2,22 @@
 
 {% block title %}Total Members{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
 
-<div class="payments-page" style="background-color: var(--org-bg-color); padding: 20px;">
-    <div class="data-container" style="margin-left: 20px;">
-        <h1 class="page-title" style="color: var(--org-text-primary); margin-bottom: 10px; font-size: 2.2rem; font-weight: bold; opacity: 0; animation: fadeIn 1s ease-in-out forwards;">
+<div class="membership-hub">
+    <div class="member-info-section">
+        <h1 class="section-headline">
             {% if section %} {{ section|upper }}{% endif %}
         </h1>
-        <p class="page-description" style="color: var(--org-text-secondary); margin-bottom: 20px; font-size: 1.2rem; opacity: 0; animation: fadeIn 1s ease-in-out 0.5s forwards;">
+        <p class="section-description">
             {% if section %} {% else %} TOTAL MEMBERS {% endif %}
         </p>
 
-        <style>
-            .member-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 30px;
-                background-color: var(--org-card-bg);
-                border-radius: 12px;
-                box-shadow: 0 6px 15px rgba(var(--org-shadow-base-rgb), 0.1);
-                overflow: hidden;
-                animation: slideInUp 0.8s ease-in-out;
-            }
-
-            .member-table thead th {
-                background-color: var(--org-hover-bg);
-                color: var(--org-text-primary);
-                padding: 15px;
-                text-align: left;
-                border-bottom: 2px solid var(--org-border-medium);
-                font-weight: 700;
-                font-size: 1.2rem;
-            }
-
-            .member-table tbody td {
-                padding: 15px;
-                text-align: left;
-                border-bottom: 1px solid var(--org-border-medium);
-                color: var(--org-text-primary);
-                transition: background-color 0.3s ease;
-            }
-
-            .member-table tbody tr:hover {
-                background-color: var(--org-hover-bg-light);
-                box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.1);
-            }
-
-            .member-table tbody tr:last-child td {
-                border-bottom: none;
-            }
-
-            .view-button {
-                background-color: var(--org-primary-hover);
-                color: var(--org-button-text);
-                border: none;
-                padding: 8px 18px;
-                border-radius: 28px;
-                cursor: pointer;
-                font-size: 1.1rem;
-                text-decoration: none;
-                transition: all 0.3s ease;
-                box-shadow: 0 3px 7px rgba(var(--org-shadow-base-rgb), 0.1);
-            }
-
-            .view-button:hover {
-                background-color: var(--org-hover-effect);
-                transform: translateY(-2px) scale(1.05);
-                box-shadow: 0 5px 10px rgba(var(--org-shadow-base-rgb), 0.2);
-            }
-
-            .no-members {
-                padding: 20px;
-                text-align: center;
-                color: var(--org-text-secondary);
-                font-size: 1.2rem;
-                background-color: var(--org-card-bg);
-                border-radius: 12px;
-                margin-top: 30px;
-                box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.08);
-                animation: fadeIn 1s ease-in-out;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                }
-
-                to {
-                    opacity: 1;
-                }
-            }
-
-            @keyframes slideInUp {
-                from {
-                    transform: translateY(50px);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-        </style>
-
-        <table class="member-table">
+        <table class="member-listing-table">
             <thead>
                 <tr>
                     <th>Student Number</th>
@@ -122,12 +33,12 @@
                     <td>{{ member.last_name }}</td>
                     <td>{{ member.first_name }}</td>
                     <td>
-                        <a href="/Admin/payments?student_number={{ member.student_number }}#payments" class="view-button">View</a>
+                        <a href="/Admin/payments?student_number={{ member.student_number }}#payments" class="action-button-style">View</a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="no-members">No members found{% if section %} in section {{ section|upper }}{% endif %}.</td>
+                    <td colspan="4" class="empty-state-message">No members found{% if section %} in section {{ section|upper }}{% endif %}.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -141,6 +52,7 @@
             const studentNumber = urlParams.get('student_number');
 
             if (studentNumber) {
+                // This will reload the page and navigate to the payments tab with the student number
                 window.location.href = `/Admin/payments?student_number=${studentNumber}#payments`;
             }
         }

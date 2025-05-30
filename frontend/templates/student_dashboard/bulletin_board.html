@@ -7,8 +7,9 @@
 {% endblock %}
 
 {% block content %}
-    <div class="bulletin-container">
-        <h2 class="bulletin-header">Bulletin Board</h2>
+    <div class="bulletin-page">
+        <h1 class="bulletin-header">Bulletin Board</h1>
+        <div class="bulletin-container"></div>
         {% if posts %}
             {% for post in posts %}
                 <div class="post-card">

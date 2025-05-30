@@ -2,6 +2,10 @@
 
 {% block title %}Detailed Monthly Cash Flow{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="monthly-cashflow-detailed">
     <h2 id="detailed-month-title">MONTH</h2>
@@ -33,71 +37,6 @@
         </tfoot>
     </table>
 </div>
-
-<style>
-.monthly-cashflow-detailed {
-    margin-top: 20px;
-    background-color: var(--org-card-bg);
-    padding: 20px;
-    border-radius: var(--org-radius-md);
-    box-shadow: var(--org-shadow-sm);
-}
-
-.monthly-cashflow-detailed h2 {
-    font-size: 1.5em;
-    color: var(--org-dashboard-title-color);
-    margin-bottom: 5px;
-}
-
-.monthly-cashflow-detailed p {
-    color: var(--org-text-secondary);
-    font-size: 0.9em;
-    margin-bottom: 10px;
-}
-
-.monthly-cashflow-detailed table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.monthly-cashflow-detailed th, .monthly-cashflow-detailed td {
-    border: 1px solid var(--org-border-medium);
-    padding: 8px;
-    text-align: left;
-    color: var(--org-table-data-text);
-}
-
-.monthly-cashflow-detailed th {
-    background-color: var(--org-table-header-bg-payments);
-    font-weight: bold;
-    color: var(--org-table-header-text-payments);
-}
-
-.monthly-cashflow-detailed .amount {
-    text-align: right;
-}
-
-.monthly-cashflow-detailed .inflows-row td,
-.monthly-cashflow-detailed .outflows-row td {
-    background-color: var(--org-highlight);
-    font-weight: bold;
-    text-align: left;
-    padding: 8px;
-}
-
-.monthly-cashflow-detailed tfoot th {
-    font-weight: bold;
-    text-align: left;
-    padding-top: 10px;
-    border-top: 2px solid var(--org-accent-dark);
-    color: var(--org-table-header-text-payments);
-}
-
-.monthly-cashflow-detailed tfoot .amount {
-    font-weight: bold;
-    color: var(--org-table-header-text-payments);
-}
-</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -198,9 +137,6 @@
             row.cells[5].classList.add('amount');
             row.cells[6].classList.add('amount');
         } else {
-            // No need to sort here if the backend is already sorting and calculating the running balance
-            // transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
-
             transactions.forEach(item => {
                 const row = detailedMonthlyDataTableBody.insertRow();
                 row.insertCell().textContent = item.date || 'N/A';
@@ -210,13 +146,11 @@
                 const originalFee = typeof item.original_fee === 'number' ? item.original_fee : 0;
                 const inflow = typeof item.inflow === 'number' ? item.inflow : 0;
                 const outflow = typeof item.outflow === 'number' ? item.outflow : 0;
-                // Get the running balance from the item data
                 const runningBalance = typeof item.running_balance === 'number' ? item.running_balance : 0; 
 
                 row.insertCell().textContent = `₱${originalFee.toFixed(2)}`;
                 row.insertCell().textContent = `₱${inflow.toFixed(2)}`;
                 row.insertCell().textContent = `₱${outflow.toFixed(2)}`;
-                // Display the running balance
                 row.insertCell().textContent = `₱${runningBalance.toFixed(2)}`; 
 
                 row.cells[3].classList.add('amount');

@@ -3,125 +3,12 @@
 {% block title %}Admin_Settings{% endblock %}
 
 {% block head %}
-<style>
-    /* Basic styling for the theme color inputs */
-    .theme-color-controls {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-top: 10px;
-    }
-    .theme-color-controls input[type="text"] {
-        flex-grow: 1;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    .theme-color-controls input[type="color"] {
-        width: 50px;
-        height: 38px; /* Match height of text input */
-        border: none;
-        padding: 0;
-        cursor: pointer;
-    }
-    .theme-color-controls button {
-        padding: 8px 15px;
-        background-color: var(--organization-theme-color, #6B00B9); /* Use theme color or default */
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    .theme-color-controls button:hover {
-        opacity: 0.9;
-    }
-    .notification {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #4CAF50;
-        color: white;
-        padding: 15px;
-        border-radius: 5px;
-        z-index: 1000;
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
-    }
-
-    .notification.show {
-        opacity: 1;
-    }
-
-    .notification.error {
-        background-color: #f44336;
-    }
-
-    /* Styles for Logo Upload Section */
-    .logo-upload-section {
-        margin-top: 30px;
-        border-top: 1px solid #eee;
-        padding-top: 20px;
-    }
-    .logo-upload-controls {
-        display: flex;
-        flex-direction: column; /* Stack input and button */
-        gap: 10px;
-        margin-top: 10px;
-    }
-    .logo-upload-controls input[type="file"] {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    .logo-upload-controls button {
-        padding: 10px 15px;
-        background-color: #007bff; /* A different color for distinction */
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    .logo-upload-controls button:hover {
-        background-color: #0056b3;
-    }
-    .current-logo-preview { /* Restored styles for logo preview */
-        margin-top: 15px;
-        text-align: center;
-    }
-    .current-logo-preview img { /* Restored styles for logo preview image */
-        max-width: 150px;
-        max-height: 150px;
-        border: 1px solid #ddd;
-        padding: 5px;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}"> 
 {% endblock %}
 
 {% block content %}
 <div class="content">
     <h1>Admin Settings</h1>
-
-    <div class="user-management-section">
-        <h2>Manage Users</h2>
-        <ul class="user-list" id="userList">
-            {% for user in users %}
-            <li class="user-list-item" data-user-id="{{ user.id }}">
-                <span>{{ user.first_name }} {{ user.last_name }} ({{ user.student_number }}) - {{ user.email }}</span>
-                <div class="user-actions">
-                    <button class="edit">Edit</button>
-                    <button class="delete">Delete</button>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-        <div id="editUserFormContainer" class="hidden">
-        </div>
-    </div>
 
     <div class="organization-settings-section">
         <h2>Organization Theme Settings</h2>
@@ -139,8 +26,8 @@
 
         <div class="logo-upload-section">
             <h2>Organization Logo</h2>
-            <div class="current-logo-preview"> {# Restored this div #}
-                {% if logo_url %} {# Use logo_url as per previous fix #}
+            <div class="current-logo-preview">
+                {% if logo_url %}
                 <p>Current Logo:</p>
                 <img id="currentLogoPreview" src="{{ logo_url }}" alt="Organization Logo">
                 {% else %}
@@ -158,7 +45,7 @@
 </div>
 
 <script>
-    // Function to display notifications (copied from script.js for consistency)
+    // Function to display notifications
     function displayNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
@@ -185,9 +72,9 @@
         const logoFileInput = document.getElementById('logoFileInput');
         const uploadLogoButton = document.getElementById('uploadLogoButton');
         const logoUploadError = document.getElementById('logoUploadError');
-        const currentLogoPreview = document.getElementById('currentLogoPreview'); // Restored this line
+        const currentLogoPreview = document.getElementById('currentLogoPreview');
 
-        // --- Theme Color Logic (unchanged) ---
+        // --- Theme Color Logic ---
         themeColorInput.addEventListener('input', function() {
             const hexRegex = /^#([0-9A-F]{3}){1,2}$/i;
             if (hexRegex.test(this.value)) {
@@ -238,7 +125,7 @@
             }
         });
 
-        // --- Logo Upload Logic (modified to restore preview) ---
+        // --- Logo Upload Logic ---
         logoFileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 const file = this.files[0];
@@ -268,8 +155,6 @@
                 } else {
                     currentLogoPreview.style.display = 'none';
                 }
-                // Optional: You might want to reset the displayed logo to the one from the database here
-                // For example, if you stored the initial logo_url in a data attribute on the img tag.
             }
         });
 

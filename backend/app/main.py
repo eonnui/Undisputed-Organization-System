@@ -4,8 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import func, and_, extract
-from . import models, schemas, crud # Assuming models, schemas, and crud are in the same package
-from .database import SessionLocal, engine # Assuming database.py is in the same package
+from . import models, schemas, crud
+from .database import SessionLocal, engine
 from pathlib import Path
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict
@@ -17,7 +17,6 @@ import secrets
 import re
 import requests
 import base64
-import logging
 import bcrypt
 import shutil
 import calendar
@@ -26,39 +25,26 @@ from dateutil.relativedelta import relativedelta
 
 from starlette.middleware.sessions import SessionMiddleware
 
-from .text import extract_text_from_pdf, extract_student_info # Assuming text.py is in the same package
+from .text import extract_text_from_pdf, extract_student_info
 
-# Create all database tables defined in models.Base
 models.Base.metadata.create_all(bind=engine)
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# Add SessionMiddleware for managing user sessions
-app.add_middleware(SessionMiddleware, secret_key="your_secret_key") # Replace with a strong, secret key
+app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
-# Define base directory for static files and templates
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Mount static files directory
 app.mount(
     "/static",
     StaticFiles(directory=BASE_DIR / "frontend" / "static"),
     name="static"
 )
 
-# Initialize APIRouter for organizing routes
 router = APIRouter()
 
-# Initialize Jinja2Templates for rendering HTML templates
 templates = Jinja2Templates(directory=BASE_DIR / "frontend" / "templates")
 
-# Configure logging for this module
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG) # Set to DEBUG to capture all messages
-
-
-# Dependency to get a database session
 def get_db():
     db = SessionLocal()
     try:
@@ -66,16 +52,15 @@ def get_db():
     finally:
         db.close()
 
-# Helper function to generate a secure filename
 def generate_secure_filename(original_filename: str) -> str:
     _, file_extension = os.path.splitext(original_filename)
     random_prefix = secrets.token_hex(16)
     return f"{random_prefix}{file_extension}"
 
 UPLOAD_BASE_DIRECTORY = Path(__file__).parent.parent.parent / "frontend" / "static" / "images"
-UPLOAD_BASE_DIRECTORY.mkdir(parents=True, exist_ok=True) # Ensure the directory exists
+UPLOAD_BASE_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
-# Admin Bulletin Board Post Route
+# Handles admin bulletin board post creation.
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
 async def admin_post_bulletin(
         request: Request,
@@ -147,7 +132,7 @@ async def admin_post_bulletin(
             detail="Internal server error during post creation",
         )
 
-# Admin Settings Page Route
+# Displays the admin settings page.
 @router.get("/admin_settings/", response_class=HTMLResponse, name="admin_settings")
 async def admin_settings(request: Request, db: Session = Depends(get_db)):
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
@@ -162,44 +147,43 @@ async def admin_settings(request: Request, db: Session = Depends(get_db)):
     if user_role != "Admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
 
-    # Default logo URL if no organization logo is found
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
 
-    organization_id = None # Initialize organization_id
-    current_theme_color = "#6B00B9" # Default theme color
-    logo_url = default_logo_url # Initialize the logo_url that admin_base expects
+    organization_id = None
+    current_theme_color = "#6B00B9"
+    logo_url = default_logo_url
 
     if admin_id:
         admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
         if admin and admin.organizations:
-            first_org = admin.organizations[0] # Assuming an admin manages the first organization in the list
-            organization_id = first_org.id # Get the organization ID
+            first_org = admin.organizations[0]
+            organization_id = first_org.id
             
             if first_org.logo_url:
-                logo_url = first_org.logo_url # Assign the organization's specific logo URL to logo_url
+                logo_url = first_org.logo_url
             
             if first_org.theme_color:
-                current_theme_color = first_org.theme_color # Get the current theme color
+                current_theme_color = first_org.theme_color
 
     return templates.TemplateResponse(
-        "admin_dashboard/admin_settings.html", # Ensure this path is correct for your template
+        "admin_dashboard/admin_settings.html",
         {
             "request": request,
             "year": "2025",
-            "organization_id": organization_id, # Pass organization_id to the template
-            "current_theme_color": current_theme_color, # Pass current theme color
-            "logo_url": logo_url # Changed this from "organization_logo_url" to "logo_url"
+            "organization_id": organization_id,
+            "current_theme_color": current_theme_color,
+            "logo_url": logo_url
         },
     )
 
-# Admin Create Event Route
+# Handles admin event creation.
 @router.post("/admin/events/create", name="admin_create_event")
 async def admin_create_event(
     request: Request,
     title: str = Form(...),
     classification: str = Form(...),
     description: str = Form(...),
-    date: str = Form(...), # This is the date string from the form (e.g., "2025-05-27T14:30")
+    date: str = Form(...),
     location: str = Form(...),
     max_participants: int = Form(...),
     db: Session = Depends(get_db)
@@ -219,15 +203,13 @@ async def admin_create_event(
         )
 
     try:
-        # Parse the datetime-local format (YYYY-MM-DDTHH:MM)
-        event_date = datetime.strptime(date, "%Y-%m-%dT%H:%M") # <--- MODIFIED THIS LINE
+        event_date = datetime.strptime(date, "%Y-%m-%dT%H:%M")
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid date and time format. Please use YYYY-MM-DDTHH:MM (e.g., 2025-05-27T14:30).",
         )
 
-    # Ensure admin_org_id is correctly retrieved
     admin_org_id = None
     try:
         admin_org_id = get_entity_organization_id(db, admin_id)
@@ -247,10 +229,10 @@ async def admin_create_event(
         title=title,
         classification=classification,
         description=description,
-        date=event_date, # Use the parsed datetime object
+        date=event_date,
         location=location,
         max_participants=max_participants,
-        admin_id=admin_id, # Assign the admin who created it
+        admin_id=admin_id,
     )
     db.add(db_event)
     db.commit()
@@ -258,7 +240,7 @@ async def admin_create_event(
 
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
 
-# Admin Delete Event Route
+# Handles admin event deletion.
 @router.post("/admin/events/delete/{event_id}", response_class=HTMLResponse, name="admin_delete_event")
 async def admin_delete_event(
     request: Request,
@@ -284,7 +266,7 @@ async def admin_delete_event(
         db.close()
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
 
-# Admin Delete Bulletin Post Route
+# Handles admin bulletin post deletion.
 @router.post("/admin/bulletin_board/delete/{post_id}", response_class=HTMLResponse, name="admin_delete_bulletin_post")
 async def admin_delete_bulletin_post(
     request: Request,
@@ -310,18 +292,13 @@ async def admin_delete_bulletin_post(
         db.close()
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
 
-# Admin Payments Page Route
+# Displays the admin payments page.
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
 async def admin_payments(
     request: Request,
     db: Session = Depends(get_db),
     student_number: Optional[str] = None,
 ):
-    """
-    Displays all payment items for administrators, with accurate payment status
-    respecting the is_past_due and is_not_responsible flags, and student number.
-    Filters payment items by the admin's organization.
-    """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
     admin_id = request.session.get("admin_id")
@@ -344,12 +321,12 @@ async def admin_payments(
             first_org = admin.organizations[0]
             if first_org.logo_url:
                 logo_url = first_org.logo_url
-            admin_org_id = first_org.id # Get the admin's organization ID
+            admin_org_id = first_org.id
 
     query = db.query(models.PaymentItem).join(models.User)
 
     if admin_org_id:
-        query = query.filter(models.User.organization_id == admin_org_id) # Filter by organization
+        query = query.filter(models.User.organization_id == admin_org_id)
 
     if student_number:
         query = query.filter(models.User.student_number == student_number)
@@ -391,8 +368,7 @@ async def admin_payments(
         },
     )
 
-
-
+# Updates the status of a specific payment item.
 @router.post("/admin/payment/{payment_item_id}/update_status")
 async def update_payment_status(
     request: Request,
@@ -400,11 +376,6 @@ async def update_payment_status(
     status: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    """
-    Updates the status of a specific payment item and handles payment creation
-    or updates based on the selected status. Includes marking item as 'not responsible'
-    and explicitly handles 'Unpaid' status with past due override.
-    """
     current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
     user_role: Optional[str] = request.session.get("user_role")
 
@@ -471,7 +442,7 @@ async def update_payment_status(
             detail=f"Failed to update payment item status: {e}",
         )
 
-
+# Retrieves membership data for administrators.
 @router.get("/admin/membership/")
 async def admin_membership(
     request: Request,
@@ -479,10 +450,6 @@ async def admin_membership(
     academic_year: Optional[str] = None,
     semester: Optional[str] = None,
 ) -> List[Dict]:
-    """
-    Retrieves membership data, optionally filtered by academic year and semester,
-    ensuring no duplicate sections are displayed. Filters members by the admin's organization.
-    """
     try:
         admin_id = request.session.get("admin_id")
         if not admin_id:
@@ -492,7 +459,7 @@ async def admin_membership(
 
         query = db.query(models.User).options(
             joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
-        ).filter(models.User.organization_id == admin_org_id) # Filter by organization
+        ).filter(models.User.organization_id == admin_org_id)
         
         users = query.all()
 
@@ -567,7 +534,7 @@ async def admin_membership(
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch membership data")
 
-
+# Retrieves individual membership data for administrators.
 @router.get("/admin/individual_members/")
 async def admin_individual_members(
     request: Request,
@@ -575,11 +542,6 @@ async def admin_individual_members(
     academic_year: Optional[str] = None,
     semester: Optional[str] = None,
 ) -> List[Dict]:
-    """
-    Retrieves individual membership data, optionally filtered by academic year and semester.
-    This route is specifically for displaying each individual member.
-    Filters individual members by the admin's organization.
-    """
     try:
         admin_id = request.session.get("admin_id")
         if not admin_id:
@@ -589,7 +551,7 @@ async def admin_individual_members(
 
         query = db.query(models.User).options(
             joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
-        ).filter(models.User.organization_id == admin_org_id) # Filter by organization
+        ).filter(models.User.organization_id == admin_org_id)
 
         filters = []
         if academic_year:
@@ -598,10 +560,6 @@ async def admin_individual_members(
             filters.append(models.PaymentItem.semester == semester)
 
         if filters:
-            # Apply filters only if payment items are loaded, otherwise it might cause issues
-            # if a user has no payment items for the given filter but belongs to the org.
-            # This logic needs to be carefully considered if a user can exist without payment items.
-            # For now, assuming payment items are always present if filters are applied.
             query = query.join(models.PaymentItem).filter(*filters)
 
         users = query.all()
@@ -648,12 +606,9 @@ async def admin_individual_members(
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch individual membership data")
 
-    
+# Returns monthly trends of total successful membership fees collected.
 @router.get("/financial_trends")
 async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
-    """
-    Returns monthly trends of total successful membership fees collected, filtered by the admin's organization.
-    """
     admin_id = request.session.get("admin_id")
     if not admin_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
@@ -665,10 +620,10 @@ async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
         func.extract('month', models.Payment.created_at),
         func.sum(models.Payment.amount)
     ).join(
-        models.Payment.user # Join with User to access organization_id
+        models.Payment.user
     ).filter(
         models.Payment.status == "success",
-        models.User.organization_id == admin_org_id # Filter by organization
+        models.User.organization_id == admin_org_id
     ).group_by(
         func.extract('year', models.Payment.created_at),
         func.extract('month', models.Payment.created_at)
@@ -682,11 +637,9 @@ async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
 
     return {"labels": labels, "data": data}
 
+# Returns total fees per academic year from PaymentItem.
 @router.get("/expenses_by_category")
 async def get_expenses_by_category(request: Request, db: Session = Depends(get_db)):
-    """
-    Returns total fees per academic year from PaymentItem, filtered by the admin's organization.
-    """
     admin_id = request.session.get("admin_id")
     if not admin_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
@@ -697,9 +650,9 @@ async def get_expenses_by_category(request: Request, db: Session = Depends(get_d
         models.PaymentItem.academic_year,
         func.sum(models.PaymentItem.fee)
     ).join(
-        models.PaymentItem.user # Join with User to access organization_id
+        models.PaymentItem.user
     ).filter(
-        models.User.organization_id == admin_org_id # Filter by organization
+        models.User.organization_id == admin_org_id
     ).group_by(
         models.PaymentItem.academic_year
     ).all()
@@ -709,12 +662,9 @@ async def get_expenses_by_category(request: Request, db: Session = Depends(get_d
 
     return {"labels": labels, "data": data}
 
+# Distributes collected successful funds based on the academic year.
 @router.get("/fund_distribution")
 async def get_fund_distribution(request: Request, db: Session = Depends(get_db)):
-    """
-    Distributes collected *successful* funds based on the academic year
-    of the associated PaymentItem, filtered by the admin's organization.
-    """
     admin_id = request.session.get("admin_id")
     if not admin_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
@@ -727,10 +677,10 @@ async def get_fund_distribution(request: Request, db: Session = Depends(get_db))
     ).join(
         models.Payment, models.PaymentItem.id == models.Payment.payment_item_id
     ).join(
-        models.PaymentItem.user # Join with User to access organization_id
+        models.PaymentItem.user
     ).filter(
         models.Payment.status == "success",
-        models.User.organization_id == admin_org_id # Filter by organization
+        models.User.organization_id == admin_org_id
     ).group_by(
         models.PaymentItem.academic_year
     ).all()
@@ -745,19 +695,13 @@ async def get_fund_distribution(request: Request, db: Session = Depends(get_db))
 
     return {"labels": labels, "data": data}
 
-
+# Retrieves the total outstanding dues amount.
 @router.get("/admin/outstanding_dues/")
 async def admin_outstanding_dues(
     request: Request,
     db: Session = Depends(get_db),
     academic_year: Optional[str] = None,
 ) -> List[Dict]:
-    """
-    Retrieves the total outstanding dues amount, filtered by academic year,
-    CURRENT semester, and the admin's organization.
-    This version uses case-insensitive comparison for academic year. The semester
-    is always the *current* semester, determined by the server.
-    """
     admin_id = request.session.get("admin_id")
     if not admin_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
@@ -779,7 +723,6 @@ async def admin_outstanding_dues(
             end_year = start_year + 1
             resolved_academic_year = f"{start_year}-{end_year}"
 
-        # Join PaymentItem directly to User and filter by organization, academic year, and semester
         query = db.query(models.PaymentItem).join(
             models.User, models.PaymentItem.user_id == models.User.id
         ).filter(
@@ -787,7 +730,7 @@ async def admin_outstanding_dues(
                 func.lower(models.PaymentItem.academic_year) == resolved_academic_year.lower(),
                 models.PaymentItem.semester == current_semester,
                 models.User.organization_id == admin_org_id,
-                models.PaymentItem.is_not_responsible == False # Only consider those responsible
+                models.PaymentItem.is_not_responsible == False
             )
         )
         
@@ -796,7 +739,6 @@ async def admin_outstanding_dues(
         total_outstanding_amount = 0.0
 
         for item in relevant_payment_items:
-            # If the PaymentItem is not marked as paid, add its fee to the outstanding total
             if not item.is_paid:
                 total_outstanding_amount += item.fee
 
@@ -807,8 +749,7 @@ async def admin_outstanding_dues(
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to fetch outstanding dues data")
 
-
-
+# Displays total members for administrators.
 @router.get("/admin/payments/total_members", response_class=HTMLResponse, name="payments_total_members")
 async def payments_total_members(
     request: Request,
@@ -817,9 +758,6 @@ async def payments_total_members(
     year_level: Optional[str] = None,
     student_number: Optional[str] = None
 ):
-    """
-    Displays total members, filtered by the admin's organization, and optionally by section, year level, or student number.
-    """
     admin_id = request.session.get("admin_id")
     if not admin_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
@@ -834,7 +772,7 @@ async def payments_total_members(
         if first_org.logo_url:
             logo_url = first_org.logo_url
 
-    query = db.query(models.User).filter(models.User.organization_id == admin_org_id) # Filter by organization
+    query = db.query(models.User).filter(models.User.organization_id == admin_org_id)
 
     if section:
         query = query.filter(models.User.section == section)
@@ -860,12 +798,9 @@ async def payments_total_members(
         },
     )
 
-# Admin Bulletin Board Page Route
+# Displays the admin bulletin board page.
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
 async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
-    """
-    Displays the admin bulletin board page with recent posts, filtered by the admin's organization.
-    """
     admin_id = request.session.get("admin_id")
     if not admin_id:
         return RedirectResponse(url="/admin/login", status_code=status.HTTP_302_FOUND)
@@ -874,7 +809,7 @@ async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
     try:
         admin_org_id = get_entity_organization_id(db, admin_id)
     except HTTPException as e:
-        raise e # Re-raise if admin not found or not associated with org
+        raise e
 
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     logo_url = default_logo_url
@@ -899,12 +834,9 @@ async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
         },
     )
 
-# Admin Events Page Route
+# Displays the admin events page.
 @router.get('/admin/events', response_class=HTMLResponse)
 async def admin_events(request: Request, db: Session = Depends(get_db)):
-    """
-    Displays the admin events page with a list of events.
-    """
     admin_id = request.session.get("admin_id")
     if not admin_id:
         return RedirectResponse(url="/admin/login", status_code=status.HTTP_302_FOUND)
@@ -938,22 +870,17 @@ async def admin_events(request: Request, db: Session = Depends(get_db)):
         },
     )
 
-# Admin Financial Statement Page Route
-# 1. Existing route to serve the HTML dashboard page (no change here)
+# Displays the admin financial statement page.
 @router.get("/admin/financial_statement", response_class=HTMLResponse, name="admin_financial_statement")
 async def admin_financial_statement_page(request: Request, db: Session = Depends(get_db)):
     admin_id = request.session.get("admin_id")
 
-    # Basic authentication check for rendering the page
     if not admin_id:
-        # Redirect to login or show an unauthorized message
-        # For a full application, you'd use a proper redirect or authentication middleware
         return templates.TemplateResponse(
-            "admin_dashboard/unauthorized.html", # Or redirect using RedirectResponse
+            "admin_dashboard/unauthorized.html",
             {"request": request, "message": "You must be logged in as an admin to view this page."}
         )
 
-    # Optional: Fetch admin and organization details for logo etc.
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     logo_url = default_logo_url
     admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
@@ -968,13 +895,10 @@ async def admin_financial_statement_page(request: Request, db: Session = Depends
             "request": request,
             "year": str(datetime.now().year),
             "logo_url": logo_url,
-            # IMPORTANT: Do NOT pass all financial_data here if you intend to fetch it via AJAX.
-            # Only pass data needed for the initial page render that doesn't change with AJAX.
-            # The JavaScript will fetch the dynamic financial_data separately.
         },
     )
 
-# 2. NEW route to serve the financial data as JSON (this is what your JS will call)
+# Retrieves financial data for administrators.
 @router.get("/api/admin/financial_data", response_class=JSONResponse, name="admin_financial_data_api")
 async def admin_financial_data_api(request: Request, db: Session = Depends(get_db)):
     admin_id = request.session.get("admin_id")
@@ -1282,21 +1206,13 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
 
     return JSONResponse(content=financial_data)
 
-
-# Create organization route
+# Creates a new organization.
 @router.post("/admin/organizations/", response_model=schemas.Organization, status_code=status.HTTP_201_CREATED)
 async def create_organization_route(
     request: Request,
-    organization: schemas.OrganizationCreate, # Use schema from schemas.py
+    organization: schemas.OrganizationCreate,
     db: Session = Depends(get_db)
 ):
-    """
-    Creates a new organization in the database with an auto-generated custom palette and logo URL.
-    This route is intended for initial setup and does NOT require admin authentication.
-    """
-    # Removed current_admin_id check to allow unauthenticated access for initial setup.
-
-    # Check if the organization name already exists
     existing_organization = db.query(models.Organization).filter(
         models.Organization.name == organization.name
     ).first()
@@ -1306,9 +1222,6 @@ async def create_organization_route(
             detail=f"Organization with name '{organization.name}' already exists."
         )
 
-    # NEW: Check if the primary course code already exists for an organization
-    # This assumes you want a unique primary course code per organization.
-    # If an organization can have multiple primary courses, you'd adjust this logic.
     existing_course_org = db.query(models.Organization).filter(
         models.Organization.primary_course_code == organization.primary_course_code
     ).first()
@@ -1319,26 +1232,22 @@ async def create_organization_route(
         )
 
     try:
-        # Generate custom_palette from theme_color
-        # Ensure crud.generate_custom_palette is defined or imported
         custom_palette = crud.generate_custom_palette(organization.theme_color)
 
-        # Generate a suggested filename for the logo based on the organization name
         suggested_filename = f"{organization.name.lower().replace(' ', '_')}_logo.png"
-        logo_upload_path = f"/static/images/{suggested_filename}" # Keeping the path as provided by user
+        logo_upload_path = f"/static/images/{suggested_filename}"
 
         new_org = models.Organization(
             name=organization.name,
             theme_color=organization.theme_color,
-            primary_course_code=organization.primary_course_code, # NEW: Pass primary_course_code
+            primary_course_code=organization.primary_course_code,
             custom_palette=custom_palette,
-            logo_url=logo_upload_path # Store the generated path
+            logo_url=logo_upload_path
         )
         db.add(new_org)
         db.commit()
         db.refresh(new_org)
 
-        # Inform the user about the required logo upload
         print(f"\n**Action Required:** Please upload the organization logo to your web server at the path: **{new_org.logo_url}**")
         print(f"The suggested filename for the image file is: **{suggested_filename}**")
 
@@ -1350,19 +1259,13 @@ async def create_organization_route(
             detail=f"Error creating organization: {e}"
         )
     
+# Creates a new admin user.
 @router.post("/admin/admins/", response_model=schemas.Admin, status_code=status.HTTP_201_CREATED)
 async def create_admin_user_route(
     request: Request,
-    admin_data: schemas.AdminCreate, # Use schema from schemas.py
+    admin_data: schemas.AdminCreate,
     db: Session = Depends(get_db)
 ):
-    """
-    Creates a new admin user in the database. This route is intended for initial setup
-    and does NOT require existing admin authentication.
-    """
-    # Removed current_admin_id check to allow unauthenticated access for initial setup.
-
-    # Check if the email already exists
     existing_admin = db.query(models.Admin).filter(models.Admin.email == admin_data.email).first()
     if existing_admin:
         raise HTTPException(
@@ -1378,18 +1281,17 @@ async def create_admin_user_route(
             name=admin_data.name,
             email=admin_data.email,
             password=hashed_password,
-            role="Admin", # Force role to Admin for this route
-            position=admin_data.position # <--- THIS LINE WAS ADDED/CONFIRMED FOR FIX
+            role="Admin",
+            position=admin_data.position
         )
         db.add(new_admin)
-        db.flush() # Flush to get admin_id before linking organization
+        db.flush()
 
         if admin_data.organization_id:
             organization = db.get(models.Organization, admin_data.organization_id)
             if organization:
                 new_admin.organizations.append(organization)
             else:
-                # Log a warning but don't fail the admin creation if org not found
                 print(f"Warning: Organization with ID {admin_data.organization_id} not found. Admin created without organization link.")
         
         db.commit()
@@ -1402,7 +1304,7 @@ async def create_admin_user_route(
             detail=f"Error creating admin user: {e}"
         )
 
-
+# Updates the theme color of an existing organization.
 @router.put("/admin/organizations/{org_id}/theme", response_model=Dict[str, str])
 async def update_organization_theme_color_route(
     request: Request,
@@ -1410,10 +1312,6 @@ async def update_organization_theme_color_route(
     theme_update: schemas.OrganizationThemeUpdate,
     db: Session = Depends(get_db)
 ):
-    """
-    Updates the theme color of an existing organization and regenerates its custom palette.
-    Requires admin authentication.
-    """
     current_admin_id = request.session.get("admin_id")
     if not current_admin_id:
         raise HTTPException(
@@ -1429,14 +1327,13 @@ async def update_organization_theme_color_route(
                 detail=f"Organization with ID {org_id} not found."
             )
         organization.theme_color = theme_update.new_theme_color
-        # Use crud.generate_custom_palette
         organization.custom_palette = crud.generate_custom_palette(theme_update.new_theme_color)
         db.add(organization)
         db.commit()
         db.refresh(organization)
         return {"message": f"Organization '{organization.name}' (ID: {org_id}) theme color updated to {theme_update.new_theme_color} and palette regenerated successfully."}
     except HTTPException:
-        raise # Re-raise HTTPExceptions
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(
@@ -1444,19 +1341,14 @@ async def update_organization_theme_color_route(
             detail=f"Error updating organization theme color: {e}"
         )
 
+# Uploads and updates the logo for an existing organization.
 @router.put("/admin/organizations/{org_id}/logo", response_model=Dict[str, str])
 async def update_organization_logo_route(
     request: Request,
     org_id: int,
-    logo_file: UploadFile = File(...), # Expect a file upload
+    logo_file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    """
-    Uploads and updates the logo for an existing organization.
-    The logo will be named based on the organization's name and saved
-    as /static/images/{organization_name_slug}_logo.{extension}.
-    Requires admin authentication.
-    """
     current_admin_id = request.session.get("admin_id")
     if not current_admin_id:
         raise HTTPException(
@@ -1471,16 +1363,11 @@ async def update_organization_logo_route(
             detail=f"Organization with ID {org_id} not found."
         )
 
-    # --- Implement your desired naming convention here ---
-    # 1. Slugify the organization name
     organization_name_slug = organization.name.lower().replace(' ', '_')
-    # Remove any characters that might cause issues in a URL or filename
     organization_name_slug = ''.join(e for e in organization_name_slug if e.isalnum() or e == '_')
 
-    # 2. Get the actual file extension from the uploaded file
     file_extension = Path(logo_file.filename).suffix.lower()
     
-    # 3. Ensure allowed image file types
     allowed_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg']
     if file_extension not in allowed_extensions:
         raise HTTPException(
@@ -1488,21 +1375,16 @@ async def update_organization_logo_route(
             detail=f"Invalid file type. Only {', '.join(allowed_extensions)} are allowed."
         )
 
-    # 4. Construct the final suggested filename as requested
     suggested_filename = f"{organization_name_slug}_logo{file_extension}"
     
-    # 5. Define the full server-side path where the file will be stored
     file_path = UPLOAD_BASE_DIRECTORY / suggested_filename
 
     try:
-        # Save the uploaded file to the constructed path
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(logo_file.file, buffer)
         
-        # Construct the URL path to serve the image, exactly as desired
         logo_url = f"/static/images/{suggested_filename}"
 
-        # Update the organization's logo_url in the database
         organization.logo_url = logo_url
         db.add(organization)
         db.commit()
@@ -1511,10 +1393,9 @@ async def update_organization_logo_route(
         return {"message": f"Organization '{organization.name}' (ID: {org_id}) logo updated successfully to {logo_url}."}
 
     except HTTPException:
-        raise # Re-raise HTTPExceptions
+        raise
     except Exception as e:
         db.rollback()
-        # Clean up the partially uploaded file if an error occurred after saving
         if file_path.exists():
             os.remove(file_path)
         raise HTTPException(
@@ -1522,19 +1403,14 @@ async def update_organization_logo_route(
             detail=f"Error updating organization logo: {e}"
         )
 
-
-# PayMaya Create Payment Route
+# Creates a PayMaya payment request.
 @router.post("/payments/paymaya/create", response_class=JSONResponse, name="paymaya_create_payment")
 async def paymaya_create_payment(
     request: Request,
     payment_item_id: int = Form(...),
     db: Session = Depends(get_db),
 ):
-    """
-    Creates a PayMaya payment request. Handles cases where the amount is
-    provided directly or needs to be retrieved from a payment item.
-    """
-    public_api_key = "pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah" # This should ideally be in environment variables
+    public_api_key = "pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah"
     encoded_key = base64.b64encode(f"{public_api_key}:".encode()).decode()
     url = "https://pg-sandbox.paymaya.com/checkout/v1/checkouts"
     headers = {
@@ -1597,7 +1473,7 @@ async def paymaya_create_payment(
             detail=f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}"
         )
 
-# Payment Success Callback Route
+# Handles the payment success callback from PayMaya.
 @router.get("/Success", response_class=HTMLResponse, name="payment_success")
 async def payment_success(
     request: Request,
@@ -1644,7 +1520,7 @@ async def payment_success(
             detail=f"PaymentItem with ID {paymentItemId} not found."
         )
 
-# Payment Failure Callback Route
+# Handles the payment failure callback from PayMaya.
 @router.get("/Failure", response_class=HTMLResponse, name="payment_failure")
 async def payment_failure(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
@@ -1674,7 +1550,7 @@ async def payment_failure(request: Request, paymentId: int = Query(...), db: Ses
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
 
-# Payment Cancel Callback Route
+# Handles the payment cancellation callback from PayMaya.
 @router.get("/Cancel", response_class=HTMLResponse, name="payment_cancel")
 async def payment_cancel(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
@@ -1704,38 +1580,31 @@ async def payment_cancel(request: Request, paymentId: int = Query(...), db: Sess
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
 
-# Helper function to get related PaymentItem
+# Helper function to get related PaymentItem.
 async def _get_related_payment_item(db: Session, payment_item_id: int | None) -> models.PaymentItem | None:
-    """Helper function to fetch the PaymentItem if payment_item_id is available."""
     if payment_item_id:
         return crud.get_payment_item_by_id(db, payment_item_id=payment_item_id)
     return None
 
-# Include the router in the main FastAPI app
 app.include_router(router)
 
-# Logout Route
+# Handles user logout.
 @app.get("/logout", response_class=RedirectResponse, name="logout")
 async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)
 
-# Root Route (Index page)
+# Displays the root index page.
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# Home Route (Dashboard for both Admin and User)
+# Displays the home dashboard for both admin and regular users.
 @app.get("/home", response_class=HTMLResponse, name="home")
 async def home(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    """
-    Handles the /home route, displaying either the student or admin dashboard
-    depending on the user's role stored in the session, and passes the
-    organization's logo URL to the template. Bulletin posts are filtered by organization.
-    """
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
     user_role = request.session.get("user_role")
@@ -1747,12 +1616,10 @@ async def home(
     if not (user_id or admin_id) or not user_role:
         return templates.TemplateResponse("index.html", {"request": request, "error": "Please log in to access this page."})
 
-    # Determine the organization ID for the current user/admin
     current_org_id = None
     try:
         current_org_id = await get_user_organization_id(request, db)
     except HTTPException:
-        # If no organization found, posts/events will be empty
         pass
 
     if user_role == "Admin":
@@ -1825,20 +1692,19 @@ async def home(
     else:
         raise HTTPException(status_code=403, detail="Invalid user role")
 
-# Bulletin Board Page Route (for users)
+# Displays the bulletin board page for users.
 @app.get("/BulletinBoard", response_class=HTMLResponse, name="bulletin_board")
 async def bulletin_board(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
     user_role = request.session.get("user_role")
 
-    if not user_id: # Ensure user is authenticated
+    if not user_id:
         return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
     user_org_id = None
     try:
         user_org_id = await get_user_organization_id(request, db)
     except HTTPException:
-        # If user is not associated with an organization, they won't see any posts
         pass 
 
     default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
@@ -1854,13 +1720,13 @@ async def bulletin_board(request: Request, db: Session = Depends(get_db)):
             models.Organization.id == user_org_id
         ).order_by(models.BulletinBoard.created_at.desc()).all()
 
-    hearted_posts = [] # This needs to be populated based on user's hearted posts if implemented
+    hearted_posts = []
     return templates.TemplateResponse(
         "student_dashboard/bulletin_board.html",
         {"request": request, "year": "2025", "posts": posts, "hearted_posts": hearted_posts, "logo_url": logo_url}
     )
 
-# Events Page Route (for users)
+# Displays the events page for users.
 @app.get("/Events", response_class=HTMLResponse, name="events")
 async def events(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
@@ -1877,7 +1743,7 @@ async def events(request: Request, db: Session = Depends(get_db)):
     try:
         user_org_id = await get_user_organization_id(request, db)
     except HTTPException:
-        pass # If no organization found, events will be empty
+        pass
 
     events = []
     if user_org_id:
@@ -1889,12 +1755,9 @@ async def events(request: Request, db: Session = Depends(get_db)):
         "student_dashboard/events.html", {"request": request, "year": "2025", "events": events, "logo_url": logo_url}
     )
 
-# Payments Page Route (for users)
+# Displays payment items for the authenticated user.
 @app.get("/Payments", response_class=HTMLResponse, name="payments")
 async def payments(request: Request, db: Session = Depends(get_db)):
-    """
-    Displays payment items for the authenticated user, categorized into past due and unpaid upcoming.
-    """
     user_id = request.session.get("user_id")
     user_role = request.session.get("user_role")
 
@@ -1952,7 +1815,7 @@ async def payments(request: Request, db: Session = Depends(get_db)):
             detail="Failed to retrieve payment information.",
         )
 
-# Financial Statement Page Route (for users)
+# Displays the financial statement page for users.
 @app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
 async def financial_statement(request: Request, db: Session = Depends(get_db)):
     user_id: int | None = request.session.get("user_id")
@@ -1975,7 +1838,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     today: date = date.today()
     current_year: int = today.year
 
-    # Payment Items (Revenue)
     all_user_payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user_id).all()
     paid_user_payment_items = [item for item in all_user_payment_items if item.is_paid]
     unpaid_user_payment_items = [item for item in all_user_payment_items if not item.is_paid]
@@ -1984,7 +1846,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     total_outstanding_fees: float = sum(item.fee for item in unpaid_user_payment_items)
     total_past_due_fees: float = sum(item.fee for item in unpaid_user_payment_items if item.due_date and item.due_date < today)
 
-    # Collected Fees by Category
     collected_fees_by_category: defaultdict[str, float] = defaultdict(float)
     for item in paid_user_payment_items:
         category_name = "Miscellaneous Fees"
@@ -1997,7 +1858,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         collected_fees_by_category[category_name] += item.fee
     collected_fees_list = [{"category": k, "amount": v} for k, v in collected_fees_by_category.items()]
 
-    # Outstanding Fees by Category
     outstanding_fees_by_category: defaultdict[str, float] = defaultdict(float)
     for item in unpaid_user_payment_items:
         category_name = "Miscellaneous Fees"
@@ -2010,33 +1870,25 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         outstanding_fees_by_category[category_name] += item.fee
     outstanding_fees_list = [{"category": k, "amount": v} for k, v in outstanding_fees_by_category.items()]
 
-    # Expenses Data
-    # Get expenses for the user's organization (if they have one)
     expense_query = db.query(models.Expense)
     if user_obj.organization_id:
-        # Filter by organization if user belongs to one
         all_expenses = expense_query.filter(models.Expense.organization_id == user_obj.organization_id).all()
     else:
-        # If no organization, get expenses without organization_id (could be personal or general expenses)
         all_expenses = expense_query.filter(models.Expense.organization_id.is_(None)).all()
 
     total_expenses: float = sum(expense.amount for expense in all_expenses)
 
-    # Group expenses by category
     expenses_by_category: defaultdict[str, float] = defaultdict(float)
     for expense in all_expenses:
         category_name = expense.category if expense.category else "Uncategorized"
         expenses_by_category[category_name] += expense.amount
     expenses_by_category_list = [{"category": k, "amount": v} for k, v in expenses_by_category.items()]
 
-    # Financial calculations
     current_balance: float = total_revenue - total_expenses
     net_income: float = total_revenue - total_expenses
 
-    # Financial Summary Items (for detailed breakdown)
     financial_summary_items: list[dict[str, float | str]] = []
     
-    # Add revenue items
     for item in collected_fees_list:
         financial_summary_items.append({
             "event_item": item["category"],
@@ -2044,7 +1896,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
             "outflows": 0.00
         })
     
-    # Add expense items
     for item in expenses_by_category_list:
         financial_summary_items.append({
             "event_item": f"Expenses - {item['category']}",
@@ -2052,28 +1903,24 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
             "outflows": item["amount"]
         })
 
-    # Monthly Data
     monthly_data: dict[str, dict[str, float]] = {}
     months_full = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ]
     
-    # Monthly revenue
     user_payments_by_month_current_year: defaultdict[str, float] = defaultdict(float)
     for item in paid_user_payment_items:
         if item.created_at and item.created_at.year == current_year:
             month_index = item.created_at.month - 1
             user_payments_by_month_current_year[months_full[month_index].lower()] += item.fee
 
-    # Monthly expenses
     expenses_by_month_current_year: defaultdict[str, float] = defaultdict(float)
     for expense in all_expenses:
         if expense.incurred_at and expense.incurred_at.year == current_year:
             month_index = expense.incurred_at.month - 1
             expenses_by_month_current_year[months_full[month_index].lower()] += expense.amount
 
-    # Calculate running balance for each month
     running_balance = 0.00
     for i, month_name in enumerate(months_full):
         month_name_lower = month_name.lower()
@@ -2118,8 +1965,7 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         }
     )
 
-
-# It receives month and year as query parameters.
+# Displays the detailed monthly report page for users.
 @app.get("/student_dashboard/detailed_monthly_report_page", response_class=HTMLResponse)
 async def detailed_monthly_report_page(
     request: Request,
@@ -2143,7 +1989,7 @@ async def detailed_monthly_report_page(
         {"request": request, "month": month, "year": year, "logo_url": logo_url}
     )
 
-
+# Retrieves detailed monthly report data for users.
 @app.get("/api/detailed_monthly_report", response_class=JSONResponse)
 async def get_detailed_monthly_report_json(
     request: Request,
@@ -2253,8 +2099,7 @@ async def get_detailed_monthly_report_json(
 
     return JSONResponse(content=response_content)
 
-
-# Settings Page Route (for users)
+# Displays the settings page for users.
 @app.get("/Settings", response_class=HTMLResponse, name="settings")
 async def settings(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
@@ -2264,7 +2109,6 @@ async def settings(request: Request, db: Session = Depends(get_db)):
     logo_url = default_logo_url
 
     if user_role == "user":
-        # Ensure that the organization relationship is eager-loaded or handled if needed for logo
         user_for_logo = db.query(models.User).filter(models.User.id == user_id).first()
         if user_for_logo and user_for_logo.organization and user_for_logo.organization.logo_url:
             logo_url = user_for_logo.organization.logo_url
@@ -2275,14 +2119,9 @@ async def settings(request: Request, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
         )
-    # Ensure user is loaded to get is_verified status
     user = db.query(models.User).filter(models.User.id == current_user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    # --- DEBUGGING STEP: Print the value of user.is_verified here ---
-    print(f"DEBUG: In /Settings route, user.is_verified for user {user.id} is: {user.is_verified}")
-    # --- END DEBUGGING STEP ---
 
     formatted_birthdate = ""
     if user.birthdate:
@@ -2298,9 +2137,8 @@ async def settings(request: Request, db: Session = Depends(get_db)):
                     birthdate_object = datetime.strptime(user.birthdate, "%m/%d/%Y")
                     formatted_birthdate = birthdate_object.strftime("%Y-%m-%d")
                 except ValueError:
-                    formatted_birthdate = user.birthdate # Fallback if no known format matches
+                    formatted_birthdate = user.birthdate
 
-    # Set the verification_status for the template
     user.verification_status = "Verified" if user.is_verified else "Not Verified"
 
     return templates.TemplateResponse(
@@ -2308,17 +2146,13 @@ async def settings(request: Request, db: Session = Depends(get_db)):
         {"request": request, "year": "2025", "user": user, "formatted_birthdate": formatted_birthdate, "logo_url": logo_url},
     )
 
-
-# Get Organizations API Route
+# Retrieves a list of all organizations.
 @app.get("/api/organizations/", response_model=List[schemas.Organization])
 async def get_organizations(db: Session = Depends(get_db)):
-    """
-    Retrieves a list of all organizations from the database.
-    """
     organizations = db.query(models.Organization).all()
     return organizations
 
-# User Signup API Route
+# Handles user signup.
 @app.post("/api/signup/")
 async def signup(
     user: schemas.UserCreate,
@@ -2345,17 +2179,17 @@ async def signup(
     current_year = date.today().year
     semester = "1st"
     payment_items = []
-    start_date = date(current_year, 2, 28) # Arbitrary start date for payment item generation
-    for i in range(8): # Generate 8 payment items (4 years, 2 semesters each)
+    start_date = date(current_year, 2, 28)
+    for i in range(8):
         academic_year = f"{current_year}-{current_year + 1}"
-        due_date = start_date + timedelta(days=i * 6 * 30) # Roughly every 6 months
+        due_date = start_date + timedelta(days=i * 6 * 30)
         year_level_applicable = (i // 2) + 1
         payment_items.append(
             {
                 "user_id": new_user.id,
                 "academic_year": academic_year,
                 "semester": semester,
-                "fee": 100.00, # Default fee
+                "fee": 100.00,
                 "description": f"Payment Item {i+1}",
                 "due_date": due_date,
                 "year_level_applicable": year_level_applicable,
@@ -2366,7 +2200,7 @@ async def signup(
         else:
             semester = "1st"
             current_year += 1
-            start_date = date(current_year, 2, 28) # Reset start date for new academic year
+            start_date = date(current_year, 2, 28)
 
     for payment_data in payment_items:
         crud.add_payment_item(
@@ -2381,6 +2215,7 @@ async def signup(
 
     return {"message": "User created successfully", "user_id": new_user.id}
 
+# Retrieves a user by ID.
 @app.get("/api/user/{user_id}", response_model=schemas.User)
 async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
     user = crud.get_user(db, identifier=str(user_id))
@@ -2388,6 +2223,7 @@ async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+# Retrieves user data including organization and verification status.
 @app.get("/get_user_data", response_model=schemas.UserDataResponse)
 async def get_user_data(request: Request, db: Session = Depends(get_db)):
     user_id = request.session.get("user_id")
@@ -2397,15 +2233,14 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
     organization_data = None
     first_name = None
     profile_picture = None
-    is_verified_status = None # Initialize for user's verification status
+    is_verified_status = None
 
     if user_id:
         current_user_obj = db.query(models.User).filter(models.User.id == user_id).first()
         if current_user_obj:
             first_name = current_user_obj.first_name
             profile_picture = current_user_obj.profile_picture
-            is_verified_status = current_user_obj.is_verified # Get user's is_verified status
-            logger.info(f"User ID {user_id} verification status: {is_verified_status}")
+            is_verified_status = current_user_obj.is_verified
             if current_user_obj.organization:
                 organization_data = schemas.Organization(
                     id=current_user_obj.organization.id,
@@ -2419,8 +2254,7 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
         current_user_obj = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
         if current_user_obj:
             first_name = current_user_obj.name 
-            profile_picture = None # Admins might not have profile pictures
-            # Admins don't have is_verified, so this remains None for them
+            profile_picture = None
             
             if current_user_obj.organizations:
                 first_org = current_user_obj.organizations[0]
@@ -2448,20 +2282,17 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
         first_name=first_name,
         profile_picture=profile_picture,
         organization=organization_data,
-        is_verified=is_verified_status # Pass the is_verified status in the response
+        is_verified=is_verified_status
     )
 
+# Handles user and admin login.
 @app.post("/api/login/")
 async def login(request: Request, form_data: schemas.UserLogin, db: Session = Depends(get_db)):
-    """
-    Login endpoint that handles both user and admin login.
-    Admins log in using their email, and users with their student number.
-    """
     user = crud.authenticate_user(db, form_data.identifier, form_data.password)
 
     if user:
         request.session["user_id"] = user.id
-        request.session["user_role"] = getattr(user, 'role', 'user') # Default to 'user' if role not explicitly set
+        request.session["user_role"] = getattr(user, 'role', 'user')
         return {
             "message": "User login successful",
             "user_id": user.id,
@@ -2484,12 +2315,8 @@ async def login(request: Request, form_data: schemas.UserLogin, db: Session = De
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-# Helper function to get user's organization ID
+# Retrieves the organization ID of the currently authenticated user or admin.
 async def get_user_organization_id(request: Request, db: Session) -> int:
-    """
-    Retrieves the organization ID of the currently authenticated user or admin.
-    Raises HTTPException if not authenticated or not associated with an organization.
-    """
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
     organization_id = None
@@ -2510,12 +2337,8 @@ async def get_user_organization_id(request: Request, db: Session) -> int:
         )
     return organization_id
 
-# Helper function to get entity's organization ID (e.g., from an admin who created a post/event)
+# Retrieves the organization ID associated with a given admin ID.
 def get_entity_organization_id(db: Session, admin_id: int) -> int:
-    """
-    Retrieves the organization ID associated with a given admin ID.
-    Raises HTTPException if admin not found or not associated with an organization.
-    """
     admin = db.query(models.Admin).options(joinedload(models.Admin.organizations)).filter(models.Admin.admin_id == admin_id).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Admin for this entity not found.")
@@ -2523,7 +2346,7 @@ def get_entity_organization_id(db: Session, admin_id: int) -> int:
         raise HTTPException(status_code=500, detail="Admin is not associated with any organization.")
     return admin.organizations[0].id
 
-# Heart Post API Route
+# Handles hearting/unhearting of bulletin posts.
 @app.post("/bulletin/heart/{post_id}")
 async def heart_post(
     post_id: int,
@@ -2556,7 +2379,7 @@ async def heart_post(
     db.refresh(post)
     return {"heart_count": post.heart_count}
 
-
+# Handles a user joining an event.
 @app.post("/Events/join/{event_id}")
 async def join_event(event_id: int, request: Request, db: Session = Depends(get_db)):
     user_org_id = await get_user_organization_id(request, db)
@@ -2596,7 +2419,7 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
     db.commit()
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
 
-
+# Handles a user leaving an event.
 @app.post("/Events/leave/{event_id}")
 async def leave_event(event_id: int, request: Request, db: Session = Depends(get_db)):
     user_org_id = await get_user_organization_id(request, db)
@@ -2633,7 +2456,7 @@ async def leave_event(event_id: int, request: Request, db: Session = Depends(get
     db.commit()
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
 
-
+# Retrieves a summary of upcoming events.
 @app.get("/api/events/upcoming_summary")
 async def get_upcoming_events_summary(request: Request, db: Session = Depends(get_db)):
     user_org_id = await get_user_organization_id(request, db)
@@ -2651,19 +2474,18 @@ async def get_upcoming_events_summary(request: Request, db: Session = Depends(ge
             if user_org_id in admin_org_ids:
                 filtered_events.append(event)
     
-    limited_events = filtered_events[:5] # Limit to 5 upcoming events
+    limited_events = filtered_events[:5]
 
     return [{"title": event.title, "date": event.date.isoformat(), "location": event.location,
              "classification": event.classification} for event in limited_events]
 
-# Helper function to generate email
+# Generates an email address based on first and last name.
 def generate_email(first_name: str, last_name: str) -> str:
-    """Generates the email address based on the provided format."""
     if first_name and last_name:
         return f"ic.{first_name.lower()}.{last_name.lower()}@cvsu.edu.ph"
     return None
 
-# Update Profile API Route
+# Updates the user's profile information.
 @app.post("/api/profile/update/")
 async def update_profile(
     request: Request,
@@ -2689,11 +2511,6 @@ async def update_profile(
     profilePicture: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
-    """
-    Updates the user's profile information, including handling the registration form file upload
-    and extracting data from it. It also updates the user's payment items, setting the academic year
-    and due date dynamically based on the user's year level.
-    """
     current_user_id = request.session.get("user_id")
     if not current_user_id:
         raise HTTPException(
@@ -2717,7 +2534,6 @@ async def update_profile(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Helper function to delete old files
     def delete_file(file_path: Optional[str]):
         if file_path:
             full_path = os.path.join(
@@ -2727,12 +2543,10 @@ async def update_profile(
                 try:
                     os.remove(full_path)
                 except Exception as e:
-                    # Log the error but don't raise an HTTPException, as it's not critical for the main update
                     print(f"Error deleting old file {full_path}: {e}")
             else:
                 print(f"File not found for deletion: {full_path}")
 
-    # Update user fields if provided in the form
     if student_number is not None:
         user.student_number = student_number
     if first_name is not None:
@@ -2770,7 +2584,6 @@ async def update_profile(
     if is_verified is not None:
         user.is_verified = is_verified
 
-    # Handle registration form upload (PDF)
     if registration_form:
         if registration_form.content_type != "application/pdf":
             raise HTTPException(
@@ -2779,7 +2592,6 @@ async def update_profile(
             )
 
         try:
-            # Delete old registration form if exists
             delete_file(user.registration_form)
 
             pdf_content = await registration_form.read()
@@ -2799,7 +2611,6 @@ async def update_profile(
                 f"/static/documents/registration_forms/{filename}"
             )
 
-            # Extract info from PDF and update user fields if not already provided by form
             extracted_text = extract_text_from_pdf(pdf_file_path)
             student_info = extract_student_info(extracted_text)
 
@@ -2838,29 +2649,25 @@ async def update_profile(
             ):
                 user.student_number = student_info["student_number"]
 
-            # Further process name to extract first and last name for email generation
             if "name" in student_info and student_info["name"]:
                 name_str = student_info["name"].strip()
-                # Remove middle initials like "A." or "B."
                 name_str = re.sub(r"\s+[a-zA-Z]\.\s+", " ", name_str)
                 name_str = re.sub(r"\s+[a-zA-Z]\.$", "", name_str)
                 name_str = re.sub(r"\s+[a-zA-Z]\.(?=\s)", "", name_str)
-                name_str = re.sub(r"\s+", " ", name_str).strip() # Normalize spaces
+                name_str = re.sub(r"\s+", " ", name_str).strip()
                 name_parts = name_str.split()
                 if len(name_parts) >= 2:
                     user.first_name = " ".join(name_parts[:-1]).title()
                     user.last_name = name_parts[-1].title()
                 elif len(name_parts) == 1:
                     user.first_name = name_parts[0].title()
-                    user.last_name = "" # No last name if only one part
+                    user.last_name = ""
 
-            # Generate email if first and last name are available
             if user.first_name and user.last_name:
                 user.email = generate_email(
                     user.first_name.replace(" ", ""), user.last_name
                 )
             
-            # Set is_verified to True after successful registration form processing
             user.is_verified = True
 
         except Exception as e:
@@ -2869,20 +2676,17 @@ async def update_profile(
                 detail=f"Failed to process registration form: {e}",
             )
 
-    # Handle profile picture upload
     if profilePicture:
         try:
-            # Delete old profile picture if exists
             delete_file(user.profile_picture)
 
             image_content = await profilePicture.read()
-            max_image_size_bytes = 2 * 1024 * 1024 # 2 MB limit
+            max_image_size_bytes = 2 * 1024 * 1024
             if len(image_content) > max_image_size_bytes:
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail=f"Image size too large. Maximum allowed size is {max_image_size_bytes} bytes.",
                 )
-            # Verify image content
             img = Image.open(BytesIO(image_content))
             img.verify()
         except Exception as e:
@@ -2913,15 +2717,12 @@ async def update_profile(
                 detail=f"Failed to save image: {e}",
             )
 
-    # Regenerate email if first name and last name are updated and email was not explicitly provided
     if first_name and last_name and not email:
         email = generate_email(first_name, last_name)
         user.email = email
 
-    # Update payment items with revised logic based on current date and user's year level
     current_date = datetime.now()
 
-    # Map year level string to integer for calculation
     year_level_str = str(user.year_level).lower().strip()
     year_level_mapping = {
         "1st": 1,
@@ -2938,55 +2739,49 @@ async def update_profile(
         "4": 4,
     }
 
-    student_year = year_level_mapping.get(year_level_str, 1) # Default to 1st year if not found
+    student_year = year_level_mapping.get(year_level_str, 1)
 
-    # Calculate the starting academic year for the student based on their current year level
     first_academic_year_start = current_date.year - (student_year - 1)
-    if current_date.month < 6: # If current month is before June, the academic year started last year
+    if current_date.month < 6:
         first_academic_year_start -= 1
 
-    # This variable is not directly used in the loop, but kept for context if needed
     first_academic_year = f"{first_academic_year_start}-{first_academic_year_start + 1}"
 
-    payment_items = user.payment_items # Get existing payment items for the user
+    payment_items = user.payment_items
 
-    # Iterate through payment items to update academic year and due dates
     for i, item in enumerate(payment_items):
-        semester_offset = i // 2 # 0 for 1st/2nd semester of year 1, 1 for year 2, etc.
+        semester_offset = i // 2
         item_academic_year_start = first_academic_year_start + semester_offset
         item.academic_year = f"{item_academic_year_start}-{item_academic_year_start + 1}"
 
-        # Determine due date based on semester (even index for 2nd semester, odd for 1st semester of next year)
-        due_date_year = int(item.academic_year.split("-")[1]) # Use the end year of the academic year
-        if (i % 2) == 0: # First payment item of the academic year (e.g., 2nd semester of current academic year)
-            due_date = datetime(due_date_year, 2, 1) + timedelta( # February 1st
-                days=7 - datetime(due_date_year, 2, 1).weekday() # Adjust to next Monday
+        due_date_year = int(item.academic_year.split("-")[1])
+        if (i % 2) == 0:
+            due_date = datetime(due_date_year, 2, 1) + timedelta(
+                days=7 - datetime(due_date_year, 2, 1).weekday()
             )
-        else: # Second payment item of the academic year (e.g., 1st semester of next academic year)
-            due_date = datetime(due_date_year, 7, 1) + timedelta( # July 1st
-                days=7 - datetime(due_date_year, 7, 1).weekday() # Adjust to next Monday
+        else:
+            due_date = datetime(due_date_year, 7, 1) + timedelta(
+                days=7 - datetime(due_date_year, 7, 1).weekday()
             )
-        item.due_date = due_date.date() # Store only the date part
+        item.due_date = due_date.date()
 
-        # Set is_past_due flag
         if item.due_date and item.due_date < current_date.date() and not item.is_paid:
             item.is_past_due = True
         else:
             item.is_past_due = False
 
-        db.add(item) # Add the modified item to the session
-        db.flush() # Flush to ensure changes are tracked before commit
+        db.add(item)
+        db.flush()
 
     try:
-        db.commit() # Commit all changes to the database
-        db.refresh(user) # Refresh the user object to get the latest data
+        db.commit()
+        db.refresh(user)
 
-        # Add the verification_status attribute to the user object for frontend consumption
         user.verification_status = "Verified" if user.is_verified else "Not Verified"
 
         return {"message": "Profile updated successfully", "user": user}
     except Exception as e:
-        db.rollback() # Rollback in case of any error during commit
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update profile in database: {e}",
