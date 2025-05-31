@@ -369,6 +369,122 @@ async def admin_payments(
         },
     )
 
+# This route allows an admin to view the payment history for all members in their organization.
+@router.get("/admin/Payments/History", response_class=JSONResponse, name="admin_payment_history")
+async def admin_payment_history(request: Request, db: Session = Depends(get_db)):
+    current_user_id: Optional[int] = request.session.get("user_id") or request.session.get("admin_id")
+    user_role: Optional[str] = request.session.get("user_role")
+    admin_id = request.session.get("admin_id")
+
+    if not current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+    if user_role != "Admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions. Admin access required.")
+
+    current_admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+
+    if not current_admin:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found.")
+
+    admin_organizations = current_admin.organizations
+    if not admin_organizations:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin is not associated with an organization.")
+
+    organization = admin_organizations[0]
+
+    try:
+        organization_members = db.query(models.User).filter(
+            models.User.organization_id == organization.id
+        ).all()
+
+        member_ids = [member.id for member in organization_members]
+
+        payments = (
+            db.query(models.Payment)
+            .options(joinedload(models.Payment.payment_item), joinedload(models.Payment.user))
+            .filter(models.Payment.user_id.in_(member_ids))
+            .order_by(models.Payment.created_at.desc(), models.Payment.id.desc())
+            .all()
+        )
+
+        payment_history_data = []
+        for payment in payments:
+            payment_item = payment.payment_item
+            user = payment.user
+
+            academic_year = payment_item.academic_year if payment_item else None
+            semester = payment_item.semester if payment_item else None
+            fee = payment_item.fee if payment_item else None
+            due_date = payment_item.due_date if payment_item else None
+            is_not_responsible = payment_item.is_not_responsible if payment_item else False
+
+            amount_paid = payment.amount
+            status_raw = payment.status
+            payment_created_at = payment.created_at
+            payment_updated_at = payment.updated_at
+
+            user_first_name = user.first_name if user else None
+            user_last_name = user.last_name if user else None
+            student_number = user.student_number if user else None
+
+            if (academic_year is None or str(academic_year).lower() == "n/a" or
+                semester is None or str(semester).lower() == "n/a" or
+                fee is None or str(fee).lower() == "n/a" or
+                amount_paid is None or str(amount_paid).lower() == "n/a" or
+                status_raw is None or str(status_raw).lower() == "n/a" or
+                due_date is None or str(due_date).lower() == "n/a" or
+                payment_created_at is None or str(payment_created_at).lower() == "n/a" or
+                user_first_name is None or str(user_first_name).lower() == "n/a" or
+                user_last_name is None or str(user_last_name).lower() == "n/a" or
+                student_number is None or str(student_number).lower() == "n/a"):
+                continue
+
+            status_text = status_raw
+            if status_text == "pending":
+                status_text = "Pending"
+            elif status_text == "success":
+                status_text = "Paid"
+            elif status_text == "failed":
+                status_text = "Failed"
+            elif status_text == "cancelled":
+                status_text = "Cancelled"
+
+            due_date_str = due_date.strftime('%Y-%m-%d') if due_date else 'Not Set'
+            created_at_str = payment_created_at.strftime('%Y-%m-%d %H:%M:%S') if payment_created_at else None
+            updated_at_str = payment_updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment_updated_at else None
+
+            payment_history_data.append({
+                "item": {
+                    "id": payment.id,
+                    "amount": amount_paid,
+                    "paymaya_payment_id": payment.paymaya_payment_id,
+                    "status": payment.status,
+                    "created_at": created_at_str,
+                    "updated_at": updated_at_str,
+                    "payment_item": {
+                        "academic_year": academic_year,
+                        "semester": semester,
+                        "fee": fee,
+                        "due_date": due_date_str,
+                        "is_not_responsible": is_not_responsible
+                    } if payment_item else None
+                },
+                "status": status_text,
+                "user_name": f"{user_first_name} {user_last_name}" if user_first_name and user_last_name else "N/A",
+                "student_number": student_number,
+                "payment_date": created_at_str  # Added payment_date column
+            })
+
+        return JSONResponse(content={"payment_history": payment_history_data})
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve organization payment history: {e}",
+        )
+
 # Updates the status of a specific payment item.
 @router.post("/admin/payment/{payment_item_id}/update_status")
 async def update_payment_status(
@@ -1897,7 +2013,27 @@ async def payment_history(request: Request, db: Session = Depends(get_db)):
 
         payment_history_data = []
         for payment in payments:
-            status_text = payment.status
+            payment_item = payment.payment_item
+
+            academic_year = payment_item.academic_year if payment_item else None
+            semester = payment_item.semester if payment_item else None
+            fee = payment_item.fee if payment_item else None
+            due_date = payment_item.due_date if payment_item else None
+
+            amount_paid = payment.amount
+            status_raw = payment.status
+            payment_date = payment.created_at
+
+            if (academic_year is None or str(academic_year).lower() == "n/a" or
+                semester is None or str(semester).lower() == "n/a" or
+                fee is None or str(fee).lower() == "n/a" or
+                amount_paid is None or str(amount_paid).lower() == "n/a" or
+                status_raw is None or str(status_raw).lower() == "n/a" or
+                due_date is None or str(due_date).lower() == "n/a" or
+                payment_date is None or str(payment_date).lower() == "n/a"):
+                continue
+
+            status_text = status_raw
             if status_text == "pending":
                 status_text = "Pending"
             elif status_text == "success":
