@@ -273,7 +273,6 @@
 .filter-select {
     padding: 12px;
     border-radius: 6px;
-    border: 1px solid var(--org-border-medium);
     background-color: var(--org-bg-secondary);
     cursor: pointer;
     box-sizing: border-box;
@@ -286,7 +285,7 @@
 }
 
 .filter-select:hover {
-    background-color: var(--org-dropdown-item-hover-bg);
+    background-color: var(--org-highlight);
 }
 
 .filter-select-options {
