@@ -988,6 +988,21 @@ h2 {
     color: var(--org-past-due-hover-text) !important;
 }
 
+.view-history-button {
+        background-color: var(--org-button-bg);
+        color: var(--org-button-text);
+        padding: 10px 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .view-history-button:hover {
+        background-color: var(--org-hover-effect); 
+    }
+
 /* FINANCIAL STATEMENT */
 h1 {
     margin-bottom: 15px;

@@ -358,19 +358,20 @@ def authenticate_admin_by_email(db: Session, email: str, password: str) -> model
     return admin
 
 
-def create_payment(db: Session, user_id: int, amount: float):
+def create_payment(db: Session, user_id: int, amount: float, payment_item_id: Optional[int] = None):
     db_payment = models.Payment(
         user_id=user_id,
         amount=amount,
+        payment_item_id=payment_item_id, 
+        status="pending", 
         created_at=date.today(),
         updated_at=date.today(),
     )
     db.add(db_payment)
     db.commit()
     db.refresh(db_payment)
-    logging.info(f"Created payment with user_id: {user_id}, amount: {amount}")
+    logging.info(f"Created payment with user_id: {user_id}, amount: {amount}, payment_item_id: {payment_item_id}")
     return db_payment
-
 
 def get_payment_by_id(db: Session, payment_id: int):
     payment = db.query(models.Payment).filter(models.Payment.id == payment_id).first()

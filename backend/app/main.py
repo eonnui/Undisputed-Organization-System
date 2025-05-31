@@ -26,6 +26,7 @@ from dateutil.relativedelta import relativedelta
 from starlette.middleware.sessions import SessionMiddleware
 
 from .text import extract_text_from_pdf, extract_student_info
+import logging
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -642,22 +643,36 @@ async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
 async def get_expenses_by_category(request: Request, db: Session = Depends(get_db)):
     admin_id = request.session.get("admin_id")
     if not admin_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated as admin. Please log in.",
+        )
 
     admin_org_id = get_entity_organization_id(db, admin_id)
 
-    expenses_data = db.query(
-        models.PaymentItem.academic_year,
-        func.sum(models.PaymentItem.fee)
-    ).join(
-        models.PaymentItem.user
-    ).filter(
-        models.User.organization_id == admin_org_id
-    ).group_by(
-        models.PaymentItem.academic_year
-    ).all()
+    if not admin_org_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin organization not found or not assigned.",
+        )
 
-    labels = [category if category else "Unknown Year" for category, total in expenses_data]
+    expenses_data = (
+        db.query(
+            models.Expense.category,
+            func.sum(models.Expense.amount),
+        )
+        .filter(
+            models.Expense.organization_id == admin_org_id
+        )
+        .group_by(
+            models.Expense.category
+        )
+        .all()
+    )
+
+    labels = [
+        category if category else "Uncategorized" for category, total in expenses_data
+    ]
     data = [float(total) for category, total in expenses_data]
 
     return {"labels": labels, "data": data}
@@ -1429,7 +1444,8 @@ async def paymaya_create_payment(
 
     payment_amount = payment_item.fee
 
-    db_payment = crud.create_payment(db, amount=payment_amount, user_id=user_id)
+    # Pass the payment_item_id to the create_payment function
+    db_payment = crud.create_payment(db, amount=payment_amount, user_id=user_id, payment_item_id=payment_item_id)
 
     payload = {
         "totalAmount": {
@@ -1813,6 +1829,71 @@ async def payments(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve payment information.",
+        )
+
+# Displays the Payment History for users.
+@app.get("/Payments/History", response_class=HTMLResponse, name="payment_history")
+async def payment_history(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    user_role = request.session.get("user_role")
+
+    default_logo_url = request.url_for('static', path='images/patrick_logo.jpg')
+    logo_url = default_logo_url
+
+    if user_role == "user":
+        user_for_logo = db.query(models.User).filter(models.User.id == user_id).first()
+        if user_for_logo and user_for_logo.organization and user_for_logo.organization.logo_url:
+            logo_url = user_for_logo.organization.logo_url
+
+    user_identifier = request.session.get("user_id")
+
+    if not user_identifier:
+        return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+    current_user = db.query(models.User).filter(models.User.id == user_identifier).first()
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    try:
+        payments = (
+            db.query(models.Payment)
+            .options(joinedload(models.Payment.payment_item))
+            .filter(models.Payment.user_id == user_identifier)
+            .order_by(models.Payment.created_at.desc(), models.Payment.id.desc())
+            .all()
+        )
+
+        payment_history_data = []
+        for payment in payments:
+            status_text = payment.status
+            if status_text == "pending":
+                status_text = "Pending"
+            elif status_text == "success":
+                status_text = "Paid"
+            elif status_text == "failed":
+                status_text = "Failed"
+            elif status_text == "cancelled":
+                status_text = "Cancelled"
+
+            payment_history_data.append({
+                "item": payment,
+                "status": status_text,
+            })
+
+        return templates.TemplateResponse(
+            "student_dashboard/payment_history.html",
+            {
+                "request": request,
+                "payment_history": payment_history_data,
+                "current_user": current_user,
+                "logo_url": logo_url,
+                "year": "2025",
+            },
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve payment history: {e}",
         )
 
 # Displays the financial statement page for users.

@@ -8,8 +8,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="payments-page">    
-    <h1 class="page-title">Membership Payments</h1>       
+<div class="payments-page">
+    <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1 class="page-title" style="margin: 0;">Membership Payments</h1>
+        <a href="{{ url_for('payment_history') }}" class="view-history-button">
+            <i class="fas fa-history"></i> View Payment History
+        </a>
+    </div>
+
     <div class="payments-container">
         <h2>Past Due Items</h2>
         <div class="payments-table-container">
