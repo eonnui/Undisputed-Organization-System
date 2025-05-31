@@ -1437,7 +1437,7 @@ th.sortable {
 }
 
 th.sortable:hover {
-    background-color: #f8f9fa;
+    background-color: var(--org-dashboard-accent-primary);
 }
 
 th.sortable::after {

@@ -69,14 +69,20 @@
   <div class="tracker-section">
     <div class="chart-title">Membership Fee Tracker</div>
     <div class="filter-row">
-      <select class="filter-select" id="academic-year-filter">
-        <option>Academic Year ▼</option>
-      </select>
-      <select class="filter-select" id="semester-filter">
-        <option>Semester ▼</option>
-        <option value="1st">1st Semester</option>
-        <option value="2nd">2nd Semester</option>
-      </select>
+      <div class="filter-select" id="academic-year-filter-wrapper">
+        <div class="filter-select-value">Academic Year ▼</div>
+        <select class="original-select" id="academic-year-filter" style="display: none;">
+          <option value="">Academic Year ▼</option>
+        </select>
+      </div>
+      <div class="filter-select" id="semester-filter-wrapper">
+        <div class="filter-select-value">Semester ▼</div>
+        <select class="original-select" id="semester-filter" style="display: none;">
+          <option value="">Semester ▼</option>
+          <option value="1st">1st Semester</option>
+          <option value="2nd">2nd Semester</option>
+        </select>
+      </div>
     </div>
 
     <table>
@@ -101,7 +107,7 @@
     const distributionCtx = document.getElementById('distributionChart').getContext('2d');
     const totalMembersValue = document.querySelector('.stat-card:first-child .stat-value');
     const totalCollectedValue = document.querySelector('.stat-card:nth-child(2) .stat-value');
-    const academicYearValue = document.querySelector('.stat-card:nth-child(3) .stat-value'); // Select the Academic Year stat value element
+    const academicYearValue = document.querySelector('.stat-card:nth-child(3) .stat-value');
     const academicYearFilterDropdown = document.getElementById('academic-year-filter');
     const semesterFilterDropdown = document.getElementById('semester-filter');
 
@@ -268,17 +274,14 @@
         fetch('/fund_distribution').then(res => res.json())
       ])
         .then(([trendData, expensesData, distributionData]) => {
-          // Update Trend Chart
           trendChart.data.labels = trendData.labels;
           trendChart.data.datasets[0].data = trendData.data;
           trendChart.update();
 
-          // Update Expenses Chart
           expensesChart.data.labels = expensesData.labels;
           expensesChart.data.datasets[0].data = expensesData.data;
           expensesChart.update();
 
-          // Update Distribution Chart
           distributionChart.data.labels = distributionData.labels;
           distributionChart.data.datasets[0].data = distributionData.data;
           distributionChart.update();
@@ -288,13 +291,10 @@
         });
     }
 
-    // Initialize charts
     initializeCharts();
 
-    // Fetch initial data and update charts
     fetchFinancialData();
 
-    // --- Fetch Total Members using /admin/membership/ ---
     function fetchTotalMembers() {
       fetch('/admin/membership/')
         .then(response => {
@@ -316,13 +316,8 @@
         });
     }
 
-    // Fetch total members on page load
     fetchTotalMembers();
 
-    // Optionally, refresh total members periodically
-    // setInterval(fetchTotalMembers, 10000);
-
-    // --- Fetch Total Collected Fees using /admin/membership/ ---
     function fetchTotalCollectedFees() {
       fetch('/admin/membership/')
         .then(response => {
@@ -344,24 +339,18 @@
         });
     }
 
-    // Fetch total collected fees on page load
     fetchTotalCollectedFees();
 
-    // Optionally, refresh total collected fees periodically
-    // setInterval(fetchTotalCollectedFees, 15000);
-
-    // --- Fill Academic Year Stat Card ---
     function displayCurrentAcademicYear() {
       const today = new Date();
       const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth(); // 0-indexed (0 = January, 11 = December)
+      const currentMonth = today.getMonth();
 
-      // Assuming the academic year starts around June or July
-      const academicYearStartMonth = 5; // June
+      const academicYearStartMonth = 5;
 
       let startYear, endYear;
 
-      if (currentMonth > academicYearStartMonth) {
+      if (currentMonth >= academicYearStartMonth) {
         startYear = currentYear;
         endYear = currentYear + 1;
       } else {
@@ -371,10 +360,9 @@
 
       academicYearValue.textContent = `${startYear}-${endYear}`;
 
-// Populate the Academic Year dropdown
-      const startYearForDropdown = 2022; // Set the starting year for the dropdown
-      const endYearForDropdown = endYear + 4; // Extend a few years into the future
-      let optionsHTML = '<option>Academic Year ▼</option>';
+      const startYearForDropdown = 2022;
+      const endYearForDropdown = endYear + 4;
+      let optionsHTML = '<option value="">Academic Year ▼</option>';
       for (let year = startYearForDropdown; year <= endYearForDropdown; year++) {
         const yearPair = `${year}-${year + 1}`;
         optionsHTML += `<option value="${yearPair}">${yearPair}</option>`;
@@ -382,23 +370,21 @@
       academicYearFilterDropdown.innerHTML = optionsHTML;
     }
 
-    // Display the current academic year on load
     displayCurrentAcademicYear();
 
     function fetchOutstandingDuesAmount() {
-      // Get current academic year from the stat card
       const currentAcademicYear = document.querySelector('.stat-card:nth-child(3) .stat-value').textContent;
 
-      // Determine current semester.  Use the filter if set, otherwise, calculate.
       const selectedSemester = semesterFilterDropdown.value;
       let currentSemester;
-      if (selectedSemester !== 'Semester ▼') {
+      if (selectedSemester !== '') {
         currentSemester = selectedSemester;
       } else {
         const today = new Date();
         const currentMonth = today.getMonth();
         const semester1StartMonth = 6;
         const semester2StartMonth = 0;
+
         if (currentMonth >= semester1StartMonth && currentMonth <= 11) {
           currentSemester = "1st";
         } else {
@@ -420,7 +406,7 @@
         .then(data => {
           let totalOutstandingAmount = 0;
 
-          console.log("Data received from /admin/outstanding_dues/:", data); // Log the response
+          console.log("Data received from /admin/outstanding_dues/:", data);
 
           if (Array.isArray(data) && data.length > 0) {
             totalOutstandingAmount = data[0].total_outstanding_amount;
@@ -444,7 +430,6 @@
             `Displaying total outstanding dues amount for current semester (${currentSemester}, ${currentAcademicYear}): ₱${totalOutstandingAmount.toFixed(2)}`
           );
 
-          // Optional: Modify the link
           const statCard = document.querySelector('.stat-card:nth-child(4)');
           const unpaidLinkHref = `/Admin/payments`;
           if (!statCard.querySelector('.card-link')) {
@@ -465,16 +450,18 @@
         });
     }
 
-    // Call fetchOutstandingDuesAmount
     fetchOutstandingDuesAmount();
 
-    // --- Membership Fee Tracker Logic ---
     const academicYearSelect = document.getElementById('academic-year-filter');
     const semesterSelect = document.getElementById('semester-filter');
     const membershipTableBody = document.querySelector('.tracker-section table tbody');
 
     function populateMembershipTable(data) {
       membershipTableBody.innerHTML = '';
+      if (data.length === 0) {
+        membershipTableBody.innerHTML = '<tr><td colspan="3">No members found for this selection.</td></tr>';
+        return;
+      }
       data.forEach(item => {
         const row = membershipTableBody.insertRow();
         const nameCell = row.insertCell();
@@ -483,17 +470,17 @@
 
         nameCell.textContent = `${item.first_name} ${item.last_name}`;
         yearSecCell.textContent = `${item.year_level} - ${item.section}`;
-        amountPaidCell.textContent = item.total_paid;
+        amountPaidCell.textContent = item.total_paid.toLocaleString('en-US', { style: 'currency', currency: 'PHP' });
       });
     }
 
     function fetchMembershipData(academicYear = null, semester = null) {
       let url = '/admin/individual_members/';
       const params = [];
-      if (academicYear && academicYear !== 'Academic Year ▼') {
+      if (academicYear && academicYear !== '') {
         params.push(`academic_year=${academicYear}`);
       }
-      if (semester && semester !== 'Semester ▼') {
+      if (semester && semester !== '') {
         params.push(`semester=${semester}`);
       }
       if (params.length > 0) {
@@ -515,71 +502,69 @@
           membershipTableBody.innerHTML = '<tr><td colspan="3">Error loading data.</td></tr>';
         });
     }
-    // Initial load of membership data
     fetchMembershipData();
 
-    // Event listeners for filter changes
     academicYearSelect.addEventListener('change', function () {
       const selectedAcademicYear = this.value;
       const selectedSemester = semesterSelect.value;
       fetchMembershipData(selectedAcademicYear, selectedSemester);
-      fetchOutstandingDuesAmount(); //update dues on filter change
+      fetchOutstandingDuesAmount();
     });
 
     semesterSelect.addEventListener('change', function () {
       const selectedAcademicYear = academicYearSelect.value;
       const selectedSemester = this.value;
       fetchMembershipData(selectedAcademicYear, selectedSemester);
-      fetchOutstandingDuesAmount(); //update dues on filter change
+      fetchOutstandingDuesAmount();
     });
 
-    // Enhanced select dropdown functionality (DO NOT TOUCH)
-    document.querySelectorAll('.filter-select').forEach(select => {
-      const valueDisplay = select.querySelector('.filter-select-value');
-      const optionsContainer = document.createElement('ul');
-      optionsContainer.classList.add('filter-select-options');
-      select.appendChild(optionsContainer);
+    document.querySelectorAll('.filter-select').forEach(selectWrapper => {
+      const originalSelect = selectWrapper.querySelector('.original-select');
+      const valueDisplay = selectWrapper.querySelector('.filter-select-value');
+      
+      let optionsContainer = selectWrapper.querySelector('.filter-select-options');
+      if (!optionsContainer) {
+          optionsContainer = document.createElement('ul');
+          optionsContainer.classList.add('filter-select-options');
+          selectWrapper.appendChild(optionsContainer);
+      } else {
+          optionsContainer.innerHTML = '';
+      }
 
-      const originalSelect = document.createElement('select');
-      originalSelect.style.display = 'none';
-      select.appendChild(originalSelect);
 
-      const defaultOptionText = select.querySelector('option:first-child').textContent;
-      const originalOptions = Array.from(select.querySelectorAll('option'));
+      const originalOptions = Array.from(originalSelect.querySelectorAll('option'));
 
       originalOptions.forEach((option, index) => {
         const li = document.createElement('li');
         li.textContent = option.textContent;
         li.dataset.value = option.value;
         optionsContainer.appendChild(li);
-        const originalOption = document.createElement('option');
-        originalOption.value = option.value;
-        originalOption.textContent = option.textContent;
-        if (index === 0) {
-          originalOption.selected = true;
-          valueDisplay.textContent = defaultOptionText;
+        
+        if (originalSelect.value === option.value || (originalSelect.value === "" && index === 0)) {
+            valueDisplay.textContent = option.textContent;
+            originalSelect.value = option.value;
+            originalSelect.dispatchEvent(new Event('change'));
         }
-        originalSelect.appendChild(originalOption);
+
 
         li.addEventListener('click', function () {
           valueDisplay.textContent = this.textContent;
           originalSelect.value = this.dataset.value;
-          originalSelect.dispatchEvent(new Event('change')); // Trigger the change event on the hidden select
-          select.classList.remove('open');
-          optionsContainer.style.maxHeight = null; // Reset max-height
+          originalSelect.dispatchEvent(new Event('change'));
+          selectWrapper.classList.remove('open');
+          optionsContainer.style.maxHeight = null;
         });
       });
 
       valueDisplay.addEventListener('click', function (event) {
-        select.classList.toggle('open');
-        optionsContainer.style.maxHeight = select.classList.contains('open') ? '200px' : null;
+        selectWrapper.classList.toggle('open');
+        optionsContainer.style.maxHeight = selectWrapper.classList.contains('open') ? '200px' : null;
         event.stopPropagation();
       });
 
-      // Close dropdown when clicking outside
       document.addEventListener('click', function (event) {
-        if (!select.contains(event.target)) {
-          select.classList.remove('open');
+        if (!selectWrapper.contains(event.target)) {
+          selectWrapper.classList.remove('open');
           optionsContainer.style.maxHeight = null;
         }
       });

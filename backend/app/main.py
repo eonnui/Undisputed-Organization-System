@@ -11,7 +11,7 @@ from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict
 from io import BytesIO
 from PIL import Image
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import os
 import secrets
 import re
@@ -612,29 +612,62 @@ async def admin_individual_members(
 async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
     admin_id = request.session.get("admin_id")
     if not admin_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated as admin")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated as admin. Please log in.",
+        )
 
     admin_org_id = get_entity_organization_id(db, admin_id)
 
-    financial_data = db.query(
-        func.extract('year', models.Payment.created_at),
-        func.extract('month', models.Payment.created_at),
-        func.sum(models.Payment.amount)
-    ).join(
-        models.Payment.user
-    ).filter(
-        models.Payment.status == "success",
-        models.User.organization_id == admin_org_id
-    ).group_by(
-        func.extract('year', models.Payment.created_at),
-        func.extract('month', models.Payment.created_at)
-    ).order_by(
-        func.extract('year', models.Payment.created_at),
-        func.extract('month', models.Payment.created_at)
-    ).all()
+    if not admin_org_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin organization not found or not assigned.",
+        )
 
-    labels = [f"{year}-{month}" for year, month, total in financial_data]
-    data = [float(total) for year, month, total in financial_data]
+    num_months_to_display = 12
+    today = date.today()
+
+    all_months_data = OrderedDict()
+
+    for i in range(num_months_to_display - 1, -1, -1):
+        target_date = today - relativedelta(months=i)
+        year_month_key = (target_date.year, target_date.month)
+        all_months_data[year_month_key] = 0.0
+
+    earliest_year, earliest_month = next(iter(all_months_data.keys()))
+    earliest_date_for_filter = datetime(earliest_year, earliest_month, 1)
+
+    financial_data_raw = (
+        db.query(
+            func.extract('year', models.Payment.created_at).label('year'),
+            func.extract('month', models.Payment.created_at).label('month'),
+            func.sum(models.Payment.amount).label('total'),
+        )
+        .join(models.Payment.user)
+        .filter(
+            models.Payment.status == "success",
+            models.User.organization_id == admin_org_id,
+            models.Payment.created_at >= earliest_date_for_filter,
+            models.Payment.created_at <= today
+        )
+        .group_by(
+            func.extract('year', models.Payment.created_at),
+            func.extract('month', models.Payment.created_at),
+        )
+        .all()
+    )
+
+    for row in financial_data_raw:
+        key = (int(row.year), int(row.month))
+        if key in all_months_data:
+            all_months_data[key] = float(row.total)
+
+    labels = []
+    data = []
+    for (year, month), total in all_months_data.items():
+        labels.append(f"{year}-{month:02d}")
+        data.append(total)
 
     return {"labels": labels, "data": data}
 
@@ -1443,8 +1476,7 @@ async def paymaya_create_payment(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment item not found")
 
     payment_amount = payment_item.fee
-
-    # Pass the payment_item_id to the create_payment function
+    
     db_payment = crud.create_payment(db, amount=payment_amount, user_id=user_id, payment_item_id=payment_item_id)
 
     payload = {
