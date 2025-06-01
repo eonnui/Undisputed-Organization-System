@@ -1,6 +1,6 @@
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, date
 
 class OrganizationBase(BaseModel):
     name: str
@@ -118,3 +118,24 @@ class Admin(BaseModel):
 
 class OrganizationThemeUpdate(BaseModel):
     new_theme_color: str
+
+
+class ExpenseBase(BaseModel):
+    description: str
+    amount: float
+    category: Optional[str] = None
+    incurred_at: Optional[date] = None
+    admin_id: Optional[int] = None
+    organization_id: Optional[int] = None
+
+class ExpenseCreate(ExpenseBase):
+    pass
+
+class Expense(ExpenseBase):
+    id: int
+    created_at: datetime
+    admin: Optional[Admin] = None
+    organization: Optional[Organization] = None
+
+    class Config:
+        from_attributes = True

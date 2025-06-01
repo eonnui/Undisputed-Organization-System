@@ -1062,6 +1062,64 @@ async def admin_financial_statement_page(request: Request, db: Session = Depends
         },
     )
 
+# This router handles expense-related endpoints for admins.
+@router.post("/expenses/", response_model=schemas.Expense, status_code=status.HTTP_201_CREATED)
+async def create_expense(request: Request, expense: schemas.ExpenseCreate, db: Session = Depends(get_db)):
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated as admin. Only admins can create expenses."
+        )
+
+    organization_id = get_entity_organization_id(db, admin_id)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin is not associated with an organization. Cannot create expense."
+        )
+    
+    total_revenue_query = db.query(func.sum(models.PaymentItem.fee)).join(
+        models.User, models.PaymentItem.user_id == models.User.id
+    ).filter(
+        models.User.organization_id == organization_id,
+        models.PaymentItem.is_paid.is_(True)
+    )
+    total_revenue = total_revenue_query.scalar() or 0.0
+
+    total_expenses_query = db.query(func.sum(models.Expense.amount)).filter(
+        models.Expense.organization_id == organization_id
+    )
+    total_expenses = total_expenses_query.scalar() or 0.0
+
+    if (total_expenses + expense.amount) > total_revenue:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Expense amount (${expense.amount:.2f}) exceeds the available revenue. "
+                   f"Current total revenue: ${total_revenue:.2f}, "
+                   f"Current total expenses: ${total_expenses:.2f}. "
+                   f"Remaining budget: ${total_revenue - total_expenses:.2f}"
+        )
+
+    db_expense = models.Expense(
+        description=expense.description,
+        amount=expense.amount,
+        category=expense.category,
+        incurred_at=expense.incurred_at if expense.incurred_at else date.today(),
+        admin_id=admin_id,
+        organization_id=organization_id
+    )
+
+    db.add(db_expense)
+    db.commit()
+    
+    db.refresh(db_expense, attribute_names=["admin"])     
+    
+    if db_expense.admin and db_expense.admin.position is None:
+        db_expense.admin.position = ""
+
+    return db_expense
+
 # Retrieves financial data for administrators.
 @router.get("/api/admin/financial_data", response_class=JSONResponse, name="admin_financial_data_api")
 async def admin_financial_data_api(request: Request, db: Session = Depends(get_db)):
@@ -1088,7 +1146,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         join(models.User).\
         filter(
             and_(
-                extract('year', models.PaymentItem.created_at) == current_year,
+                extract('year', models.PaymentItem.updated_at) == current_year,
                 models.PaymentItem.is_paid == True,
                 models.User.organization_id == organization_id
             )
@@ -1106,8 +1164,9 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
 
     net_income_ytd = total_revenue_ytd - total_expenses_ytd
 
-    total_current_balance = net_income_ytd
-    total_funds_available = total_current_balance
+    
+    total_current_balance = net_income_ytd 
+    total_funds_available = net_income_ytd 
 
     balance_turnover = 0.0
     if total_current_balance > 0:
@@ -1122,7 +1181,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     ).join(models.User).\
     filter(
         and_(
-            extract('year', models.PaymentItem.created_at) == current_year,
+            extract('year', models.PaymentItem.updated_at) == current_year,
             models.PaymentItem.is_paid == True,
             models.User.organization_id == organization_id
         )
@@ -1135,9 +1194,14 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
 
     top_revenue_source = {"name": "N/A", "amount": 0.0}
     if top_revenue_source_query:
-        source_name = f"{top_revenue_source_query.academic_year} {top_revenue_source_query.semester} Fees" \
-            if top_revenue_source_query.academic_year and top_revenue_source_query.semester \
-            else "Collected Fees"
+        if top_revenue_source_query.academic_year and top_revenue_source_query.semester:
+            source_name = f"AY {top_revenue_source_query.academic_year} - {top_revenue_source_query.semester} Fees"
+        elif top_revenue_source_query.academic_year:
+            source_name = f"AY {top_revenue_source_query.academic_year} Fees"
+        elif top_revenue_source_query.semester:
+            source_name = f"{top_revenue_source_query.semester} Semester Fees"
+        else:
+            source_name = "Miscellaneous Fees"
         top_revenue_source = {
             "name": source_name,
             "amount": round(float(top_revenue_source_query.total_fee), 2)
@@ -1160,7 +1224,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     largest_expense_category = "N/A"
     largest_expense_amount = 0.0
     if largest_expense_query:
-        largest_expense_category = largest_expense_query.category
+        largest_expense_category = largest_expense_query.category if largest_expense_query.category else "Uncategorized"
         largest_expense_amount = round(float(largest_expense_query.total_amount), 2)
 
     profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
@@ -1172,7 +1236,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     ).join(models.User).\
     filter(
         and_(
-            extract('year', models.PaymentItem.created_at) == current_year,
+            extract('year', models.PaymentItem.updated_at) == current_year,
             models.PaymentItem.is_paid == True,
             models.User.organization_id == organization_id
         )
@@ -1183,9 +1247,14 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
 
     revenues_breakdown = []
     for item in revenues_breakdown_query:
-        source_name = f"{item.academic_year} {item.semester} Fees" \
-            if item.academic_year and item.semester \
-            else "Uncategorized Fees"
+        if item.academic_year and item.semester:
+            source_name = f"AY {item.academic_year} - {item.semester} Fees"
+        elif item.academic_year:
+            source_name = f"AY {item.academic_year} Fees"
+        elif item.semester:
+            source_name = f"{item.semester} Semester Fees"
+        else:
+            source_name = "Miscellaneous Fees"
         percentage = round((float(item.total_fee) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
         revenues_breakdown.append({
             "source": source_name,
@@ -1217,7 +1286,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     for item in expenses_breakdown_query:
         percentage = round((float(item.total_amount) / total_expenses_ytd) * 100, 2) if total_expenses_ytd != 0 else 0.0
         expenses_breakdown.append({
-            "category": item.category,
+            "category": item.category if item.category else "Uncategorized",
             "amount": round(float(item.total_amount), 2),
             "trend": "Stable",
             "percentage": percentage
@@ -1233,22 +1302,20 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     chart_net_income_trend_data = []
     chart_net_income_trend_labels = []
 
-    for i in range(12):
-        target_date = today - relativedelta(months=11 - i)
-
-        target_month_num = target_date.month
-        target_year = target_date.year
-
-        month_name_full = target_date.strftime('%B')
-        month_name_abbr = target_date.strftime('%b')
+    for i in range(1, 13):
+        target_month_num = i
+        
+        dummy_date = date(current_year, target_month_num, 1)
+        month_name_full = dummy_date.strftime('%B')
+        month_name_abbr = dummy_date.strftime('%b')
         chart_net_income_trend_labels.append(month_name_abbr)
 
         monthly_revenue_query = db.query(func.sum(models.PaymentItem.fee)).\
             join(models.User).\
             filter(
                 and_(
-                    extract('year', models.PaymentItem.created_at) == target_year,
-                    extract('month', models.PaymentItem.created_at) == target_month_num,
+                    extract('year', models.PaymentItem.updated_at) == current_year,
+                    extract('month', models.PaymentItem.updated_at) == target_month_num,
                     models.PaymentItem.is_paid == True,
                     models.User.organization_id == organization_id
                 )
@@ -1258,11 +1325,10 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         monthly_expenses_query = db.query(func.sum(models.Expense.amount)).\
             filter(
                 and_(
-                    extract('year', models.Expense.incurred_at) == target_year,
+                    extract('year', models.Expense.incurred_at) == current_year,
                     extract('month', models.Expense.incurred_at) == target_month_num,
                     models.Expense.organization_id == organization_id
                 )
-                
             ).scalar()
         monthly_expenses = float(monthly_expenses_query) if monthly_expenses_query else 0.0
 
@@ -1309,7 +1375,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     else:
         accounts_balances = [
             {
-                "account": "Main Operating Account",
+                "account": "Main Operating Account", 
                 "balance": total_current_balance,
                 "last_transaction": today.strftime("%Y-%m-%d"),
                 "status": "Critical"
@@ -1320,7 +1386,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         join(models.PaymentItem).\
         filter(
             and_(
-                extract('year', models.PaymentItem.created_at) == current_year,
+                extract('year', models.PaymentItem.updated_at) == current_year,
                 models.PaymentItem.is_paid == True,
                 models.User.organization_id == organization_id
             )
@@ -1344,18 +1410,18 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         "organization_id": organization_id,
         "organization_name": organization_name,
         "year": str(current_year),
-        "total_current_balance": f"{total_current_balance:,.2f}",
-        "total_revenue_ytd": f"{total_revenue_ytd:,.2f}",
-        "total_expenses_ytd": f"{total_expenses_ytd:,.2f}",
-        "net_income_ytd": f"{net_income_ytd:,.2f}",
-        "balance_turnover": f"{balance_turnover:,.2f}",
-        "total_funds_available": f"{total_funds_available:,.2f}",
+        "total_current_balance": total_current_balance,
+        "total_revenue_ytd": total_revenue_ytd,
+        "total_expenses_ytd": total_expenses_ytd,
+        "net_income_ytd": net_income_ytd,
+        "balance_turnover": balance_turnover,
+        "total_funds_available": total_funds_available,
         "reporting_date": reporting_date,
         "top_revenue_source_name": top_revenue_source["name"],
-        "top_revenue_source_amount": f"{top_revenue_source['amount']:,.2f}",
+        "top_revenue_source_amount": top_revenue_source['amount'],
         "largest_expense_category": largest_expense_category,
-        "largest_expense_amount": f"{largest_expense_amount:,.2f}",
-        "profit_margin_ytd": f"{profit_margin_ytd:,.2f}",
+        "largest_expense_amount": largest_expense_amount,
+        "profit_margin_ytd": profit_margin_ytd,
         "revenues_breakdown": revenues_breakdown,
         "expenses_breakdown": expenses_breakdown,
         "monthly_summary": monthly_summary,
@@ -2088,35 +2154,40 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     current_year: int = today.year
 
     all_user_payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user_id).all()
-    paid_user_payment_items = [item for item in all_user_payment_items if item.is_paid]
-    unpaid_user_payment_items = [item for item in all_user_payment_items if not item.is_paid]
-
-    total_revenue: float = sum(item.fee for item in paid_user_payment_items)
-    total_outstanding_fees: float = sum(item.fee for item in unpaid_user_payment_items)
-    total_past_due_fees: float = sum(item.fee for item in unpaid_user_payment_items if item.due_date and item.due_date < today)
+    
+    paid_user_payment_items = []
+    unpaid_user_payment_items = []
+    total_revenue = 0.0
+    total_outstanding_fees = 0.0
+    total_past_due_fees = 0.0
 
     collected_fees_by_category: defaultdict[str, float] = defaultdict(float)
-    for item in paid_user_payment_items:
-        category_name = "Miscellaneous Fees"
-        if item.academic_year and item.semester:
-            category_name = f"AY {item.academic_year} - {item.semester} Fees"
-        elif item.academic_year:
-            category_name = f"AY {item.academic_year} Fees"
-        elif item.semester:
-            category_name = f"{item.semester} Semester Fees"
-        collected_fees_by_category[category_name] += item.fee
-    collected_fees_list = [{"category": k, "amount": v} for k, v in collected_fees_by_category.items()]
-
     outstanding_fees_by_category: defaultdict[str, float] = defaultdict(float)
-    for item in unpaid_user_payment_items:
-        category_name = "Miscellaneous Fees"
+
+    for item in all_user_payment_items:
+        # Inlined logic for category_name
+        category_name: str
         if item.academic_year and item.semester:
             category_name = f"AY {item.academic_year} - {item.semester} Fees"
         elif item.academic_year:
             category_name = f"AY {item.academic_year} Fees"
         elif item.semester:
             category_name = f"{item.semester} Semester Fees"
-        outstanding_fees_by_category[category_name] += item.fee
+        else:
+            category_name = "Miscellaneous Fees"
+
+        if item.is_paid:
+            paid_user_payment_items.append(item)
+            total_revenue += item.fee
+            collected_fees_by_category[category_name] += item.fee
+        else:
+            unpaid_user_payment_items.append(item)
+            total_outstanding_fees += item.fee
+            outstanding_fees_by_category[category_name] += item.fee
+            if item.due_date and item.due_date < today:
+                total_past_due_fees += item.fee
+
+    collected_fees_list = [{"category": k, "amount": v} for k, v in collected_fees_by_category.items()]
     outstanding_fees_list = [{"category": k, "amount": v} for k, v in outstanding_fees_by_category.items()]
 
     expense_query = db.query(models.Expense)
@@ -2133,26 +2204,44 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         expenses_by_category[category_name] += expense.amount
     expenses_by_category_list = [{"category": k, "amount": v} for k, v in expenses_by_category.items()]
 
-    current_balance: float = total_revenue - total_expenses
-    net_income: float = total_revenue - total_expenses
+    net_income: float = total_revenue - total_expenses 
 
-    financial_summary_items: list[dict[str, float | str]] = []
-    
-    for item in collected_fees_list:
-        financial_summary_items.append({
-            "event_item": item["category"],
-            "inflows": item["amount"],
-            "outflows": 0.00
-        })
-    
-    for item in expenses_by_category_list:
-        financial_summary_items.append({
-            "event_item": f"Expenses - {item['category']}",
-            "inflows": 0.00,
-            "outflows": item["amount"]
-        })
+    financial_summary_items: list[dict[str, float | str | date]] = []
+    for item in paid_user_payment_items:
+        relevant_date = item.updated_at if item.updated_at else item.created_at
+        if relevant_date:
+            # Inlined logic for category_name
+            category_name_summary: str
+            if item.academic_year and item.semester:
+                category_name_summary = f"AY {item.academic_year} - {item.semester} Fees"
+            elif item.academic_year:
+                category_name_summary = f"AY {item.academic_year} Fees"
+            elif item.semester:
+                category_name_summary = f"{item.semester} Semester Fees"
+            else:
+                category_name_summary = "Miscellaneous Fees"
 
-    monthly_data: dict[str, dict[str, float]] = {}
+            financial_summary_items.append({
+                "date": relevant_date,
+                "event_item": category_name_summary,
+                "inflows": item.fee,
+                "outflows": 0.00
+            })
+    
+    for expense in all_expenses:
+        if expense.incurred_at:
+            financial_summary_items.append({
+                "date": expense.incurred_at,
+                "event_item": f"Expenses - {expense.category if expense.category else 'Uncategorized'}",
+                "inflows": 0.00,
+                "outflows": expense.amount
+            })
+    
+    financial_summary_items.sort(key=lambda x: x['date'])
+    for item in financial_summary_items:
+        item['date'] = item['date'].strftime("%Y-%m-%d")
+
+
     months_full = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
@@ -2160,8 +2249,10 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     
     user_payments_by_month_current_year: defaultdict[str, float] = defaultdict(float)
     for item in paid_user_payment_items:
-        if item.created_at and item.created_at.year == current_year:
-            month_index = item.created_at.month - 1
+        relevant_date = item.updated_at if item.updated_at and item.updated_at.year == current_year else \
+                        (item.created_at if item.created_at and item.created_at.year == current_year else None)
+        if relevant_date:
+            month_index = relevant_date.month - 1
             user_payments_by_month_current_year[months_full[month_index].lower()] += item.fee
 
     expenses_by_month_current_year: defaultdict[str, float] = defaultdict(float)
@@ -2170,15 +2261,17 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
             month_index = expense.incurred_at.month - 1
             expenses_by_month_current_year[months_full[month_index].lower()] += expense.amount
 
-    running_balance = 0.00
+    running_balance_org_level = 0.00
+    monthly_data: dict[str, dict[str, float]] = {}
+
     for i, month_name in enumerate(months_full):
         month_name_lower = month_name.lower()
         inflows_this_month = user_payments_by_month_current_year.get(month_name_lower, 0.00)
         outflows_this_month = expenses_by_month_current_year.get(month_name_lower, 0.00)
         
-        starting_balance = running_balance
+        starting_balance = running_balance_org_level
         ending_balance = starting_balance + inflows_this_month - outflows_this_month
-        running_balance = ending_balance
+        running_balance_org_level = ending_balance
         
         monthly_data[month_name_lower] = {
             "starting_balance": starting_balance,
@@ -2194,7 +2287,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         "total_outstanding_fees": total_outstanding_fees,
         "total_past_due_fees": total_past_due_fees,
         "total_expenses": total_expenses,
-        "current_balance": current_balance,
         "net_income": net_income,
         "collected_fees_by_category": collected_fees_list,
         "outstanding_fees_by_category": outstanding_fees_list,
@@ -2267,14 +2359,54 @@ async def get_detailed_monthly_report_json(
         raise HTTPException(status_code=400, detail="Invalid month specified.")
 
     report_year: int = year
-    start_date: date = date(report_year, month_number, 1)
+    start_date_of_month: date = date(report_year, month_number, 1)
     end_of_month_day: int = calendar.monthrange(report_year, month_number)[1]
-    end_date: date = date(report_year, month_number, end_of_month_day)
+    end_date_of_month: date = date(report_year, month_number, end_of_month_day)
 
-    all_payment_items: list[models.PaymentItem] = db.query(models.PaymentItem).filter(
-        models.PaymentItem.user_id == user_id,
-        models.PaymentItem.created_at <= (end_date + timedelta(days=1))
-    ).order_by(models.PaymentItem.created_at).all()
+    all_user_payment_items_unsorted: list[models.PaymentItem] = db.query(models.PaymentItem).filter(
+        models.PaymentItem.user_id == user_id
+    ).all()
+
+    expense_query = db.query(models.Expense)
+    if user_obj.organization_id:
+        all_expenses_unsorted: list[models.Expense] = expense_query.filter(models.Expense.organization_id == user_obj.organization_id).all()
+    else:
+        all_expenses_unsorted: list[models.Expense] = expense_query.filter(models.Expense.organization_id.is_(None)).all()
+
+    all_financial_events: list[tuple[date, str, float, float, str, float]] = []
+
+    for item in all_user_payment_items_unsorted:
+        relevant_date = item.updated_at if item.updated_at else item.created_at
+        if relevant_date:
+            category_name: str
+            if item.academic_year and item.semester:
+                category_name = f"AY {item.academic_year} - {item.semester} Fee"
+            elif item.academic_year:
+                category_name = f"AY {item.academic_year} Fee"
+            elif item.semester:
+                category_name = f"{item.semester} Semester Fee"
+            else:
+                category_name = "Miscellaneous Fee"
+            
+            inflow_amount = item.fee if item.is_paid else 0.00
+            outflow_amount = 0.00
+
+            status_str = ""
+            if item.is_paid:
+                status_str = "Paid"
+            else:
+                status_str = "Unpaid"
+                if item.due_date and item.due_date < date.today():
+                    status_str = "Past Due"
+            
+            all_financial_events.append((relevant_date, category_name, inflow_amount, outflow_amount, status_str, item.fee))
+
+    for expense in all_expenses_unsorted:
+        if expense.incurred_at:
+            description = f"Expense - {expense.category if expense.category else 'Uncategorized'}"
+            all_financial_events.append((expense.incurred_at, description, 0.00, expense.amount, "Recorded", expense.amount))
+
+    all_financial_events.sort(key=lambda x: x[0])
 
     transactions_for_report_month: list[dict] = []
     total_inflows_month: float = 0.00
@@ -2283,67 +2415,54 @@ async def get_detailed_monthly_report_json(
     total_past_due_month: float = 0.00
     
     current_running_balance: float = 0.00 
+    starting_balance_month: float = 0.00
 
-    for item in all_payment_items:
-        amount_inflow: float = 0.00
-        amount_outflow: float = 0.00
-        status: str = ""
-        description: str = "Fee Payment"
-
-        if item.academic_year and item.semester:
-            description = f"AY {item.academic_year} - {item.semester} Fee"
-        elif item.academic_year:
-            description = f"AY {item.academic_year} Fee"
-        elif item.semester:
-            description = f"{item.semester} Semester Fee"
-
-        if item.is_paid:
-            amount_inflow = item.fee
-            status = "Paid"
+    for event_date, _, inflow, outflow, _, _ in all_financial_events:
+        if event_date < start_date_of_month:
+            current_running_balance += inflow - outflow
         else:
-            status = "Unpaid"
-            if item.due_date and item.due_date < date.today():
-                status = "Past Due"
-                
-        current_running_balance += amount_inflow 
-        current_running_balance -= amount_outflow 
+            starting_balance_month = current_running_balance
+            break
 
-        if start_date <= item.created_at <= end_date:
-            total_inflows_month += amount_inflow
-            total_outflows_month += amount_outflow
-            if not item.is_paid:
-                total_outstanding_month += item.fee
-                if item.due_date and item.due_date < date.today():
-                    total_past_due_month += item.fee
+    for event_date, description, inflow, outflow, status, original_value in all_financial_events:
+        if start_date_of_month <= event_date <= end_date_of_month:
+            total_inflows_month += inflow
+            total_outflows_month += outflow
+            
+            current_running_balance += inflow - outflow
 
-            transaction_data = {
-                "date": item.created_at.strftime("%Y-%m-%d") if item.created_at else "N/A",
+            transactions_for_report_month.append({
+                "date": event_date.strftime("%Y-%m-%d"),
                 "description": description,
-                "inflow": amount_inflow,
-                "outflow": amount_outflow,
+                "inflow": inflow,
+                "outflow": outflow,
                 "status": status,
-                "original_fee": item.fee,
-                "running_balance": current_running_balance 
-            }
-            transactions_for_report_month.append(transaction_data)
-    
-    transactions_for_report_month.sort(key=lambda x: x['date'])
+                "original_value": original_value,
+                "running_balance": current_running_balance
+            })
+            
+            if "Fee" in description and status != "Paid":
+                matching_payment_item = next((pi for pi in all_user_payment_items_unsorted if (pi.updated_at == event_date or pi.created_at == event_date) and pi.fee == original_value), None)
+                if matching_payment_item and not matching_payment_item.is_paid:
+                    total_outstanding_month += matching_payment_item.fee
+                    if matching_payment_item.due_date and matching_payment_item.due_date < date.today():
+                        total_past_due_month += matching_payment_item.fee
 
-    ending_balance_month_footer_sum: float = total_inflows_month - total_outflows_month
+    ending_balance_month_footer_sum: float = starting_balance_month + total_inflows_month - total_outflows_month
 
     response_content = {
         "month_name": month.capitalize(),
         "year": report_year,
         "current_date": date.today().strftime("%B %d, %Y"),
-        "starting_balance": 0.00,
+        "starting_balance": starting_balance_month,
         "total_inflows": total_inflows_month,
         "total_outflows": total_outflows_month,
         "total_outstanding": total_outstanding_month,
         "total_past_due": total_past_due_month,
-        "ending_balance": ending_balance_month_footer_sum, 
+        "ending_balance": ending_balance_month_footer_sum,
         "transactions": transactions_for_report_month,
         "user_name": f"{user_obj.first_name} {user_obj.last_name}" if user_obj else "N/A",
-        "total_all_original_fees": sum(item.fee for item in all_payment_items)
+        "total_all_original_fees": sum(item.fee for item in all_user_payment_items_unsorted)
     }
 
     return JSONResponse(content=response_content)

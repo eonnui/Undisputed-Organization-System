@@ -26,7 +26,8 @@
             <p id="total-expenses-ytd">₱0.00</p>
         </div>
         <div class="stat-card">
-            <h3>Net Income (YTD)</h3>
+            <h3>Net Income
+(YTD)</h3>
             <p id="net-income-ytd" class="positive">₱0.00</p>
         </div>
     </div>
@@ -113,7 +114,8 @@
     <div id="expenses" class="report-card">
         <div class="report-header">
             <h2>Expense Breakdown</h2>
-            <p>Detailed Expenditures</p>
+            <p>Detailed
+Expenditures</p>
         </div>
         <div class="report-body">
             <table class="data-table">
@@ -203,27 +205,19 @@
 
 {% block scripts %}
 <script>
-    // Global variables to hold chart instances
     let revenueExpenseChart;
     let netIncomeTrendChart;
 
-    /**
-     * Toggles the display of different report sections and updates active button state.
-     * @param {string} viewId - The ID of the report card to display (e.g., 'overview', 'revenues').
-     */
     function toggleView(viewId) {
         const reportCards = document.querySelectorAll('.report-card');
         const toggleButtons = document.querySelectorAll('.report-toggle-button');
 
-        // Hide all report cards and deactivate all buttons
         reportCards.forEach(card => {
             card.classList.remove('active');
         });
         toggleButtons.forEach(button => {
             button.classList.remove('active');
         });
-
-        // Show the selected report card and activate its button
         const selectedCard = document.getElementById(viewId);
         if (selectedCard) {
             selectedCard.classList.add('active');
@@ -235,18 +229,12 @@
             selectedButton.classList.add('active');
         }
 
-        // Re-render charts if the overview is activated and data is available
         if (viewId === 'overview' && window.financialData) {
             renderCharts(window.financialData);
         }
     }
 
-    /**
-     * Renders the Chart.js graphs using the fetched financial data.
-     * @param {object} data - The financial data object fetched from the API.
-     */
     function renderCharts(data) {
-        // Destroy existing chart instances if they exist to prevent duplicates
         if (revenueExpenseChart) {
             revenueExpenseChart.destroy();
         }
@@ -254,7 +242,6 @@
             netIncomeTrendChart.destroy();
         }
 
-        // Revenue vs. Expenses Chart
         const revenueExpenseCtx = document.getElementById('revenue-expense-chart');
         if (revenueExpenseCtx) {
             revenueExpenseChart = new Chart(revenueExpenseCtx, {
@@ -263,10 +250,9 @@
                     labels: ['Revenue', 'Expenses'],
                     datasets: [{
                         label: 'Year-to-Date (₱)',
-                        // Data from API is already cleaned/formatted, so parseFloat is needed
                         data: [
-                            parseFloat(data.total_revenue_ytd.replace(/,/g, '')),
-                            parseFloat(data.total_expenses_ytd.replace(/,/g, ''))
+                            data.total_revenue_ytd,
+                            data.total_expenses_ytd
                         ],
                         backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
                         borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
@@ -321,7 +307,6 @@
             });
         }
 
-        // Net Income Trend Chart
         const netIncomeCtx = document.getElementById('net-income-trend-chart');
         if (netIncomeCtx) {
             netIncomeTrendChart = new Chart(netIncomeCtx, {
@@ -400,20 +385,14 @@
         }
     }
 
-    /**
-     * Populates the HTML elements with the fetched financial data.
-     * @param {object} data - The financial data object fetched from the API.
-     */
     function populateDashboard(data) {
-        // Update quick stats
         document.getElementById('current-year').textContent = data.year;
-        document.getElementById('total-current-balance').textContent = `₱${data.total_current_balance}`;
-        document.getElementById('total-revenue-ytd').textContent = `₱${data.total_revenue_ytd}`;
-        document.getElementById('total-expenses-ytd').textContent = `₱${data.total_expenses_ytd}`;
+        document.getElementById('total-current-balance').textContent = `₱${data.total_current_balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('total-revenue-ytd').textContent = `₱${data.total_revenue_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('total-expenses-ytd').textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         const netIncomeYTDElement = document.getElementById('net-income-ytd');
-        netIncomeYTDElement.textContent = `₱${data.net_income_ytd}`;
-        // Apply positive/negative class based on value
-        if (parseFloat(data.net_income_ytd.replace(/,/g, '')) >= 0) {
+        netIncomeYTDElement.textContent = `₱${data.net_income_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        if (data.net_income_ytd >= 0) {
             netIncomeYTDElement.classList.add('positive');
             netIncomeYTDElement.classList.remove('negative');
         } else {
@@ -421,19 +400,16 @@
             netIncomeYTDElement.classList.remove('positive');
         }
 
-        // Update summary info
-        document.getElementById('balance-turnover').textContent = data.balance_turnover;
-        document.getElementById('total-funds-available').textContent = `₱${data.total_funds_available}`;
+        document.getElementById('balance-turnover').textContent = data.balance_turnover.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('total-funds-available').textContent = `₱${data.total_funds_available.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('reporting-date').textContent = data.reporting_date;
 
-        // Update key metrics
-        document.getElementById('top-revenue-source').textContent = `${data.top_revenue_source_name} (₱${data.top_revenue_source_amount})`;
-        document.getElementById('largest-expense').textContent = `${data.largest_expense_category} (₱${data.largest_expense_amount})`;
-        document.getElementById('profit-margin-ytd').textContent = `${data.profit_margin_ytd}%`;
+        document.getElementById('top-revenue-source').textContent = `${data.top_revenue_source_name} (₱${data.top_revenue_source_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
+        document.getElementById('largest-expense').textContent = `${data.largest_expense_category} (₱${data.largest_expense_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
+        document.getElementById('profit-margin-ytd').textContent = `${data.profit_margin_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
 
-        // Populate Revenue Breakdown Table
         const revenuesBreakdownBody = document.getElementById('revenues-breakdown-body');
-        revenuesBreakdownBody.innerHTML = ''; // Clear existing rows
+        revenuesBreakdownBody.innerHTML = '';
         data.revenues_breakdown.forEach(item => {
             const row = revenuesBreakdownBody.insertRow();
             row.innerHTML = `
@@ -443,12 +419,11 @@
                 <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
             `;
         });
-        document.getElementById('total-revenue-footer').textContent = `₱${data.total_revenue_ytd}`;
+        document.getElementById('total-revenue-footer').textContent = `₱${data.total_revenue_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
 
-        // Populate Expense Breakdown Table
         const expensesBreakdownBody = document.getElementById('expenses-breakdown-body');
-        expensesBreakdownBody.innerHTML = ''; // Clear existing rows
+        expensesBreakdownBody.innerHTML = '';
         data.expenses_breakdown.forEach(item => {
             const row = expensesBreakdownBody.insertRow();
             row.innerHTML = `
@@ -458,19 +433,18 @@
                 <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
             `;
         });
-        document.getElementById('total-expenses-footer').textContent = `₱${data.total_expenses_ytd}`;
+        document.getElementById('total-expenses-footer').textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
 
-        // Populate Monthly Summary Table
         const monthlySummaryBody = document.getElementById('monthly-summary-body');
-        monthlySummaryBody.innerHTML = ''; // Clear existing rows
+        monthlySummaryBody.innerHTML = '';
         let totalMonthlyRevenue = 0;
         let totalMonthlyExpenses = 0;
         let totalMonthlyNetIncome = 0;
 
         data.monthly_summary.forEach(item => {
             const row = monthlySummaryBody.insertRow();
-            const netIncomeClass = parseFloat(item.net_income) >= 0 ? 'positive' : 'negative';
+            const netIncomeClass = item.net_income >= 0 ? 'positive' : 'negative';
             row.innerHTML = `
                 <td>${item.month}</td>
                 <td class="amount positive">₱${item.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -482,7 +456,6 @@
             totalMonthlyNetIncome += item.net_income;
         });
 
-        // Update monthly summary footer
         document.getElementById('monthly-total-revenue-footer').textContent = `₱${totalMonthlyRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('monthly-total-expenses-footer').textContent = `₱${totalMonthlyExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         const monthlyNetIncomeFooter = document.getElementById('monthly-net-income-footer');
@@ -496,9 +469,8 @@
         }
 
 
-        // Populate Account Balances Table
         const accountsBalancesBody = document.getElementById('accounts-balances-body');
-        accountsBalancesBody.innerHTML = ''; // Clear existing rows
+        accountsBalancesBody.innerHTML = '';
         let totalAccountBalance = 0;
         data.accounts_balances.forEach(item => {
             const row = accountsBalancesBody.insertRow();
@@ -513,23 +485,14 @@
         });
         document.getElementById('total-accounts-balance-footer').textContent = `₱${totalAccountBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-        // Store data globally for access by toggleView and other functions
         window.financialData = data;
-
-        // Render charts initially for the overview tab
         renderCharts(data);
     }
 
-    /**
-     * Fetches financial data from the API and populates the dashboard.
-     */
     async function fetchFinancialData() {
         try {
-            // *** IMPORTANT CHANGE HERE ***
-            // Now fetching from the new API endpoint for JSON data
             const response = await fetch('/api/admin/financial_data');
             if (!response.ok) {
-                // If the response is not OK (e.g., 401 Unauthorized, 500 Server Error)
                 let errorMessage = `HTTP error! status: ${response.status}`;
                 try {
                     const errorData = await response.json();
@@ -537,29 +500,27 @@
                         errorMessage += ` - Detail: ${errorData.detail}`;
                     }
                 } catch (jsonError) {
-                    // Ignore if response is not JSON
                 }
                 throw new Error(errorMessage);
             }
             const data = await response.json();
-            console.log("Fetched data:", data); // For debugging
+            console.log("Fetched data:", data);
             populateDashboard(data);
         } catch (error) {
             console.error("Error fetching financial data:", error);
-            // Display an error message on the dashboard
             document.querySelector('.dashboard-container').innerHTML = `
                 <div style="text-align: center; color: red; font-size: 1.2em; padding: 50px;">
-                    Failed to load financial data. Please ensure you are logged in and authorized, then try again later. <br>
+                    Failed to load financial data. Please ensure you are logged in and authorized, then try again later.
+                    <br>
                     Error: ${error.message}
                 </div>
             `;
         }
     }
 
-    // Initialize the dashboard when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function () {
-        fetchFinancialData(); // Fetch and populate data
-        toggleView('overview'); // Ensure overview is shown initially
+        fetchFinancialData();
+        toggleView('overview');
     });
 </script>
 {% endblock %}

@@ -12,10 +12,6 @@
         <h1>Financial Statement Dashboard</h1>
 
         <div class="quick-stats">
-            <div class="stat-card">
-                <h3>Current Balance</h3>
-                <p>₱{{ "%.2f"|format(financial_data.current_balance) }}</p>
-            </div>
             <div class="stat-card positive">
                 <h3>Total Revenue</h3>
                 <p>₱{{ "%.2f"|format(financial_data.total_revenue) }}</p>
@@ -141,7 +137,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Event/Item</th>
+                            <th>Date</th> <th>Event/Item</th>
                             <th class="amount">INFLOWS (₱)</th>
                             <th class="amount">OUTFLOWS (₱)</th>
                         </tr>
@@ -150,13 +146,11 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTALS:</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_revenue) }}</th>
+                            <th colspan="2">TOTALS:</th> <th class="amount">₱{{ "%.2f"|format(financial_data.total_revenue) }}</th>
                             <th class="amount">₱{{ "%.2f"|format(financial_data.total_expenses) }}</th>
                         </tr>
                         <tr>
-                            <th>NET BALANCE:</th>
-                            <th class="amount" colspan="2">₱{{ "%.2f"|format(financial_data.net_income) }}</th>
+                            <th colspan="2">NET BALANCE:</th> <th class="amount" colspan="2">₱{{ "%.2f"|format(financial_data.net_income) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -205,31 +199,27 @@
 
 {% block scripts %}
 <script>
-    // This line is crucial: it passes your backend financial data to the frontend JavaScript
     let financialData = JSON.parse('{{ financial_data | tojson | safe }}');
-    let currentYear = '{{ year }}'; // Add single quotes around {{ year }}
-    let lastActiveMonth = 'may'; // Set default to 'may' as per your logs
+    let currentYear = '{{ year }}';
+    let today = new Date();
+    let currentMonthName = new Date(today.getFullYear(), today.getMonth(), 1)
+                                .toLocaleString('en-US', { month: 'long' }).toLowerCase();
+    let lastActiveMonth = currentMonthName;
 
     function formatCurrency(amount) {
         return `₱${amount.toFixed(2)}`;
     }
 
-    // Function to populate the quick stats (though Jinja does initial render, good for updates)
     function populateQuickStats() {
-        document.querySelector('.quick-stats .stat-card:nth-child(1) p').textContent = formatCurrency(financialData.current_balance);
-        document.querySelector('.quick-stats .stat-card:nth-child(2) p').textContent = formatCurrency(financialData.total_revenue);
-        document.querySelector('.quick-stats .stat-card:nth-child(3) p').textContent = formatCurrency(financialData.total_expenses);
-        document.querySelector('.quick-stats .stat-card:nth-child(4) p').textContent = formatCurrency(financialData.net_income);
-        document.querySelector('.quick-stats .stat-card:nth-child(5) p').textContent = formatCurrency(financialData.total_outstanding_fees);
-        document.querySelector('.quick-stats .stat-card:nth-child(6) p').textContent = formatCurrency(financialData.total_past_due_fees);
-
+        // Removed current_balance stat card, so re-indexed or removed its update.
+        // The Jinja2 templating directly handles the initial render of these values.
+        // This function is less critical for initial render but good for dynamic updates if any.
         document.getElementById('current-date').textContent = financialData.current_date;
     }
 
-    // Function to populate the Collected Fees table
     function populateRevenuesTable() {
         const tableBody = document.getElementById('revenues-data-table');
-        tableBody.innerHTML = ''; // Clear existing rows
+        tableBody.innerHTML = '';
         if (financialData.collected_fees_by_category && financialData.collected_fees_by_category.length > 0) {
             financialData.collected_fees_by_category.forEach(item => {
                 let row = tableBody.insertRow();
@@ -248,10 +238,9 @@
         }
     }
 
-    // Function to populate the Outstanding Fees table
     function populateOutstandingTable() {
         const tableBody = document.getElementById('outstanding-data-table');
-        tableBody.innerHTML = ''; // Clear existing rows
+        tableBody.innerHTML = '';
         if (financialData.outstanding_fees_by_category && financialData.outstanding_fees_by_category.length > 0) {
             financialData.outstanding_fees_by_category.forEach(item => {
                 let row = tableBody.insertRow();
@@ -270,10 +259,9 @@
         }
     }
 
-    // Function to populate the Expenses table
     function populateExpensesTable() {
         const tableBody = document.getElementById('expenses-data-table');
-        tableBody.innerHTML = ''; // Clear existing rows
+        tableBody.innerHTML = '';
         if (financialData.expenses_by_category && financialData.expenses_by_category.length > 0) {
             financialData.expenses_by_category.forEach(item => {
                 let row = tableBody.insertRow();
@@ -292,16 +280,19 @@
         }
     }
 
-    // Function to populate the Financial Summary table
+    // Updated function to populate the Financial Summary table
     function populateSummaryTable() {
         const tableBody = document.getElementById('summary-data-table');
-        tableBody.innerHTML = ''; // Clear existing rows
+        tableBody.innerHTML = '';
         if (financialData.financial_summary_items && financialData.financial_summary_items.length > 0) {
             financialData.financial_summary_items.forEach(item => {
                 let row = tableBody.insertRow();
+                let dateCell = row.insertCell();      // New date cell
                 let eventItemCell = row.insertCell();
                 let inflowsCell = row.insertCell();
                 let outflowsCell = row.insertCell();
+
+                dateCell.textContent = item.date; // Display the date
                 eventItemCell.textContent = item.event_item;
                 inflowsCell.textContent = formatCurrency(item.inflows);
                 outflowsCell.textContent = formatCurrency(item.outflows);
@@ -311,7 +302,7 @@
         } else {
             let row = tableBody.insertRow();
             let cell = row.insertCell();
-            cell.colSpan = 3;
+            cell.colSpan = 4; // Adjusted colspan for the new Date column
             cell.textContent = 'No summary data to display.';
             cell.style.textAlign = 'center';
         }
@@ -330,7 +321,6 @@
                 if (viewId === 'monthly') {
                     console.log('Calling showMonthlyData with lastActiveMonth:', lastActiveMonth);
                     showMonthlyData(lastActiveMonth);
-                    // Ensure the correct monthly button has the active class when switching back
                     monthlyButtons.forEach(button => {
                         button.classList.remove('active');
                         if (button.textContent.toLowerCase() === lastActiveMonth) {
@@ -351,7 +341,7 @@
 
     function showMonthlyData(month) {
         console.log('showMonthlyData called for:', month);
-        lastActiveMonth = month; // Update the last active month
+        lastActiveMonth = month;
 
         const monthlyDataTable = document.getElementById('monthly-data-table');
         const viewDetailedLink = document.getElementById('view-detailed-monthly-report-link');
@@ -360,14 +350,12 @@
             console.error('monthly-data-table element not found!');
             return;
         }
-        monthlyDataTable.innerHTML = ''; // Clear previous data
+        monthlyDataTable.innerHTML = '';
 
-        // Update the 'View Detailed Monthly Report' link with the current month AND YEAR
         if (viewDetailedLink) {
-            viewDetailedLink.href = `/student_dashboard/detailed_monthly_report_page?month=${month}&year=${currentYear}`; // <-- KEY FIX HERE
+            viewDetailedLink.href = `/student_dashboard/detailed_monthly_report_page?month=${month}&year=${currentYear}`;
         }
 
-        // --- Use financialData.monthly_data to populate values ---
         const monthlyStats = financialData.monthly_data[month];
 
         if (monthlyStats) {
@@ -407,7 +395,6 @@
             cell.style.textAlign = 'center';
         }
 
-        // Update active monthly button after data is displayed
         const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
         monthlyButtons.forEach(button => {
             button.classList.remove('active');
@@ -420,17 +407,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOMContentLoaded event fired');
 
-        // Initial population of all sections
         populateQuickStats();
         populateRevenuesTable();
         populateOutstandingTable();
         populateExpensesTable();
         populateSummaryTable();
 
-        // Initialize monthly view with the pre-set lastActiveMonth (e.g., 'may' from your logs)
         showMonthlyData(lastActiveMonth);
 
-        // Add event listeners for month buttons
         const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
         monthlyButtons.forEach(button => {
             button.addEventListener('click', function() {
@@ -438,12 +422,10 @@
             });
         });
 
-        // Set initial active button for the main toggle
         const initialActiveView = document.querySelector('.toggle-buttons .toggle-btn.active');
         if (initialActiveView) {
             toggleDashboardView(initialActiveView.id.replace('toggle-', ''));
         } else {
-            // Default to 'revenues' if no active class is initially set
             toggleDashboardView('revenues');
         }
     });
