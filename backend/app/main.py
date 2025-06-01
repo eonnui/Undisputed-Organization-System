@@ -475,7 +475,7 @@ async def admin_payment_history(request: Request, db: Session = Depends(get_db))
                 "status": status_text,
                 "user_name": f"{user_first_name} {user_last_name}" if user_first_name and user_last_name else "N/A",
                 "student_number": student_number,
-                "payment_date": created_at_str  # Added payment_date column
+                "payment_date": created_at_str  
             })
 
         return JSONResponse(content={"payment_history": payment_history_data})
