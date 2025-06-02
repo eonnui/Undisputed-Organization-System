@@ -1625,6 +1625,118 @@ th.sortable.desc::after {
 .modal-body .not-responsible { color: var(--org-info); font-weight: bold; }
 .modal-body .past-due { color: var(--org-past-due-text); font-weight: bold; }
 
+#expenses {
+    padding: 20px;
+    background-color: var(--org-bg-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.1);
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#expenses .payments-header {
+    color: var(--org-text-primary);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    border-bottom: 2px solid var(--org-border-light);
+    padding-bottom: 10px;
+}
+
+#add-expense-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 25px;
+    background-color: var(--org-card-bg);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.08);
+}
+
+#add-expense-form div {
+    display: flex;
+    flex-direction: column;
+}
+
+#add-expense-form label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--org-text-secondary);
+    font-size: 0.95em;
+}
+
+#add-expense-form input[type="text"],
+#add-expense-form input[type="number"],
+#add-expense-form input[type="date"] {
+    padding: 12px;
+    border: 1px solid var(--org-form-group-input-border);
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#add-expense-form input[type="text"]:focus,
+#add-expense-form input[type="number"]:focus,
+#add-expense-form input[type="date"]:focus {
+    border-color: var(--org-focus-border);
+    box-shadow: 0 0 0 3px rgba(var(--org-primary), 0.25);
+    outline: none;
+}
+
+#add-expense-form button[type="submit"] {
+    background-color: var(--org-button-bg);
+    color: var(--org-button-text);
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 15px;
+}
+
+#add-expense-form button[type="submit"]:hover {
+    background-color: var(--org-button-bg);
+    filter: brightness(0.85);
+    transform: translateY(-2px);
+}
+
+#add-expense-form button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+#expense-message-box {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    display: none;
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#expense-message-box.info {
+    background-color: var(--org-info);
+    color: var(--org-text-primary);
+    border: 1px solid var(--org-info);
+}
+
+#expense-message-box.error {
+    background-color: var(--org-error);
+    color: var(--org-text-primary);
+    border: 1px solid var(--org-error-border);
+}
+
 /* Financial Statement */
 .dashboard-container {
     max-width: 100%;

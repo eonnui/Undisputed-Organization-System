@@ -522,12 +522,14 @@ async def update_payment_status(
                 detail=f"Payment item {payment_item_id} not found",
             )
 
-        payment_item.is_paid = (status == "Paid")
-        payment_item.is_not_responsible = (status == "NOT RESPONSIBLE")
         if status == "Unpaid":
             payment_item.is_past_due = False
+            payment_item.is_paid = False
+            payment_item.is_not_responsible = False
         elif status == "Paid":
             payment_item.is_past_due = False
+            payment_item.is_paid = True
+            payment_item.is_not_responsible = False
 
             existing_payment = db.query(models.Payment).filter(models.Payment.payment_item_id == payment_item_id).first()
 
@@ -544,10 +546,17 @@ async def update_payment_status(
                 db.add(new_payment)
             db.commit()
         elif status == "NOT RESPONSIBLE":
+            payment_item.is_not_responsible = True
+            payment_item.is_paid = False
+            payment_item.is_past_due = False
+            payment_item.fee = 0.0
+
             existing_payment = db.query(models.Payment).filter(models.Payment.payment_item_id == payment_item_id).first()
             if existing_payment:
                 db.delete(existing_payment)
-                db.commit()
+            
+            db.commit()
+            return {"message": f"Payment item {payment_item_id} marked as NOT RESPONSIBLE, fee set to 0, and associated payment (if any) deleted."}
 
         db.commit()
         db.refresh(payment_item)
@@ -1062,6 +1071,33 @@ async def admin_financial_statement_page(request: Request, db: Session = Depends
         },
     )
 
+# This router provides endpoints for creating and retrieving organizational expenses.
+@router.get("/expenses/", response_model=List[schemas.Expense], status_code=status.HTTP_200_OK)
+async def get_expenses(request: Request, db: Session = Depends(get_db)):
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated as admin. Only admins can view expenses."
+        )
+
+    organization_id = get_entity_organization_id(db, admin_id)
+    if not organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin is not associated with an organization. Cannot view expenses."
+        )
+    
+    expenses = db.query(models.Expense).filter(
+        models.Expense.organization_id == organization_id
+    ).order_by(models.Expense.incurred_at.desc()).all()
+
+    for expense in expenses:
+        if expense.admin and expense.admin.position is None:
+            expense.admin.position = ""
+
+    return expenses
+
 # This router handles expense-related endpoints for admins.
 @router.post("/expenses/", response_model=schemas.Expense, status_code=status.HTTP_201_CREATED)
 async def create_expense(request: Request, expense: schemas.ExpenseCreate, db: Session = Depends(get_db)):
@@ -1095,10 +1131,10 @@ async def create_expense(request: Request, expense: schemas.ExpenseCreate, db: S
     if (total_expenses + expense.amount) > total_revenue:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Expense amount (${expense.amount:.2f}) exceeds the available revenue. "
-                   f"Current total revenue: ${total_revenue:.2f}, "
-                   f"Current total expenses: ${total_expenses:.2f}. "
-                   f"Remaining budget: ${total_revenue - total_expenses:.2f}"
+            detail=f"Expense amount (₱{expense.amount:.2f}) exceeds the available revenue. "
+                   f"Current total revenue: ₱{total_revenue:.2f}, "
+                   f"Current total expenses: ₱{total_expenses:.2f}. "
+                   f"Remaining budget: ₱{total_revenue - total_expenses:.2f}"
         )
 
     db_expense = models.Expense(
