@@ -848,8 +848,8 @@ tr:hover td {
 
 
 .create-event-submit-button {
-    background-color: var(--org-accent-color);
-    color: var(--button-text-light);
+    background-color: var(--org-button-bg);
+    color: var(--org-button-text);
     padding: 0.8rem 1.5rem;
     border: none;
     border-radius: 6px;

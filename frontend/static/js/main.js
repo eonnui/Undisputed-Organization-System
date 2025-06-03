@@ -1,47 +1,3 @@
-async function fetchAndDisplayNotifications() {
-    console.log('Debug log 1: fetchAndDisplayNotifications called.');
-    const notificationsDropdown = document.getElementById('notifications-dropdown');
-    notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
-
-    try {
-        console.log('Debug log 2: Fetching from /get_user_notifications...');
-        const response = await fetch('/get_user_notifications');
-        console.log('Debug log 3: Response received:', response);
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                console.warn('User not authenticated for notifications. No notifications displayed.');
-                notificationsDropdown.innerHTML = '<div class="notification-item">Please log in to see notifications.</div>';
-                return;
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Debug log 4: Notifications data:', data);
-        const notifications = data.notifications;
-
-        notificationsDropdown.innerHTML = ''; 
-
-        if (notifications && notifications.length > 0) {
-            notifications.forEach(notification => {
-                const notificationItem = document.createElement('div');
-                notificationItem.classList.add('notification-item');
-                notificationItem.textContent = notification.message || notification;
-                notificationsDropdown.appendChild(notificationItem);
-            });
-            console.log('Debug log 5: Notifications displayed.');
-        } else {
-            notificationsDropdown.innerHTML = '<div class="notification-item">No new notifications.</div>';
-            console.log('Debug log 6: No new notifications found.');
-        }
-    } catch (error) {
-        console.error('Debug log 7: Error fetching notifications:', error);
-        notificationsDropdown.innerHTML = '<div class="notification-item">Failed to load notifications.</div>';
-    }
-}
-
-
-// Function to apply user-specific theme colors
 function applyUserTheme() {
     console.log('Attempting to apply user theme...');
 
@@ -123,8 +79,66 @@ function applyUserTheme() {
 
 document.addEventListener('DOMContentLoaded', applyUserTheme);
 
+// Function to fetch and display user notifications
+async function fetchAndDisplayNotifications() {
+    console.log('Debug log 1: fetchAndDisplayNotifications called.');
+    const notificationsDropdown = document.getElementById('notifications-dropdown');
+    notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
+
+    try {
+        console.log('Debug log 2: Fetching from /get_user_notifications...');
+        const response = await fetch('/get_user_notifications');
+        console.log('Debug log 3: Response received:', response);
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.warn('User not authenticated for notifications. No notifications displayed.');
+                notificationsDropdown.innerHTML = '<div class="notification-item">Please log in to see notifications.</div>';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Debug log 4: Notifications data:', data);
+        const notifications = data.notifications;
+
+        notificationsDropdown.innerHTML = ''; 
+
+        if (notifications && notifications.length > 0) {
+            notifications.forEach(notification => {
+                // Create an <a> tag for clickable notifications
+                const notificationItem = document.createElement('a'); 
+                notificationItem.classList.add('notification-item');
+                notificationItem.textContent = notification.message || notification;
+
+                // Set the href for redirection if a URL is provided by the API
+                if (notification.url) {
+                    notificationItem.href = notification.url;
+                    // Optional: Open in a new tab
+                    // notificationItem.target = '_blank'; 
+                } else {
+                    // If no URL, make it non-clickable by setting href to '#' and changing cursor
+                    notificationItem.href = '#'; 
+                    notificationItem.style.cursor = 'default'; 
+                    notificationItem.addEventListener('click', (e) => e.preventDefault()); // Prevent default navigation for non-links
+                }
+                notificationsDropdown.appendChild(notificationItem);
+            });
+            console.log('Debug log 5: Notifications displayed.');
+        } else {
+            notificationsDropdown.innerHTML = '<div class="notification-item">No new notifications.</div>';
+            console.log('Debug log 6: No new notifications found.');
+        }
+    } catch (error) {
+        console.error('Debug log 7: Error fetching notifications:', error);
+        notificationsDropdown.innerHTML = '<div class="notification-item">Failed to load notifications.</div>';
+    }
+}
+
+
+// Sidebar toggle and dropdown functionality
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Debug log A: DOMContentLoaded listener for sidebar and dropdowns is running.'); // New debug log
+    console.log('Debug log A: DOMContentLoaded listener for sidebar and dropdowns is running.'); 
 
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
@@ -150,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
             button.setAttribute('aria-expanded', isExpanded);
             console.log(`Debug log 9: toggleDropdown called for ${dropdownId}, isExpanded: ${isExpanded}`);
 
-            if (isExpanded) {                
+            if (isExpanded) { 
                 if (dropdownId === 'notifications-dropdown') {
                     console.log('Debug log 10: Calling fetchAndDisplayNotifications for notifications-dropdown');
                     fetchAndDisplayNotifications();

@@ -58,89 +58,51 @@ def generate_secure_filename(original_filename: str) -> str:
     random_prefix = secrets.token_hex(16)
     return f"{random_prefix}{file_extension}"
 
-# Helper function to create a notification
-def create_notification(
-    db: Session,
-    message: str,
-    organization_id: Optional[int] = None,
-    user_id: Optional[int] = None,
-    admin_id: Optional[int] = None,
-    notification_type: Optional[str] = None,
-    entity_id: Optional[int] = None
-):
-    existing_notification = db.query(models.Notification).filter(
-        models.Notification.message == message,
-        models.Notification.organization_id == organization_id,
-        models.Notification.user_id == user_id,
-        models.Notification.admin_id == admin_id,
-        models.Notification.notification_type == notification_type,
-        models.Notification.entity_id == entity_id
-    ).first()
-
-    if existing_notification:
-        return existing_notification
-    else:
-        db_notification = models.Notification(
-            message=message,
-            organization_id=organization_id,
-            user_id=user_id,
-            admin_id=admin_id,
-            notification_type=notification_type,
-            entity_id=entity_id
-        )
-        db.add(db_notification)
-        db.commit()
-        db.refresh(db_notification)
-        return db_notification
-
-def get_notifications(db: Session, user_id: Optional[int] = None, admin_id: Optional[int] = None) -> List[models.Notification]:
-    notifications_query = db.query(models.Notification)
-
-    if user_id:
-        notifications_query = notifications_query.filter(models.Notification.user_id == user_id)
-        user_org_id = db.query(models.User.organization_id).filter(models.User.id == user_id).scalar()
-        if user_org_id:
-            notifications_query = notifications_query.filter(
-                (models.Notification.user_id == user_id) | 
-                ((models.Notification.organization_id == user_org_id) & (models.Notification.user_id == None) & (models.Notification.admin_id == None))
-            )
-    elif admin_id:
-        notifications_query = notifications_query.filter(models.Notification.admin_id == admin_id)
-        admin_org_ids = [
-            org.id for org in db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first().organizations
-        ]
-        if admin_org_ids:
-            notifications_query = notifications_query.filter(
-                (models.Notification.admin_id == admin_id) | 
-                ((models.Notification.organization_id.in_(admin_org_ids)) & (models.Notification.user_id == None) & (models.Notification.admin_id == None))
-            )
-    else:
-        return []
-
-    notifications = notifications_query.order_by(models.Notification.created_at.desc()).all()
-    return notifications
-
 UPLOAD_BASE_DIRECTORY = Path(__file__).parent.parent.parent / "frontend" / "static" / "images"
 UPLOAD_BASE_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
 @router.get("/get_user_notifications", response_class=JSONResponse)
-async def get_user_notifications_route(request: Request, db: Session = Depends(get_db)):
+async def get_notifications_route(
+    request: Request,
+    db: Session = Depends(get_db),
+    organization_id: Optional[int] = Query(None, description="Optional organization ID to filter notifications.")
+) -> JSONResponse:
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
 
-    notifications = [] 
+    print(f"DEBUG: User ID from session: {user_id}")
+    print(f"DEBUG: Admin ID from session: {admin_id}")
+    print(f"DEBUG: Organization ID from query: {organization_id}")
+
+    raw_notifications = []
 
     if user_id:
-        notifications = get_notifications(db, user_id=user_id, admin_id=None)
+        print(f"DEBUG: Attempting to fetch notifications for user_id: {user_id}")
+        raw_notifications = crud.get_notifications(db, user_id=user_id)
     elif admin_id:
-        notifications = get_notifications(db, user_id=None, admin_id=admin_id)
+        print(f"DEBUG: Attempting to fetch notifications for admin_id: {admin_id}")
+        raw_notifications = crud.get_notifications(db, admin_id=admin_id)
+    elif organization_id:
+        print(f"DEBUG: Attempting to fetch notifications for organization_id: {organization_id}")
+        raw_notifications = crud.get_notifications(db, organization_id=organization_id)
     else:
+        print("DEBUG: No user_id, admin_id, or organization_id found.")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated."
+            detail="Not authenticated or no organization ID provided."
         )
+    
+    print(f"DEBUG: Raw notifications fetched: {len(raw_notifications)}")
 
-    return {"notifications": notifications}
+    # Fetch notification configurations
+    config_map = crud.get_all_notification_configs_as_map(db)
+
+    # Process and format notifications using the new CRUD function
+    final_notifications_data = crud.process_and_format_notifications(db, raw_notifications, config_map)
+    
+    print(f"DEBUG: Final notifications after processing: {len(final_notifications_data)}")
+
+    return JSONResponse(content={"notifications": final_notifications_data})
 
 # Handles admin bulletin board post creation.
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
@@ -211,13 +173,14 @@ async def admin_post_bulletin(
         if admin_org_id:
             users_in_org = db.query(models.User).filter(models.User.organization_id == admin_org_id).all()
             for user in users_in_org:
-                create_notification(
+                crud.create_notification(
                     db,
                     message=f"New bulletin post: '{title}'",
                     organization_id=admin_org_id,
                     user_id=user.id,
                     notification_type="bulletin_post",
-                    entity_id=db_post.post_id
+                    entity_id=db_post.post_id,
+                    url=f"/BulletinBoard#{db_post.post_id}" # Link to the bulletin board, anchor to post
                 )
 
         return RedirectResponse(url="/admin/bulletin_board",
@@ -341,13 +304,14 @@ async def admin_create_event(
     # Notify all users in the organization about the new event
     users_in_org = db.query(models.User).filter(models.User.organization_id == admin_org_id).all()
     for user in users_in_org:
-        create_notification(
+        crud.create_notification(
             db,
             message=f"New event: '{title}' on {event_date.strftime('%Y-%m-%d at %H:%M')}",
             organization_id=admin_org_id,
             user_id=user.id,
             notification_type="event",
-            entity_id=db_event.event_id
+            entity_id=db_event.event_id,
+            url=f"/Events#{db_event.event_id}" # Link to the events page, anchor to event
         )
 
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
@@ -1021,6 +985,7 @@ async def admin_outstanding_dues(
         relevant_payment_items = query.all()
         
         total_outstanding_amount = 0.0
+        # No notification creation here, so no URL needed
 
         for item in relevant_payment_items:
             if not item.is_paid:
@@ -1886,13 +1851,14 @@ async def payment_success(
             organization_admins = user.organization.admins
             for admin in organization_admins:
                 message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
-                create_notification(
+                crud.create_notification(
                     db,
                     message=message,
                     admin_id=admin.admin_id,
                     organization_id=user.organization_id,
                     notification_type="payment_success",
-                    entity_id=payment.id  # Link to the payment for context
+                    entity_id=payment.id,  # Link to the payment for context
+                    url=f"/admin/Payments/History" # Link to admin payment history
                 )
         # --- End Notification Logic ---
 
@@ -2034,22 +2000,22 @@ async def home(
                 .all()
             )
 
-            # Check for past due items and create notifications
             past_due_users = db.query(models.User).join(models.PaymentItem).filter(
                 models.User.organization_id == current_org_id,
                 models.PaymentItem.is_past_due == True,
                 models.PaymentItem.is_paid == False
-            ).distinct().all()
+            ).distinct(models.User.id).all()
 
             for past_due_user in past_due_users:
                 message = f"Past Due Payments: {past_due_user.first_name} {past_due_user.last_name} has past due payment items."
-                create_notification(
+                crud.create_notification(
                     db,
                     message=message,
-                    admin_id=admin.admin_id,  # Use the current admin's ID
+                    admin_id=admin.admin_id,
                     organization_id=current_org_id,
                     notification_type="past_due_payments",
-                    entity_id=past_due_user.id  # Link to the user
+                    entity_id=past_due_user.id,
+                    url=f"/admin/payments/total_members?student_number={past_due_user.student_number}"
                 )
 
         return templates.TemplateResponse(
@@ -2077,6 +2043,24 @@ async def home(
                 .limit(5)
                 .all()
             )
+        
+        user_past_due_items = db.query(models.PaymentItem).filter(
+            models.PaymentItem.user_id == user_id,
+            models.PaymentItem.is_past_due == True,
+            models.PaymentItem.is_paid == False
+        ).all()
+
+        if user_past_due_items:
+            message = "You have past due payment items. Please check your payments page."
+            crud.create_notification(
+                db,
+                message=message,
+                user_id=user_id,
+                organization_id=current_org_id,
+                notification_type="user_past_due",
+                url="/Payments"
+            )
+
         temporary_faqs = [
             {
                 "question": "What is the schedule for student orientation?",
@@ -2159,12 +2143,18 @@ async def events(request: Request, db: Session = Depends(get_db)):
 
     events = []
     if user_org_id:
-        events = db.query(models.Event).join(models.Admin).join(models.Admin.organizations).filter(
+        events = db.query(models.Event).options(joinedload(models.Event.participants)).join(models.Admin).join(models.Admin.organizations).filter(
             models.Organization.id == user_org_id
         ).order_by(models.Event.created_at.desc()).all()
 
     return templates.TemplateResponse(
-        "student_dashboard/events.html", {"request": request, "year": "2025", "events": events, "logo_url": logo_url}
+        "student_dashboard/events.html", {
+            "request": request,
+            "year": "2025",
+            "events": events,
+            "logo_url": logo_url,
+            "current_user_id": user_id
+        }
     )
 
 # Displays payment items for the authenticated user.
@@ -2208,26 +2198,8 @@ async def payments(request: Request, db: Session = Depends(get_db)):
             if not item.is_paid:
                 if item.is_past_due:
                     past_due_items.append(item)
-                    # Notify user about past due payment
-                    create_notification(
-                        db,
-                        message=f"Your payment for {item.fee} ({item.academic_year} {item.semester}) is past due.",
-                        organization_id=current_user.organization_id,
-                        user_id=current_user.id,
-                        notification_type="payment_past_due",
-                        entity_id=item.id
-                    )
                 else:
                     unpaid_upcoming_items.append(item)
-                    # Notify user about unpaid upcoming payment
-                    create_notification(
-                        db,
-                        message=f"You have an upcoming payment for {item.fee} ({item.academic_year} {item.semester}) due on {item.due_date}.",
-                        organization_id=current_user.organization_id,
-                        user_id=current_user.id,
-                        notification_type="payment_unpaid_upcoming",
-                        entity_id=item.id
-                    )
 
         return templates.TemplateResponse(
             "student_dashboard/payments.html",
@@ -2947,7 +2919,15 @@ async def heart_post(
             liking_user = db.query(models.User).filter(models.User.id == user_id).first()
             if liking_user:
                 message = f"{liking_user.first_name} {liking_user.last_name} liked your bulletin post: '{post.title}'"
-                create_notification(db, message, organization_id=post_org_id, admin_id=post.admin_id, notification_type="bulletin_like", entity_id=post_id)
+                crud.create_notification(
+                    db,
+                    message,
+                    organization_id=post_org_id,
+                    admin_id=post.admin_id,
+                    notification_type="bulletin_like",
+                    entity_id=post_id,
+                    url=f"/admin/bulletin_board#{post_id}" # Link to the specific bulletin post for admin
+                )
     elif action == 'unheart' and post.heart_count > 0:
         post.heart_count -= 1
     else:
@@ -2999,7 +2979,15 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
     # Notify admin about the event join
     if event.admin_id:
         message = f"{user.first_name} {user.last_name} joined your event: '{event.title}'"
-        create_notification(db, message, organization_id=event_org_id, admin_id=event.admin_id, notification_type="event_join", entity_id=event_id)
+        crud.create_notification(
+            db,
+            message,
+            organization_id=event_org_id,
+            admin_id=event.admin_id,
+            notification_type="event_join",
+            entity_id=event_id,
+            url=f"/admin/events#{event_id}" # Link to the specific event for admin
+        )
 
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -3366,13 +3354,14 @@ async def update_profile(
 
                 for admin in organization_admins:
                     message = f"Member {user.first_name} {user.last_name} has been verified."
-                    create_notification(
+                    crud.create_notification(
                         db=db,
                         message=message,
                         organization_id=user.organization_id,
                         admin_id=admin.admin_id,
                         notification_type="member_verification",
-                        entity_id=user.id
+                        entity_id=user.id,
+                        url=f"/admin/payments/total_members?student_number={user.student_number}" # Link to admin individual members filtered by student
                     )
 
         db.commit()

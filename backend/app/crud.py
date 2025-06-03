@@ -4,8 +4,9 @@ from passlib.context import CryptContext
 from datetime import datetime, date
 import logging
 from sqlalchemy.sql import exists
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import json
+from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO)
 
@@ -466,3 +467,422 @@ def mark_payment_item_as_paid(db: Session, payment_item_id: int):
     else:
         logging.warning(f"Payment item with id: {payment_item_id} not found for marking as paid.")
     return None
+
+
+# Helper function to create a notification
+def create_notification(
+    db: Session,
+    message: str,
+    organization_id: Optional[int] = None,
+    user_id: Optional[int] = None,
+    admin_id: Optional[int] = None,
+    notification_type: Optional[str] = None,
+    entity_id: Optional[int] = None,
+    url: Optional[str] = None
+) -> models.Notification:
+    query_filters = [
+        models.Notification.message == message,
+        models.Notification.organization_id == organization_id,
+        models.Notification.user_id == user_id,
+        models.Notification.admin_id == admin_id,
+        models.Notification.notification_type == notification_type,
+        models.Notification.entity_id == entity_id,
+        models.Notification.url == url
+    ]
+    existing_notification = db.query(models.Notification).filter(*query_filters).first()
+    if existing_notification:
+        return existing_notification
+    else:
+        db_notification = models.Notification(
+            message=message,
+            organization_id=organization_id,
+            user_id=user_id,
+            admin_id=admin_id,
+            notification_type=notification_type,
+            entity_id=entity_id,
+            url=url,
+            created_at=datetime.utcnow()
+        )
+        db.add(db_notification)
+        db.commit()
+        db.refresh(db_notification)
+        return db_notification
+
+def get_notifications(
+    db: Session,
+    user_id: Optional[int] = None,
+    admin_id: Optional[int] = None,
+    organization_id: Optional[int] = None
+) -> List[models.Notification]:
+    notifications_query = db.query(models.Notification)
+    filters = []
+    if user_id:
+        user_org_id = db.query(models.User.organization_id).filter(models.User.id == user_id).scalar()
+        filters.append(
+            (models.Notification.user_id == user_id) |
+            (
+                (models.Notification.organization_id == user_org_id) &
+                (models.Notification.user_id == None) &
+                (models.Notification.admin_id == None)
+            )
+        )
+    elif admin_id:
+        admin_org_ids = [
+            org.id for org in db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first().organizations
+        ] if db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first() else []
+        filters.append(
+            (models.Notification.admin_id == admin_id) |
+            (
+                (models.Notification.organization_id.in_(admin_org_ids)) &
+                (models.Notification.user_id == None) &
+                (models.Notification.admin_id == None)
+            )
+        )
+    elif organization_id:
+        filters.append(
+            (models.Notification.organization_id == organization_id) &
+            (models.Notification.user_id == None) &
+            (models.Notification.admin_id == None)
+        )
+    else:
+        return []
+    notifications_query = notifications_query.filter(*filters)
+    notifications = notifications_query.order_by(models.Notification.created_at.desc()).all()
+    return notifications
+
+def get_all_notification_configs_as_map(db: Session) -> dict:
+    notification_configs = db.query(models.NotificationTypeConfig).all()
+    config_map = {
+        config.type_name: {
+            "group_by_type_only": config.group_by_type_only,
+            "display_name_plural": config.display_name_plural,
+            "message_template_plural": config.message_template_plural,
+            "message_template_individual": config.message_template_individual,
+            "entity_model_name": config.entity_model_name,
+            "entity_title_attribute": config.entity_title_attribute,
+            "context_phrase_template": config.context_phrase_template,
+            "message_prefix_to_strip": config.message_prefix_to_strip,
+            "always_individual": config.always_individual,
+            # Removed "url_template": config.url_template
+        } for config in notification_configs
+    }
+    return config_map
+
+def fetch_dynamic_entity_titles(db_session: Session, dynamic_entity_ids_to_fetch: defaultdict, config_map_local: dict) -> dict:
+    dynamic_entity_titles_local = {}
+    for model_name, entity_ids in dynamic_entity_ids_to_fetch.items():
+        if not entity_ids:
+            continue
+        model_class = getattr(models, model_name, None)
+        if not model_class:
+            continue
+        pk_column = None
+        if model_name == "Event":
+            pk_column = models.Event.event_id
+        elif model_name == "BulletinBoard":
+            pk_column = models.BulletinBoard.post_id
+        elif model_name == "User":
+            pk_column = models.User.id
+        elif model_name == "Organization":
+            pk_column = models.Organization.id
+        elif model_name == "Payment":
+            pk_column = models.Payment.id
+        elif model_name == "PaymentItem":
+            pk_column = models.PaymentItem.id
+        elif model_name == "Expense":
+            pk_column = models.Expense.id
+        elif model_name == "Admin":
+            pk_column = models.Admin.admin_id
+        if not pk_column:
+            continue
+        entities = db_session.query(model_class).filter(pk_column.in_(list(entity_ids))).all()
+        for entity in entities:
+            determined_title_attribute = None
+            for cfg_details in config_map_local.values():
+                if cfg_details.get("entity_model_name") == model_name and cfg_details.get("entity_title_attribute"):
+                    determined_title_attribute = cfg_details["entity_title_attribute"]
+                    break
+            if not determined_title_attribute:
+                if model_name == "User":
+                    pass
+                elif hasattr(entity, "name"):
+                    determined_title_attribute = "name"
+                elif hasattr(entity, "title"):
+                    determined_title_attribute = "title"
+                elif hasattr(entity, "description"):
+                    determined_title_attribute = "description"
+            entity_key = getattr(entity, pk_column.key)
+            
+            # Removed storing full entity object for URL templating as it's no longer needed
+            # dynamic_entity_titles_local[f"{model_name}_{entity_key}_obj"] = entity 
+
+            if model_name == "User" and hasattr(entity, "first_name") and hasattr(entity, "last_name"):
+                dynamic_entity_titles_local[f"{model_name}_{entity_key}"] = f"{entity.first_name} {entity.last_name}"
+            elif determined_title_attribute and hasattr(entity, determined_title_attribute):
+                dynamic_entity_titles_local[f"{model_name}_{entity_key}"] = getattr(entity, determined_title_attribute)
+            else:
+                dynamic_entity_titles_local[f"{model_name}_{entity_key}"] = f"Unknown {model_name} (ID: {entity_key})"
+    return dynamic_entity_titles_local
+
+def process_and_format_notifications(db: Session, raw_notifications: list, config_map: dict) -> list:
+    individual_notifications_always = []
+    notifications_for_grouping = defaultdict(lambda: {"count": 0, "latest_notification": None, "notifications": []})
+    dynamic_entity_ids_to_fetch = defaultdict(set)
+
+    for notification in raw_notifications:
+        config = config_map.get(notification.notification_type)
+
+        if not config or config.get("always_individual"):
+            individual_notifications_always.append(notification)
+            # Ensure entity_id is collected for individual notifications too, if they have one
+            if notification.entity_id and config and config.get("entity_model_name"):
+                dynamic_entity_ids_to_fetch[config["entity_model_name"]].add(notification.entity_id)
+            continue
+
+        if notification.entity_id and config.get("entity_model_name"):
+            dynamic_entity_ids_to_fetch[config["entity_model_name"]].add(notification.entity_id)
+        
+        grouping_key_parts = [notification.notification_type]
+        if not config.get("group_by_type_only") and notification.entity_id:
+            grouping_key_parts.append(str(notification.entity_id))
+        grouping_key = tuple(grouping_key_parts)
+        
+        notifications_for_grouping[grouping_key]["notifications"].append(notification)
+        notifications_for_grouping[grouping_key]["count"] = len(notifications_for_grouping[grouping_key]["notifications"])
+        
+        current_created_at = notification.created_at
+        if not isinstance(current_created_at, datetime):
+            try:
+                if isinstance(current_created_at, str) and current_created_at:
+                    current_created_at = datetime.fromisoformat(current_created_at)
+                else:
+                    current_created_at = datetime.min
+            except ValueError:
+                current_created_at = datetime.min
+        latest_notif_in_group = notifications_for_grouping[grouping_key]["latest_notification"]
+        if latest_notif_in_group is None or \
+           (current_created_at > latest_notif_in_group.created_at if isinstance(latest_notif_in_group.created_at, datetime) else True):
+            notifications_for_grouping[grouping_key]["latest_notification"] = notification
+
+    dynamic_entity_titles = fetch_dynamic_entity_titles(db, dynamic_entity_ids_to_fetch, config_map)
+    final_notifications_data = []
+
+    # Removed Helper to generate URL (generate_url_from_template)
+
+    # Process all "always individual" notifications first
+    for individual_notif in sorted(individual_notifications_always, key=lambda n: n.created_at, reverse=True):
+        config = config_map.get(individual_notif.notification_type)
+        
+        # Apply message_prefix_to_strip first
+        stripped_message = individual_notif.message
+        if config and config.get("message_prefix_to_strip"):
+            prefix = config["message_prefix_to_strip"]
+            if stripped_message.startswith(prefix):
+                stripped_message = stripped_message[len(prefix):].strip()
+
+        formatted_message = stripped_message
+
+        # Determine entity_title for individual notifications if needed
+        entity_title_for_individual = None
+        # Removed entity_obj_for_individual as it's no longer needed for URL templating
+        if individual_notif.entity_id and config and config.get("entity_model_name"):
+            model_name = config["entity_model_name"]
+            entity_title_for_individual = dynamic_entity_titles.get(f"{model_name}_{individual_notif.entity_id}")
+            # Removed fetching entity_obj_for_individual
+
+        template_vars_individual = {
+            "message": formatted_message, # This is the stripped message
+            "entity_title": entity_title_for_individual,
+            # "url" is now directly from individual_notif.url, no longer a template variable
+        }
+
+        # Apply message_template_individual if available
+        if config and config.get("message_template_individual"):
+            try:
+                formatted_message = config["message_template_individual"].format(**template_vars_individual)
+            except KeyError:
+                formatted_message = stripped_message
+        
+        try:
+            created_at_iso = individual_notif.created_at.isoformat()
+        except AttributeError:
+            continue
+        
+        # Use the original URL from the notification object directly
+        final_notifications_data.append({
+            "id": individual_notif.id,
+            "message": formatted_message,
+            "url": individual_notif.url, # Use the original URL
+            "notification_type": individual_notif.notification_type,
+            "created_at": created_at_iso
+        })
+
+    # Process grouped notifications (those not marked as always_individual)
+    for key, value in notifications_for_grouping.items():
+        count = value["count"]
+        latest_notif = value["latest_notification"]
+        notifications_in_group = value["notifications"]
+
+        grouping_key = key
+        notification_type = grouping_key[0]
+        entity_id = grouping_key[1] if len(grouping_key) > 1 else None
+
+        if not latest_notif:
+            continue
+
+        type_config = config_map.get(notification_type)
+        if not type_config:
+            continue
+
+        if count < 4:
+            # Sort individual notifications by created_at for consistent display order
+            sorted_individual_notifications = sorted(notifications_in_group, key=lambda n: n.created_at, reverse=True)
+            for individual_notif in sorted_individual_notifications:
+                config = config_map.get(individual_notif.notification_type) # Re-get config for individual notif in group
+                
+                stripped_message = individual_notif.message
+                if config and config.get("message_prefix_to_strip"):
+                    prefix = config["message_prefix_to_strip"]
+                    if stripped_message.startswith(prefix):
+                        stripped_message = stripped_message[len(prefix):].strip()
+
+                formatted_message = stripped_message
+
+                entity_title_for_individual = None
+                # Removed entity_obj_for_individual
+                if individual_notif.entity_id and config and config.get("entity_model_name"):
+                    model_name = config["entity_model_name"]
+                    entity_title_for_individual = dynamic_entity_titles.get(f"{model_name}_{individual_notif.entity_id}")
+                    # Removed fetching entity_obj_for_individual
+
+
+                template_vars_individual = {
+                    "message": formatted_message,
+                    "entity_title": entity_title_for_individual,
+                    # "url" is now directly from individual_notif.url
+                }
+
+                if config and config.get("message_template_individual"):
+                    try:
+                        formatted_message = config["message_template_individual"].format(**template_vars_individual)
+                    except KeyError:
+                        formatted_message = stripped_message
+                
+                try:
+                    created_at_iso = individual_notif.created_at.isoformat()
+                except AttributeError:
+                    continue
+                
+                # Use the original URL from the notification object directly
+                final_notifications_data.append({
+                    "id": individual_notif.id,
+                    "message": formatted_message,
+                    "url": individual_notif.url, # Use the original URL
+                    "notification_type": individual_notif.notification_type,
+                    "created_at": created_at_iso
+                })
+        else:
+            # If count is 4 or more, process as a single grouped notification
+            final_notification_message = ""
+            base_display_name = (
+                type_config["display_name_plural"]
+                if type_config and type_config["display_name_plural"]
+                else notification_type.replace('_', ' ').lower()
+            )
+            context_phrase = ""
+            # Removed entity_obj_for_group
+            if entity_id and type_config and type_config.get("entity_model_name"):
+                model_name = type_config["entity_model_name"]
+                fetched_title = dynamic_entity_titles.get(f"{model_name}_{entity_id}")
+                # Removed fetching entity_obj_for_group
+                if fetched_title:
+                    if type_config.get("context_phrase_template"):
+                        try:
+                            context_phrase = type_config["context_phrase_template"].format(entity_title=fetched_title)
+                        except KeyError:
+                            context_phrase = f" for {fetched_title}"
+                    else:
+                        context_phrase = f" for {fetched_title}"
+
+            MAX_CHARS_IN_SUMMARY = 60
+            original_messages_for_summary = [n.message for n in notifications_in_group]
+            unique_messages = list(set(original_messages_for_summary))
+            summary_items_list = []
+            
+            for msg in unique_messages[:3]:
+                if type_config and type_config.get("message_prefix_to_strip"):
+                    prefix = type_config["message_prefix_to_strip"]
+                    if msg.startswith(prefix):
+                        msg = msg[len(prefix):].strip()
+                
+                processed_msg = msg[0].upper() + msg[1:] if msg else ""
+
+                if len(processed_msg) > MAX_CHARS_IN_SUMMARY:
+                    truncated_point = processed_msg.rfind(' ', 0, MAX_CHARS_IN_SUMMARY)
+                    if truncated_point != -1:
+                        truncated_msg = processed_msg[:truncated_point] + '...'
+                    else:
+                        truncated_msg = processed_msg[:MAX_CHARS_IN_SUMMARY] + '...'
+                else:
+                    truncated_msg = processed_msg
+                
+                summary_items_list.append(truncated_msg)
+
+            items_list_str = ""
+            if len(summary_items_list) == 1:
+                items_list_str = summary_items_list[0]
+            elif len(summary_items_list) == 2:
+                items_list_str = f"{summary_items_list[0]} and {summary_items_list[1]}"
+            elif len(summary_items_list) > 2:
+                items_list_str = f"{', '.join(summary_items_list[:-1])}, and {summary_items_list[-1]}"
+            
+            remaining_count = len(unique_messages) - len(summary_items_list) if len(unique_messages) > len(summary_items_list) else 0
+            s_suffix = "s" if remaining_count > 1 else ""
+
+            summary_items_with_others = items_list_str
+            if remaining_count > 0:
+                if items_list_str:
+                    summary_items_with_others += f" and {remaining_count} other{s_suffix}"
+                else:
+                    summary_items_with_others = f"{remaining_count} other{s_suffix}"
+
+            template_vars = {
+                "count": count,
+                "display_name_plural": base_display_name,
+                "context_phrase": context_phrase,
+                "summary_items": items_list_str,
+                "summary_items_with_others": summary_items_with_others,
+                "remaining_count": remaining_count,
+                "s_suffix": s_suffix
+            }
+
+            if type_config and type_config.get("message_template_plural"):
+                try:
+                    final_notification_message = type_config["message_template_plural"].format(**template_vars)
+                except KeyError:
+                    final_notification_message = f"{count} {base_display_name}{context_phrase}"
+                    if summary_items_with_others:
+                        final_notification_message += f": {summary_items_with_others}"
+                    final_notification_message += "."
+            else:
+                final_notification_message = f"{count} {base_display_name}{context_phrase}"
+                if summary_items_with_others:
+                    final_notification_message += f": {summary_items_with_others}"
+                final_notification_message += "."
+            
+            try:
+                created_at_iso = latest_notif.created_at.isoformat()
+            except AttributeError:
+                continue
+            
+            # Use the original URL from the notification object directly
+            final_notifications_data.append({
+                "id": latest_notif.id,
+                "message": final_notification_message,
+                "url": latest_notif.url, # Use the original URL
+                "notification_type": latest_notif.notification_type,
+                "created_at": created_at_iso
+            })
+
+    final_notifications_data.sort(key=lambda x: x['created_at'], reverse=True)
+    return final_notifications_data

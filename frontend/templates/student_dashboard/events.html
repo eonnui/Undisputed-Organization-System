@@ -23,12 +23,12 @@
                     </div>
                     <p class="event-description">{{ event.description }}</p>
                     <div class="event-actions">
-                        {% if event.joined_count() >= event.max_participants %}
-                            <button class="full-button" disabled>Full</button>
-                        {% elif current_user_id in event.participant_ids %}
+                        {% if current_user_id in event.participants|map(attribute='id')|list %}
                             <form action="{{ url_for('leave_event', event_id=event.event_id) }}" method="post">
                                 <button class="leave-button" type="submit">Leave</button>
                             </form>
+                        {% elif event.joined_count() >= event.max_participants %}
+                            <button class="full-button" disabled>Full</button>
                         {% else %}
                             <form action="{{ url_for('join_event', event_id=event.event_id) }}" method="post">
                                 <button class="join-button" type="submit">Join</button>

@@ -96,6 +96,7 @@ class Admin(Base):
     events = relationship("Event", back_populates="admin")
     organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")
     notifications = relationship("Notification", back_populates="admin")
+
 class BulletinBoard(Base):
     __tablename__ = "bulletin_board"
     post_id = Column(Integer, primary_key=True, index=True)
@@ -167,7 +168,22 @@ class Notification(Base):
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     read_at = Column(DateTime, nullable=True)
+    url = Column(String, nullable=True)
 
     user = relationship("User", back_populates="notifications")
     admin = relationship("Admin", back_populates="notifications")
     organization = relationship("Organization", back_populates="notifications")
+
+class NotificationTypeConfig(Base):
+    __tablename__ = "notification_type_configs"
+
+    type_name = Column(String, primary_key=True, index=True, unique=True, nullable=False)
+    display_name_plural = Column(String, nullable=True)
+    group_by_type_only = Column(Boolean, default=False)
+    message_template_plural = Column(String, nullable=True)
+    context_phrase_template = Column(String, nullable=True)
+    message_prefix_to_strip = Column(String, nullable=True)
+    entity_model_name = Column(String, nullable=True)
+    entity_title_attribute = Column(String, nullable=True)
+    always_individual = Column(Boolean, default=False)
+    message_template_individual = Column(String, nullable=True)

@@ -16,7 +16,6 @@ function applyUserTheme() {
             if (data && data.organization) {
                 organizationName = data.organization.name || organizationName;
 
-                // Priority 1: Apply full custom_palette if available
                 if (data.organization.custom_palette) {
                     try {
                         const palette = JSON.parse(data.organization.custom_palette);
@@ -31,13 +30,11 @@ function applyUserTheme() {
                         }
                     }
                 }
-                // Priority 2: Fallback to single theme_color if no custom_palette or parsing failed
                 else if (data.organization.theme_color) {
                     root.style.setProperty('--organization-theme-color', data.organization.theme_color);
                 }
             }
 
-            // Update profile name and picture (if present)
             const profilePicElement = document.getElementById('user-profile-pic');
             const profileNameElement = document.getElementById('profile-name');
             if (data && data.first_name && profileNameElement) {
@@ -52,7 +49,6 @@ function applyUserTheme() {
                 profilePicElement.src = '/static/images/your_image_name.jpg';
             }
 
-            // Update organization name display
             const organizationNameDisplay = document.getElementById('organizationNameDisplay');
             if (organizationNameDisplay) {
                 organizationNameDisplay.textContent = organizationName;
@@ -71,7 +67,6 @@ function applyUserTheme() {
 
 document.addEventListener('DOMContentLoaded', applyUserTheme);
 
-// Function to fetch and display user notifications
 async function fetchAndDisplayNotifications() {
     const notificationsDropdown = document.getElementById('notifications-dropdown');
     notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
@@ -92,9 +87,17 @@ async function fetchAndDisplayNotifications() {
 
         if (notifications && notifications.length > 0) {
             notifications.forEach(notification => {
-                const notificationItem = document.createElement('div');
+                const notificationItem = document.createElement('a');
                 notificationItem.classList.add('notification-item');
-                notificationItem.textContent = notification.message || notification;
+                notificationItem.textContent = notification.message;
+
+                if (notification.url) {
+                    notificationItem.href = notification.url;
+                } else {
+                    notificationItem.href = '#';
+                    notificationItem.style.cursor = 'default';
+                    notificationItem.addEventListener('click', (e) => e.preventDefault());
+                }
                 notificationsDropdown.appendChild(notificationItem);
             });
         } else {
@@ -105,7 +108,6 @@ async function fetchAndDisplayNotifications() {
     }
 }
 
-// Sidebar toggle and dropdown functionality
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
@@ -115,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const logo = document.querySelector('.sidebar .logo');
     let isCollapsed = false;
 
-    // Function to handle dropdown toggle and accessibility
     function setupDropdown(buttonSelector, dropdownId) {
         const button = document.querySelector(buttonSelector);
         const dropdown = document.getElementById(dropdownId);
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const isExpanded = dropdown.classList.toggle('show');
             button.setAttribute('aria-expanded', isExpanded);
 
-            if (isExpanded) {                
+            if (isExpanded) {
                 if (dropdownId === 'notifications-dropdown') {
                     fetchAndDisplayNotifications();
                 }
