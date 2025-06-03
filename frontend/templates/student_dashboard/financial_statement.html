@@ -11,26 +11,31 @@
     <section id="dashboard" class="section active">
         <h1>Financial Statement Dashboard</h1>
 
+        <!-- Personal Financials Section -->
         <div class="quick-stats">
             <div class="stat-card positive">
-                <h3>Total Revenue</h3>
-                <p>₱{{ "%.2f"|format(financial_data.total_revenue) }}</p>
-            </div>
-            <div class="stat-card negative">
-                <h3>Total Expenses</h3>
-                <p>₱{{ "%.2f"|format(financial_data.total_expenses) }}</p>
-            </div>
-            <div class="stat-card">
-                <h3>Net Income</h3>
-                <p>₱{{ "%.2f"|format(financial_data.net_income) }}</p>
+                <h3>Total Paid by You</h3>
+                <p>₱{{ "%.2f"|format(financial_data.user_financials.total_paid_by_user) }}</p>
             </div>
             <div class="stat-card info">
-                <h3>Total Outstanding Fees</h3>
-                <p>₱{{ "%.2f"|format(financial_data.total_outstanding_fees) }}</p>
+                <h3>Your Outstanding Fees</h3>
+                <p>₱{{ "%.2f"|format(financial_data.user_financials.total_outstanding_fees) }}</p>
             </div>
             <div class="stat-card warning">
-                <h3>Total Past Due Fees</h3>
-                <p>₱{{ "%.2f"|format(financial_data.total_past_due_fees) }}</p>
+                <h3>Your Past Due Fees</h3>
+                <p>₱{{ "%.2f"|format(financial_data.user_financials.total_past_due_fees) }}</p>
+            </div>
+            <div class="stat-card positive">
+                <h3>Organization Total Revenue</h3>
+                <p>₱{{ "%.2f"|format(financial_data.organization_financials.total_revenue_org) }}</p>
+            </div>
+            <div class="stat-card negative">
+                <h3>Organization Total Expenses</h3>
+                <p>₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Organization Net Income</h3>
+                <p>₱{{ "%.2f"|format(financial_data.organization_financials.net_income_org) }}</p>
             </div>
         </div>
 
@@ -41,17 +46,17 @@
         <div class="toggle-container">
             <span class="toggle-label">Quick View:</span>
             <div class="toggle-buttons">
-                <button id="toggle-revenues" class="toggle-btn active" onclick="toggleDashboardView('revenues')">Collected Fees</button>
-                <button id="toggle-outstanding" class="toggle-btn" onclick="toggleDashboardView('outstanding')">Outstanding Fees</button>
-                <button id="toggle-expenses" class="toggle-btn" onclick="toggleDashboardView('expenses')">Expenses</button>
-                <button id="toggle-summary" class="toggle-btn" onclick="toggleDashboardView('summary')">Summary</button>
-                <button id="toggle-monthly" class="toggle-btn" onclick="toggleDashboardView('monthly')">Monthly</button>
+                <button id="toggle-user-collected" class="toggle-btn active" onclick="toggleDashboardView('user-collected')">Your Collected Fees</button>
+                <button id="toggle-user-outstanding" class="toggle-btn" onclick="toggleDashboardView('user-outstanding')">Your Outstanding Fees</button>
+                <button id="toggle-org-expenses" class="toggle-btn" onclick="toggleDashboardView('org-expenses')">Organization Expenses</button>
+                <button id="toggle-combined-activity" class="toggle-btn" onclick="toggleDashboardView('combined-activity')">Combined Activity</button>
+                <button id="toggle-org-monthly" class="toggle-btn" onclick="toggleDashboardView('org-monthly')">Monthly Overview</button>
             </div>
         </div>
 
-        <div id="dashboard-revenues" class="report-card active">
+        <div id="dashboard-user-collected" class="report-card active">
             <div class="report-header">
-                <h2>Statement of Collected Fees</h2>
+                <h2>Your Collected Fees by Category</h2>
                 <p>As of {{ financial_data.current_date }}</p>
             </div>
             <div class="report-body">
@@ -62,21 +67,33 @@
                             <th class="amount">Amount (₱)</th>
                         </tr>
                     </thead>
-                    <tbody id="revenues-data-table">
+                    <tbody id="user-collected-data-table">
+                        {% if financial_data.user_financials.collected_fees_by_category %}
+                            {% for item in financial_data.user_financials.collected_fees_by_category %}
+                                <tr>
+                                    <td>{{ item.category }}</td>
+                                    <td class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="2" style="text-align: center;">No collected fees to display for you.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL COLLECTED FEES:</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_revenue) }}</th>
+                            <th>TOTAL COLLECTED FEES (Your Payments):</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_paid_by_user) }}</th>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
 
-        <div id="dashboard-outstanding" class="report-card">
+        <div id="dashboard-user-outstanding" class="report-card">
             <div class="report-header">
-                <h2>Statement of Outstanding Fees</h2>
+                <h2>Your Outstanding Fees by Category</h2>
                 <p>As of {{ financial_data.current_date }}</p>
             </div>
             <div class="report-body">
@@ -87,25 +104,37 @@
                             <th class="amount">Amount (₱)</th>
                         </tr>
                     </thead>
-                    <tbody id="outstanding-data-table">
+                    <tbody id="user-outstanding-data-table">
+                        {% if financial_data.user_financials.outstanding_fees_by_category %}
+                            {% for item in financial_data.user_financials.outstanding_fees_by_category %}
+                                <tr>
+                                    <td>{{ item.category }}</td>
+                                    <td class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="2" style="text-align: center;">No outstanding fees to display for you.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL OUTSTANDING FEES:</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_outstanding_fees) }}</th>
+                            <th>TOTAL OUTSTANDING FEES (Your Payments):</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_outstanding_fees) }}</th>
                         </tr>
                         <tr>
-                            <th>TOTAL PAST DUE FEES:</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_past_due_fees) }}</th>
+                            <th>TOTAL PAST DUE FEES (Your Payments):</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_past_due_fees) }}</th>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
 
-        <div id="dashboard-expenses" class="report-card">
+        <div id="dashboard-org-expenses" class="report-card">
             <div class="report-header">
-                <h2>Statement of Expenses</h2>
+                <h2>Organization Expenses by Category</h2>
                 <p>As of {{ financial_data.current_date }}</p>
             </div>
             <div class="report-body">
@@ -116,48 +145,87 @@
                             <th class="amount">Amount (₱)</th>
                         </tr>
                     </thead>
-                    <tbody id="expenses-data-table">
+                    <tbody id="org-expenses-data-table">
+                        {% if financial_data.organization_financials.expenses_by_category_org %}
+                            {% for item in financial_data.organization_financials.expenses_by_category_org %}
+                                <tr>
+                                    <td>{{ item.category }}</td>
+                                    <td class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="2" style="text-align: center;">No organization expenses to display.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL EXPENSES:</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_expenses) }}</th>
+                            <th>TOTAL ORGANIZATION EXPENSES:</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</th>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
 
-        <div id="dashboard-summary" class="report-card">
+        <div id="dashboard-combined-activity" class="report-card">
             <div class="report-header">
-                <h2>Financial Summary</h2>
+                <h2>Combined Financial Activity Log</h2>
                 <p>As of {{ financial_data.current_date }}</p>
             </div>
             <div class="report-body">
                 <table>
                     <thead>
                         <tr>
-                            <th>Date</th> <th>Event/Item</th>
+                            <th>Date</th>
+                            <th>Event/Item</th>
                             <th class="amount">INFLOWS (₱)</th>
                             <th class="amount">OUTFLOWS (₱)</th>
                         </tr>
                     </thead>
-                    <tbody id="summary-data-table">
+                    <tbody id="combined-activity-data-table">
+                        {% if financial_data.financial_summary_items_combined %}
+                            {% for item in financial_data.financial_summary_items_combined %}
+                                <tr class="{% if 'Your Payment' in item.event_item %}user-payment{% else %}org-expense{% endif %}">
+                                    <td>{{ item.date }}</td>
+                                    <td>
+                                        <span class="event-item-label">{{ item.event_item.split(' - ')[0] | default(item.event_item) }}</span>
+                                        {% if ' - ' in item.event_item %}
+                                            <br><span class="event-item-description">({{ item.event_item.split(' - ')[1] }})</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="amount">₱{{ "%.2f"|format(item.inflows) }}</td>
+                                    <td class="amount">₱{{ "%.2f"|format(item.outflows) }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No combined activity to display.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th colspan="2">TOTALS:</th> <th class="amount">₱{{ "%.2f"|format(financial_data.total_revenue) }}</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.total_expenses) }}</th>
+                            <th colspan="2">TOTAL INFLOWS (Org-Wide):</th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_revenue_org) }}</th>
+                            <th></th>
                         </tr>
                         <tr>
-                            <th colspan="2">NET BALANCE:</th> <th class="amount" colspan="2">₱{{ "%.2f"|format(financial_data.net_income) }}</th>
+                            <th colspan="2">TOTAL OUTFLOWS (Org-Wide):</th>
+                            <th></th>
+                            <th class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</th>
+                        </tr>
+                        <tr>
+                            <th colspan="2">ORGANIZATION NET BALANCE:</th>
+                            <th class="amount" colspan="2">₱{{ "%.2f"|format(financial_data.organization_financials.net_income_org) }}</th>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         </div>
 
-        <div id="dashboard-monthly" class="report-card">
+        <div id="dashboard-org-monthly" class="report-card">
             <div class="report-header">
                 <h2>Monthly Cash Flow Overview</h2>
                 <p>Annual Overview ({{ year }})</p>
@@ -187,7 +255,7 @@
                     <tbody id="monthly-data-table">
                     </tbody>
                 </table>
-                <a href="{{ url_for('static', path='html/student_dashboard/detailed_monthly_report.html') }}?month=january" id="view-detailed-monthly-report-link" class="view-detail-link">
+                <a href="{{ url_for('static', path='html/student_dashboard/detailed_monthly_report.html') }}?month=january&type=organization" id="view-detailed-monthly-report-link" class="view-detail-link">
                     <span class="material-symbols-outlined">visibility</span>
                     View Detailed Monthly Report
                 </a>
@@ -199,6 +267,7 @@
 
 {% block scripts %}
 <script>
+    // Parse the financial_data from Jinja2 into a JavaScript object
     let financialData = JSON.parse('{{ financial_data | tojson | safe }}');
     let currentYear = '{{ year }}';
     let today = new Date();
@@ -211,141 +280,42 @@
     }
 
     function populateQuickStats() {
-        // Removed current_balance stat card, so re-indexed or removed its update.
-        // The Jinja2 templating directly handles the initial render of these values.
-        // This function is less critical for initial render but good for dynamic updates if any.
         document.getElementById('current-date').textContent = financialData.current_date;
     }
 
-    function populateRevenuesTable() {
-        const tableBody = document.getElementById('revenues-data-table');
-        tableBody.innerHTML = '';
-        if (financialData.collected_fees_by_category && financialData.collected_fees_by_category.length > 0) {
-            financialData.collected_fees_by_category.forEach(item => {
-                let row = tableBody.insertRow();
-                let categoryCell = row.insertCell();
-                let amountCell = row.insertCell();
-                categoryCell.textContent = item.category;
-                amountCell.textContent = formatCurrency(item.amount);
-                amountCell.classList.add('amount');
-            });
-        } else {
-            let row = tableBody.insertRow();
-            let cell = row.insertCell();
-            cell.colSpan = 2;
-            cell.textContent = 'No collected fees to display.';
-            cell.style.textAlign = 'center';
-        }
-    }
-
-    function populateOutstandingTable() {
-        const tableBody = document.getElementById('outstanding-data-table');
-        tableBody.innerHTML = '';
-        if (financialData.outstanding_fees_by_category && financialData.outstanding_fees_by_category.length > 0) {
-            financialData.outstanding_fees_by_category.forEach(item => {
-                let row = tableBody.insertRow();
-                let categoryCell = row.insertCell();
-                let amountCell = row.insertCell();
-                categoryCell.textContent = item.category;
-                amountCell.textContent = formatCurrency(item.amount);
-                amountCell.classList.add('amount');
-            });
-        } else {
-            let row = tableBody.insertRow();
-            let cell = row.insertCell();
-            cell.colSpan = 2;
-            cell.textContent = 'No outstanding fees to display.';
-            cell.style.textAlign = 'center';
-        }
-    }
-
-    function populateExpensesTable() {
-        const tableBody = document.getElementById('expenses-data-table');
-        tableBody.innerHTML = '';
-        if (financialData.expenses_by_category && financialData.expenses_by_category.length > 0) {
-            financialData.expenses_by_category.forEach(item => {
-                let row = tableBody.insertRow();
-                let categoryCell = row.insertCell();
-                let amountCell = row.insertCell();
-                categoryCell.textContent = item.category;
-                amountCell.textContent = formatCurrency(item.amount);
-                amountCell.classList.add('amount');
-            });
-        } else {
-            let row = tableBody.insertRow();
-            let cell = row.insertCell();
-            cell.colSpan = 2;
-            cell.textContent = 'No expenses to display.';
-            cell.style.textAlign = 'center';
-        }
-    }
-
-    // Updated function to populate the Financial Summary table
-    function populateSummaryTable() {
-        const tableBody = document.getElementById('summary-data-table');
-        tableBody.innerHTML = '';
-        if (financialData.financial_summary_items && financialData.financial_summary_items.length > 0) {
-            financialData.financial_summary_items.forEach(item => {
-                let row = tableBody.insertRow();
-                let dateCell = row.insertCell();      // New date cell
-                let eventItemCell = row.insertCell();
-                let inflowsCell = row.insertCell();
-                let outflowsCell = row.insertCell();
-
-                dateCell.textContent = item.date; // Display the date
-                eventItemCell.textContent = item.event_item;
-                inflowsCell.textContent = formatCurrency(item.inflows);
-                outflowsCell.textContent = formatCurrency(item.outflows);
-                inflowsCell.classList.add('amount');
-                outflowsCell.classList.add('amount');
-            });
-        } else {
-            let row = tableBody.insertRow();
-            let cell = row.insertCell();
-            cell.colSpan = 4; // Adjusted colspan for the new Date column
-            cell.textContent = 'No summary data to display.';
-            cell.style.textAlign = 'center';
-        }
-    }
-
     function toggleDashboardView(viewId) {
-        console.log('toggleDashboardView called with:', viewId);
         const reportCards = document.querySelectorAll('.report-card');
         const toggleButtons = document.querySelectorAll('.toggle-buttons .toggle-btn');
-        const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
-
+        
         reportCards.forEach(card => {
             card.classList.remove('active');
-            if (card.id === `dashboard-${viewId}`) {
-                card.classList.add('active');
-                if (viewId === 'monthly') {
-                    console.log('Calling showMonthlyData with lastActiveMonth:', lastActiveMonth);
-                    showMonthlyData(lastActiveMonth);
-                    monthlyButtons.forEach(button => {
-                        button.classList.remove('active');
-                        if (button.textContent.toLowerCase() === lastActiveMonth) {
-                            button.classList.add('active');
-                        }
-                    });
-                }
-            }
         });
-
+        
         toggleButtons.forEach(button => {
             button.classList.remove('active');
-            if (button.id === `toggle-${viewId}`) {
-                button.classList.add('active');
-            }
         });
+
+        const targetCard = document.getElementById(`dashboard-${viewId}`);
+        const targetButton = document.getElementById(`toggle-${viewId}`);
+
+        if (targetCard) {
+            targetCard.classList.add('active');
+        }
+        if (targetButton) {
+            targetButton.classList.add('active');
+        }
+
+        if (viewId === 'org-monthly') {
+            showMonthlyData(lastActiveMonth);
+        }
     }
 
     function showMonthlyData(month) {
-        console.log('showMonthlyData called for:', month);
         lastActiveMonth = month;
-
+        
         const monthlyDataTable = document.getElementById('monthly-data-table');
         const viewDetailedLink = document.getElementById('view-detailed-monthly-report-link');
-
+        
         if (!monthlyDataTable) {
             console.error('monthly-data-table element not found!');
             return;
@@ -353,10 +323,10 @@
         monthlyDataTable.innerHTML = '';
 
         if (viewDetailedLink) {
-            viewDetailedLink.href = `/student_dashboard/detailed_monthly_report_page?month=${month}&year=${currentYear}`;
+            viewDetailedLink.href = `/student_dashboard/detailed_monthly_report_page?month=${month}&year=${currentYear}&type=organization`;
         }
 
-        const monthlyStats = financialData.monthly_data[month];
+        const monthlyStats = financialData.organization_financials.monthly_data_org[month];
 
         if (monthlyStats) {
             let startingBalanceRow = monthlyDataTable.insertRow();
@@ -386,7 +356,6 @@
             endingBalanceCellLabel.textContent = 'Ending Balance';
             endingBalanceCellAmount.textContent = formatCurrency(monthlyStats.ending_balance);
             endingBalanceCellAmount.classList.add('amount');
-            endingBalanceRow.classList.add('outflows-row');
         } else {
             let row = monthlyDataTable.insertRow();
             let cell = row.insertCell();
@@ -395,7 +364,7 @@
             cell.style.textAlign = 'center';
         }
 
-        const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
+        const monthlyButtons = document.querySelectorAll('#dashboard-org-monthly .monthly-toggles button');
         monthlyButtons.forEach(button => {
             button.classList.remove('active');
             if (button.textContent.toLowerCase() === month) {
@@ -405,29 +374,17 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOMContentLoaded event fired');
-
         populateQuickStats();
-        populateRevenuesTable();
-        populateOutstandingTable();
-        populateExpensesTable();
-        populateSummaryTable();
+        toggleDashboardView('user-collected');
 
-        showMonthlyData(lastActiveMonth);
-
-        const monthlyButtons = document.querySelectorAll('.monthly-toggles button');
+        const monthlyButtons = document.querySelectorAll('#dashboard-org-monthly .monthly-toggles button');
         monthlyButtons.forEach(button => {
             button.addEventListener('click', function() {
                 showMonthlyData(this.textContent.toLowerCase());
             });
         });
-
-        const initialActiveView = document.querySelector('.toggle-buttons .toggle-btn.active');
-        if (initialActiveView) {
-            toggleDashboardView(initialActiveView.id.replace('toggle-', ''));
-        } else {
-            toggleDashboardView('revenues');
-        }
+        
+        showMonthlyData(lastActiveMonth);
     });
 </script>
 {% endblock %}

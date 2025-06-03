@@ -11,6 +11,16 @@
     <h2 id="detailed-month-title">MONTH</h2>
     <p>Monthly Cash Flow</p>
     <p id="detailed-month-date">For the month of --</p>
+
+    <div style="margin-bottom: 20px;">
+        <label for="report-type-select">Report Type:</label>
+        <select id="report-type-select" style="padding: 5px; border-radius: 5px; border: 1px solid #ccc;">
+            <option value="combined">Combined (User & Organization)</option>
+            <option value="user">User Payments</option>
+            <option value="organization">Organization Expenses</option>
+        </select>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -50,62 +60,77 @@
         const footerCashReceived = document.getElementById('footer-cash-received');
         const footerCashDisbursed = document.getElementById('footer-cash-disbursed');
         const footerRunningBalance = document.getElementById('footer-running-balance');
+
+        const reportTypeSelect = document.getElementById('report-type-select'); // Get the new select element
         
-        if (month && year) {
-            const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
-            detailedMonthTitle.textContent = capitalizedMonth;
-            detailedMonthFooter.textContent = capitalizedMonth;
-            detailedMonthDate.textContent = `For the month of ${capitalizedMonth} ${year}`;
+        // Function to fetch and populate data
+        function fetchAndPopulateData() {
+            if (month && year) {
+                const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+                detailedMonthTitle.textContent = capitalizedMonth;
+                detailedMonthFooter.textContent = capitalizedMonth;
+                detailedMonthDate.textContent = `For the month of ${capitalizedMonth} ${year}`;
 
-            const apiUrl = `/api/detailed_monthly_report?month=${month}&year=${year}`;
-            
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(errorData => {
-                            console.error('API Error:', errorData.detail || 'Unknown API Error');
-                            if (response.status === 403) {
-                                window.location.href = '/login';
-                                throw new Error('Authentication/Authorization issue. Redirecting...');
-                            }
-                            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-                        }).catch(() => {
-                            return response.text().then(text => {
-                                console.error('Non-JSON error response received from API:', text);
-                                throw new Error(`HTTP error! status: ${response.status}. Server returned unexpected content.`);
+                const selectedReportType = reportTypeSelect.value; // Get selected value
+                let apiUrl = `/api/detailed_monthly_report?month=${month}&year=${year}`;
+                if (selectedReportType !== 'combined') { // Only append if not 'combined' (which is the default backend behavior if not specified)
+                    apiUrl += `&report_type=${selectedReportType}`;
+                }
+                
+                fetch(apiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => {
+                                console.error('API Error:', errorData.detail || 'Unknown API Error');
+                                if (response.status === 403) {
+                                    window.location.href = '/login';
+                                    throw new Error('Authentication/Authorization issue. Redirecting...');
+                                }
+                                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                            }).catch(() => {
+                                return response.text().then(text => {
+                                    console.error('Non-JSON error response received from API:', text);
+                                    throw new Error(`HTTP error! status: ${response.status}. Server returned unexpected content.`);
+                                });
                             });
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data && data.transactions) {
-                        populateDetailedTable(data.transactions, {
-                            received: data.total_inflows,
-                            disbursed: data.total_outflows,
-                            running: data.ending_balance
-                        });
-                    } else {
-                        console.warn('No transaction data found in API response:', data);
-                        populateDetailedTable([], { received: 0, disbursed: 0, running: 0 });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching detailed monthly data:', error);
-                    detailedMonthlyDataTableBody.innerHTML = `<tr>
-                        <td>--</td>
-                        <td colspan="5" style="text-align: center;">Error loading data: ${error.message}. Please try again.</td>
-                    </tr>`;
-                    footerCashReceived.textContent = '₱0.00';
-                    footerCashDisbursed.textContent = '₱0.00';
-                    footerRunningBalance.textContent = '₱0.00';
-                });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && data.transactions) {
+                            populateDetailedTable(data.transactions, {
+                                received: data.total_inflows,
+                                disbursed: data.total_outflows,
+                                running: data.ending_balance
+                            });
+                        } else {
+                            console.warn('No transaction data found in API response:', data);
+                            populateDetailedTable([], { received: 0, disbursed: 0, running: 0 });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching detailed monthly data:', error);
+                        detailedMonthlyDataTableBody.innerHTML = `<tr>
+                            <td>--</td>
+                            <td colspan="5" style="text-align: center;">Error loading data: ${error.message}. Please try again.</td>
+                        </tr>`;
+                        footerCashReceived.textContent = '₱0.00';
+                        footerCashDisbursed.textContent = '₱0.00';
+                        footerRunningBalance.textContent = '₱0.00';
+                    });
 
-        } else {
-            detailedMonthTitle.textContent = 'No Month Selected';
-            detailedMonthDate.textContent = 'Please select a month and year from the dashboard.';
-            populateDetailedTable([], { received: 0, disbursed: 0, running: 0 });
+            } else {
+                detailedMonthTitle.textContent = 'No Month Selected';
+                detailedMonthDate.textContent = 'Please select a month and year from the dashboard.';
+                populateDetailedTable([], { received: 0, disbursed: 0, running: 0 });
+            }
         }
+
+        // Initial data load
+        fetchAndPopulateData();
+
+        // Add event listener for when the report type changes
+        reportTypeSelect.addEventListener('change', fetchAndPopulateData);
     });
 
     function populateDetailedTable(transactions, totals) {
