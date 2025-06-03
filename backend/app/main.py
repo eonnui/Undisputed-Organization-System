@@ -3118,6 +3118,8 @@ async def update_profile(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    original_is_verified_status = user.is_verified
+
     def delete_file(file_path: Optional[str]):
         if file_path:
             full_path = os.path.join(
@@ -3165,6 +3167,7 @@ async def update_profile(
         user.guardian_name = guardian_name
     if guardian_contact is not None:
         user.guardian_contact = guardian_contact
+    
     if is_verified is not None:
         user.is_verified = is_verified
 
@@ -3309,24 +3312,16 @@ async def update_profile(
 
     year_level_str = str(user.year_level).lower().strip()
     year_level_mapping = {
-        "1st": 1,
-        "first": 1,
-        "1": 1,
-        "2nd": 2,
-        "second": 2,
-        "2": 2,
-        "3rd": 3,
-        "third": 3,
-        "3": 3,
-        "4th": 4,
-        "fourth": 4,
-        "4": 4,
+        "1st": 1, "first": 1, "1": 1,
+        "2nd": 2, "second": 2, "2": 2,
+        "3rd": 3, "third": 3, "3": 3,
+        "4th": 4, "fourth": 4, "4": 4,
     }
 
     student_year = year_level_mapping.get(year_level_str, 1)
 
     first_academic_year_start = current_date.year - (student_year - 1)
-    if current_date.month < 6:
+    if current_date.month < 9:
         first_academic_year_start -= 1
 
     first_academic_year = f"{first_academic_year_start}-{first_academic_year_start + 1}"
@@ -3338,15 +3333,18 @@ async def update_profile(
         item_academic_year_start = first_academic_year_start + semester_offset
         item.academic_year = f"{item_academic_year_start}-{item_academic_year_start + 1}"
 
-        due_date_year = int(item.academic_year.split("-")[1])
+        academic_year_end_year = int(item.academic_year.split("-")[1])
+
         if (i % 2) == 0:
-            due_date = datetime(due_date_year, 2, 1) + timedelta(
-                days=7 - datetime(due_date_year, 2, 1).weekday()
-            )
+            jan_1st = datetime(academic_year_end_year, 1, 1)
+            first_sunday_of_jan = jan_1st + timedelta(days=(6 - jan_1st.weekday()) % 7)
+            due_date = first_sunday_of_jan
         else:
-            due_date = datetime(due_date_year, 7, 1) + timedelta(
-                days=7 - datetime(due_date_year, 7, 1).weekday()
-            )
+            june_1st = datetime(academic_year_end_year, 6, 1)
+            first_sunday_of_june = june_1st + timedelta(days=(6 - june_1st.weekday()) % 7)
+            third_sunday = first_sunday_of_june + timedelta(days=14)
+            due_date = third_sunday
+
         item.due_date = due_date.date()
 
         if item.due_date and item.due_date < current_date.date() and not item.is_paid:
@@ -3358,6 +3356,25 @@ async def update_profile(
         db.flush()
 
     try:
+        if not original_is_verified_status and user.is_verified:
+            if user.organization_id:
+                organization_admins = db.query(models.Admin).join(
+                    models.organization_admins
+                ).filter(
+                    models.organization_admins.c.organization_id == user.organization_id
+                ).all()
+
+                for admin in organization_admins:
+                    message = f"Member {user.first_name} {user.last_name} has been verified."
+                    create_notification(
+                        db=db,
+                        message=message,
+                        organization_id=user.organization_id,
+                        admin_id=admin.admin_id,
+                        notification_type="member_verification",
+                        entity_id=user.id
+                    )
+
         db.commit()
         db.refresh(user)
 
