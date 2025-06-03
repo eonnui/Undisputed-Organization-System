@@ -1858,7 +1858,7 @@ async def payment_success(
                     organization_id=user.organization_id,
                     notification_type="payment_success",
                     entity_id=payment.id,  # Link to the payment for context
-                    url=f"/admin/Payments/History" # Link to admin payment history
+                    url=f"/admin/payments/total_members?student_number={user.student_number}" 
                 )
         # --- End Notification Logic ---
 
