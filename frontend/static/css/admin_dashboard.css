@@ -153,10 +153,6 @@
     }
 }
 
-.stat-value:hover {
-    color: var(--org-info);
-}
-
 .card-link {
     text-decoration: none;
     color: inherit;

@@ -272,12 +272,18 @@
             const options = wrapper.querySelector('.custom-options');
             const listItems = options.querySelectorAll('li');
 
-            trigger.addEventListener('click', () => {
-                const triggerId = trigger.id;
+            trigger.addEventListener('click', () => {                
+                document.querySelectorAll('.custom-select-wrapper.open').forEach(openWrapper => {
+                    if (openWrapper !== wrapper) { 
+                        openWrapper.classList.remove('open');
+                        openWrapper.querySelector('.custom-options').style.display = 'none';
+                    }
+                });
+                
                 wrapper.classList.toggle('open');
                 options.style.display = wrapper.classList.contains('open') ? "block" : "none";
             });
-
+            
             listItems.forEach(item => {
                 item.addEventListener('click', () => {
                     const value = item.dataset.value;

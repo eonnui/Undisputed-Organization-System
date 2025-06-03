@@ -22,7 +22,7 @@
                 <ul>
                     <li class="{% if request.path == url_for('home') %}selected{% endif %}"><a href="{{ url_for('home') }}"><span class="material-symbols-outlined">home</span> <span class="nav-text">Home</span></a></li>
                     <li class="{% if request.path == url_for('bulletin_board') %}selected{% endif %}"><a href="{{ url_for('bulletin_board') }}"><span class="material-symbols-outlined">breaking_news</span> <span class="nav-text">Bulletin Board</span></a></li>
-                    <li class="{% if request.path == url_for('events') %}selected{% endif %}"><a href="{{ url_for('events') }}"><span class="material-symbols-outlined">event</span> <span class="nav-text">Events</span></a></li>
+                    <li class="{% if request.path == request.url_for('events') %}selected{% endif %}"><a href="{{ request.url_for('events') }}"><span class="material-symbols-outlined">event</span> <span class="nav-text">Events</span></a></li>
                     <li class="{% if request.path == url_for('payments') %}selected{% endif %}"><a href="{{ url_for('payments')}}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership and Payments</span></a></li>
                     <li class="{% if request.path == url_for('financial_statement') %}selected{% endif %}"><a href="{{ url_for('financial_statement')}}"><span class="material-symbols-outlined">request_quote</span> <span class="nav-text">Financial Statement</span></a></li>
                 </ul>
@@ -41,9 +41,14 @@
                         <span class="material-symbols-outlined">notifications</span>
                     </button>
                     <div id="notifications-dropdown" class="dropdown-content">
-                        <div class="notification-item">New event scheduled!</div>
-                        <div class="notification-item">Membership payment due soon.</div>
-                        <div class="notification-item">Important announcement on the bulletin board.</div>
+                        {# Iterate over the notifications passed from the backend #}
+                        {% if notifications %}
+                            {% for notification in notifications %}
+                                <div class="notification-item">{{ notification }}</div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="notification-item">No new notifications.</div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="profile-container">

@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Tabl
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
+from datetime import datetime
 
 event_participants = Table(
     'event_participants',
@@ -21,6 +22,7 @@ class Organization(Base):
     primary_course_code = Column(String, nullable=True, unique=True, index=True)
     admins = relationship("Admin", secondary="organization_admins", back_populates="organizations")
     students = relationship("User", back_populates="organization")
+    notifications = relationship("Notification", back_populates="organization")
 
 organization_admins = Table(
     'organization_admins',
@@ -80,6 +82,7 @@ class User(Base):
     verification_date = Column(DateTime, nullable=True)
     payments = relationship("Payment", back_populates="user")
     payment_items = relationship("PaymentItem", back_populates="user", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="user")
 
 class Admin(Base):
     __tablename__ = "admins"
@@ -92,7 +95,7 @@ class Admin(Base):
     bulletin_board_posts = relationship("BulletinBoard", back_populates="admin")
     events = relationship("Event", back_populates="admin")
     organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")
-
+    notifications = relationship("Notification", back_populates="admin")
 class BulletinBoard(Base):
     __tablename__ = "bulletin_board"
     post_id = Column(Integer, primary_key=True, index=True)
@@ -149,3 +152,22 @@ class Expense(Base):
     admin = relationship("Admin")
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
     organization = relationship("Organization")
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) 
+    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True) 
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True) 
+    
+    message = Column(Text, nullable=False)
+    notification_type = Column(String, default="general") 
+    entity_id = Column(Integer, nullable=True) 
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    read_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="notifications")
+    admin = relationship("Admin", back_populates="notifications")
+    organization = relationship("Organization", back_populates="notifications")

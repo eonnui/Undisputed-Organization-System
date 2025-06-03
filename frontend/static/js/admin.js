@@ -1,23 +1,17 @@
-// Function to apply user-specific theme colors
 function applyUserTheme() {
-    console.log('Attempting to apply user theme...');
-
-    fetch('/get_user_data') // Your backend endpoint to get user and organization data
+    fetch('/get_user_data')
         .then(response => {
             if (!response.ok) {
                 if (response.status === 401) {
-                    console.warn('User not authenticated. Using default theme.');
-                    return null; // Handle unauthenticated case gracefully
+                    return null;
                 }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('User data received for theme application:', data);
-
-            const root = document.documentElement; // The <html> element
-            let organizationName = 'Organization System'; // Default name
+            const root = document.documentElement;
+            let organizationName = 'Organization System';
 
             if (data && data.organization) {
                 organizationName = data.organization.name || organizationName;
@@ -26,28 +20,21 @@ function applyUserTheme() {
                 if (data.organization.custom_palette) {
                     try {
                         const palette = JSON.parse(data.organization.custom_palette);
-                        console.log('Applying custom palette:', palette);
                         for (const varName in palette) {
                             if (palette.hasOwnProperty(varName)) {
                                 root.style.setProperty(varName, palette[varName]);
                             }
                         }
                     } catch (e) {
-                        console.error('Error parsing custom_palette JSON:', e);
-                        // Fallback to theme_color if custom_palette is invalid JSON
                         if (data.organization.theme_color) {
                             root.style.setProperty('--organization-theme-color', data.organization.theme_color);
-                            console.log(`Applied theme color (fallback): ${data.organization.theme_color} for organization: ${organizationName}`);
                         }
                     }
                 }
                 // Priority 2: Fallback to single theme_color if no custom_palette or parsing failed
                 else if (data.organization.theme_color) {
                     root.style.setProperty('--organization-theme-color', data.organization.theme_color);
-                    console.log(`Applied theme color: ${data.organization.theme_color} for organization: ${organizationName}`);
                 }
-            } else {
-                console.warn('No organization data found, using default theme.');
             }
 
             // Update profile name and picture (if present)
@@ -56,13 +43,13 @@ function applyUserTheme() {
             if (data && data.first_name && profileNameElement) {
                 profileNameElement.textContent = data.first_name;
             } else if (profileNameElement) {
-                profileNameElement.textContent = 'Profile'; // Default
+                profileNameElement.textContent = 'Profile';
             }
 
             if (data && data.profile_picture && profilePicElement) {
                 profilePicElement.src = data.profile_picture;
             } else if (profilePicElement) {
-                profilePicElement.src = '/static/images/your_image_name.jpg'; // Default, ensure this file exists!
+                profilePicElement.src = '/static/images/your_image_name.jpg';
             }
 
             // Update organization name display
@@ -72,21 +59,51 @@ function applyUserTheme() {
             }
         })
         .catch(error => {
-            console.error('Error fetching user data for theme:', error);
-            // Ensure default profile/organization name is shown on error
             const profilePicElement = document.getElementById('user-profile-pic');
             const profileNameElement = document.getElementById('profile-name');
             const organizationNameDisplay = document.getElementById('organizationNameDisplay');
 
             if (profileNameElement) profileNameElement.textContent = 'Profile';
-            if (profilePicElement) profilePicElement.src = '/static/images/your_image_name.jpg'; // Default
+            if (profilePicElement) profilePicElement.src = '/static/images/your_image_name.jpg';
             if (organizationNameDisplay) organizationNameDisplay.textContent = 'Organization System';
         });
 }
 
-// Initial call when the DOM is loaded for theme application
 document.addEventListener('DOMContentLoaded', applyUserTheme);
 
+// Function to fetch and display user notifications
+async function fetchAndDisplayNotifications() {
+    const notificationsDropdown = document.getElementById('notifications-dropdown');
+    notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
+
+    try {
+        const response = await fetch('/get_user_notifications');
+        if (!response.ok) {
+            if (response.status === 401) {
+                notificationsDropdown.innerHTML = '<div class="notification-item">Please log in to see notifications.</div>';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        const notifications = data.notifications;
+
+        notificationsDropdown.innerHTML = '';
+
+        if (notifications && notifications.length > 0) {
+            notifications.forEach(notification => {
+                const notificationItem = document.createElement('div');
+                notificationItem.classList.add('notification-item');
+                notificationItem.textContent = notification.message || notification;
+                notificationsDropdown.appendChild(notificationItem);
+            });
+        } else {
+            notificationsDropdown.innerHTML = '<div class="notification-item">No new notifications.</div>';
+        }
+    } catch (error) {
+        notificationsDropdown.innerHTML = '<div class="notification-item">Failed to load notifications.</div>';
+    }
+}
 
 // Sidebar toggle and dropdown functionality
 document.addEventListener('DOMContentLoaded', function() {
@@ -104,14 +121,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const dropdown = document.getElementById(dropdownId);
 
         if (!button || !dropdown) {
-            console.error(`Dropdown elements not found for button: ${buttonSelector}, dropdown: ${dropdownId}`);
             return;
         }
 
         function toggleDropdown() {
             const isExpanded = dropdown.classList.toggle('show');
             button.setAttribute('aria-expanded', isExpanded);
-            if (isExpanded) {
+
+            if (isExpanded) {                
+                if (dropdownId === 'notifications-dropdown') {
+                    fetchAndDisplayNotifications();
+                }
                 const firstInteractive = dropdown.querySelector('a, button');
                 if (firstInteractive) {
                     firstInteractive.focus();
@@ -157,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', function(event) {
         document.querySelectorAll('.dropdown-content.show').forEach(openDropdown => {
             const relatedButton = document.querySelector(`[aria-controls="${openDropdown.id}"]`);
-            if (relatedButton && !event.target.matches(relatedButton) && !openDropdown.contains(event.target)) {
+            if (relatedButton && !relatedButton.contains(event.target) && !openDropdown.contains(event.target)) {
                 openDropdown.classList.remove('show');
                 relatedButton.setAttribute('aria-expanded', 'false');
             }

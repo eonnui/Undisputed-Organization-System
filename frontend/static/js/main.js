@@ -1,13 +1,56 @@
+async function fetchAndDisplayNotifications() {
+    console.log('Debug log 1: fetchAndDisplayNotifications called.');
+    const notificationsDropdown = document.getElementById('notifications-dropdown');
+    notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
+
+    try {
+        console.log('Debug log 2: Fetching from /get_user_notifications...');
+        const response = await fetch('/get_user_notifications');
+        console.log('Debug log 3: Response received:', response);
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.warn('User not authenticated for notifications. No notifications displayed.');
+                notificationsDropdown.innerHTML = '<div class="notification-item">Please log in to see notifications.</div>';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Debug log 4: Notifications data:', data);
+        const notifications = data.notifications;
+
+        notificationsDropdown.innerHTML = ''; 
+
+        if (notifications && notifications.length > 0) {
+            notifications.forEach(notification => {
+                const notificationItem = document.createElement('div');
+                notificationItem.classList.add('notification-item');
+                notificationItem.textContent = notification.message || notification;
+                notificationsDropdown.appendChild(notificationItem);
+            });
+            console.log('Debug log 5: Notifications displayed.');
+        } else {
+            notificationsDropdown.innerHTML = '<div class="notification-item">No new notifications.</div>';
+            console.log('Debug log 6: No new notifications found.');
+        }
+    } catch (error) {
+        console.error('Debug log 7: Error fetching notifications:', error);
+        notificationsDropdown.innerHTML = '<div class="notification-item">Failed to load notifications.</div>';
+    }
+}
+
+
 // Function to apply user-specific theme colors
 function applyUserTheme() {
     console.log('Attempting to apply user theme...');
 
-    fetch('/get_user_data') // Your backend endpoint to get user and organization data
+    fetch('/get_user_data')
         .then(response => {
             if (!response.ok) {
                 if (response.status === 401) {
                     console.warn('User not authenticated. Using default theme.');
-                    return null; // Handle unauthenticated case gracefully
+                    return null;
                 }
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -16,13 +59,12 @@ function applyUserTheme() {
         .then(data => {
             console.log('User data received for theme application:', data);
 
-            const root = document.documentElement; // The <html> element
-            let organizationName = 'Organization System'; // Default name
+            const root = document.documentElement;
+            let organizationName = 'Organization System';
 
             if (data && data.organization) {
                 organizationName = data.organization.name || organizationName;
 
-                // Priority 1: Apply full custom_palette if available
                 if (data.organization.custom_palette) {
                     try {
                         const palette = JSON.parse(data.organization.custom_palette);
@@ -32,19 +74,14 @@ function applyUserTheme() {
                                 root.style.setProperty(varName, palette[varName]);
                             }
                         }
-                        // If a full palette is applied, the single theme_color might still be used for a primary accent
-                        // Or you can define a primary accent within the custom_palette itself (e.g., --org-primary-theme-color)
-                        // For now, let's assume if custom_palette exists, it covers everything.
                     } catch (e) {
                         console.error('Error parsing custom_palette JSON:', e);
-                        // Fallback to theme_color if custom_palette is invalid JSON
                         if (data.organization.theme_color) {
                             root.style.setProperty('--organization-theme-color', data.organization.theme_color);
                             console.log(`Applied theme color (fallback): ${data.organization.theme_color} for organization: ${organizationName}`);
                         }
                     }
                 }
-                // Priority 2: Fallback to single theme_color if no custom_palette or parsing failed
                 else if (data.organization.theme_color) {
                     root.style.setProperty('--organization-theme-color', data.organization.theme_color);
                     console.log(`Applied theme color: ${data.organization.theme_color} for organization: ${organizationName}`);
@@ -53,22 +90,20 @@ function applyUserTheme() {
                 console.warn('No organization data found, using default theme.');
             }
 
-            // Update profile name and picture (if present)
             const profilePicElement = document.getElementById('user-profile-pic');
             const profileNameElement = document.getElementById('profile-name');
             if (data && data.first_name && profileNameElement) {
                 profileNameElement.textContent = data.first_name;
             } else if (profileNameElement) {
-                profileNameElement.textContent = 'Profile'; // Default
+                profileNameElement.textContent = 'Profile';
             }
 
             if (data && data.profile_picture && profilePicElement) {
                 profilePicElement.src = data.profile_picture;
             } else if (profilePicElement) {
-                profilePicElement.src = '/static/images/your_image_name.jpg'; // Default
+                profilePicElement.src = '/static/images/your_image_name.jpg';
             }
 
-            // Update organization name display (if you have one in base.html)
             const organizationNameDisplay = document.getElementById('organizationNameDisplay');
             if (organizationNameDisplay) {
                 organizationNameDisplay.textContent = organizationName;
@@ -76,7 +111,6 @@ function applyUserTheme() {
         })
         .catch(error => {
             console.error('Error fetching user data for theme:', error);
-            // Ensure default profile/organization name is shown on error
             const profilePicElement = document.getElementById('user-profile-pic');
             const profileNameElement = document.getElementById('profile-name');
             const organizationNameDisplay = document.getElementById('organizationNameDisplay');
@@ -87,11 +121,11 @@ function applyUserTheme() {
         });
 }
 
-// Initial call when the DOM is loaded
 document.addEventListener('DOMContentLoaded', applyUserTheme);
 
-// Sidebar toggle functionality (as previously implemented)
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Debug log A: DOMContentLoaded listener for sidebar and dropdowns is running.'); // New debug log
+
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
     const menuToggle = document.getElementById('menu-toggle');
@@ -100,7 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const logo = document.querySelector('.sidebar .logo');
     let isCollapsed = false;
 
-    // Function to handle dropdown toggle and accessibility
     function setupDropdown(buttonSelector, dropdownId) {
         const button = document.querySelector(buttonSelector);
         const dropdown = document.getElementById(dropdownId);
@@ -110,10 +143,18 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        console.log(`Debug log 8: Setting up dropdown for: ${buttonSelector} -> ${dropdownId}`);
+
         function toggleDropdown() {
             const isExpanded = dropdown.classList.toggle('show');
             button.setAttribute('aria-expanded', isExpanded);
-            if (isExpanded) {
+            console.log(`Debug log 9: toggleDropdown called for ${dropdownId}, isExpanded: ${isExpanded}`);
+
+            if (isExpanded) {                
+                if (dropdownId === 'notifications-dropdown') {
+                    console.log('Debug log 10: Calling fetchAndDisplayNotifications for notifications-dropdown');
+                    fetchAndDisplayNotifications();
+                }
                 const firstInteractive = dropdown.querySelector('a, button');
                 if (firstInteractive) {
                     firstInteractive.focus();
@@ -159,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', function(event) {
         document.querySelectorAll('.dropdown-content.show').forEach(openDropdown => {
             const relatedButton = document.querySelector(`[aria-controls="${openDropdown.id}"]`);
-            if (relatedButton && !event.target.matches(relatedButton) && !openDropdown.contains(event.target)) {
+            if (relatedButton && !relatedButton.contains(event.target) && !openDropdown.contains(event.target)) {
                 openDropdown.classList.remove('show');
                 relatedButton.setAttribute('aria-expanded', 'false');
             }

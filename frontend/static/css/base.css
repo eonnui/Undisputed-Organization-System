@@ -413,8 +413,13 @@ body {
     background-color: var(--org-dropdown-item-hover-bg);
 }
 
+.dropdown-content {
+  max-height: 300px; 
+  overflow-y: auto;
+}
+
 .dropdown-content .notification-item {
-    border-bottom: 1px solid var(--org-dropdown-border);
+  border-bottom: 1px solid var(--org-dropdown-border);
 }
 
 .dropdown-content .notification-item:last-child {

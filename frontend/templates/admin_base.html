@@ -9,13 +9,12 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     {% block head %}
     {% endblock %}
-    
 </head>
 <body>
     <div class="sidebar">
         <div class="logo">
             <a href="{{ url_for('home') }}">
-                <img src="{{ logo_url }}" alt="Organization Logo">                
+                <img src="{{ logo_url }}" alt="Organization Logo">
             </a>
         </div>
         <nav>
@@ -24,7 +23,7 @@
                     <li class="{% if request.path == url_for('home') %}selected{% endif %}"><a href="{{ url_for('home') }}"><span class="material-symbols-outlined">home</span> <span class="nav-text">Home</span></a></li>
                     <li class="{% if request.path == url_for('admin_bulletin_board') %}selected{% endif %}"><a href="{{ url_for('admin_bulletin_board') }}"><span class="material-symbols-outlined">breaking_news</span> <span class="nav-text">Bulletin Board</span></a></li>
                     <li class="{% if request.path == url_for('admin_events') %}selected{% endif %}"><a href="{{ url_for('admin_events') }}"><span class="material-symbols-outlined">event</span> <span class="nav-text">Events</span></a></li>
-                    <li class="{% if request.path == url_for('admin_payments') %}selected{% endif %}"><a href="{{ url_for('admin_payments') }}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership & Payments</span></a></li>                  
+                    <li class="{% if request.path == url_for('admin_payments') %}selected{% endif %}"><a href="{{ url_for('admin_payments') }}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership & Payments</span></a></li>
                     <li class="{% if request.path == url_for('admin_financial_statement') %}selected{% endif %}"><a href="{{ url_for('admin_financial_statement') }}"><span class="material-symbols-outlined">request_quote</span> <span class="nav-text">Financial Statement</span></a></li>
                 </ul>
             </div>
@@ -42,19 +41,22 @@
                         <span class="material-symbols-outlined">notifications</span>
                     </button>
                     <div id="notifications-dropdown" class="dropdown-content">
-                        <div class="notification-item">New event scheduled!</div>
-                        <div class="notification-item">Membership payment due soon.</div>
-                        <div class="notification-item">Important announcement on the bulletin board.</div>
+                        {# Iterate over the notifications passed from the backend #}
+                        {% if notifications %}
+                            {% for notification in notifications %}
+                                <div class="notification-item">{{ notification }}</div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="notification-item">No new notifications.</div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="profile-container">
                     <button class="profile-btn" aria-haspopup="true" aria-expanded="false" aria-controls="profile-dropdown">
-                        {# MODIFIED: Added img and span with IDs for user profile pic and name #}
                         <img id="user-profile-pic" src="{{ url_for('static', path='images/your_image_name.jpg') }}" alt="Profile Picture" class="profile-pic-placeholder">
                         <span id="profile-name">Loading...</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
-                        
                         <a href="{{ url_for('admin_settings')}}">Settings</a>
                         <a href="{{ url_for('logout')}}">Log Out</a>
                     </div>
@@ -64,14 +66,12 @@
         <div class="content">
             {% block content %}
             {% endblock %}
-            
         </div>
         <footer>
             <p>&copy; {{ year }} Organization System</p>
         </footer>
     </div>
-    {# Link to your main JavaScript file #}
-    <script src="{{ url_for('static', path='js/admin.js') }}"></script> 
+    <script src="{{ url_for('static', path='js/admin.js') }}"></script>
     {% block scripts %}
     {% endblock %}
 </body>
