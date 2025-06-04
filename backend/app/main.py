@@ -224,7 +224,8 @@ async def admin_post_bulletin(
 
     users_in_org = db.query(models.User).filter(models.User.organization_id == admin_org.id).all()
     for user in users_in_org:
-        crud.create_notification(
+        if user.organization_id == admin_org.id:
+            crud.create_notification(
             db,
             message=f"New bulletin post: '{title}'",
             organization_id=admin_org.id,
@@ -232,7 +233,7 @@ async def admin_post_bulletin(
             notification_type="bulletin_post",
             entity_id=db_post.post_id,
             url=f"/BulletinBoard#{db_post.post_id}"
-        )
+            )
     db.commit() 
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -1005,7 +1006,7 @@ async def paymaya_create_payment(
     payment_item_id: int = Form(...),
     db: Session = Depends(get_db),
 ):
-    user, _ = get_current_user_with_org(request, db) 
+    user, _ = get_current_user_with_org(request, db)
 
     public_api_key = "pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah"
     encoded_key = base64.b64encode(f"{public_api_key}:".encode()).decode()
@@ -1017,6 +1018,9 @@ async def paymaya_create_payment(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment item not found")
 
     db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+        
+    db.commit()
+    db.refresh(db_payment)
 
     payload = {
         "totalAmount": {"currency": "PHP", "value": payment_item.fee},
@@ -1035,12 +1039,13 @@ async def paymaya_create_payment(
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         payment_data = response.json()
-        crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=payment_data.get("checkoutId"))
+        paymaya_payment_id = payment_data.get("checkoutId")
+        crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
         db.commit() 
-        db.refresh(db_payment) 
+        logging.info(f"PayMaya payment created: payment_id={db_payment.id}, paymaya_payment_id={paymaya_payment_id}")
         return payment_data
     except requests.exceptions.RequestException as e:
-        db.rollback() 
+        db.rollback()
         crud.update_payment(db, payment_id=db_payment.id, status="failed")
         db.commit() 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}")
@@ -1052,6 +1057,7 @@ async def payment_success(
 ):
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if not payment: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+    db.refresh(payment) 
 
     crud.update_payment(db, payment_id=payment.id, status="success", payment_item_id=paymentItemId)
     payment_item = crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
@@ -1063,6 +1069,7 @@ async def payment_success(
             crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success", entity_id=payment.id, url=f"/admin/payments/total_members?student_number={user.student_number}")
     
     db.commit() 
+    logging.info(f"PayMaya payment success: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
     context = await get_base_template_context(request, db)
     context.update({"payment_id": payment.paymaya_payment_id, "payment_item_id": paymentItemId, "payment": payment, "payment_item": payment_item})
     return templates.TemplateResponse("student_dashboard/payment_success.html", context)
@@ -1072,11 +1079,13 @@ async def payment_success(
 async def payment_failure(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if not payment: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+    db.refresh(payment) 
     
     crud.update_payment(db, payment_id=payment.id, status="failed")
     payment_item = crud.get_payment_item_by_id(db, payment.payment_item_id)
 
     db.commit() 
+    logging.info(f"PayMaya payment failure: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
     context = await get_base_template_context(request, db)
     context.update({"payment_id": payment.paymaya_payment_id, "payment_item": payment_item})
     return templates.TemplateResponse("student_dashboard/payment_failure.html", context)
@@ -1086,11 +1095,13 @@ async def payment_failure(request: Request, paymentId: int = Query(...), db: Ses
 async def payment_cancel(request: Request, paymentId: int = Query(...), db: Session = Depends(get_db)):
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if not payment: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+    db.refresh(payment) 
     
     crud.update_payment(db, payment_id=payment.id, status="cancelled")
     payment_item = crud.get_payment_item_by_id(db, payment.payment_item_id)
 
     db.commit() 
+    logging.info(f"PayMaya payment cancelled: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
     context = await get_base_template_context(request, db)
     context.update({"payment_id": payment.paymaya_payment_id, "payment_item": payment_item})
     return templates.TemplateResponse("student_dashboard/payment_cancel.html", context)
@@ -1329,7 +1340,7 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("student_dashboard/financial_statement.html", context)
 
 # Detailed Monthly Report Page (User)
-@router.get("/student_dashboard/detailed_monthly_report_page", response_class=HTMLResponse)
+@app.get("/student_dashboard/detailed_monthly_report_page", response_class=HTMLResponse)
 async def detailed_monthly_report_page(
     request: Request, month: str = Query(...), year: int = Query(...), db: Session = Depends(get_db)
 ):
@@ -1339,7 +1350,7 @@ async def detailed_monthly_report_page(
     return templates.TemplateResponse("student_dashboard/detailed_monthly_report.html", context)
 
 # Detailed Monthly Report Data (User)
-@router.get("/api/detailed_monthly_report", response_class=JSONResponse)
+@app.get("/api/detailed_monthly_report", response_class=JSONResponse)
 async def get_detailed_monthly_report_json(
     request: Request,
     month: str = Query(..., description="Month name (e.g., 'january')"),
@@ -1361,8 +1372,8 @@ async def get_detailed_monthly_report_json(
     all_financial_events = []
     if report_type in ['user', 'combined', None]:
         for item in db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user.id).all():
-            relevant_date = (item.updated_at or item.created_at).date()
-            if start_date_of_month <= relevant_date <= end_date_of_month:
+            relevant_date = (item.updated_at or item.created_at) 
+            if relevant_date and start_date_of_month <= relevant_date <= end_date_of_month: 
                 category_name = f"AY {item.academic_year} - {item.semester} Fee" if item.academic_year and item.semester else "Miscellaneous Fee"
                 status_str = "Paid" if item.is_paid else ("Past Due" if not item.is_paid and item.due_date and item.due_date < date.today() else "Unpaid")
                 all_financial_events.append((relevant_date, f"Your Payment - {category_name}", item.fee if item.is_paid else 0.00, 0.00, status_str, item.fee, item))
@@ -1373,8 +1384,10 @@ async def get_detailed_monthly_report_json(
         if report_type in ['user', 'combined', None]: org_inflows_query = org_inflows_query.filter(models.PaymentItem.user_id != user.id)
         
         org_inflows_for_month = org_inflows_query.filter(
-            (func.date(models.PaymentItem.updated_at) >= start_date_of_month) | (func.date(models.PaymentItem.created_at) >= start_date_of_month),
-            (func.date(models.PaymentItem.updated_at) <= end_date_of_month) | (func.date(models.PaymentItem.created_at) <= end_date_of_month)
+            or_(
+                and_(models.PaymentItem.updated_at >= start_date_of_month, models.PaymentItem.updated_at <= end_date_of_month),
+                and_(models.PaymentItem.created_at >= start_date_of_month, models.PaymentItem.created_at <= end_date_of_month)
+            )
         ).all()
         total_org_inflow_amount = sum(item.fee for item in org_inflows_for_month)
         if total_org_inflow_amount > 0:

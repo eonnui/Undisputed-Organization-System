@@ -252,6 +252,8 @@
     transition: box-shadow 0.2s ease, opacity 0.2s ease;
     opacity: 0;
     animation: fadeIn 0.3s ease-in forwards;
+    max-height: 700px;
+    overflow-y: auto;
 }
 
 .tracker-section:hover {

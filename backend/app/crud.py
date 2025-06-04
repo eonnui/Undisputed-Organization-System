@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 from passlib.context import CryptContext
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import logging
 from sqlalchemy.sql import exists
 from typing import Optional, Tuple, List, Dict, Any
@@ -9,37 +9,26 @@ import json
 from collections import defaultdict
 
 logging.basicConfig(level=logging.INFO)
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# --- Organization CRUD Operations ---
-
+# Organization CRUD Operations
 def get_organization_by_name(db: Session, organization_name: str) -> Optional[models.Organization]:
-    """Retrieves an organization by its name."""
     return db.query(models.Organization).filter(models.Organization.name == organization_name).first()
 
 def get_organization_by_primary_course_code(db: Session, primary_course_code: str) -> Optional[models.Organization]:
-    """Retrieves an organization by its primary course code."""
     return db.query(models.Organization).filter(models.Organization.primary_course_code == primary_course_code).first()
 
 def create_organization(db: Session, organization: schemas.OrganizationCreate) -> models.Organization:
-    """
-    Creates a new organization. Checks for existing organizations by name or primary course code.
-    Generates a custom color palette based on the theme color.
-    """
     existing_org_by_name = get_organization_by_name(db, organization.name)
     if existing_org_by_name:
         logging.warning(f"Organization with name '{organization.name}' already exists.")
         return existing_org_by_name
-
     if organization.primary_course_code:
         existing_org_by_code = get_organization_by_primary_course_code(db, organization.primary_course_code)
         if existing_org_by_code:
             logging.warning(f"Organization with primary_course_code '{organization.primary_course_code}' already exists.")
             return existing_org_by_code
-
     custom_palette_json = generate_custom_palette(organization.theme_color)
-
     db_organization = models.Organization(
         name=organization.name,
         theme_color=organization.theme_color,
@@ -47,24 +36,17 @@ def create_organization(db: Session, organization: schemas.OrganizationCreate) -
         logo_url=organization.logo_url,
         primary_course_code=organization.primary_course_code
     )
-    db.add(db_organization)    
+    db.add(db_organization)
     logging.info(f"Created organization: {organization.name} with theme: {organization.theme_color} and primary course code: {organization.primary_course_code}")
     return db_organization
 
-# --- User CRUD Operations ---
-
+# User CRUD Operations
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
-    """
-    Creates a new user. Checks if a user with the given student number already exists.
-    Assigns an organization if found.
-    """
     if db.query(exists().where(models.User.student_number == user.student_number)).scalar():
         existing_user = db.query(models.User).filter(models.User.student_number == user.student_number).first()
         logging.info(f"User with student_number: {user.student_number} already exists.")
         return existing_user
-
     hashed_password = pwd_context.hash(user.password)
-
     organization_id_to_assign = None
     if user.organization:
         organization_obj = get_organization_by_name(db, user.organization) or \
@@ -73,7 +55,6 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
             organization_id_to_assign = organization_obj.id
         else:
             logging.warning(f"Organization '{user.organization}' not found during user creation. User will be created without an assigned organization.")
-
     db_user = models.User(
         student_number=user.student_number,
         email=user.email,
@@ -82,23 +63,17 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
         last_name=user.last_name,
         hashed_password=hashed_password,
     )
-
-    db.add(db_user)    
+    db.add(db_user)
     logging.info(f"Created user with student_number: {user.student_number}, email: {user.email}")
     return db_user
 
 def get_user(db: Session, identifier: str) -> Optional[models.User]:
-    """
-    Retrieves a user by student number or email.
-    """
     return db.query(models.User).filter(
         (models.User.student_number == identifier) | (models.User.email == identifier)
     ).first()
 
-# --- Authentication Operations ---
-
+# Authentication Operations
 def authenticate_user(db: Session, identifier: str, password: str) -> Optional[models.User]:
-    """Authenticates a user by student number or email and password."""
     user = get_user(db, identifier)
     if not user:
         logging.warning(f"User with identifier: {identifier} not found.")
@@ -110,7 +85,6 @@ def authenticate_user(db: Session, identifier: str, password: str) -> Optional[m
     return user
 
 def authenticate_admin_by_email(db: Session, email: str, password: str) -> Optional[models.Admin]:
-    """Authenticates an admin by email and password."""
     admin = db.query(models.Admin).filter(models.Admin.email == email).first()
     if not admin:
         logging.warning(f"Admin with email: {email} not found.")
@@ -121,24 +95,21 @@ def authenticate_admin_by_email(db: Session, email: str, password: str) -> Optio
     logging.info(f"Admin {email} authenticated successfully.")
     return admin
 
-# --- Payment CRUD Operations ---
-
+# Payment CRUD Operations
 def create_payment(db: Session, user_id: int, amount: float, payment_item_id: Optional[int] = None) -> models.Payment:
-    """Creates a new payment record."""
     db_payment = models.Payment(
         user_id=user_id,
         amount=amount,
         payment_item_id=payment_item_id,
         status="pending",
-        created_at=datetime.utcnow(), # Use utcnow for consistency
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
-    db.add(db_payment)    
+    db.add(db_payment)
     logging.info(f"Created payment for user_id: {user_id}, amount: {amount}, payment_item_id: {payment_item_id}")
     return db_payment
 
 def get_payment_by_id(db: Session, payment_id: int) -> Optional[models.Payment]:
-    """Retrieves a payment record by its ID."""
     payment = db.query(models.Payment).filter(models.Payment.id == payment_id).first()
     if payment:
         logging.info(f"Retrieved payment with id: {payment_id}")
@@ -153,7 +124,6 @@ def update_payment(
     status: Optional[str] = None,
     payment_item_id: Optional[int] = None,
 ) -> Optional[models.Payment]:
-    """Updates an existing payment record."""
     db_payment = db.query(models.Payment).filter(models.Payment.id == payment_id).first()
     if db_payment:
         if paymaya_payment_id is not None:
@@ -162,7 +132,7 @@ def update_payment(
             db_payment.status = status
         if payment_item_id is not None:
             db_payment.payment_item_id = payment_item_id
-        db_payment.updated_at = datetime.utcnow()         
+        db_payment.updated_at = datetime.now(timezone.utc)
         logging.info(f"Updated payment with id: {payment_id}, status: {status}")
         return db_payment
     else:
@@ -185,23 +155,21 @@ def add_payment_item(
         fee=fee,
         user_id=user_id,
         due_date=due_date,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
         year_level_applicable=year_level_applicable,
         is_past_due=is_past_due,
     )
-    db.add(db_payment_item)    
+    db.add(db_payment_item)
     logging.info(f"Added payment item for user {user_id} (AY: {academic_year}, Semester: {semester}, Fee: {fee})")
     return db_payment_item
 
 def get_all_payment_items(db: Session) -> List[models.PaymentItem]:
-    """Retrieves all unpaid payment items."""
     payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.is_paid == False).all()
     logging.info(f"Retrieved all unpaid payment items. Count: {len(payment_items)}")
     return payment_items
 
 def get_payment_item_by_id(db: Session, payment_item_id: int) -> Optional[models.PaymentItem]:
-    """Retrieves a payment item by its ID."""
     payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
     if payment_item:
         logging.info(f"Retrieved payment item with id: {payment_item_id}")
@@ -210,19 +178,17 @@ def get_payment_item_by_id(db: Session, payment_item_id: int) -> Optional[models
     return payment_item
 
 def mark_payment_item_as_paid(db: Session, payment_item_id: int) -> Optional[models.PaymentItem]:
-    """Marks a payment item as paid."""
     db_payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
     if db_payment_item:
         db_payment_item.is_paid = True
-        db_payment_item.updated_at = datetime.utcnow()         
+        db_payment_item.updated_at = datetime.now(timezone.utc)
         logging.info(f"Payment item with id: {payment_item_id} marked as paid.")
         return db_payment_item
     else:
         logging.warning(f"Payment item with id: {payment_item_id} not found for marking as paid.")
     return None
 
-# --- Notification Operations ---
-
+# Notification Operations
 def create_notification(
     db: Session,
     message: str,
@@ -233,10 +199,6 @@ def create_notification(
     entity_id: Optional[int] = None,
     url: Optional[str] = None
 ) -> models.Notification:
-    """
-    Creates a new notification. Prevents duplicate notifications with the same exact parameters.
-    """
-    # Use filter_by for more concise filtering when all conditions are equality
     existing_notification = db.query(models.Notification).filter_by(
         message=message,
         organization_id=organization_id,
@@ -246,7 +208,6 @@ def create_notification(
         entity_id=entity_id,
         url=url
     ).first()
-
     if existing_notification:
         logging.debug(f"Duplicate notification skipped: {message}")
         return existing_notification
@@ -259,9 +220,9 @@ def create_notification(
             notification_type=notification_type,
             entity_id=entity_id,
             url=url,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
-        db.add(db_notification)        
+        db.add(db_notification)
         logging.info(f"Created notification: {message[:50]}...")
         return db_notification
 
@@ -271,21 +232,16 @@ def get_notifications(
     admin_id: Optional[int] = None,
     organization_id: Optional[int] = None
 ) -> List[models.Notification]:
-    """
-    Retrieves notifications based on user, admin, or organization ID.
-    Includes general organization-wide notifications for users/admins.
-    """
     notifications_query = db.query(models.Notification)
     filters = []
-
     if user_id:
         user_org_id = db.query(models.User.organization_id).filter(models.User.id == user_id).scalar()
         filters.append(
             (models.Notification.user_id == user_id) |
             (
                 (models.Notification.organization_id == user_org_id) &
-                models.Notification.user_id.is_(None) & # Explicitly check for None
-                models.Notification.admin_id.is_(None)  # Explicitly check for None
+                models.Notification.user_id.is_(None) &
+                models.Notification.admin_id.is_(None)
             )
         )
     elif admin_id:
@@ -296,27 +252,24 @@ def get_notifications(
             (models.Notification.admin_id == admin_id) |
             (
                 (models.Notification.organization_id.in_(admin_org_ids)) &
-                models.Notification.user_id.is_(None) & # Explicitly check for None
-                models.Notification.admin_id.is_(None)  # Explicitly check for None
+                models.Notification.user_id.is_(None) &
+                models.Notification.admin_id.is_(None)
             )
         )
     elif organization_id:
         filters.append(
             (models.Notification.organization_id == organization_id) &
-            models.Notification.user_id.is_(None) & # Explicitly check for None
-            models.Notification.admin_id.is_(None)  # Explicitly check for None
+            models.Notification.user_id.is_(None) &
+            models.Notification.admin_id.is_(None)
         )
     else:
-        return [] # No valid filter provided
-
+        return []
     if filters:
         notifications_query = notifications_query.filter(*filters)
-    
     notifications = notifications_query.order_by(models.Notification.created_at.desc()).all()
     return notifications
 
 def get_all_notification_configs_as_map(db: Session) -> Dict[str, Dict[str, Any]]:
-    """Retrieves all notification type configurations and returns them as a dictionary map."""
     notification_configs = db.query(models.NotificationTypeConfig).all()
     return {
         config.type_name: {
@@ -332,18 +285,13 @@ def get_all_notification_configs_as_map(db: Session) -> Dict[str, Dict[str, Any]
         } for config in notification_configs
     }
 
+# Fetch dynamic entity titles for notifications
 def fetch_dynamic_entity_titles(
     db_session: Session,
     dynamic_entity_ids_to_fetch: defaultdict,
     config_map_local: dict
 ) -> Dict[str, str]:
-    """
-    Fetches titles for dynamic entities referenced in notifications.
-    Optimized to use a dictionary for primary key column mapping.
-    """
     dynamic_entity_titles_local = {}
-    
-    # Map model names to their primary key columns
     pk_column_map = {
         "Event": models.Event.event_id,
         "BulletinBoard": models.BulletinBoard.post_id,
@@ -354,103 +302,75 @@ def fetch_dynamic_entity_titles(
         "Expense": models.Expense.id,
         "Admin": models.Admin.admin_id,
     }
-
     for model_name, entity_ids in dynamic_entity_ids_to_fetch.items():
         if not entity_ids:
             continue
-
         model_class = getattr(models, model_name, None)
         pk_column = pk_column_map.get(model_name)
-
         if not model_class or not pk_column:
             logging.warning(f"Skipping entity fetch for unknown model: {model_name} or missing PK column.")
             continue
-
         entities = db_session.query(model_class).filter(pk_column.in_(list(entity_ids))).all()
-
         for entity in entities:
             entity_key = getattr(entity, pk_column.key)
             determined_title_attribute = None
-
-            # Find title attribute from config_map first
             for cfg_details in config_map_local.values():
                 if cfg_details.get("entity_model_name") == model_name and cfg_details.get("entity_title_attribute"):
                     determined_title_attribute = cfg_details["entity_title_attribute"]
                     break
-            
-            # Fallback to common attributes if not found in config
             if not determined_title_attribute:
                 if model_name == "User" and hasattr(entity, "first_name") and hasattr(entity, "last_name"):
                     dynamic_entity_titles_local[f"{model_name}_{entity_key}"] = f"{entity.first_name} {entity.last_name}"
-                    continue # Already handled, move to next entity
+                    continue
                 elif hasattr(entity, "name"):
                     determined_title_attribute = "name"
                 elif hasattr(entity, "title"):
                     determined_title_attribute = "title"
                 elif hasattr(entity, "description"):
                     determined_title_attribute = "description"
-            
             if determined_title_attribute and hasattr(entity, determined_title_attribute):
                 dynamic_entity_titles_local[f"{model_name}_{entity_key}"] = getattr(entity, determined_title_attribute)
             else:
                 dynamic_entity_titles_local[f"{model_name}_{entity_key}"] = f"Unknown {model_name} (ID: {entity_key})"
-
     return dynamic_entity_titles_local
 
+# Process and format notifications for display
 def process_and_format_notifications(db: Session, raw_notifications: list, config_map: dict) -> list:
-    """
-    Processes raw notifications, groups them based on configuration,
-    and formats them into a user-friendly list.
-    """
     individual_notifications_always = []
     notifications_for_grouping = defaultdict(lambda: {"count": 0, "latest_notification": None, "notifications": []})
     dynamic_entity_ids_to_fetch = defaultdict(set)
-
-    # First pass: Categorize notifications and collect entity IDs
     for notification in raw_notifications:
         config = config_map.get(notification.notification_type)
-
-        # Collect entity IDs for fetching titles later
         if notification.entity_id and config and config.get("entity_model_name"):
-            dynamic_entity_ids_to_fetch[config["entity_model_name"]].add(notification.entity_id)
-        
+            model_name = config["entity_model_name"]
+            dynamic_entity_ids_to_fetch[model_name].add(notification.entity_id)
         if not config or config.get("always_individual"):
             individual_notifications_always.append(notification)
             continue
-
         grouping_key_parts = [notification.notification_type]
         if not config.get("group_by_type_only") and notification.entity_id:
             grouping_key_parts.append(str(notification.entity_id))
         grouping_key = tuple(grouping_key_parts)
-        
         notifications_for_grouping[grouping_key]["notifications"].append(notification)
-        
-        # Update latest notification in group
         current_created_at = notification.created_at
         if not isinstance(current_created_at, datetime):
             try:
                 current_created_at = datetime.fromisoformat(current_created_at) if isinstance(current_created_at, str) else datetime.min
             except ValueError:
                 current_created_at = datetime.min
-        
         latest_notif_in_group = notifications_for_grouping[grouping_key]["latest_notification"]
         if latest_notif_in_group is None or current_created_at > (latest_notif_in_group.created_at if isinstance(latest_notif_in_group.created_at, datetime) else datetime.min):
             notifications_for_grouping[grouping_key]["latest_notification"] = notification
-
-    # Fetch dynamic entity titles once
     dynamic_entity_titles = fetch_dynamic_entity_titles(db, dynamic_entity_ids_to_fetch, config_map)
     final_notifications_data = []
-
-    # Process all "always individual" notifications
     for individual_notif in sorted(individual_notifications_always, key=lambda n: n.created_at, reverse=True):
         config = config_map.get(individual_notif.notification_type)
         formatted_message = _format_individual_notification_message(individual_notif, config, dynamic_entity_titles)
-        
         try:
             created_at_iso = individual_notif.created_at.isoformat()
         except AttributeError:
+            logging.warning(f"Notification ID {individual_notif.id} has invalid created_at format: {individual_notif.created_at}. Skipping.")
             continue
-        
         final_notifications_data.append({
             "id": individual_notif.id,
             "message": formatted_message,
@@ -458,30 +378,24 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
             "notification_type": individual_notif.notification_type,
             "created_at": created_at_iso
         })
-
-    # Process grouped notifications
     for key, value in notifications_for_grouping.items():
         count = len(value["notifications"])
         latest_notif = value["latest_notification"]
         notifications_in_group = value["notifications"]
-
         if not latest_notif:
+            logging.warning(f"Skipping empty group for key: {key}")
             continue
-
-        type_config = config_map.get(key[0]) # notification_type is the first part of the key
-
+        type_config = config_map.get(key[0])
         if count < 4:
-            # If count is less than 4, treat each as individual, but ensure sorting
             sorted_individual_notifications = sorted(notifications_in_group, key=lambda n: n.created_at, reverse=True)
             for individual_notif in sorted_individual_notifications:
                 config = config_map.get(individual_notif.notification_type)
                 formatted_message = _format_individual_notification_message(individual_notif, config, dynamic_entity_titles)
-                
                 try:
                     created_at_iso = individual_notif.created_at.isoformat()
                 except AttributeError:
+                    logging.warning(f"Notification ID {individual_notif.id} in group has invalid created_at format: {individual_notif.created_at}. Skipping.")
                     continue
-                
                 final_notifications_data.append({
                     "id": individual_notif.id,
                     "message": formatted_message,
@@ -490,16 +404,14 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
                     "created_at": created_at_iso
                 })
         else:
-            # If count is 4 or more, process as a single grouped notification
             formatted_message = _format_grouped_notification_message(
                 count, latest_notif, notifications_in_group, type_config, dynamic_entity_titles, key
             )
-            
             try:
                 created_at_iso = latest_notif.created_at.isoformat()
             except AttributeError:
+                logging.warning(f"Latest notification in group {key} has invalid created_at format: {latest_notif.created_at}. Skipping.")
                 continue
-            
             final_notifications_data.append({
                 "id": latest_notif.id,
                 "message": formatted_message,
@@ -507,34 +419,29 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
                 "notification_type": latest_notif.notification_type,
                 "created_at": created_at_iso
             })
-
     final_notifications_data.sort(key=lambda x: x['created_at'], reverse=True)
+    logging.info(f"Finished processing notifications. Total formatted: {len(final_notifications_data)}")
     return final_notifications_data
 
-# --- Internal Helpers for Notification Formatting (New/Refactored) ---
-
+# Format a single notification message
 def _format_individual_notification_message(
     notification: models.Notification,
     config: Optional[Dict[str, Any]],
     dynamic_entity_titles: Dict[str, str]
 ) -> str:
-    """Helper to format a single notification message."""
     stripped_message = notification.message
     if config and config.get("message_prefix_to_strip"):
         prefix = config["message_prefix_to_strip"]
         if stripped_message.startswith(prefix):
             stripped_message = stripped_message[len(prefix):].strip()
-
     entity_title = None
     if notification.entity_id and config and config.get("entity_model_name"):
         model_name = config["entity_model_name"]
         entity_title = dynamic_entity_titles.get(f"{model_name}_{notification.entity_id}")
-
     template_vars = {
         "message": stripped_message,
         "entity_title": entity_title,
     }
-
     if config and config.get("message_template_individual"):
         try:
             return config["message_template_individual"].format(**template_vars)
@@ -543,6 +450,7 @@ def _format_individual_notification_message(
             return stripped_message
     return stripped_message
 
+# Format a grouped notification message
 def _format_grouped_notification_message(
     count: int,
     latest_notif: models.Notification,
@@ -551,13 +459,10 @@ def _format_grouped_notification_message(
     dynamic_entity_titles: Dict[str, str],
     grouping_key: Tuple[str, ...]
 ) -> str:
-    """Helper to format a grouped notification message."""
     notification_type = grouping_key[0]
     entity_id = grouping_key[1] if len(grouping_key) > 1 else None
-
     base_display_name = type_config.get("display_name_plural") or notification_type.replace('_', ' ').lower()
     context_phrase = ""
-
     if entity_id and type_config.get("entity_model_name"):
         model_name = type_config["entity_model_name"]
         fetched_title = dynamic_entity_titles.get(f"{model_name}_{entity_id}")
@@ -569,21 +474,17 @@ def _format_grouped_notification_message(
                     context_phrase = f" for {fetched_title}"
             else:
                 context_phrase = f" for {fetched_title}"
-
     MAX_CHARS_IN_SUMMARY = 60
     unique_messages = list(set([n.message for n in notifications_in_group]))
     summary_items_list = []
-    
-    for msg in unique_messages[:3]: # Take up to 3 unique messages for summary
+    for msg in unique_messages[:3]:
         if type_config.get("message_prefix_to_strip"):
             prefix = type_config["message_prefix_to_strip"]
             if msg.startswith(prefix):
                 msg = msg[len(prefix):].strip()
-        
         processed_msg = msg[0].upper() + msg[1:] if msg else ""
         truncated_msg = (processed_msg[:MAX_CHARS_IN_SUMMARY] + '...') if len(processed_msg) > MAX_CHARS_IN_SUMMARY else processed_msg
         summary_items_list.append(truncated_msg)
-
     items_list_str = ""
     if len(summary_items_list) == 1:
         items_list_str = summary_items_list[0]
@@ -591,17 +492,14 @@ def _format_grouped_notification_message(
         items_list_str = f"{summary_items_list[0]} and {summary_items_list[1]}"
     elif len(summary_items_list) > 2:
         items_list_str = f"{', '.join(summary_items_list[:-1])}, and {summary_items_list[-1]}"
-    
     remaining_count = max(0, len(unique_messages) - len(summary_items_list))
     s_suffix = "s" if remaining_count > 1 else ""
-
     summary_items_with_others = items_list_str
     if remaining_count > 0:
         if items_list_str:
             summary_items_with_others += f" and {remaining_count} other{s_suffix}"
         else:
             summary_items_with_others = f"{remaining_count} other{s_suffix}"
-
     template_vars = {
         "count": count,
         "display_name_plural": base_display_name,
@@ -611,7 +509,6 @@ def _format_grouped_notification_message(
         "remaining_count": remaining_count,
         "s_suffix": s_suffix
     }
-
     if type_config.get("message_template_plural"):
         try:
             return type_config["message_template_plural"].format(**template_vars)
@@ -621,19 +518,15 @@ def _format_grouped_notification_message(
     else:
         return f"{count} {base_display_name}{context_phrase}: {summary_items_with_others}."
 
-# --- Color Palette Generation Helpers (Kept as is, already concise) ---
-
+# Color palette helpers
 def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
-    """Converts a hex color string to an RGB tuple."""
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 def rgb_to_hex(rgb_color: Tuple[int, int, int]) -> str:
-    """Converts an RGB tuple to a hex color string."""
     return '#%02x%02x%02x' % rgb_color
 
 def adjust_rgb_lightness(rgb: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
-    """Adjusts the lightness of an RGB color by a given factor."""
     r, g, b = rgb
     r = int(max(0, min(255, r * factor)))
     g = int(max(0, min(255, g * factor)))
@@ -641,16 +534,12 @@ def adjust_rgb_lightness(rgb: Tuple[int, int, int], factor: float) -> Tuple[int,
     return (r, g, b)
 
 def get_contrast_text_color(bg_hex: str) -> str:
-    """Determines a suitable black or white text color for a given background hex color."""
     r, g, b = hex_to_rgb(bg_hex)
     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return "#000000" if luminance > 0.5 else "#FFFFFF"
 
+# Generate a custom CSS color palette
 def generate_custom_palette(theme_color_hex: str) -> str:
-    """
-    Generates a custom CSS color palette (JSON string) based on a primary theme color.
-    This function remains largely the same as it was already well-structured and concise.
-    """
     base_palette = {
         "--org-bg-color": "#fdf5f5", "--org-login-bg": "#5c1011", "--org-button-bg": "#9a1415",
         "--org-button-text": "#FFFFFF", "--org-hover-effect": "#7a1012", "--org-accent-light": "#d32f2f",
@@ -720,20 +609,16 @@ def generate_custom_palette(theme_color_hex: str) -> str:
         "--org-form-group-label-color": "#212121", "--org-form-group-input-border": "transparent",
         "--org-form-group-input-focus-border": "transparent"
     }
-
     custom_palette = base_palette.copy()
     theme_rgb = hex_to_rgb(theme_color_hex)
-
     dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.7)
     darker_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.5)
     light_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.2)
     lighter_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.6)
-
     dark_theme_hex = rgb_to_hex(dark_theme_rgb)
     darker_theme_hex = rgb_to_hex(darker_theme_rgb)
     light_theme_hex = rgb_to_hex(light_theme_rgb)
     lighter_theme_hex = rgb_to_hex(lighter_theme_rgb)
-
     whiteness_factor = .9
     very_light_bg_rgb = (
         int(theme_rgb[0] * (1 - whiteness_factor) + 255 * whiteness_factor),
@@ -746,7 +631,6 @@ def generate_custom_palette(theme_color_hex: str) -> str:
         max(0, min(255, very_light_bg_rgb[2]))
     )
     very_light_bg_hex = rgb_to_hex(very_light_bg_rgb)
-
     custom_palette["--org-bg-color"] = very_light_bg_hex
     custom_palette["--org-secondary-color"] = very_light_bg_hex
     custom_palette["--org-dashboard-bg-color"] = very_light_bg_hex
@@ -754,9 +638,7 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-nav-hover-accent-color"] = very_light_bg_hex
     custom_palette["--org-settings-section-bg"] = very_light_bg_hex
     custom_palette["--org-read-only-input-bg"] = very_light_bg_hex
-
     button_text_color = get_contrast_text_color(theme_color_hex)
-
     custom_palette["--org-primary"] = theme_color_hex
     custom_palette["--org-button-bg"] = theme_color_hex
     custom_palette["--org-hover-effect"] = dark_theme_hex
@@ -766,35 +648,25 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-primary-hover"] = dark_theme_hex
     custom_palette["--org-primary-light"] = lighter_theme_hex
     custom_palette["--org-dashboard-accent-primary"] = light_theme_hex
-
     custom_palette["--org-login-bg"] = darker_theme_hex
     custom_palette["--org-sidebar-bg-color"] = dark_theme_hex
     custom_palette["--org-nav-item-hover-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.05)"
     custom_palette["--org-nav-item-selected-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.1)"
     custom_palette["--org-nav-icon-color"] = button_text_color
-
     custom_palette["--org-button-text"] = "#FFFFFF"
     custom_palette["--org-dashboard-title-color"] = darker_theme_hex
     custom_palette["--org-text-light"] = button_text_color
-
     custom_palette["--org-event-tag-bg"] = lighter_theme_hex
     custom_palette["--org-event-tag-text"] = dark_theme_hex
-
     custom_palette["--org-academic-tag-bg"] = adjust_rgb_lightness(hex_to_rgb(theme_color_hex), 1.4)
     custom_palette["--org-academic-tag-text"] = darker_theme_hex
-
     custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
     custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex)
-
     custom_palette["--org-settings-title-color"] = darker_theme_hex
-
     custom_palette["--org-button-group-button-update-bg"] = dark_theme_hex
     custom_palette["--org-button-group-button-update-hover-bg"] = darker_theme_hex
     custom_palette["--org-change-profile-pic-bg"] = dark_theme_hex
     custom_palette["--org-change-profile-pic-hover-bg"] = darker_theme_hex
-
     custom_palette["--org-highlight"] = very_light_bg_hex
     custom_palette["--org-primary"] = theme_color_hex
-
     return json.dumps(custom_palette, indent=2)
-
