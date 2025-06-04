@@ -659,7 +659,7 @@
 .event-tag {
     background-color: var(--org-event-tag-bg);
     color: var(--org-event-tag-text);
-    padding: 8px 15px;
+    padding: 1px 15px;
     border-radius: 15px;
     font-size: 0.9em;
     font-weight: bold;
@@ -1814,7 +1814,7 @@ tfoot td {
 }
 
 .form-group small {
-    display: block;
+    display: none;
     margin-top: 8px;
     color: var(--org-text-secondary);
     font-size: 0.9em;

@@ -307,6 +307,6 @@ button:hover {
 
 .password-requirements {
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary)!important;
     margin-top: 0.25rem;
 }
