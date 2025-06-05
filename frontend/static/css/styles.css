@@ -17,15 +17,14 @@
 
 body {
     margin: 0;
-    font-family: 'Inter', sans-serif;
+    font-family: "DM Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg-color);
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    /* Gradient background animation */
+    min-height: 100vh;   
     background-image: linear-gradient(to bottom, #f3f4f6, #d9dee7);
     background-size: 200% 200%;
     animation: gradientAnimation 3s ease infinite;
@@ -152,7 +151,7 @@ input {
     color: var(--text-primary);
     background-color: #ffffff;
     transition: border-color 0.2s ease, transform var(--animation-duration) ease;
-    font-family: 'Inter', sans-serif;
+    font-family: "DM Sans", sans-serif;
 }
 
 input:focus {
@@ -199,8 +198,8 @@ select {
     font-size: 1rem;
     color: var(--text-primary);
     background-color: #ffffff;
-    transition: border-color 0.2s ease; /* Removed transform transition */
-    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease; 
+    font-family: "DM Sans", sans-serif;
     width: 100%;
     appearance: none;
     -webkit-appearance: none;
@@ -238,7 +237,7 @@ button {
     font-weight: 500;
     cursor: pointer;
     transition: transform var(--animation-duration) ease, box-shadow 0.2s ease; 
-    font-family: 'Inter', sans-serif;
+    font-family: "DM Sans", sans-serif;
     position: relative;
     overflow: hidden;
 }
