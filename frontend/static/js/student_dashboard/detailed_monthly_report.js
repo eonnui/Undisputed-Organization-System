@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const footerCashDisbursed = document.getElementById('footer-cash-disbursed');
         const footerRunningBalance = document.getElementById('footer-running-balance');
 
-        const reportTypeSelect = document.getElementById('report-type-select'); // Get the new select element
+        const reportTypeSelect = document.getElementById('report-type-select'); 
         
         // Function to fetch and populate data
         function fetchAndPopulateData() {
@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 detailedMonthFooter.textContent = capitalizedMonth;
                 detailedMonthDate.textContent = `For the month of ${capitalizedMonth} ${year}`;
 
-                const selectedReportType = reportTypeSelect.value; // Get selected value
+                const selectedReportType = reportTypeSelect.value; 
                 let apiUrl = `/api/detailed_monthly_report?month=${month}&year=${year}`;
-                if (selectedReportType !== 'combined') { // Only append if not 'combined' (which is the default backend behavior if not specified)
+                if (selectedReportType !== 'combined') { 
                     apiUrl += `&report_type=${selectedReportType}`;
                 }
                 

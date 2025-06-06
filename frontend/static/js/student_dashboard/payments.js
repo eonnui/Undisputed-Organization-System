@@ -2,18 +2,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', async (event) => {
                 console.log('PAY button clicked and form submitted!');
-                event.preventDefault(); // Prevent the default form submission
+                event.preventDefault(); 
 
                 // Get the form data.
                 const formData = new FormData(form);
 
                 // Use fetch to send the request
                 const response = await fetch(form.action, {
-                    method: form.method, // Get method from the form
+                    method: form.method, 
                     body: formData,
                 });
 
-                const data = await response.json(); // Parse JSON response
+                const data = await response.json(); 
 
                 if (response.ok && data.redirectUrl) {
                     // Redirect the user to PayMaya

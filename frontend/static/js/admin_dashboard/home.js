@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const distributionCtx = document.getElementById('distributionChart').getContext('2d');
     const totalMembersValue = document.querySelector('.stat-card:first-child .stat-value');
     const totalCollectedValue = document.querySelector('.stat-card:nth-child(2) .stat-value');
-    const academicYearValue = document.querySelector('.stat-card:nth-child(3) .stat-value'); // Select the Academic Year stat value element
+    const academicYearValue = document.querySelector('.stat-card:nth-child(3) .stat-value'); 
     const academicYearFilterDropdown = document.getElementById('academic-year-filter');
     const semesterFilterDropdown = document.getElementById('semester-filter');
 
@@ -222,9 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch total members on page load
     fetchTotalMembers();
 
-    // Optionally, refresh total members periodically
-    // setInterval(fetchTotalMembers, 10000);
-
     // --- Fetch Total Collected Fees using /admin/membership/ ---
     function fetchTotalCollectedFees() {
       fetch('/admin/membership/')
@@ -249,18 +246,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch total collected fees on page load
     fetchTotalCollectedFees();
-
-    // Optionally, refresh total collected fees periodically
-    // setInterval(fetchTotalCollectedFees, 15000);
-
     // --- Fill Academic Year Stat Card ---
     function displayCurrentAcademicYear() {
       const today = new Date();
       const currentYear = today.getFullYear();
-      const currentMonth = today.getMonth(); // 0-indexed (0 = January, 11 = December)
+      const currentMonth = today.getMonth(); 
 
-      // Assuming the academic year starts around June or July
-      const academicYearStartMonth = 5; // June
+      const academicYearStartMonth = 5; 
 
       let startYear, endYear;
 
@@ -274,9 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
       academicYearValue.textContent = `${startYear}-${endYear}`;
 
-// Populate the Academic Year dropdown
-      const startYearForDropdown = 2022; // Set the starting year for the dropdown
-      const endYearForDropdown = endYear + 4; // Extend a few years into the future
+      // Populate the Academic Year dropdown
+      const startYearForDropdown = 2022; 
+      const endYearForDropdown = endYear + 4; 
       let optionsHTML = '<option>Academic Year ▼</option>';
       for (let year = startYearForDropdown; year <= endYearForDropdown; year++) {
         const yearPair = `${year}-${year + 1}`;
@@ -292,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Get current academic year from the stat card
       const currentAcademicYear = document.querySelector('.stat-card:nth-child(3) .stat-value').textContent;
 
-      // Determine current semester.  Use the filter if set, otherwise, calculate.
+      // Determine current semester.  
       const selectedSemester = semesterFilterDropdown.value;
       let currentSemester;
       if (selectedSemester !== 'Semester ▼') {
@@ -323,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
           let totalOutstandingAmount = 0;
 
-          console.log("Data received from /admin/outstanding_dues/:", data); // Log the response
+          console.log("Data received from /admin/outstanding_dues/:", data); 
 
           if (Array.isArray(data) && data.length > 0) {
             totalOutstandingAmount = data[0].total_outstanding_amount;
@@ -346,8 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
           console.log(
             `Displaying total outstanding dues amount for current semester (${currentSemester}, ${currentAcademicYear}): ₱${totalOutstandingAmount.toFixed(2)}`
           );
-
-          // Optional: Modify the link
+          
           const statCard = document.querySelector('.stat-card:nth-child(4)');
           const unpaidLinkHref = `/Admin/payments`;
           if (!statCard.querySelector('.card-link')) {
@@ -426,17 +417,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const selectedAcademicYear = this.value;
       const selectedSemester = semesterSelect.value;
       fetchMembershipData(selectedAcademicYear, selectedSemester);
-      fetchOutstandingDuesAmount(); //update dues on filter change
+      fetchOutstandingDuesAmount(); 
     });
 
     semesterSelect.addEventListener('change', function () {
       const selectedAcademicYear = academicYearSelect.value;
       const selectedSemester = this.value;
       fetchMembershipData(selectedAcademicYear, selectedSemester);
-      fetchOutstandingDuesAmount(); //update dues on filter change
+      fetchOutstandingDuesAmount(); 
     });
-
-    // Enhanced select dropdown functionality (DO NOT TOUCH)
+    
     document.querySelectorAll('.filter-select').forEach(select => {
       const valueDisplay = select.querySelector('.filter-select-value');
       const optionsContainer = document.createElement('ul');
@@ -467,9 +457,9 @@ document.addEventListener('DOMContentLoaded', function() {
         li.addEventListener('click', function () {
           valueDisplay.textContent = this.textContent;
           originalSelect.value = this.dataset.value;
-          originalSelect.dispatchEvent(new Event('change')); // Trigger the change event on the hidden select
+          originalSelect.dispatchEvent(new Event('change')); 
           select.classList.remove('open');
-          optionsContainer.style.maxHeight = null; // Reset max-height
+          optionsContainer.style.maxHeight = null; 
         });
       });
 
@@ -478,8 +468,7 @@ document.addEventListener('DOMContentLoaded', function() {
         optionsContainer.style.maxHeight = select.classList.contains('open') ? '200px' : null;
         event.stopPropagation();
       });
-
-      // Close dropdown when clicking outside
+      
       document.addEventListener('click', function (event) {
         if (!select.contains(event.target)) {
           select.classList.remove('open');

@@ -86,7 +86,7 @@
                 if (!allowedTypes.includes(file.type)) {
                     logoUploadError.textContent = 'Invalid file type. Only PNG, JPG, JPEG, GIF, SVG are allowed.';
                     uploadLogoButton.disabled = true;
-                    currentLogoPreview.style.display = 'none'; // Hide preview on invalid file
+                    currentLogoPreview.style.display = 'none'; 
                 } else {
                     logoUploadError.textContent = '';
                     uploadLogoButton.disabled = false;
@@ -95,13 +95,12 @@
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         currentLogoPreview.src = e.target.result;
-                        currentLogoPreview.style.display = 'block'; // Show preview
+                        currentLogoPreview.style.display = 'block'; 
                     };
                     reader.readAsDataURL(file);
                 }
             } else {
-                uploadLogoButton.disabled = true;
-                // If no file is selected, revert to showing the database logo or hide if none
+                uploadLogoButton.disabled = true;                
                 if (currentLogoPreview.getAttribute('data-initial-src')) {
                     currentLogoPreview.src = currentLogoPreview.getAttribute('data-initial-src');
                     currentLogoPreview.style.display = 'block';
@@ -143,13 +142,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    displayNotification(data.message, 'success');
-                    // After successful upload, update the preview to the *new* URL from the server
-                    // This assumes your FastAPI route returns the new logo_url in its response data.
-                    // If it does, uncomment the next line:
-                    // currentLogoPreview.src = data.logo_url;
-                    // Otherwise, a page reload might be needed to show the persistent new logo.
-                    // For now, the client-side preview on file select is sufficient for pre-upload visual.
+                    displayNotification(data.message, 'success');                    
                 } else {
                     displayNotification('Error uploading logo: ' + (data.detail || 'Unknown error'), 'error');
                 }
@@ -158,8 +151,7 @@
                 displayNotification('An error occurred while uploading the logo.', 'error');
             }
         });
-
-        // Store the initial logo URL for display logic when file input is cleared
+        
         if (currentLogoPreview.src) {
             currentLogoPreview.setAttribute('data-initial-src', currentLogoPreview.src);
         }

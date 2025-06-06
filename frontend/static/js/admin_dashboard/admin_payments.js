@@ -11,8 +11,7 @@
             const targetTab = document.getElementById(tabName);
             const targetButton = Array.from(buttons).find(button => button.textContent.toLowerCase() === tabName.toLowerCase());
             if (targetTab) {
-                targetTab.classList.add('active');
-                // If the expenses tab is opened, load the expenses data
+                targetTab.classList.add('active');               
                 if (tabName === 'expenses') {
                     loadExpensesTable();
                 }
