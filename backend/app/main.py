@@ -21,6 +21,9 @@ import calendar
 from dateutil.relativedelta import relativedelta
 import logging
 
+# Configure logger
+logger = logging.getLogger("uvicorn.error")
+
 # Import SessionMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -165,26 +168,56 @@ router = APIRouter()
 
 @router.get("/get_user_notifications", response_class=JSONResponse)
 async def get_notifications_route(
-    request: Request,
-    db: Session = Depends(get_db),
-    organization_id: Optional[int] = Query(None, description="Optional organization ID to filter notifications.")
+    request: Request, db: Session = Depends(get_db),
+    organization_id: Optional[int] = Query(None),
+    include_read: bool = Query(False)
 ) -> JSONResponse:
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
-
     raw_notifications = []
     if user_id:
-        raw_notifications = crud.get_notifications(db, user_id=user_id)
+        raw_notifications = crud.get_notifications(db, user_id=user_id, include_read=include_read)
     elif admin_id:
-        raw_notifications = crud.get_notifications(db, admin_id=admin_id)
+        raw_notifications = crud.get_notifications(db, admin_id=admin_id, include_read=include_read)
     elif organization_id:
-        raw_notifications = crud.get_notifications(db, organization_id=organization_id)
+        raw_notifications = crud.get_notifications(db, organization_id=organization_id, include_read=include_read)
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated or no organization ID provided.")
-    
     config_map = crud.get_all_notification_configs_as_map(db)
     final_notifications_data = crud.process_and_format_notifications(db, raw_notifications, config_map)
     return JSONResponse(content={"notifications": final_notifications_data})
+
+@router.post("/{notification_id}/read", response_model=schemas.Notification)
+async def mark_single_notification_as_read_endpoint(
+    request: Request,
+    notification_id: int,
+    db: Session = Depends(get_db)
+):  
+    notif = crud.mark_notification_as_read(db, notification_id)
+    if not notif:       
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found.")    
+    db.commit()
+    db.refresh(notif)  
+    return notif
+
+@router.post("/mark_notifications_as_read_bulk")
+async def mark_notifications_as_read_bulk(
+    notification_ids: List[int], db: Session = Depends(get_db)
+):   
+    try:       
+        notifications_to_update = db.query(models.Notification).filter(
+            models.Notification.id.in_(notification_ids)           
+        ).all()
+        if not notifications_to_update:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notifications not found or not accessible.")
+        for notification in notifications_to_update:
+            notification.is_read = True        
+        db.commit()         
+        return {"message": "Notifications marked as read successfully."}
+    except Exception as e:
+        db.rollback() 
+        logging.error(f"Error marking notifications {notification_ids} as read: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to mark notifications as read: {e}")
 
 # Admin Bulletin Board Post Creation
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")

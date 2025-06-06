@@ -226,11 +226,13 @@ def create_notification(
         logging.info(f"Created notification: {message[:50]}...")
         return db_notification
 
+# Gets Notification
 def get_notifications(
     db: Session,
     user_id: Optional[int] = None,
     admin_id: Optional[int] = None,
-    organization_id: Optional[int] = None
+    organization_id: Optional[int] = None,
+    include_read: bool = False
 ) -> List[models.Notification]:
     notifications_query = db.query(models.Notification)
     filters = []
@@ -264,8 +266,13 @@ def get_notifications(
         )
     else:
         return []
+    
+    if not include_read: 
+        filters.append(models.Notification.is_read == False)
+
     if filters:
         notifications_query = notifications_query.filter(*filters)
+        
     notifications = notifications_query.order_by(models.Notification.created_at.desc()).all()
     return notifications
 
@@ -339,30 +346,38 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
     individual_notifications_always = []
     notifications_for_grouping = defaultdict(lambda: {"count": 0, "latest_notification": None, "notifications": []})
     dynamic_entity_ids_to_fetch = defaultdict(set)
+
     for notification in raw_notifications:
         config = config_map.get(notification.notification_type)
         if notification.entity_id and config and config.get("entity_model_name"):
             model_name = config["entity_model_name"]
             dynamic_entity_ids_to_fetch[model_name].add(notification.entity_id)
+
         if not config or config.get("always_individual"):
             individual_notifications_always.append(notification)
             continue
+
         grouping_key_parts = [notification.notification_type]
         if not config.get("group_by_type_only") and notification.entity_id:
             grouping_key_parts.append(str(notification.entity_id))
         grouping_key = tuple(grouping_key_parts)
+
         notifications_for_grouping[grouping_key]["notifications"].append(notification)
+        
         current_created_at = notification.created_at
         if not isinstance(current_created_at, datetime):
-            try:
+            try:         
                 current_created_at = datetime.fromisoformat(current_created_at) if isinstance(current_created_at, str) else datetime.min
             except ValueError:
                 current_created_at = datetime.min
+        
         latest_notif_in_group = notifications_for_grouping[grouping_key]["latest_notification"]
         if latest_notif_in_group is None or current_created_at > (latest_notif_in_group.created_at if isinstance(latest_notif_in_group.created_at, datetime) else datetime.min):
             notifications_for_grouping[grouping_key]["latest_notification"] = notification
+
     dynamic_entity_titles = fetch_dynamic_entity_titles(db, dynamic_entity_ids_to_fetch, config_map)
     final_notifications_data = []
+    
     for individual_notif in sorted(individual_notifications_always, key=lambda n: n.created_at, reverse=True):
         config = config_map.get(individual_notif.notification_type)
         formatted_message = _format_individual_notification_message(individual_notif, config, dynamic_entity_titles)
@@ -376,17 +391,24 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
             "message": formatted_message,
             "url": individual_notif.url,
             "notification_type": individual_notif.notification_type,
-            "created_at": created_at_iso
+            "created_at": created_at_iso,
+            "is_read": individual_notif.is_read, 
         })
+
     for key, value in notifications_for_grouping.items():
         count = len(value["notifications"])
         latest_notif = value["latest_notification"]
         notifications_in_group = value["notifications"]
+
         if not latest_notif:
             logging.warning(f"Skipping empty group for key: {key}")
-            continue
+            continue        
+        
+        group_is_read = all(n.is_read for n in notifications_in_group) 
+        
         type_config = config_map.get(key[0])
-        if count < 4:
+
+        if count < 4:            
             sorted_individual_notifications = sorted(notifications_in_group, key=lambda n: n.created_at, reverse=True)
             for individual_notif in sorted_individual_notifications:
                 config = config_map.get(individual_notif.notification_type)
@@ -401,9 +423,10 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
                     "message": formatted_message,
                     "url": individual_notif.url,
                     "notification_type": individual_notif.notification_type,
-                    "created_at": created_at_iso
+                    "created_at": created_at_iso,
+                    "is_read": individual_notif.is_read, 
                 })
-        else:
+        else:            
             formatted_message = _format_grouped_notification_message(
                 count, latest_notif, notifications_in_group, type_config, dynamic_entity_titles, key
             )
@@ -412,13 +435,20 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
             except AttributeError:
                 logging.warning(f"Latest notification in group {key} has invalid created_at format: {latest_notif.created_at}. Skipping.")
                 continue
+
+            # Extract IDs of all notifications in this group
+            group_notification_ids = [n.id for n in notifications_in_group]
+
             final_notifications_data.append({
-                "id": latest_notif.id,
+                "id": latest_notif.id, 
                 "message": formatted_message,
                 "url": latest_notif.url,
                 "notification_type": latest_notif.notification_type,
-                "created_at": created_at_iso
+                "created_at": created_at_iso,
+                "is_read": group_is_read,
+                "group_ids": group_notification_ids, 
             })
+
     final_notifications_data.sort(key=lambda x: x['created_at'], reverse=True)
     logging.info(f"Finished processing notifications. Total formatted: {len(final_notifications_data)}")
     return final_notifications_data
@@ -517,6 +547,22 @@ def _format_grouped_notification_message(
             return f"{count} {base_display_name}{context_phrase}: {summary_items_with_others}."
     else:
         return f"{count} {base_display_name}{context_phrase}: {summary_items_with_others}."
+
+# Mark Notifications as Read
+def mark_notification_as_read(db: Session, notification_id: int) -> Optional[models.Notification]:
+    """
+    Marks a specific notification as read.
+    """
+    db_notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
+    if db_notification:
+        db_notification.is_read = True
+        db_notification.updated_at = datetime.now(timezone.utc) # Assuming an 'updated_at' field exists
+        db.add(db_notification)
+        logging.info(f"Notification with id: {notification_id} marked as read.")
+        return db_notification
+    else:
+        logging.warning(f"Notification with id: {notification_id} not found for marking as read.")
+    return None
 
 # Color palette helpers
 def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:

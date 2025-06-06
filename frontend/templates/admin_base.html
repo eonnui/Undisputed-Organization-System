@@ -23,7 +23,7 @@
                     <li class="{% if request.path == url_for('home') %}selected{% endif %}"><a href="{{ url_for('home') }}"><span class="material-symbols-outlined">home</span> <span class="nav-text">Home</span></a></li>
                     <li class="{% if request.path == url_for('admin_bulletin_board') %}selected{% endif %}"><a href="{{ url_for('admin_bulletin_board') }}"><span class="material-symbols-outlined">breaking_news</span> <span class="nav-text">Bulletin Board</span></a></li>
                     <li class="{% if request.path == url_for('admin_events') %}selected{% endif %}"><a href="{{ url_for('admin_events') }}"><span class="material-symbols-outlined">event</span> <span class="nav-text">Events</span></a></li>
-                    <li class="{% if request.path == url_for('admin_payments') %}selected{% endif %}"><a href="{{ url_for('admin_payments') }}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership & Payments</span></a></li>
+                    <li class="{% if request.path == url_for('admin_payments') %}selected{% endif %}"><a href="{{ url_for('admin_payments') }}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership and Payments</span></a></li>
                     <li class="{% if request.path == url_for('admin_financial_statement') %}selected{% endif %}"><a href="{{ url_for('admin_financial_statement') }}"><span class="material-symbols-outlined">request_quote</span> <span class="nav-text">Financial Statement</span></a></li>
                 </ul>
             </div>
