@@ -1493,22 +1493,34 @@ async def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="First and last name combination already registered")
 
     new_user = crud.create_user(db=db, user=user_data)
+    
+    db.flush()
 
-    current_year = date.today().year
-    start_date = date(current_year, 2, 28)
+    current_academic_year_string_start = date.today().year
+    if date.today().month < 6:
+        current_academic_year_string_start -= 1
+        
+    start_calculation_date = date(2025, 2, 28)
+    
     for i in range(8):
-        academic_year = f"{current_year}-{current_year + 1}"
-        due_date = start_date + timedelta(days=i * 6 * 30)
+        if i % 2 == 0:
+            academic_year_str = f"{current_academic_year_string_start}-{current_academic_year_string_start + 1}"
+        else:
+            academic_year_str = f"{current_academic_year_string_start}-{current_academic_year_string_start + 1}"
+            current_academic_year_string_start += 1
+
+        due_date = start_calculation_date + timedelta(days=i * 6 * 30)
+        
         year_level_applicable = (i // 2) + 1
         semester = "1st" if (i % 2) == 0 else "2nd"
+
         crud.add_payment_item(
-            db=db, user_id=new_user.id, academic_year=academic_year, semester=semester,
-            fee=100.00, 
+            db=db, user_id=new_user.id, academic_year=academic_year_str, semester=semester,
+            fee=100.00,
             due_date=due_date,
             year_level_applicable=year_level_applicable,
         )
-        if semester == "2nd": current_year += 1
-    db.commit() 
+    db.commit()
     return {"message": "User created successfully", "user_id": new_user.id}
 
 # Get User by ID

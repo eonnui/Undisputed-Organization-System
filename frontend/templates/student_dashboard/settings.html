@@ -35,7 +35,7 @@
                 <input type="text" id="email" name="email" value="{{ user.email }}" class="read-only-input" readonly>
             </div>
             <div class="form-group">
-                <label>Birth Date *</label>
+                <label>Birth Date </label>
                 <div class="input-wrapper">
                     <span id="birthDateDisplay">
                         {% if user.birthdate %}
@@ -174,27 +174,6 @@
         </div>
     </div>
 </div>
-<script src="../../static/js/student_setting.js"></script>
+<script src="../../static/js/student_dashboard/settings.js"></script>
 <script src="../../static/js/script.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const initialUserData = {
-            student_number: "{{ user.student_number | default('') }}",
-            first_name: "{{ user.first_name | default('') }}",
-            last_name: "{{ user.last_name | default('') }}",
-            email: "{{ user.email | default('') }}",
-            birthdate: "{{ formatted_birthdate | default('') }}",
-            sex: "{{ user.sex | default('') }}",
-            address: "{{ user.address | default('') }}",
-            year_level: "{{ user.year_level | default('') }}",
-            section: "{{ user.section | default('') }}",
-            guardian_name: "{{ user.guardian_name | default('') }}",
-            guardian_contact: "{{ user.guardian_contact | default('') }}"
-        };        
-        updateStudentInfoDisplay(initialUserData);
-        
-        const initialStatus = "{{ user.verification_status }}";
-        setRegistrationStatus(initialStatus);
-    });
-</script>
 {% endblock %}
