@@ -83,6 +83,7 @@ class User(Base):
     payments = relationship("Payment", back_populates="user")
     payment_items = relationship("PaymentItem", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user")
+    liked_posts = relationship("UserLike", back_populates="user")
 
 class Admin(Base):
     __tablename__ = "admins"
@@ -109,6 +110,7 @@ class BulletinBoard(Base):
     admin_id = Column(Integer, ForeignKey("admins.admin_id"))
     image_path = Column(String(255), nullable=True)
     admin = relationship("Admin", back_populates="bulletin_board_posts")
+    likes = relationship("UserLike", back_populates="bulletin_post")
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -187,3 +189,12 @@ class NotificationTypeConfig(Base):
     entity_title_attribute = Column(String, nullable=True)
     always_individual = Column(Boolean, default=False)
     message_template_individual = Column(String, nullable=True)
+
+class UserLike(Base):
+    __tablename__ = "user_likes"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id")) 
+    post_id = Column(Integer, ForeignKey("bulletin_board.post_id"))
+   
+    user = relationship("User", back_populates="liked_posts")
+    bulletin_post = relationship("BulletinBoard", back_populates="likes")

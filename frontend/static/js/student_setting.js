@@ -241,3 +241,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearRegistrationFormOnlyBtn) clearRegistrationFormOnlyBtn.addEventListener('click', () => resetForm(registrationFormOnly));
     
 });
+

@@ -358,8 +358,8 @@ body {
 
 .top-bar .user-actions .profile-btn img {
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    width: 50px;
+    height: 50px;
     object-fit: cover;
     box-shadow: var(--org-shadow-sm);
     border: 2px solid var(--org-profile-pic-border-color);

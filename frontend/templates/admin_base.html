@@ -53,7 +53,7 @@
                 </div>
                 <div class="profile-container">
                     <button class="profile-btn" aria-haspopup="true" aria-expanded="false" aria-controls="profile-dropdown">
-                        <img id="user-profile-pic" src="{{ url_for('static', path='images/your_image_name.jpg') }}" alt="Profile Picture" class="profile-pic-placeholder">
+                        <img id="user-profile-pic" src="{{ url_for('static', path='images/your_image_name.jpg') }}" alt="Profile Picture">
                         <span id="profile-name">Loading...</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
@@ -71,7 +71,7 @@
             <p>&copy; {{ year }} Organization System</p>
         </footer>
     </div>
-    <script src="{{ url_for('static', path='js/admin.js') }}"></script>
+    <script src="{{ url_for('static', path='js/admin_base.js') }}"></script>
     {% block scripts %}
     {% endblock %}
 </body>

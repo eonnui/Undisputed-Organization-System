@@ -2,15 +2,13 @@ from fastapi import FastAPI, Request, Depends, HTTPException, status, File, Uplo
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from sqlalchemy.orm import Session, joinedload, selectinload
-from sqlalchemy import func, and_, or_, extract
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, and_, or_, extract, desc
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any, Tuple
-from io import BytesIO
-from PIL import Image
 from collections import defaultdict, OrderedDict
 import os
 import secrets
@@ -1180,13 +1178,21 @@ async def home(request: Request, db: Session = Depends(get_db)):
 async def bulletin_board(request: Request, db: Session = Depends(get_db)):
     user, user_org = get_current_user_with_org(request, db)
     posts = []
+    hearted_post_ids = set()
+
     if user_org:
-        posts = db.query(models.BulletinBoard).join(models.Admin).join(models.Admin.organizations).filter(
-            models.Organization.id == user_org.id
-        ).order_by(models.BulletinBoard.created_at.desc()).all()
-    
+        posts = db.query(models.BulletinBoard)\
+                  .join(models.Admin).join(models.Admin.organizations)\
+                  .filter(models.Organization.id == user_org.id)\
+                  .order_by(desc(models.BulletinBoard.created_at)).all()
+
+        if user:
+            user_likes = db.query(models.UserLike).filter(models.UserLike.user_id == user.id).all()
+            hearted_post_ids = {like.post_id for like in user_likes}
+
     context = await get_base_template_context(request, db)
-    context.update({"posts": posts, "hearted_posts": []})  
+    context.update({"posts": posts, "hearted_posts": hearted_post_ids})
+
     return templates.TemplateResponse("student_dashboard/bulletin_board.html", context)
 
 # Events Page (User)
@@ -1565,27 +1571,41 @@ async def login(request: Request, form_data: schemas.UserLogin, db: Session = De
 
 # Heart/Unheart Bulletin Posts
 @app.post("/bulletin/heart/{post_id}")
-async def heart_post(post_id: int, request: Request, db: Session = Depends(get_db), action: str = Form(...)):
+async def heart_post(
+    post_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    action: str = Form(...)
+):
     user, user_org = get_current_user_with_org(request, db)
+    if not user: raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Auth required.")
 
-    post = db.query(models.BulletinBoard).options(joinedload(models.BulletinBoard.admin)).filter(models.BulletinBoard.post_id == post_id).first()
-    if not post: raise HTTPException(status_code=404, detail="Post not found")
+    post = db.query(models.BulletinBoard).options(joinedload(models.BulletinBoard.admin)).get(post_id)
+    if not post: raise HTTPException(status_code=404, detail="Post not found.")
     if not post.admin or not post.admin.organizations or post.admin.organizations[0].id != user_org.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only interact with posts from your own organization.")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied for organization.")
+
+    user_like = db.query(models.UserLike).filter_by(user_id=user.id, post_id=post_id).first()
+    is_hearted_by_user = (action == 'heart')
 
     if action == 'heart':
-        post.heart_count += 1
-        crud.create_notification(db, f"{user.first_name} {user.last_name} liked your bulletin post: '{post.title}'",
-                                 organization_id=user_org.id, admin_id=post.admin_id, notification_type="bulletin_like",
-                                 entity_id=post_id, url=f"/admin/bulletin_board#{post_id}")
-    elif action == 'unheart' and post.heart_count > 0:
-        post.heart_count -= 1
+        if not user_like:
+            db.add(models.UserLike(user_id=user.id, post_id=post_id))
+            post.heart_count += 1
+            crud.create_notification(db, f"{user.first_name} {user.last_name} liked your post: '{post.title}'",
+                                     organization_id=user_org.id, admin_id=post.admin_id,
+                                     notification_type="bulletin_like", entity_id=post_id,
+                                     url=f"/admin/bulletin_board#{post_id}")
+    elif action == 'unheart':
+        if user_like:
+            db.delete(user_like)
+            post.heart_count = max(0, post.heart_count - 1) 
     else:
-        raise HTTPException(status_code=400, detail="Invalid action. Must be 'heart' or 'unheart'.")
+        raise HTTPException(status_code=400, detail="Invalid action.")
 
     db.commit()
     db.refresh(post)
-    return {"heart_count": post.heart_count}
+    return {"heart_count": post.heart_count, "is_hearted_by_user": is_hearted_by_user}
 
 # Join Event
 @app.post("/Events/join/{event_id}")

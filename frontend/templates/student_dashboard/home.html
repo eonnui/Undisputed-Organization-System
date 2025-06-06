@@ -2,7 +2,6 @@
 {% block title %}Home{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/student_dashboard.css') }}">
-   
 {% endblock %}
 
 {% block content %}
@@ -14,7 +13,7 @@
         <div id="announcements-container">
             {% if bulletin_posts %}
               {% for post in bulletin_posts %}
-              <div class="announcement-card" onclick="window.location='{{ url_for('bulletin_board') }}'">
+              <div class="announcement-card" data-url="{{ url_for('bulletin_board') }}">
                 <p class="announcement-text">{{ post.title }}</p>
                 <p class="announcement-meta">
                   <span class="date-posted">Date Posted: {{ post.created_at.strftime('%B %d, %Y') }}</span> |
@@ -30,9 +29,8 @@
         </div>
       </div>
       <div class="dashboard-section upcoming-events">
-        <h2 class="section-title" onclick="window.location='{{ url_for('events') }}'">Upcoming Events</h2>
+        <h2 class="section-title" id="upcoming-events-title" data-events-url="{{ url_for('events') }}">Upcoming Events</h2>
         <div id="events-container">
-          <!-- Events will be loaded here via JavaScript -->
           <div class="loading-events">Loading upcoming events...</div>
         </div>
       </div>
@@ -40,152 +38,11 @@
     <div class="faq-section">
         <h2 class="faq-title">Frequently Asked Questions</h2>
         <div id="faq-container">
-            <!-- FAQs will be loaded here via JavaScript -->
-        </div>
+            </div>
     </div>
 </div>
-
-<script>
-       document.addEventListener('DOMContentLoaded', function() {
-        // Load upcoming events from API
-        fetchUpcomingEvents();
-
-        // Load FAQs
-        loadFAQs();
-    });
-
-    // Function to fetch events from the backend for the homepage summary
-    async function fetchUpcomingEvents() {
-        const eventsContainer = document.getElementById('events-container');
-
-        try {
-            // Replace with your actual API endpoint to get a list of upcoming events
-            // This endpoint should return the necessary event data (title, date, location, classification)
-            const response = await fetch('/api/events/upcoming_summary');
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch events');
-            }
-
-            const events = await response.json();
-            displayEvents(events);
-
-        } catch (error) {
-            console.error('Error fetching events:', error);
-
-            // Fallback to display some static events if API fails
-            displayFallbackEvents();
-        }
-    }
-
-    // Function to display events on the homepage summary (MODIFIED - no join button, links to /Events)
-    function displayEvents(events) {
-        const eventsContainer = document.getElementById('events-container');
-
-        // Clear loading message
-        eventsContainer.innerHTML = '';
-
-        if (!events || events.length === 0) {
-            eventsContainer.innerHTML = '<div class="empty-state">No upcoming events at this time.</div>';
-            return;
-        }
-
-        // Create and append event items (simplified for homepage summary and linked to /Events)
-        events.forEach(event => {
-            const eventItem = document.createElement('div');
-            eventItem.className = 'event-item';
-            eventItem.style.cursor = 'pointer'; // Make it clickable
-            eventItem.onclick = function() {
-                window.location = '{{ url_for('events') }}'; // Link to the main events page
-            };
-
-            const eventTag = `<span class="event-tag tag-${event.classification ? event.classification.toLowerCase() : ''}">${event.classification || 'Event'}</span>`;
-
-            eventItem.innerHTML = `
-                ${eventTag}
-                <div class="event-title">${event.title}</div>
-                <div class="event-date">${formatDate(event.date)}</div>
-                <div class="event-location">${event.location}</div>
-            `;
-
-            eventsContainer.appendChild(eventItem);
-        });
-    }
-
-    // Fallback function if the API call fails (MODIFIED - simplified)
-    function displayFallbackEvents() {
-        const fallbackEvents = [
-            {
-                event_id: 1,
-                title: "Fallback Event 1",
-                date: new Date("2025-08-15"),
-                location: "Online",
-                classification: "Academic"
-            },
-            {
-                event_id: 2,
-                title: "Fallback Event 2",
-                date: new Date("2025-08-20"),
-                location: "Campus",
-                classification: "Social"
-            }
-        ];
-        displayEvents(fallbackEvents);
-    }
-
-    // Helper function to format dates (keeping the long format for the summary)
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
-    }
-
-    // Sample FAQ data (UNCHANGED)
-    const faqData = [
-        {
-            question: "What is the schedule for student orientation?",
-            answer: "The student orientation will be held on August 20, 2025, from 9:00 AM to 12:00 PM in the main auditorium."
-        },
-        {
-            question: "How do I access the online learning platform?",
-            answer: "You can access the online learning platform by visiting our website and clicking on the 'Student Portal' link. Use your student ID and password to log in."
-        },
-        {
-            question: "Who should I contact for academic advising?",
-            answer: "For academic advising, please contact the Dean's office of your respective faculty. You can find their contact information on the university website under the 'Academics' section."
-        },
-        {
-            question: "How do I apply for scholarships and financial aid?",
-            answer: "Scholarship and financial aid applications are available through the Financial Aid Office. Visit the Financial Aid section on our website for more information."
-        }
-    ];
-
-    // Function to load FAQs (UNCHANGED)
-    function loadFAQs() {
-        const faqContainer = document.getElementById('faq-container');
-
-        if (faqData.length === 0) {
-            faqContainer.innerHTML = '<div class="empty-state">No FAQs available at this time.</div>';
-            return;
-        }
-
-        faqData.forEach((faq, index) => {
-            const faqItem = document.createElement('div');
-            faqItem.className = 'faq-item';
-            faqItem.id = `faq-${index}`;
-
-            faqItem.innerHTML = `
-                <div class="faq-question">${faq.question}</div>
-                <div class="faq-answer">${faq.answer}</div>
-            `;
-
-            faqContainer.appendChild(faqItem);
-
-            const questionElement = faqItem.querySelector('.faq-question');
-            questionElement.addEventListener('click', function() {
-                faqItem.classList.toggle('open');
-            });
-        });
-    }
+<script> 
+    const GLOBAL_EVENTS_PAGE_URL = "{{ url_for('events') }}";
 </script>
+<script src="../../static/js/student_home.js"></script>
 {% endblock %}

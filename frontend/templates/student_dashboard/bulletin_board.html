@@ -45,35 +45,5 @@
             <p>No bulletin board posts yet.</p>
         {% endif %}
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const heartButtons = document.querySelectorAll('.heart-button');
-
-            heartButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const postId = this.dataset.postId;
-                    const heartCountSpan = this.querySelector('.heart-count');
-                    const isHearted = this.classList.contains('hearted');
-                    const action = isHearted ? 'unheart' : 'heart';
-
-                    fetch(`/bulletin/heart/${postId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=${action}`,
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        heartCountSpan.textContent = data.heart_count;
-                        this.classList.toggle('hearted');
-                    })
-                    .catch(error => {
-                        console.error('Error hearting post:', error);
-                    });
-                });
-            });
-        });
-    </script>
+<script src="../../static/js/student_bulletin_board.js"></script>
 {% endblock %}
