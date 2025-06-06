@@ -2129,15 +2129,18 @@ th.sortable.desc::after {
 }
 
 .current-logo-preview {
-    margin-top: 25px;
-    text-align: center;
-    background-color: var(--org-profile-image-bg);
+    margin-top: 25px;   
     padding: 20px;
     border-radius: var(--org-radius-md);
     border: 1px solid var(--org-logo-border-color);
     animation: fadeIn 0.8s ease-out forwards;
     opacity: 0;
     animation-delay: 1s;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 250px; 
 }
 
 .current-logo-preview img {

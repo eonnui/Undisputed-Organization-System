@@ -99,14 +99,11 @@ async function fetchAndDisplayNotifications(includeRead = true) {
         clearAllBtn.classList.add('clear-all-btn');
         clearAllBtn.textContent = 'Clear All';
         clearAllBtn.onclick = async () => {
-            const confirmClearAll = confirm('Are you sure you want to clear all notifications? This action cannot be undone.');
-            if (confirmClearAll) {
-                if (await clearAllNotifications()) {
-                    await fetchAndDisplayNotifications(true);
-                    updateBadgeBasedOnNewUnread();
-                } else {
-                    alert('Failed to clear all notifications.');
-                }
+            if (await clearAllNotifications()) {
+                await fetchAndDisplayNotifications(true);
+                updateBadgeBasedOnNewUnread();
+            } else {
+                alert('Failed to clear all notifications.');
             }
         };
         clearAllContainer.appendChild(clearAllBtn);
@@ -160,22 +157,19 @@ async function fetchAndDisplayNotifications(includeRead = true) {
                 event.stopPropagation();
                 event.preventDefault();
 
-                const confirmClear = confirm('Are you sure you want to clear this notification?');
-                if (confirmClear) {
-                    const notificationIdsToClear = notification.group_ids || [notification.id];
-                    let successCount = 0;
-                    for (const id of notificationIdsToClear) {
-                        if (await clearNotification(id)) {
-                            successCount++;
-                        }
+                const notificationIdsToClear = notification.group_ids || [notification.id];
+                let successCount = 0;
+                for (const id of notificationIdsToClear) {
+                    if (await clearNotification(id)) {
+                        successCount++;
                     }
+                }
 
-                    if (successCount > 0) {
-                        await fetchAndDisplayNotifications(true);
-                        updateBadgeBasedOnNewUnread();
-                    } else {
-                        alert('Failed to clear notification.');
-                    }
+                if (successCount > 0) {
+                    await fetchAndDisplayNotifications(true);
+                    updateBadgeBasedOnNewUnread();
+                } else {
+                    alert('Failed to clear notification.');
                 }
             });
 

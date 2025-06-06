@@ -100,15 +100,17 @@ class UserUpdate(BaseModel):
     profile_picture: Optional[str]
 
 class AdminCreate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     email: str
     password: str
-    name: Optional[str] = "Admin"
     position: str
     organization_id: Optional[int] = None
 
 class Admin(BaseModel):
     admin_id: int
-    name: str
+    first_name: Optional[str]
+    last_name: Optional[str]
     email: EmailStr
     role: str
     position: str

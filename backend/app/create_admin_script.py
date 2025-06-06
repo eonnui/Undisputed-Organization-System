@@ -15,7 +15,7 @@ backend_dir = app_dir.parent
 sys.path.insert(0, str(backend_dir))
 
 # Now we can import directly
-from app.models import Admin, Organization, User, NotificationTypeConfig, Event, BulletinBoard, Payment # Import models for type checking
+from app.models import Admin, Organization, User, NotificationTypeConfig, Event, BulletinBoard, Payment
 from app.database import SQLALCHEMY_DATABASE_URL
 
 def check_database_url():
@@ -156,27 +156,86 @@ def update_organization_theme_color(db, org_id: int, new_theme_color: str):
         db.rollback()
         return False
 
-# --- Function to update an admin's position ---
-def update_admin_position(db, admin_id: int, new_position: str):
+# --- NEW: Function to edit admin information ---
+def edit_admin_info(db):
     """
-    Updates the position of an existing admin.
+    Allows editing of an existing admin's name, email, password, role, and position.
     """
-    try:
-        admin = db.get(Admin, admin_id)
-        if not admin:
-            print(f"Error: Admin with ID {admin_id} not found.")
-            return False
+    admins = db.query(Admin).all()
+    if not admins:
+        print("No admins found.")
+        return
 
-        admin.position = new_position
-        db.add(admin)
+    print("\n--- Existing Admins ---")
+    for admin in admins:
+        full_name = f"{admin.first_name or ''} {admin.last_name or ''}".strip()
+        print(f"ID: {admin.admin_id}, Name: {full_name if full_name else 'N/A'}, Email: {admin.email}, Position: {admin.position if admin.position else 'N/A'}, Role: {admin.role}")
+
+    admin_id_input = input("Enter the ID of the admin to edit: ")
+    try:
+        selected_admin_id = int(admin_id_input)
+    except ValueError:
+        print("Invalid admin ID. Please enter a number.")
+        return
+
+    admin_to_edit = db.get(Admin, selected_admin_id)
+    if not admin_to_edit:
+        print(f"Admin with ID {selected_admin_id} not found.")
+        return
+
+    print(f"\n--- Editing Admin: {admin_to_edit.first_name, admin_to_edit.last_name} (ID: {admin_to_edit.admin_id}) ---")
+    print("Press Enter to keep current value.")
+
+    # Edit Name
+    new_first_name = input(f"Enter new first name (current: {admin_to_edit.first_name if admin_to_edit.first_name else 'N/A'}): ").strip()
+    if new_first_name:
+        admin_to_edit.first_name = new_first_name
+
+    new_last_name = input(f"Enter new last name (current: {admin_to_edit.last_name if admin_to_edit.last_name else 'N/A'}): ").strip()
+    if new_last_name:
+        admin_to_edit.last_name = new_last_name
+
+    # Edit Email
+    new_email = input(f"Enter new email (current: {admin_to_edit.email}): ").strip()
+    if new_email:
+        # Check if the new email already exists for another admin
+        existing_admin_with_email = db.query(Admin).filter(Admin.email == new_email).first()
+        if existing_admin_with_email and existing_admin_with_email.admin_id != admin_to_edit.admin_id:
+            print(f"Error: Email '{new_email}' already exists for another admin. Email not updated.")
+        else:
+            admin_to_edit.email = new_email
+
+    # Edit Password
+    change_password = input("Do you want to change the password? (yes/no, default: no): ").strip().lower()
+    if change_password == 'yes':
+        new_password = getpass.getpass("Enter new password: ").strip()
+        confirm_new_password = getpass.getpass("Confirm new password: ").strip()
+        if new_password and new_password == confirm_new_password:
+            hashed_password = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            admin_to_edit.password = hashed_password
+            print("Password updated successfully.")
+        else:
+            print("Passwords do not match or new password was empty. Password not updated.")
+
+    # Edit Role
+    new_role = input(f"Enter new role (current: {admin_to_edit.role}, e.g., Admin, SuperAdmin): ").strip()
+    if new_role:
+        admin_to_edit.role = new_role
+
+    # Edit Position
+    new_position = input(f"Enter new position (current: {admin_to_edit.position if admin_to_edit.position else 'N/A'}): ").strip()
+    # Allow clearing position if user inputs empty string
+    admin_to_edit.position = new_position if new_position else None
+
+    try:
+        db.add(admin_to_edit)
         db.commit()
-        db.refresh(admin)
-        print(f"Admin '{admin.name}' (ID: {admin_id}) position updated to '{new_position}' successfully.")
-        return True
+        db.refresh(admin_to_edit)
+        print(f"Admin '{admin_to_edit.first_name, admin_to_edit.last_name}' (ID: {admin_to_edit.admin_id}) information updated successfully.")
     except Exception as e:
-        print(f"An unexpected error occurred during admin position update: {e}")
+        print(f"An unexpected error occurred during admin info update: {e}")
         db.rollback()
-        return False
+
 
 # --- Function to delete an organization and its associated admins and users ---
 def delete_organization(db, org_id: int):
@@ -256,7 +315,8 @@ def display_all_data(db):
                     print(f"  {'-'*10}-+-{'-'*20}-+-{'-'*30}-+-{'-'*15}")
                     for admin in org_admins:
                         position = admin.position if admin.position else 'N/A'
-                        print(f"  {admin.admin_id:<10} | {admin.name:<20} | {admin.email:<30} | {position:<15}")
+                        full_name = f"{admin.first_name or ''} {admin.last_name or ''}".strip()
+                        print(f"  {admin.admin_id:<10} | {full_name:<20} | {admin.email:<30} | {position:<15}")
                 else:
                     print(f"  No admins found for '{org.name}'.")
                 print("\n")
@@ -363,7 +423,7 @@ def add_notification_config(db):
         # Input prompts for update (showing current, allowing override or keep)
         display_name_plural_prompt = f"Enter Display Name (plural, e.g., 'past due payments') (current: {initial_display_name_plural}): "
         display_name_plural = input(display_name_plural_prompt).strip() or initial_display_name_plural
-        
+
         # Prompt for always_individual first to determine subsequent prompts
         always_individual_prompt = f"Always display individually (never group)? (yes/no) (current: {initial_always_individual}): "
         always_individual_input = input(always_individual_prompt).strip().lower()
@@ -389,7 +449,7 @@ def add_notification_config(db):
 
         entity_model_name_prompt = f"Enter Entity Model Name (e.g., 'User', 'Event', 'BulletinBoard') (current: {initial_entity_model_name}): "
         entity_model_name = input(entity_model_name_prompt).strip() or initial_entity_model_name
-        
+
         entity_title_attribute_prompt = f"Enter Entity Title Attribute (e.g., 'first_name', 'title', 'name') (current: {initial_entity_title_attribute}): "
         entity_title_attribute = input(entity_title_attribute_prompt).strip() or initial_entity_title_attribute
 
@@ -401,7 +461,7 @@ def add_notification_config(db):
                 f"  (current: {initial_context_phrase_template}): "
             )
             context_phrase_template = input(context_phrase_template_prompt).strip() or initial_context_phrase_template
-            
+
             message_prefix_to_strip_prompt = f"Enter Message Prefix to Strip (e.g., 'Past Due Payments: ') (current: {initial_message_prefix_to_strip}): "
             message_prefix_to_strip = input(message_prefix_to_strip_prompt).strip() or initial_message_prefix_to_strip
 
@@ -520,7 +580,7 @@ def add_notification_config(db):
             message_prefix_to_strip = 'Payment Successful: '
             if not always_individual:
                 context_phrase_template = " for payment ID {entity_title}"
-        
+
         # Determine message_template_plural based on inferred values and grouping flags
         if not always_individual: # Only set plural template if not always individual
             if display_name_plural:
@@ -591,11 +651,11 @@ def main():
         print("1. Create a NEW organization and its first admin.")
         print("2. Create an admin for an EXISTING organization.")
         print("3. Edit theme color for an EXISTING organization.")
-        print("4. Update an admin's position.")
-        print("5. Delete an organization and its associated admins/users.")
-        print("6. Display ALL organizations, admins, and users.")
-        print("7. Add/Update Notification Type Configuration.")
-        print("8. Display ALL Notification Type Configurations.")
+        print("4. Edit an admin's information (name, email, password, role, position).") # NEW OPTION
+        print("5. Delete an organization and its associated admins/users.") # SHIFTED
+        print("6. Display ALL organizations, admins, and users.") # SHIFTED
+        print("7. Add/Update Notification Type Configuration.") # SHIFTED
+        print("8. Display ALL Notification Type Configurations.") # SHIFTED
         print("9. Exit")
 
         choice = input("Enter your choice (1-9): ")
@@ -687,36 +747,10 @@ def main():
 
                 update_organization_theme_color(db, selected_org_id, new_theme_color)
 
-            elif choice == '4': # Update Admin Position
-                admins = db.query(Admin).all()
-                if not admins:
-                    print("No admins found.")
-                    continue
+            elif choice == '4': # NEW: Edit Admin Information
+                edit_admin_info(db)
 
-                print("\n--- Existing Admins ---")
-                for admin in admins:
-                    print(f"ID: {admin.admin_id}, Name: {admin.name}, Email: {admin.email}, Current Position: {admin.position if admin.position else 'N/A'}")
-
-                admin_id_input = input("Enter the ID of the admin to update their position: ")
-                try:
-                    selected_admin_id = int(admin_id_input)
-                except ValueError:
-                    print("Invalid admin ID. Please enter a number.")
-                    continue
-
-                admin_to_edit = db.get(Admin, selected_admin_id)
-                if not admin_to_edit:
-                    print(f"Admin with ID {selected_admin_id} not found.")
-                    continue
-
-                new_position = input(f"Enter the NEW position for '{admin_to_edit.name}' (e.g., President, Secretary, etc.): ")
-                if not new_position:
-                    print("Position cannot be empty.")
-                    continue
-
-                update_admin_position(db, selected_admin_id, new_position)
-
-            elif choice == '5': # Delete Organization
+            elif choice == '5': # Shifted from 4
                 organizations = get_all_organizations(db)
                 if not organizations:
                     print("No existing organizations found.")
@@ -739,17 +773,17 @@ def main():
                 else:
                     print("Organization deletion cancelled.")
 
-            elif choice == '6': # Display ALL data
+            elif choice == '6': # Shifted from 5
                 display_all_data(db)
                 db.close()
 
-            elif choice == '7': # Add/Update Notification Type Configuration
+            elif choice == '7': # Shifted from 6
                 add_notification_config(db)
 
-            elif choice == '8': # Display ALL Notification Type Configurations
+            elif choice == '8': # Shifted from 7
                 display_all_notification_configs(db)
 
-            elif choice == '9': # Exit choice
+            elif choice == '9': # Exit choice (shifted from 8)
                 print("Exiting setup.")
                 break
             else:

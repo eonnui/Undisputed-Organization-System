@@ -235,8 +235,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Renders admin signup form
     function renderAdminSignupForm() {
         const isNewOrganizationChecked = document.getElementById('new-organization-radio') ?
-                                         document.getElementById('new-organization-radio').checked :
-                                         true;
+                                                document.getElementById('new-organization-radio').checked :
+                                                true;
         let newOrgFieldsStyle = isNewOrganizationChecked ? 'display: block;' : 'display: none;';
         let existingOrgFieldsStyle = isNewOrganizationChecked ? 'display: none;' : 'display: block;';
         let organizationOptions = '<option value="" disabled selected>Select an existing organization</option>';
@@ -330,11 +330,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             <select id="admin-signup-position" name="position" required>
                                 <option value="" disabled selected>Select your position</option>
                                 <option value="President">President</option>
-                                <option value="Vice President">Vice President</option>
+                                <option value="Vice President-Internal">Vice President-Internal</option>
+                                <option value="Vice President-External">Vice President-External</option>
                                 <option value="Secretary">Secretary</option>
                                 <option value="Treasurer">Treasurer</option>
                                 <option value="Adviser">Adviser</option>
-                                <option value="Other">Other</option>
+                                <option value="Auditor">Auditor</option>
+                                <option value="Public Relation Officer">Public Relation Officer</option>
                             </select>
                         </div>
                         <div class="error-message" id="admin-signup-position-error"></div>
@@ -928,7 +930,8 @@ Please log in.`;
                 if (!isValid) return;
             }
             const adminPayload = {
-                name: adminName,
+                first_name: firstName,
+                last_name: lastName,
                 email: email,
                 password: password,
                 position: position,

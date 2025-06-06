@@ -298,8 +298,8 @@ async def admin_post_bulletin(
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
-
-    users_in_org = db.query(models.User).filter(models.User.organization_id == admin_org.id).all()
+    
+    users_in_org = db.query(models.User).filter(models.User.organization_id == admin_org.id).all()    
     for user in users_in_org:
         if user.organization_id == admin_org.id:
             crud.create_notification(
@@ -1005,7 +1005,7 @@ async def create_admin_user_route(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Admin with email '{admin_data.email}' already exists.")
     
     hashed_password = bcrypt.hashpw(admin_data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    new_admin = models.Admin(name=admin_data.name, email=admin_data.email, password=hashed_password, role="Admin", position=admin_data.position)
+    new_admin = models.Admin(first_name=admin_data.first_name, last_name=admin_data.last_name, email=admin_data.email, password=hashed_password, role="Admin", position=getattr(admin_data, "position", None))
     db.add(new_admin)
     db.flush()
 
@@ -1636,7 +1636,7 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
     elif admin_id:
         current_entity = db.query(models.Admin).options(joinedload(models.Admin.organizations)).filter(models.Admin.admin_id == admin_id).first()
         if current_entity:
-            first_name = current_entity.name 
+            first_name = current_entity.first_name 
             if current_entity.organizations:
                 organization_data = schemas.Organization.model_validate(current_entity.organizations[0])
 

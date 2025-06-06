@@ -87,8 +87,9 @@ class User(Base):
 
 class Admin(Base):
     __tablename__ = "admins"
-    admin_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
+    admin_id = Column(Integer, primary_key=True, index=True)    
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
     email = Column(String, unique=True, index=True)
     password = Column(String)
     role = Column(String)
