@@ -1,3 +1,22 @@
+html {
+    font-size: 16px; 
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+img, video, canvas {
+    max-width: 100%;
+    height: auto;
+    display: block; 
+}
+
+body {
+    margin: 0;
+    padding: 0;    
+}
+
 /* Home */
 .header {
     padding: 10px;

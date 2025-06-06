@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} Organization System - Admin {% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/admin_base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Poppins:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     {% block head %}
@@ -71,7 +71,7 @@
             <p>&copy; {{ year }} Organization System</p>
         </footer>
     </div>
-    <script src="{{ url_for('static', path='js/admin_base.js') }}"></script>
+    <script src="{{ url_for('static', path='js/base.js') }}"></script>
     {% block scripts %}
     {% endblock %}
 </body>

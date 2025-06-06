@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/admin_dashboard.css') }}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
 {% block content %}
@@ -45,18 +46,4 @@
         </table>
     </div>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function navigateToPaymentsTab() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const studentNumber = urlParams.get('student_number');
-
-            if (studentNumber) {
-                // This will reload the page and navigate to the payments tab with the student number
-                window.location.href = `/Admin/payments?student_number=${studentNumber}#payments`;
-            }
-        }
-        navigateToPaymentsTab();
-    });
-</script>
 {% endblock %}
