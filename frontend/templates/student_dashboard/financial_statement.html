@@ -7,11 +7,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="content">
+<div class="content" 
+     id="financial-data-container" 
+     data-current-year="{{ year | e }}">
+
+    <script id="financial-data-json" type="application/json">
+        {{ financial_data | tojson | safe }}
+    </script>
+
     <section id="dashboard" class="section active">
         <h1>Financial Statement Dashboard</h1>
 
-        <!-- Personal Financials Section -->
         <div class="quick-stats">
             <div class="stat-card positive">
                 <h3>Total Paid by You</h3>
@@ -46,11 +52,11 @@
         <div class="toggle-container">
             <span class="toggle-label">Quick View:</span>
             <div class="toggle-buttons">
-                <button id="toggle-user-collected" class="toggle-btn active" onclick="toggleDashboardView('user-collected')">Your Collected Fees</button>
-                <button id="toggle-user-outstanding" class="toggle-btn" onclick="toggleDashboardView('user-outstanding')">Your Outstanding Fees</button>
-                <button id="toggle-org-expenses" class="toggle-btn" onclick="toggleDashboardView('org-expenses')">Organization Expenses</button>
-                <button id="toggle-combined-activity" class="toggle-btn" onclick="toggleDashboardView('combined-activity')">Combined Activity</button>
-                <button id="toggle-org-monthly" class="toggle-btn" onclick="toggleDashboardView('org-monthly')">Monthly Overview</button>
+                <button id="toggle-user-collected" class="toggle-btn active">Your Collected Fees</button>
+                <button id="toggle-user-outstanding" class="toggle-btn">Your Outstanding Fees</button>
+                <button id="toggle-org-expenses" class="toggle-btn">Organization Expenses</button>
+                <button id="toggle-combined-activity" class="toggle-btn">Combined Activity</button>
+                <button id="toggle-org-monthly" class="toggle-btn">Monthly Overview</button>
             </div>
         </div>
 
@@ -232,18 +238,18 @@
             </div>
             <div class="report-body">
                 <div class="monthly-toggles">
-                    <button class="active" onclick="showMonthlyData('january')">January</button>
-                    <button onclick="showMonthlyData('february')">February</button>
-                    <button onclick="showMonthlyData('march')">March</button>
-                    <button onclick="showMonthlyData('april')">April</button>
-                    <button onclick="showMonthlyData('may')">May</button>
-                    <button onclick="showMonthlyData('june')">June</button>
-                    <button onclick="showMonthlyData('july')">July</button>
-                    <button onclick="showMonthlyData('august')">August</button>
-                    <button onclick="showMonthlyData('september')">September</button>
-                    <button onclick="showMonthlyData('october')">October</button>
-                    <button onclick="showMonthlyData('november')">November</button>
-                    <button onclick="showMonthlyData('december')">December</button>
+                    <button class="active">January</button>
+                    <button>February</button>
+                    <button>March</button>
+                    <button>April</button>
+                    <button>May</button>
+                    <button>June</button>
+                    <button>July</button>
+                    <button>August</button>
+                    <button>September</button>
+                    <button>October</button>
+                    <button>November</button>
+                    <button>December</button>
                 </div>
                 <table>
                     <thead>
@@ -266,125 +272,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-    // Parse the financial_data from Jinja2 into a JavaScript object
-    let financialData = JSON.parse('{{ financial_data | tojson | safe }}');
-    let currentYear = '{{ year }}';
-    let today = new Date();
-    let currentMonthName = new Date(today.getFullYear(), today.getMonth(), 1)
-                                .toLocaleString('en-US', { month: 'long' }).toLowerCase();
-    let lastActiveMonth = currentMonthName;
-
-    function formatCurrency(amount) {
-        return `₱${amount.toFixed(2)}`;
-    }
-
-    function populateQuickStats() {
-        document.getElementById('current-date').textContent = financialData.current_date;
-    }
-
-    function toggleDashboardView(viewId) {
-        const reportCards = document.querySelectorAll('.report-card');
-        const toggleButtons = document.querySelectorAll('.toggle-buttons .toggle-btn');
-        
-        reportCards.forEach(card => {
-            card.classList.remove('active');
-        });
-        
-        toggleButtons.forEach(button => {
-            button.classList.remove('active');
-        });
-
-        const targetCard = document.getElementById(`dashboard-${viewId}`);
-        const targetButton = document.getElementById(`toggle-${viewId}`);
-
-        if (targetCard) {
-            targetCard.classList.add('active');
-        }
-        if (targetButton) {
-            targetButton.classList.add('active');
-        }
-
-        if (viewId === 'org-monthly') {
-            showMonthlyData(lastActiveMonth);
-        }
-    }
-
-    function showMonthlyData(month) {
-        lastActiveMonth = month;
-        
-        const monthlyDataTable = document.getElementById('monthly-data-table');
-        const viewDetailedLink = document.getElementById('view-detailed-monthly-report-link');
-        
-        if (!monthlyDataTable) {
-            console.error('monthly-data-table element not found!');
-            return;
-        }
-        monthlyDataTable.innerHTML = '';
-
-        if (viewDetailedLink) {
-            viewDetailedLink.href = `/student_dashboard/detailed_monthly_report_page?month=${month}&year=${currentYear}&type=organization`;
-        }
-
-        const monthlyStats = financialData.organization_financials.monthly_data_org[month];
-
-        if (monthlyStats) {
-            let startingBalanceRow = monthlyDataTable.insertRow();
-            let startingBalanceCellLabel = startingBalanceRow.insertCell();
-            let startingBalanceCellAmount = startingBalanceRow.insertCell();
-            startingBalanceCellLabel.textContent = 'Starting Balance';
-            startingBalanceCellAmount.textContent = formatCurrency(monthlyStats.starting_balance);
-            startingBalanceCellAmount.classList.add('amount');
-
-            let inflowsRow = monthlyDataTable.insertRow();
-            let inflowsCellLabel = inflowsRow.insertCell();
-            let inflowsCellAmount = inflowsRow.insertCell();
-            inflowsCellLabel.textContent = 'Total Inflows';
-            inflowsCellAmount.textContent = formatCurrency(monthlyStats.inflows);
-            inflowsCellAmount.classList.add('amount');
-
-            let outflowsRow = monthlyDataTable.insertRow();
-            let outflowsCellLabel = outflowsRow.insertCell();
-            let outflowsCellAmount = outflowsRow.insertCell();
-            outflowsCellLabel.textContent = 'Total Outflows';
-            outflowsCellAmount.textContent = formatCurrency(monthlyStats.outflows);
-            outflowsCellAmount.classList.add('amount');
-
-            let endingBalanceRow = monthlyDataTable.insertRow();
-            let endingBalanceCellLabel = endingBalanceRow.insertCell();
-            let endingBalanceCellAmount = endingBalanceRow.insertCell();
-            endingBalanceCellLabel.textContent = 'Ending Balance';
-            endingBalanceCellAmount.textContent = formatCurrency(monthlyStats.ending_balance);
-            endingBalanceCellAmount.classList.add('amount');
-        } else {
-            let row = monthlyDataTable.insertRow();
-            let cell = row.insertCell();
-            cell.colSpan = 2;
-            cell.textContent = `No data available for ${month}.`;
-            cell.style.textAlign = 'center';
-        }
-
-        const monthlyButtons = document.querySelectorAll('#dashboard-org-monthly .monthly-toggles button');
-        monthlyButtons.forEach(button => {
-            button.classList.remove('active');
-            if (button.textContent.toLowerCase() === month) {
-                button.classList.add('active');
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        populateQuickStats();
-        toggleDashboardView('user-collected');
-
-        const monthlyButtons = document.querySelectorAll('#dashboard-org-monthly .monthly-toggles button');
-        monthlyButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                showMonthlyData(this.textContent.toLowerCase());
-            });
-        });
-        
-        showMonthlyData(lastActiveMonth);
-    });
-</script>
+<script src="../../static/js/student_dashboard/financial_statement.js"></script>
 {% endblock %}
