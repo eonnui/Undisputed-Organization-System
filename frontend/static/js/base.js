@@ -1,10 +1,13 @@
+let isNotificationsDropdownOpen = false;
+let lastSeenUnreadNotificationIds = new Set();
+let notificationPollingTimer = null;
+const POLLING_INTERVAL_MS = 30000;
+
 function applyUserTheme() {
     fetch('/get_user_data')
         .then(response => {
             if (!response.ok) {
-                if (response.status === 401) {
-                    return null;
-                }
+                if (response.status === 401) return null;
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
@@ -13,14 +16,13 @@ function applyUserTheme() {
             const root = document.documentElement;
             let organizationName = 'Organization System';
 
-            if (data && data.organization) {
+            if (data?.organization) {
                 organizationName = data.organization.name || organizationName;
-
                 if (data.organization.custom_palette) {
                     try {
                         const palette = JSON.parse(data.organization.custom_palette);
                         for (const varName in palette) {
-                            if (palette.hasOwnProperty(varName)) {
+                            if (Object.prototype.hasOwnProperty.call(palette, varName)) {
                                 root.style.setProperty(varName, palette[varName]);
                             }
                         }
@@ -29,33 +31,32 @@ function applyUserTheme() {
                             root.style.setProperty('--organization-theme-color', data.organization.theme_color);
                         }
                     }
-                }
-                else if (data.organization.theme_color) {
+                } else if (data.organization.theme_color) {
                     root.style.setProperty('--organization-theme-color', data.organization.theme_color);
                 }
-            } else {
             }
 
             const profilePicElement = document.getElementById('user-profile-pic');
             const profileNameElement = document.getElementById('profile-name');
-            if (data && data.first_name && profileNameElement) {
+            const organizationNameDisplay = document.getElementById('organizationNameDisplay');
+
+            if (data?.first_name && profileNameElement) {
                 profileNameElement.textContent = data.first_name;
             } else if (profileNameElement) {
                 profileNameElement.textContent = 'Profile';
             }
 
-            if (data && data.profile_picture && profilePicElement) {
+            if (data?.profile_picture && profilePicElement) {
                 profilePicElement.src = data.profile_picture;
             } else if (profilePicElement) {
                 profilePicElement.src = '/static/images/your_image_name.jpg';
             }
 
-            const organizationNameDisplay = document.getElementById('organizationNameDisplay');
             if (organizationNameDisplay) {
                 organizationNameDisplay.textContent = organizationName;
             }
         })
-        .catch(error => {
+        .catch(() => {
             const profilePicElement = document.getElementById('user-profile-pic');
             const profileNameElement = document.getElementById('profile-name');
             const organizationNameDisplay = document.getElementById('organizationNameDisplay');
@@ -69,174 +70,161 @@ function applyUserTheme() {
 document.addEventListener('DOMContentLoaded', applyUserTheme);
 
 async function fetchAndDisplayNotifications(includeRead = true) {
-    console.log(`fetchAndDisplayNotifications: Function started. Include read: ${includeRead}`); 
     const notificationsDropdown = document.getElementById('notifications-dropdown');
     notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
 
     try {
-        let url = '/get_user_notifications';
-        if (includeRead) {
-            url += '?include_read=true';
-        }
-        console.log('fetchAndDisplayNotifications: Fetching from URL:', url); 
+        const url = `/get_user_notifications?include_read=${includeRead}`;
         const response = await fetch(url, { cache: 'no-store' });
 
-        console.log('fetchAndDisplayNotifications: Received response from notifications API:', response); 
         if (!response.ok) {
             if (response.status === 401) {
                 notificationsDropdown.innerHTML = '<div class="notification-item">Please log in to see notifications.</div>';
-                console.warn('fetchAndDisplayNotifications: User not authenticated (401) for notifications.'); 
-                return;
+                return [];
             }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         const notifications = data.notifications;
-        console.log('fetchAndDisplayNotifications: Notifications data received:', notifications); 
 
         notificationsDropdown.innerHTML = '';
-
-        if (notifications && notifications.length > 0) {
-            notifications.forEach(notification => {
-                const notificationItem = document.createElement('a');
-                notificationItem.classList.add('notification-item');
-                
-                if (notification.is_read) {
-                    notificationItem.classList.add('read');
-                    console.log(`Notification ID ${notification.id} is read, applying 'read' class.`); 
-                } else {
-                    notificationItem.classList.add('unread');
-                    console.log(`Notification ID ${notification.id} is unread, applying 'unread' class.`); 
-                }
-                notificationItem.textContent = notification.message || 'New Notification';
-
-                if (notification.url) {
-                    notificationItem.href = notification.url;
-                } else {
-                    notificationItem.href = '#';
-                    notificationItem.style.cursor = 'default';
-                }
-
-                if (!notification.is_read && notification.id) {
-                    console.log(`Notification ID ${notification.id}: Adding click listener to mark as read.`); 
-                    notificationItem.addEventListener('click', async (event) => {
-                        console.log(`Notification ID ${notification.id} clicked.`); 
-                        if (notificationItem.href === '#' || notificationItem.target === '_blank') {
-                            event.preventDefault(); 
-                            console.log(`Notification ID ${notification.id}: Default navigation prevented.`);
-                        }
-                        
-                        if (notificationItem.classList.contains('unread')) {
-                            console.log(`Notification ID ${notification.id}: Marking as read...`); 
-                            let success;
-                            if (notification.group_ids) {                                
-                                success = await markNotificationsAsReadBulk(notification.group_ids);
-                            } else {                                
-                                success = await markNotificationAsRead(notification.id);
-                            }
-                            
-                            if (success) {
-                                console.log(`Notification ID(s) ${notification.id} (or group) successfully marked as read on backend.`); 
-                                await fetchAndDisplayNotifications(true); 
-                                console.log(`Notifications re-fetched and re-displayed after marking ID ${notification.id} (or group) as read.`); 
-                                
-                                if (notification.url && notification.url !== '#' && notificationItem.href === '#') { 
-                                    console.log(`Navigating to URL: ${notification.url}`);
-                                    window.location.href = notification.url;
-                                }
-                            } else {
-                                console.warn(`Notification ID ${notification.id} (or group): Failed to mark as read on backend.`); 
-                            }
-                        }
-                    });
-                }
-                notificationsDropdown.appendChild(notificationItem);
-            });
-        } else {
+        if (!notifications?.length) {
             notificationsDropdown.innerHTML = '<div class="notification-item">No notifications.</div>';
-            console.log('fetchAndDisplayNotifications: No notifications to display.'); 
+            return [];
         }
-        console.log('fetchAndDisplayNotifications: Function finished successfully.'); 
 
+        notifications.forEach(notification => {
+            const notificationItem = document.createElement('a');
+            notificationItem.classList.add('notification-item', notification.is_read ? 'read' : 'unread');
+            notificationItem.textContent = notification.message || 'New Notification';
+            notificationItem.href = notification.url || '#';
+            if (!notification.url) notificationItem.style.cursor = 'default';
+
+            if (!notification.is_read && notification.id) {
+                notificationItem.addEventListener('click', async (event) => {
+                    if (notificationItem.href === '#' || notificationItem.target === '_blank') {
+                        event.preventDefault();
+                    }
+                    
+                    if (notificationItem.classList.contains('unread')) {
+                        const success = notification.group_ids ? 
+                            await markNotificationsAsReadBulk(notification.group_ids) : 
+                            await markNotificationAsRead(notification.id);
+                        
+                        if (success) {                           
+                            await fetchAndDisplayNotifications(true);                            
+                           
+                            updateBadgeBasedOnNewUnread();
+
+                            if (notification.url && notification.url !== '#' && notificationItem.href === '#') { 
+                                window.location.href = notification.url;
+                            }
+                        }
+                    }
+                });
+            }
+            notificationsDropdown.appendChild(notificationItem);
+        });
+        return notifications;
     } catch (error) {
-        console.error('fetchAndDisplayNotifications: Failed to load notifications:', error); 
         notificationsDropdown.innerHTML = '<div class="notification-item">Failed to load notifications.</div>';
+        return [];
     }
 }
 
 async function markNotificationAsRead(notificationId) {
-    console.log(`markNotificationAsRead: Attempting to mark notification ID ${notificationId} as read.`); 
     try {
-        const response = await fetch(`/${notificationId}/read`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({})
-        });
-
-        console.log(`markNotificationAsRead: Received response for ID ${notificationId}:`, response); 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`markNotificationAsRead: Failed for ID ${notificationId}: Status ${response.status} - ${errorText}`); 
-            return false;
-        }
-        console.log(`markNotificationAsRead: Successfully marked ID ${notificationId} as read.`); 
-        return true;
+        const response = await fetch(`/${notificationId}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        return response.ok;
     } catch (error) {
-        console.error(`markNotificationAsRead: Network error for ID ${notificationId}:`, error); 
         return false;
     }
 }
 
 async function markNotificationsAsReadBulk(notificationIds) {
-    console.log(`markNotificationsAsReadBulk: Attempting to mark notification IDs ${notificationIds} as read.`);
     try {
-        const response = await fetch(`/mark_notifications_as_read_bulk`, { 
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(notificationIds) 
-        });
-
-        console.log(`markNotificationsAsReadBulk: Received response for IDs ${notificationIds}:`, response);
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`markNotificationsAsReadBulk: Failed for IDs ${notificationIds}: Status ${response.status} - ${errorText}`);
-            return false;
-        }
-        console.log(`markNotificationsAsReadBulk: Successfully marked IDs ${notificationIds} as read.`);
-        return true;
+        const response = await fetch(`/mark_notifications_as_read_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(notificationIds) });
+        return response.ok;
     } catch (error) {
-        console.error(`markNotificationsAsReadBulk: Network error for IDs ${notificationIds}:`, error);
         return false;
     }
+}
+
+async function updateBadgeBasedOnNewUnread() {
+    if (isNotificationsDropdownOpen) return;
+
+    const unreadBadge = document.getElementById('unread-notifications-badge');
+    try {
+        const notifications = await fetchAndDisplayNotifications(false);
+        let newUnreadCount = 0;
+        const currentUnreadIds = new Set();
+
+        notifications.forEach(notification => {
+            if (!notification.is_read) {
+                (notification.group_ids || [notification.id]).forEach(id => currentUnreadIds.add(id));
+            }
+        });
+
+        currentUnreadIds.forEach(id => {
+            if (!lastSeenUnreadNotificationIds.has(id)) {
+                newUnreadCount++;
+            }
+        });
+
+        if (unreadBadge) {
+            unreadBadge.textContent = newUnreadCount || '';
+            unreadBadge.classList.toggle('hidden', newUnreadCount === 0);
+        }
+    } catch (error) {
+        if (unreadBadge) {
+            unreadBadge.textContent = '';
+            unreadBadge.classList.add('hidden');
+        }
+    }
+}
+
+function startNotificationPolling() {
+    clearInterval(notificationPollingTimer);
+    notificationPollingTimer = setInterval(updateBadgeBasedOnNewUnread, POLLING_INTERVAL_MS);
+    updateBadgeBasedOnNewUnread();
 }
 
 function setupDropdown(buttonSelector, dropdownId) {
     const button = document.querySelector(buttonSelector);
     const dropdown = document.getElementById(dropdownId);
+    const unreadBadge = document.getElementById('unread-notifications-badge'); 
 
-    if (!button || !dropdown) {
-        return;
-    }
+    if (!button || !dropdown) return;
 
     function toggleDropdown() {
         const isExpanded = dropdown.classList.toggle('show');
         button.setAttribute('aria-expanded', isExpanded);
 
-        if (isExpanded) {
-            if (dropdownId === 'notifications-dropdown') {
-                fetchAndDisplayNotifications(true);
+        if (dropdownId === 'notifications-dropdown') {
+            isNotificationsDropdownOpen = isExpanded;
+            if (isExpanded) {
+                if (unreadBadge) {
+                    unreadBadge.textContent = '';
+                    unreadBadge.classList.add('hidden');
+                }
+                fetchAndDisplayNotifications(true).then(notifications => {                   
+                    lastSeenUnreadNotificationIds.clear();
+                    notifications.forEach(notification => {
+                        if (!notification.is_read) {
+                            (notification.group_ids || [notification.id]).forEach(id => lastSeenUnreadNotificationIds.add(id));
+                        }
+                    });
+                    localStorage.setItem('lastSeenUnreadNotificationIds', JSON.stringify(Array.from(lastSeenUnreadNotificationIds)));
+                });
+                clearInterval(notificationPollingTimer);
+            } else {
+                startNotificationPolling();
             }
-            const firstInteractive = dropdown.querySelector('a, button');
-            if (firstInteractive) {
-                firstInteractive.focus();
-            }
-        } else {
-            button.focus();
         }
+        
+        const firstInteractive = dropdown.querySelector('a, button');
+        if (firstInteractive) firstInteractive.focus();
+        else if (!isExpanded) button.focus();
     }
 
     function handleKeyboardNavigation(event) {
@@ -246,19 +234,18 @@ function setupDropdown(buttonSelector, dropdownId) {
         } else if (event.key === 'Escape' && dropdown.classList.contains('show')) {
             toggleDropdown();
         } else if (event.key === 'Tab' && dropdown.classList.contains('show')) {
-            const focusableElements = dropdown.querySelectorAll('a, button');
-            if (focusableElements.length > 0) {
-                const firstFocusable = focusableElements[0];
-                const lastFocusable = focusableElements[focusableElements.length - 1];
-                const currentFocus = document.activeElement;
+            const focusableElements = Array.from(dropdown.querySelectorAll('a, button'));
+            if (!focusableElements.length) return;
 
-                if (event.shiftKey && currentFocus === firstFocusable) {
-                    event.preventDefault();
-                    lastFocusable.focus();
-                } else if (!event.shiftKey && currentFocus === lastFocusable) {
-                    event.preventDefault();
-                    firstFocusable.focus();
-                }
+            const [firstFocusable, lastFocusable] = [focusableElements[0], focusableElements[focusableElements.length - 1]];
+            const currentFocus = document.activeElement;
+
+            if (event.shiftKey && currentFocus === firstFocusable) {
+                event.preventDefault();
+                lastFocusable.focus();
+            } else if (!event.shiftKey && currentFocus === lastFocusable) {
+                event.preventDefault();
+                firstFocusable.focus();
             }
         }
     }
@@ -274,37 +261,18 @@ function initializeSidebarToggle() {
     const mainContent = document.querySelector('.main-content');
     const menuToggle = document.getElementById('menu-toggle');
     const menuText = document.querySelector('.top-bar .menu-text');
-    const navItems = document.querySelectorAll('.sidebar nav ul li a');
+    const navTexts = document.querySelectorAll('.sidebar nav ul li a .nav-text');
     const logo = document.querySelector('.sidebar .logo');
     let isCollapsed = false;
 
     menuToggle.addEventListener('click', () => {
-        if (isCollapsed) {
-            sidebar.classList.remove('collapsed');
-            mainContent.classList.remove('collapsed');
-            menuText.textContent = 'Menu';
-            navItems.forEach(navItem => {
-                const navTextSpan = navItem.querySelector('.nav-text');
-                if (navTextSpan) {
-                    navTextSpan.style.display = 'inline-block';
-                }
-            });
-            logo.style.opacity = 1;
-            logo.style.pointerEvents = 'auto';
-        } else {
-            sidebar.classList.add('collapsed');
-            mainContent.classList.add('collapsed');
-            menuText.textContent = '';
-            navItems.forEach(navItem => {
-                const navTextSpan = navItem.querySelector('.nav-text');
-                if (navTextSpan) {
-                    navTextSpan.style.display = 'none';
-                }
-            });
-            logo.style.opacity = 0;
-            logo.style.pointerEvents = 'none';
-        }
         isCollapsed = !isCollapsed;
+        sidebar.classList.toggle('collapsed', isCollapsed);
+        mainContent.classList.toggle('collapsed', isCollapsed);
+        menuText.textContent = isCollapsed ? '' : 'Menu';
+        logo.style.opacity = isCollapsed ? 0 : 1;
+        logo.style.pointerEvents = isCollapsed ? 'none' : 'auto';
+        navTexts.forEach(span => span.style.display = isCollapsed ? 'none' : 'inline-block');
     });
 }
 
@@ -318,9 +286,25 @@ document.addEventListener('DOMContentLoaded', function() {
             if (relatedButton && !relatedButton.contains(event.target) && !openDropdown.contains(event.target)) {
                 openDropdown.classList.remove('show');
                 relatedButton.setAttribute('aria-expanded', 'false');
+                if (openDropdown.id === 'notifications-dropdown') {
+                    isNotificationsDropdownOpen = false;
+                    startNotificationPolling();
+                }
             }
         });
     });
 
     initializeSidebarToggle();
+
+    const storedIds = localStorage.getItem('lastSeenUnreadNotificationIds');
+    if (storedIds) {
+        try {
+            lastSeenUnreadNotificationIds = new Set(JSON.parse(storedIds));
+        } catch (e) {
+            console.error("Error parsing stored notification IDs:", e);
+            localStorage.removeItem('lastSeenUnreadNotificationIds');
+        }
+    }
+
+    startNotificationPolling();
 });
