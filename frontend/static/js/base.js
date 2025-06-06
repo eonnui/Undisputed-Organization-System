@@ -71,6 +71,10 @@ document.addEventListener('DOMContentLoaded', applyUserTheme);
 
 async function fetchAndDisplayNotifications(includeRead = true) {
     const notificationsDropdown = document.getElementById('notifications-dropdown');
+    if (!notificationsDropdown) {
+        console.error("Notifications dropdown element not found.");
+        return [];
+    }
     notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
 
     try {
@@ -88,12 +92,37 @@ async function fetchAndDisplayNotifications(includeRead = true) {
         const notifications = data.notifications;
 
         notificationsDropdown.innerHTML = '';
+
+        const clearAllContainer = document.createElement('div');
+        clearAllContainer.classList.add('notification-actions');
+        const clearAllBtn = document.createElement('button');
+        clearAllBtn.classList.add('clear-all-btn');
+        clearAllBtn.textContent = 'Clear All';
+        clearAllBtn.onclick = async () => {
+            const confirmClearAll = confirm('Are you sure you want to clear all notifications? This action cannot be undone.');
+            if (confirmClearAll) {
+                if (await clearAllNotifications()) {
+                    await fetchAndDisplayNotifications(true);
+                    updateBadgeBasedOnNewUnread();
+                } else {
+                    alert('Failed to clear all notifications.');
+                }
+            }
+        };
+        clearAllContainer.appendChild(clearAllBtn);
+        notificationsDropdown.appendChild(clearAllContainer);
+
         if (!notifications?.length) {
-            notificationsDropdown.innerHTML = '<div class="notification-item">No notifications.</div>';
+            notificationsDropdown.innerHTML += `
+                <div class="notification-item no-notifications">No notifications.</div>
+            `;
             return [];
         }
 
         notifications.forEach(notification => {
+            const notificationContainer = document.createElement('div');
+            notificationContainer.classList.add('notification-container');
+
             const notificationItem = document.createElement('a');
             notificationItem.classList.add('notification-item', notification.is_read ? 'read' : 'unread');
             notificationItem.textContent = notification.message || 'New Notification';
@@ -105,28 +134,59 @@ async function fetchAndDisplayNotifications(includeRead = true) {
                     if (notificationItem.href === '#' || notificationItem.target === '_blank') {
                         event.preventDefault();
                     }
-                    
+
                     if (notificationItem.classList.contains('unread')) {
-                        const success = notification.group_ids ? 
-                            await markNotificationsAsReadBulk(notification.group_ids) : 
+                        const success = notification.group_ids ?
+                            await markNotificationsAsReadBulk(notification.group_ids) :
                             await markNotificationAsRead(notification.id);
-                        
-                        if (success) {                           
-                            await fetchAndDisplayNotifications(true);                            
-                           
+
+                        if (success) {
+                            await fetchAndDisplayNotifications(true);
                             updateBadgeBasedOnNewUnread();
 
-                            if (notification.url && notification.url !== '#' && notificationItem.href === '#') { 
+                            if (notification.url && notification.url !== '#' && notificationItem.href === '#') {
                                 window.location.href = notification.url;
                             }
                         }
                     }
                 });
             }
-            notificationsDropdown.appendChild(notificationItem);
+
+            const clearButton = document.createElement('button');
+            clearButton.classList.add('clear-notification-btn');
+            clearButton.innerHTML = '&times;';
+            clearButton.title = 'Clear notification';
+            clearButton.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+
+                const confirmClear = confirm('Are you sure you want to clear this notification?');
+                if (confirmClear) {
+                    const notificationIdsToClear = notification.group_ids || [notification.id];
+                    let successCount = 0;
+                    for (const id of notificationIdsToClear) {
+                        if (await clearNotification(id)) {
+                            successCount++;
+                        }
+                    }
+
+                    if (successCount > 0) {
+                        await fetchAndDisplayNotifications(true);
+                        updateBadgeBasedOnNewUnread();
+                    } else {
+                        alert('Failed to clear notification.');
+                    }
+                }
+            });
+
+            notificationContainer.appendChild(notificationItem);
+            notificationContainer.appendChild(clearButton);
+            notificationsDropdown.appendChild(notificationContainer);
         });
+
         return notifications;
     } catch (error) {
+        console.error("Error fetching or displaying notifications:", error);
         notificationsDropdown.innerHTML = '<div class="notification-item">Failed to load notifications.</div>';
         return [];
     }
@@ -137,6 +197,7 @@ async function markNotificationAsRead(notificationId) {
         const response = await fetch(`/${notificationId}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
         return response.ok;
     } catch (error) {
+        console.error("Error marking notification as read:", error);
         return false;
     }
 }
@@ -146,6 +207,32 @@ async function markNotificationsAsReadBulk(notificationIds) {
         const response = await fetch(`/mark_notifications_as_read_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(notificationIds) });
         return response.ok;
     } catch (error) {
+        console.error("Error marking notifications as read in bulk:", error);
+        return false;
+    }
+}
+
+async function clearNotification(notificationId) {
+    try {
+        const response = await fetch(`/notifications/${notificationId}`, { method: 'DELETE' });
+        if (response.status === 204) {
+            return true;
+        } else {
+            console.error(`Failed to clear notification ${notificationId}. Status: ${response.status}`);
+            return false;
+        }
+    } catch (error) {
+        console.error(`Error clearing notification ${notificationId}:`, error);
+        return false;
+    }
+}
+
+async function clearAllNotifications() {
+    try {
+        const response = await fetch(`/notifications/clear_all`, { method: 'DELETE' });
+        return response.ok;
+    } catch (error) {
+        console.error("Error clearing all notifications:", error);
         return false;
     }
 }
@@ -176,6 +263,7 @@ async function updateBadgeBasedOnNewUnread() {
             unreadBadge.classList.toggle('hidden', newUnreadCount === 0);
         }
     } catch (error) {
+        console.error("Error updating unread badge:", error);
         if (unreadBadge) {
             unreadBadge.textContent = '';
             unreadBadge.classList.add('hidden');
@@ -192,7 +280,7 @@ function startNotificationPolling() {
 function setupDropdown(buttonSelector, dropdownId) {
     const button = document.querySelector(buttonSelector);
     const dropdown = document.getElementById(dropdownId);
-    const unreadBadge = document.getElementById('unread-notifications-badge'); 
+    const unreadBadge = document.getElementById('unread-notifications-badge');
 
     if (!button || !dropdown) return;
 
@@ -207,7 +295,7 @@ function setupDropdown(buttonSelector, dropdownId) {
                     unreadBadge.textContent = '';
                     unreadBadge.classList.add('hidden');
                 }
-                fetchAndDisplayNotifications(true).then(notifications => {                   
+                fetchAndDisplayNotifications(true).then(notifications => {
                     lastSeenUnreadNotificationIds.clear();
                     notifications.forEach(notification => {
                         if (!notification.is_read) {
@@ -221,7 +309,7 @@ function setupDropdown(buttonSelector, dropdownId) {
                 startNotificationPolling();
             }
         }
-        
+
         const firstInteractive = dropdown.querySelector('a, button');
         if (firstInteractive) firstInteractive.focus();
         else if (!isExpanded) button.focus();

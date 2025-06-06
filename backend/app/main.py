@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Form, APIRouter, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, or_, extract, desc
 from . import models, schemas, crud
@@ -219,6 +219,52 @@ async def mark_notifications_as_read_bulk(
         logging.error(f"Error marking notifications {notification_ids} as read: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to mark notifications as read: {e}")
 
+@router.delete("/notifications/clear_all", status_code=status.HTTP_200_OK)
+async def clear_all_notifications_route(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> JSONResponse:  
+    user_id = request.session.get("user_id")
+    admin_id = request.session.get("admin_id")
+    organization_id = request.session.get("organization_id")
+
+    dismissed_count = 0
+    if user_id:
+        dismissed_count = crud.mark_all_notifications_as_dismissed_by_owner(db, user_id=user_id)
+    elif admin_id:
+        dismissed_count = crud.mark_all_notifications_as_dismissed_by_owner(db, admin_id=admin_id)
+    elif organization_id:
+        dismissed_count = crud.mark_all_notifications_as_dismissed_by_owner(db, organization_id=organization_id)
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to clear notifications.")
+    
+    return JSONResponse(content={"message": f"Successfully cleared {dismissed_count} notifications."})
+
+@router.delete("/notifications/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def clear_single_notification_route(
+    notification_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Response:
+    user_id = request.session.get("user_id")
+    admin_id = request.session.get("admin_id")
+    organization_id = request.session.get("organization_id") 
+
+    dismissed_notification = None
+    if user_id:
+        dismissed_notification = crud.mark_notification_as_dismissed_by_owner(db, notification_id, user_id=user_id)
+    elif admin_id:     
+        dismissed_notification = crud.mark_notification_as_dismissed_by_owner(db, notification_id, admin_id=admin_id)
+    elif organization_id:       
+        dismissed_notification = crud.mark_notification_as_dismissed_by_owner(db, notification_id, organization_id=organization_id)
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to clear notifications.")
+
+    if not dismissed_notification:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found or unauthorized to dismiss.")
+      
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 # Admin Bulletin Board Post Creation
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
 async def admin_post_bulletin(
@@ -263,7 +309,8 @@ async def admin_post_bulletin(
             user_id=user.id,
             notification_type="bulletin_post",
             entity_id=db_post.post_id,
-            url=f"/BulletinBoard#{db_post.post_id}"
+            url=f"/BulletinBoard#{db_post.post_id}",
+            event_identifier=f"bulletin_post_user_{user.id}_post_{db_post.post_id}"
             )
     db.commit() 
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
@@ -321,7 +368,8 @@ async def admin_create_event(
             user_id=user.id,
             notification_type="event",
             entity_id=db_event.event_id,
-            url=f"/Events#{db_event.event_id}"
+            url=f"/Events#{db_event.event_id}",
+            event_identifier=f"new_event_user_{user.id}_event_{db_event.event_id}"
         )
     db.commit() 
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
@@ -1097,7 +1145,7 @@ async def payment_success(
     if user and user.organization:
         for admin in user.organization.admins:
             message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
-            crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success", entity_id=payment.id, url=f"/admin/payments/total_members?student_number={user.student_number}")
+            crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success", entity_id=payment.id, url=f"/admin/payments/total_members?student_number={user.student_number}",event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
     
     db.commit() 
     logging.info(f"PayMaya payment success: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
@@ -1180,7 +1228,8 @@ async def home(request: Request, db: Session = Depends(get_db)):
                 crud.create_notification(db, f"Past Due Payments: {past_due_user.first_name} {past_due_user.last_name} has past due payment items.",
                                          admin_id=admin.admin_id, organization_id=context["organization_id"],
                                          notification_type="past_due_payments", entity_id=past_due_user.id,
-                                         url=f"/admin/payments/total_members?student_number={past_due_user.student_number}")
+                                         url=f"/admin/payments/total_members?student_number={past_due_user.student_number}",
+                                         event_identifier=f"admin_past_due_user_{past_due_user.id}_admin_{admin.admin_id}")
         db.commit() 
         context.update({"bulletin_posts": latest_bulletin_posts})
         return templates.TemplateResponse("admin_dashboard/home.html", context)
@@ -1194,7 +1243,8 @@ async def home(request: Request, db: Session = Depends(get_db)):
             if user_past_due_items:
                 crud.create_notification(db, "You have past due payment items. Please check your payments page.",
                                          user_id=user_id, organization_id=context["organization_id"],
-                                         notification_type="user_past_due", url="/Payments")
+                                         notification_type="user_past_due", url="/Payments",
+                                         event_identifier=f"user_past_due_alert_user_{user_id}")
         db.commit() 
         temporary_faqs = [
             {"question": "What is the schedule for student orientation?", "answer": "The student orientation will be held on August 20, 2025, from 9:00 AM to 12:00 PM in the main auditorium."},
@@ -1640,7 +1690,8 @@ async def heart_post(
             crud.create_notification(db, f"{user.first_name} {user.last_name} liked your post: '{post.title}'",
                                      organization_id=user_org.id, admin_id=post.admin_id,
                                      notification_type="bulletin_like", entity_id=post_id,
-                                     url=f"/admin/bulletin_board#{post_id}")
+                                     url=f"/admin/bulletin_board#{post_id}",
+                                     event_identifier=f"bulletin_like_admin_{post.admin_id}_post_{post_id}_user_{user.id}")
     elif action == 'unheart':
         if user_like:
             db.delete(user_like)
@@ -1668,7 +1719,8 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
     event.participants.append(user)
     crud.create_notification(db, f"{user.first_name} {user.last_name} joined your event: '{event.title}'", 
                              organization_id=user_org.id, admin_id=event.admin_id, notification_type="event_join",
-                             entity_id=event_id, url=f"/admin/events#{event_id}")
+                             entity_id=event_id, url=f"/admin/events#{event_id}",
+                             event_identifier=f"event_join_admin_{event.admin_id}_event_{event_id}_user_{user.id}")
     db.commit() 
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -1835,7 +1887,8 @@ async def update_profile(
         for admin in db.query(models.Admin).join(models.organization_admins).filter(models.organization_admins.c.organization_id == user.organization_id).all():
             crud.create_notification(db=db, message=f"Member {user.first_name} {user.last_name} has been verified.",
                                      organization_id=user.organization_id, admin_id=admin.admin_id, notification_type="member_verification",
-                                     entity_id=user.id, url=f"/admin/payments/total_members?student_number={user.student_number}")
+                                     entity_id=user.id, url=f"/admin/payments/total_members?student_number={user.student_number}",
+                                     event_identifier=f"member_verified_admin_{admin.admin_id}_user_{user.id}")
 
     db.commit()
     db.refresh(user)

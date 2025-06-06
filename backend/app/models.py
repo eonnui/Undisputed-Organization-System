@@ -165,9 +165,11 @@ class Notification(Base):
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True) 
     
     message = Column(Text, nullable=False)
+    event_identifier = Column(String, nullable=True, index=True) 
     notification_type = Column(String, default="general") 
     entity_id = Column(Integer, nullable=True) 
     is_read = Column(Boolean, default=False)
+    is_dismissed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     read_at = Column(DateTime, nullable=True)
     url = Column(String, nullable=True)

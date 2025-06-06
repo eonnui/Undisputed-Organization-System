@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 from datetime import datetime, date, timezone
 import logging
 from sqlalchemy.sql import exists
+from sqlalchemy import and_
 from typing import Optional, Tuple, List, Dict, Any
 import json
 from collections import defaultdict
@@ -192,25 +193,37 @@ def mark_payment_item_as_paid(db: Session, payment_item_id: int) -> Optional[mod
 def create_notification(
     db: Session,
     message: str,
+    event_identifier: str,
     organization_id: Optional[int] = None,
     user_id: Optional[int] = None,
     admin_id: Optional[int] = None,
     notification_type: Optional[str] = None,
     entity_id: Optional[int] = None,
     url: Optional[str] = None
-) -> models.Notification:
-    existing_notification = db.query(models.Notification).filter_by(
-        message=message,
-        organization_id=organization_id,
-        user_id=user_id,
-        admin_id=admin_id,
-        notification_type=notification_type,
-        entity_id=entity_id,
-        url=url
-    ).first()
+) -> Optional[models.Notification]:
+
+    owner_filters = []
+
+    if user_id is not None:
+        owner_filters.append(models.Notification.user_id == user_id)
+    if admin_id is not None:
+        owner_filters.append(models.Notification.admin_id == admin_id)
+    if organization_id is not None:
+        owner_filters.append(models.Notification.organization_id == organization_id)
+    
+    if not owner_filters:
+        logging.warning(f"Cannot create notification for event '{event_identifier}': No valid owner ID provided.")
+        return None
+
+    all_combined_filters = [models.Notification.event_identifier == event_identifier, and_(*owner_filters)]
+
+    existing_notification = db.query(models.Notification).filter(and_(*all_combined_filters)).first()
+
     if existing_notification:
-        logging.debug(f"Duplicate notification skipped: {message}")
-        return existing_notification
+        if existing_notification.is_dismissed:
+            return None
+        else:
+            return existing_notification
     else:
         db_notification = models.Notification(
             message=message,
@@ -220,11 +233,69 @@ def create_notification(
             notification_type=notification_type,
             entity_id=entity_id,
             url=url,
-            created_at=datetime.now(timezone.utc)
+            event_identifier=event_identifier,
+            is_read=False,
+            is_dismissed=False,
+            created_at=datetime.utcnow()
         )
         db.add(db_notification)
-        logging.info(f"Created notification: {message[:50]}...")
         return db_notification
+
+# Function to mark a single notification as dismissed
+def mark_notification_as_dismissed_by_owner(
+    db: Session,
+    notification_id: int,
+    user_id: Optional[int] = None,
+    admin_id: Optional[int] = None,
+    organization_id: Optional[int] = None
+) -> Optional[models.Notification]:
+    query = db.query(models.Notification).filter(models.Notification.id == notification_id)
+
+    if user_id:
+        query = query.filter(models.Notification.user_id == user_id)
+    elif admin_id:
+        query = query.filter(models.Notification.admin_id == admin_id)
+    elif organization_id:
+        query = query.filter(models.Notification.organization_id == organization_id)
+    else:
+        return None 
+
+    notification_to_dismiss = query.first()
+
+    if notification_to_dismiss:
+        notification_to_dismiss.is_dismissed = True
+        db.add(notification_to_dismiss) 
+        db.commit()
+        db.refresh(notification_to_dismiss)
+        logging.info(f"Notification ID {notification_id} marked as dismissed.")
+        return notification_to_dismiss
+    return None
+
+# Function to mark all notifications for an owner as dismissed
+def mark_all_notifications_as_dismissed_by_owner(
+    db: Session,
+    user_id: Optional[int] = None,
+    admin_id: Optional[int] = None,
+    organization_id: Optional[int] = None
+) -> int:
+    query = db.query(models.Notification).filter(models.Notification.is_dismissed == False) 
+    if user_id:
+        query = query.filter(models.Notification.user_id == user_id)
+    elif admin_id:
+        query = query.filter(models.Notification.admin_id == admin_id)
+    elif organization_id:
+        query = query.filter(models.Notification.organization_id == organization_id)
+    else:
+        return 0   
+    notifications_to_dismiss = query.all()
+    count = 0
+    for notif in notifications_to_dismiss:
+        notif.is_dismissed = True
+        db.add(notif)
+        count += 1    
+    db.commit() 
+    logging.info(f"Marked {count} notifications as dismissed for owner.")
+    return count
 
 # Gets Notification
 def get_notifications(
@@ -235,7 +306,9 @@ def get_notifications(
     include_read: bool = False
 ) -> List[models.Notification]:
     notifications_query = db.query(models.Notification)
-    filters = []
+
+    filters = []    
+    filters.append(models.Notification.is_dismissed == False)
     if user_id:
         user_org_id = db.query(models.User.organization_id).filter(models.User.id == user_id).scalar()
         filters.append(
@@ -264,12 +337,11 @@ def get_notifications(
             models.Notification.user_id.is_(None) &
             models.Notification.admin_id.is_(None)
         )
-    else:
+    else:       
         return []
     
     if not include_read: 
         filters.append(models.Notification.is_read == False)
-
     if filters:
         notifications_query = notifications_query.filter(*filters)
         
@@ -283,7 +355,6 @@ def get_all_notification_configs_as_map(db: Session) -> Dict[str, Dict[str, Any]
             "group_by_type_only": config.group_by_type_only,
             "display_name_plural": config.display_name_plural,
             "message_template_plural": config.message_template_plural,
-            "message_template_individual": config.message_template_individual,
             "entity_model_name": config.entity_model_name,
             "entity_title_attribute": config.entity_title_attribute,
             "context_phrase_template": config.context_phrase_template,
@@ -379,8 +450,6 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
     final_notifications_data = []
     
     for individual_notif in sorted(individual_notifications_always, key=lambda n: n.created_at, reverse=True):
-        config = config_map.get(individual_notif.notification_type)
-        formatted_message = _format_individual_notification_message(individual_notif, config, dynamic_entity_titles)
         try:
             created_at_iso = individual_notif.created_at.isoformat()
         except AttributeError:
@@ -388,7 +457,7 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
             continue
         final_notifications_data.append({
             "id": individual_notif.id,
-            "message": formatted_message,
+            "message": individual_notif.message,  # Use original message
             "url": individual_notif.url,
             "notification_type": individual_notif.notification_type,
             "created_at": created_at_iso,
@@ -402,7 +471,7 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
 
         if not latest_notif:
             logging.warning(f"Skipping empty group for key: {key}")
-            continue        
+            continue         
         
         group_is_read = all(n.is_read for n in notifications_in_group) 
         
@@ -411,8 +480,6 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
         if count < 4:            
             sorted_individual_notifications = sorted(notifications_in_group, key=lambda n: n.created_at, reverse=True)
             for individual_notif in sorted_individual_notifications:
-                config = config_map.get(individual_notif.notification_type)
-                formatted_message = _format_individual_notification_message(individual_notif, config, dynamic_entity_titles)
                 try:
                     created_at_iso = individual_notif.created_at.isoformat()
                 except AttributeError:
@@ -420,7 +487,7 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
                     continue
                 final_notifications_data.append({
                     "id": individual_notif.id,
-                    "message": formatted_message,
+                    "message": individual_notif.message,  
                     "url": individual_notif.url,
                     "notification_type": individual_notif.notification_type,
                     "created_at": created_at_iso,
@@ -435,8 +502,6 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
             except AttributeError:
                 logging.warning(f"Latest notification in group {key} has invalid created_at format: {latest_notif.created_at}. Skipping.")
                 continue
-
-            # Extract IDs of all notifications in this group
             group_notification_ids = [n.id for n in notifications_in_group]
 
             final_notifications_data.append({
@@ -452,33 +517,6 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
     final_notifications_data.sort(key=lambda x: x['created_at'], reverse=True)
     logging.info(f"Finished processing notifications. Total formatted: {len(final_notifications_data)}")
     return final_notifications_data
-
-# Format a single notification message
-def _format_individual_notification_message(
-    notification: models.Notification,
-    config: Optional[Dict[str, Any]],
-    dynamic_entity_titles: Dict[str, str]
-) -> str:
-    stripped_message = notification.message
-    if config and config.get("message_prefix_to_strip"):
-        prefix = config["message_prefix_to_strip"]
-        if stripped_message.startswith(prefix):
-            stripped_message = stripped_message[len(prefix):].strip()
-    entity_title = None
-    if notification.entity_id and config and config.get("entity_model_name"):
-        model_name = config["entity_model_name"]
-        entity_title = dynamic_entity_titles.get(f"{model_name}_{notification.entity_id}")
-    template_vars = {
-        "message": stripped_message,
-        "entity_title": entity_title,
-    }
-    if config and config.get("message_template_individual"):
-        try:
-            return config["message_template_individual"].format(**template_vars)
-        except KeyError:
-            logging.warning(f"Missing template variables for individual notification type '{notification.notification_type}'. Using stripped message.")
-            return stripped_message
-    return stripped_message
 
 # Format a grouped notification message
 def _format_grouped_notification_message(
@@ -549,10 +587,7 @@ def _format_grouped_notification_message(
         return f"{count} {base_display_name}{context_phrase}: {summary_items_with_others}."
 
 # Mark Notifications as Read
-def mark_notification_as_read(db: Session, notification_id: int) -> Optional[models.Notification]:
-    """
-    Marks a specific notification as read.
-    """
+def mark_notification_as_read(db: Session, notification_id: int) -> Optional[models.Notification]:    
     db_notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
     if db_notification:
         db_notification.is_read = True
