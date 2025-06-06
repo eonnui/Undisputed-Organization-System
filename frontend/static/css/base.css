@@ -417,7 +417,7 @@ body {
     text-decoration: none;
     display: block;
     text-align: left;
-    font-size: clamp(0.8rem, 1vw, 1.2rem);
+    font-size: clamp(1rem, 1vw, 1.2rem);
     transition: background-color 0.3s ease;
 }
 

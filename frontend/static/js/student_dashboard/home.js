@@ -1,17 +1,28 @@
-const eventsPageUrl = "/Events"; 
+const eventsPageUrl = "/Events";
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Call function to fetch upcoming events
     fetchUpcomingEvents();
 
+    // Call function to load FAQs
     loadFAQs();
 
+    // Iterate over announcement cards and apply limit
+    let announcementCount = 0;
     document.querySelectorAll('.announcement-card').forEach(card => {
-        card.style.cursor = 'pointer';
-        card.addEventListener('click', function() {
-            window.location.href = this.dataset.url;
-        });
+        if (announcementCount < 3) {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', function() {
+                window.location.href = this.dataset.url;
+            });
+            card.style.display = '';
+            announcementCount++;
+        } else {
+            card.style.display = 'none';
+        }
     });
 
+    // Event listener for upcoming events title
     const upcomingEventsTitle = document.getElementById('upcoming-events-title');
     if (upcomingEventsTitle) {
         upcomingEventsTitle.style.cursor = 'pointer';
@@ -32,10 +43,12 @@ async function fetchUpcomingEvents() {
         }
 
         const events = await response.json();
+        // Display fetched events
         displayEvents(events);
 
     } catch (error) {
         console.error('Error fetching events:', error);
+        // Display fallback events on error
         displayFallbackEvents();
     }
 }
@@ -50,7 +63,8 @@ function displayEvents(events) {
         return;
     }
 
-    events.forEach(event => {
+    // Limit events to display only the first 2
+    events.slice(0, 2).forEach(event => {
         const eventItem = document.createElement('div');
         eventItem.className = 'event-item';
         eventItem.style.cursor = 'pointer';
@@ -73,6 +87,7 @@ function displayEvents(events) {
 }
 
 function displayFallbackEvents() {
+    // Fallback event data
     const fallbackEvents = [
         {
             event_id: 1,
@@ -96,15 +111,18 @@ function displayFallbackEvents() {
             classification: "Community"
         }
     ];
+    // Display fallback events
     displayEvents(fallbackEvents);
 }
 
 function formatDate(dateString) {
+    // Format date string
     const date = new Date(dateString);
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
 }
 
+// FAQ data
 const faqData = [
     {
         question: "What is the schedule for student orientation?",
@@ -132,6 +150,7 @@ function loadFAQs() {
         return;
     }
 
+    // Iterate over FAQ data
     faqData.forEach((faq, index) => {
         const faqItem = document.createElement('div');
         faqItem.className = 'faq-item';
@@ -144,6 +163,7 @@ function loadFAQs() {
 
         faqContainer.appendChild(faqItem);
 
+        // Event listener for FAQ question toggle
         const questionElement = faqItem.querySelector('.faq-question');
         questionElement.addEventListener('click', function() {
             faqItem.classList.toggle('open');
