@@ -85,7 +85,8 @@
       </form>
     </div>
     {% if post.image_path %}
-    <img src="{{ post.image_path }}" alt="{{ post.title }}" class="post-image">
+    <img src="{{ post.image_path }}" alt="{{ post.title }}" 
+    style="max-width: 75%; height: auto; margin-bottom: 10px; border-radius: 5px; display: block; margin: 0 auto;">      
     {% endif %}
     <div class="post-content">{{ post.content | safe }}</div>
     <div class="post-actions">

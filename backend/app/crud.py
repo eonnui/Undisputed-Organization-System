@@ -738,9 +738,7 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-dashboard-title-color"] = darker_theme_hex
     custom_palette["--org-text-light"] = button_text_color
     custom_palette["--org-event-tag-bg"] = lighter_theme_hex
-    custom_palette["--org-event-tag-text"] = dark_theme_hex
-    custom_palette["--org-academic-tag-bg"] = adjust_rgb_lightness(hex_to_rgb(theme_color_hex), 1.4)
-    custom_palette["--org-academic-tag-text"] = darker_theme_hex
+    custom_palette["--org-event-tag-text"] = dark_theme_hex  
     custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
     custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex)
     custom_palette["--org-settings-title-color"] = darker_theme_hex

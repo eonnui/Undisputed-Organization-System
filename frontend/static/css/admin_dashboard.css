@@ -361,11 +361,12 @@ tr:hover td {
 }
 
 /* Bulletin */
-.bulletin-board-container { 
-    max-width: 800px;  
-    margin: 20px 0 20px 20px; 
+.bulletin-board-container {
+    max-width: 1055px;
+    margin: 20px auto;
     background-color: var(--org-bg-color);
     font-family: "DM Sans", sans-serif;
+    text-align: center;
 }
 
 .bulletin-header {
@@ -375,6 +376,7 @@ tr:hover td {
     margin-bottom: 20px;
     text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
     animation: fadeIn 0.5s ease-out;
+    text-align: left;
 }
 
 .create-post-container {
@@ -390,6 +392,9 @@ tr:hover td {
     opacity: 0;
     transform: translateY(10px);
     animation: slideUp 0.5s ease-out 0.2s forwards;
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .create-post-container:hover {
@@ -399,6 +404,7 @@ tr:hover td {
 
 .create-post-header {
     margin-bottom: 1rem;
+    text-align: left;  
 }
 
 .create-post-input {
@@ -415,6 +421,9 @@ tr:hover td {
     opacity: 0;
     transform: translateY(10px);
     animation: slideUp 0.5s ease-out 0.3s forwards;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
 }
 
 .create-post-input:focus {
@@ -427,6 +436,7 @@ tr:hover td {
     margin-top: 1rem;
     display: none;
     animation: slideIn 0.5s ease-in-out;
+    text-align: left; 
 }
 
 .create-post-form-fields label {
@@ -451,6 +461,9 @@ tr:hover td {
     box-sizing: border-box;
     font-family: "DM Sans", sans-serif;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
 }
 
 .create-post-form-fields textarea {
@@ -494,6 +507,9 @@ tr:hover td {
     opacity: 0;
     transform: translateY(10px);
     animation: slideUp 0.5s ease-out 0.4s forwards;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
 }
 
 .create-post-submit-button:hover {
@@ -506,10 +522,10 @@ tr:hover td {
     display: none;
     margin-top: 1rem;
     color: var(--org-primary);
-    text-decoration: none;    
+    text-decoration: none;
     font-size: 0.95rem;
     transition: color 0.15s ease;
-    text-align: center;
+    text-align: center; 
 }
 
 .back-to-bulletin:hover {
@@ -524,7 +540,8 @@ tr:hover td {
     font-weight: 700;
     border-bottom: 2px solid var(--org-border-medium);
     padding-bottom: 0.5rem;
-    animation: slideIn 0.5s ease-in-out;
+    animation: slideIn 0.5s ease-in-out;   
+    text-align: left;
 }
 
 .post-card {
@@ -538,6 +555,10 @@ tr:hover td {
     display: flex;
     flex-direction: column;
     animation: fadeInUp 0.5s ease-in-out;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%; 
+    text-align: left; 
 }
 
 .post-card:hover {
@@ -550,6 +571,7 @@ tr:hover td {
     align-items: center;
     margin-bottom: 1rem;
     justify-content: space-between;
+    text-align: left;
 }
 
 .profile-info {
@@ -574,6 +596,7 @@ tr:hover td {
 
 .post-meta {
     flex: 1;
+    text-align: left;
 }
 
 .post-title {
@@ -606,6 +629,7 @@ tr:hover td {
     margin-bottom: 1.25rem;
     font-size: 1rem;
     white-space: pre-line;
+    text-align: left;
 }
 
 .post-actions {
@@ -613,7 +637,8 @@ tr:hover td {
     align-items: center;
     gap: 1.25rem;
     color: var(--org-post-actions-color);
-    font-size: 1.1rem;
+    font-size: 1.1rem;  
+    width: fit-content; 
 }
 
 .heart-count {
@@ -637,21 +662,13 @@ tr:hover td {
 .delete-button:hover {
     background-color: var(--org-leave-button-hover-bg);
 }
-
-.post-image {
-    max-width: 700px;
-    height: auto;
-    margin-bottom: 0.75rem;
-    border-radius: 0.375rem;
-    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
-}
-
 /* Events */
-.events-page-container {   
-    max-width: 800px;
-    margin: 20px 0 20px 20px;    
+.events-page-container {
+    max-width: 1070px;
+    margin: 20px auto;
     background-color: var(--org-bg-color);
     font-family: "DM Sans", sans-serif;
+    text-align: center;
 }
 
 .events-header {
@@ -661,6 +678,7 @@ tr:hover td {
     margin-bottom: 20px;
     text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
     animation: fadeIn 0.5s ease-out;
+    text-align: left;
 }
 
 .create-event-container {
@@ -674,6 +692,9 @@ tr:hover td {
     flex-direction: column;
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
     transform: translateY(0);
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
 }
 
 .create-event-input {
@@ -686,12 +707,13 @@ tr:hover td {
     color: var(--org-text-primary);
     font-size: 0.95rem;
     cursor: pointer;
-    text-align: left;
+    text-align: left; 
 }
 
 .create-event-form-fields {
     display: none;
     padding-top: 1rem;
+    text-align: left; 
 }
 
 .create-event-form-fields label {
@@ -749,7 +771,7 @@ tr:hover td {
     font-size: 1rem;
     font-weight: 600;
     transition: background-color 0.2s ease;
-    align-self: flex-end;
+    align-self: center; 
     margin-top: 1rem;
 }
 
@@ -763,7 +785,7 @@ tr:hover td {
     color: var(--org-primary);
     text-decoration: none;
     font-size: 0.9rem;
-    text-align: center;
+    text-align: center; 
 }
 
 .back-to-events:hover {
@@ -777,6 +799,7 @@ tr:hover td {
     margin-top: 2rem;
     margin-bottom: 1.5rem;
     text-shadow: 1px 1px 3px rgba(var(--org-shadow-base-rgb), 0.05);
+    text-align: left;
 }
 
 .event-card {
@@ -788,6 +811,10 @@ tr:hover td {
     border: 1px solid var(--org-border-medium);
     display: flex;
     flex-direction: column;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%;
+    text-align: left;
 }
 
 .event-header {
@@ -795,6 +822,7 @@ tr:hover td {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
+    text-align: left; 
 }
 
 .event-title {
@@ -825,6 +853,7 @@ tr:hover td {
     font-size: 0.85rem;
     color: var(--org-text-secondary);
     margin-bottom: 0.8rem;
+    text-align: left; 
 }
 
 .event-meta span {
@@ -836,13 +865,12 @@ tr:hover td {
     color: var(--org-event-description-color);
     line-height: 1.7;
     white-space: pre-line;
+    text-align: left; 
 }
 
 .event-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: auto;
+    justify-content: space-between;        
 }
 
 .participants-count {
@@ -907,7 +935,7 @@ tr:hover td {
 .payments-page-container {
     max-width: 1200px;
     margin: 30px auto;
-    background-color: var(--org-payments-container-bg);
+    background-color: var(--org-text-inverse);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.15);
@@ -1004,7 +1032,7 @@ tr:hover td {
     justify-content: space-between;
     padding: 10px 16px;
     font-size: 1.05rem;
-    background-color: var(--org-bg-color);
+    background-color: var(--org-text-inverse);
     border: 1px solid var(--org-border-medium);
     border-radius: 6px;
     cursor: pointer;
