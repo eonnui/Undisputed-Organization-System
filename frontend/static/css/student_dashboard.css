@@ -898,14 +898,14 @@ h2 {
 .view-history-button {
     background-color: var(--org-button-bg);
     color: var(--org-button-text);
-    padding: 10px 13.9px;
-    border-radius: 8px;
+    padding: 9.7px 10.8px;
+    border-radius: 10px;
     text-decoration: none;
     font-weight: bold;
     transition: background-color 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     float: right;
-    width: 59px;   
+    width: 53px;   
     height: 53px;       
     line-height: 20px;       
 }

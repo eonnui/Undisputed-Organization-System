@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Form Elements
     const studentInfoForm = document.getElementById('studentInfoForm');
     const clearStudentInfoFormBtn = document.getElementById('clearStudentInfoForm');
     const registrationStatusDisplay = document.getElementById('registrationStatus');
@@ -10,13 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const registrationFormOnly = document.getElementById('registrationFormOnly');
     const clearRegistrationFormOnlyBtn = document.getElementById('clearRegistrationFormOnly');
 
-    // Initial Registration Status
     function setRegistrationStatus(status) {
         registrationStatusDisplay.textContent = status === 'Verified' ? 'Verified' : 'Not Verified';
         registrationStatusDisplay.className = status === 'Verified' ? 'verified' : 'unverified';
     }
 
-    // Editable Field Logic
     function makeFieldEditable(displayElementId, inputElementId) {
         const displayElement = document.getElementById(displayElementId);
         const inputElement = document.getElementById(inputElementId);
@@ -34,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Error Handling
     function showError(inputElementId, message) {
         const errorElement = document.getElementById(inputElementId + 'Error');
         const smallTextElement = document.getElementById(inputElementId + 'SmallText'); 
@@ -61,13 +57,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Form Reset Logic
     function resetForm(form) {
         form.querySelectorAll('input, select').forEach(input => {
             if (input.type === 'file') input.value = '';
             else if (input.type !== 'button') input.value = '';
         });
         form.querySelectorAll('.error-message').forEach(error => error.textContent = '');
+        form.querySelectorAll('[id$="SmallText"]').forEach(smallText => {
+            smallText.style.display = 'none';
+            smallText.style.color = 'var(--org-text-secondary)';
+        });
+
 
         const displayInputPairs = [
             ['birthDateDisplay', 'birthDate'], ['genderDisplay', 'gender'],
@@ -86,17 +86,22 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelectorAll('input[type="file"]').forEach(fileInput => fileInput.value = '');
     }
 
-    // Form Submission Handlers
     function handleFormSubmit(event, formId, successCallback, errorCallback) {
         event.preventDefault();
         const form = document.getElementById(formId);
         if (!form) return;
 
         let hasErrors = false;
+        form.querySelectorAll('.error-message').forEach(error => error.textContent = '');
+        form.querySelectorAll('[id$="SmallText"]').forEach(smallText => {
+            smallText.style.display = 'none';
+            smallText.style.color = 'var(--org-text-secondary)';
+        });
+
+
         const formData = new FormData(form);
         console.log(`Form ID: ${formId}`);
 
-        // Validation
         if (formId === 'studentInfoForm') {
             const birthDateInput = document.getElementById('birthDate');
             const genderInput = document.getElementById('gender');
@@ -118,15 +123,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const confirmPasswordInput = document.getElementById('confirmPassword');
 
             if (!currentPasswordInput.value) { showError('currentPassword', 'Please enter your current password.'); hasErrors = true; } else { clearError('currentPassword'); }
-            if (newPasswordInput.value && newPasswordInput.value.length < 8) { showError('newPassword', 'New password must be at least 8 characters long.'); hasErrors = true; } else { clearError('newPassword'); }
-            if (newPasswordInput.value && confirmPasswordInput.value !== newPasswordInput.value) { showError('confirmPassword', 'Passwords do not match.'); hasErrors = true; } else { clearError('confirmPassword'); }
+            
+            if (newPasswordInput.value) {
+                if (newPasswordInput.value.length < 8) { 
+                    showError('newPassword', 'New password must be at least 8 characters long.'); 
+                    hasErrors = true; 
+                } else if (!/[A-Z]/.test(newPasswordInput.value)) {
+                    showError('newPassword', 'New password must contain at least one capital letter.');
+                    hasErrors = true;
+                } else if (!/[0-9]/.test(newPasswordInput.value)) {
+                    showError('newPassword', 'New password must contain at least one number.');
+                    hasErrors = true;
+                } else { 
+                    clearError('newPassword'); 
+                }
+            }
+            
+            if (newPasswordInput.value && confirmPasswordInput.value !== newPasswordInput.value) { 
+                showError('confirmPassword', 'Passwords do not match.'); 
+                hasErrors = true; 
+            } else { 
+                clearError('confirmPassword'); 
+            }
+
         } else if (formId === 'registrationFormOnly') {
             const registrationFormInput = document.getElementById('registrationFormOnlyUpload');
             if (registrationFormInput.files.length === 0) { showError('registrationFormOnly', 'Please upload your registration form.'); hasErrors = true; } else { clearError('registrationFormOnly'); }
         }
 
         if (!hasErrors) {
-            let fetchUrl = '';         
+            let fetchUrl = '';
             if (formId === 'securityForm') {
                 fetchUrl = '/api/auth/change-password';
             } else {
@@ -136,10 +162,35 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch(fetchUrl, { method: 'POST', body: formData })
                 .then(response => {
                     console.log("Fetch Response:", response);
-                    if (!response.ok) return response.json().then(errorData => {
-                        console.error("Fetch Error Data:", errorData);
-                        throw new Error(errorData.detail || `Failed to update ${formId.slice(0, -4).toLowerCase()}`);
-                    });
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            console.error("Fetch Error Data:", errorData);
+                            if (formId === 'securityForm' && errorData.detail) {
+                                if (Array.isArray(errorData.detail)) {
+                                    errorData.detail.forEach(err => {
+                                        const fieldName = err.loc[1];
+                                        const errorMessage = err.msg;
+                                        if (fieldName === 'current_password') {
+                                            showError('currentPassword', errorMessage);
+                                        } else if (fieldName === 'new_password') {
+                                            showError('newPassword', errorMessage);
+                                        } else if (fieldName === 'confirm_password') {
+                                            showError('confirmPassword', errorMessage);
+                                        } else {
+                                            alert(errorMessage);
+                                        }
+                                    });
+                                } else if (typeof errorData.detail === 'string') {
+                                    alert(errorData.detail);
+                                } else {
+                                    alert("An unexpected error occurred during password change.");
+                                }
+                            } else {
+                                throw new Error(errorData.detail || `Failed to update ${formId.slice(0, -4).toLowerCase()}`);
+                            }
+                            throw new Error("Validation errors or other server errors occurred.");
+                        });
+                    }
                     return response.json();
                 })
                 .then(data => {
@@ -148,12 +199,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .catch(error => {
                     console.error("Fetch Error:", error);
-                    errorCallback(error);
+                    if (formId !== 'securityForm' || !error.message.includes("Validation errors or other server errors occurred.")) {
+                         errorCallback(error);
+                    }
                 });
         }
     }
 
-    // Success Callbacks
     function handleStudentInfoSuccess(data, form) {
         alert('Profile information updated successfully!');
         resetForm(form);
@@ -187,12 +239,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStudentInfoDisplay(data.user);
     }
 
-    // Error Callback
     function handleError(error) {
         alert(error.message);
     }
 
-    // Update Display and Input Fields
     const fieldConfigs = [
         { id: 'studentNumber', displayId: 'studentNumberDisplay', prop: 'student_number' },
         { id: 'firstName', displayId: 'firstNameDisplay', prop: 'first_name' },
@@ -222,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event Listeners for editable fields
     const editBirthDateBtn = document.getElementById('editBirthDate');
     const editGenderBtn = document.getElementById('editGender');
     const editGuardianNameBtn = document.getElementById('editGuardianName');
@@ -235,13 +284,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editGuardianContactBtn) editGuardianContactBtn.addEventListener('click', () => makeFieldEditable('guardianContactDisplay', 'guardianContact'));
     if (editRegistrationFormBtn) editRegistrationFormBtn.addEventListener('click', () => makeFieldEditable('registrationFormDisplay', 'registrationFormUpload'));
 
-    // Event Listeners for form submissions
     if (studentInfoForm) studentInfoForm.addEventListener('submit', (event) => handleFormSubmit(event, 'studentInfoForm', handleStudentInfoSuccess, handleError));
     if (profilePictureForm) profilePictureForm.addEventListener('submit', (event) => handleFormSubmit(event, 'profilePictureForm', handleProfilePictureSuccess, handleError));
     if (securityForm) securityForm.addEventListener('submit', (event) => handleFormSubmit(event, 'securityForm', handleSecuritySuccess, handleError));
     if (registrationFormOnly) registrationFormOnly.addEventListener('submit', (event) => handleFormSubmit(event, 'registrationFormOnly', handleRegistrationFormOnlySuccess, handleError));
 
-    // Clear Form Buttons
     if (clearStudentInfoFormBtn) clearStudentInfoFormBtn.addEventListener('click', () => resetForm(studentInfoForm));
     if (clearProfilePictureBtn) clearProfilePictureBtn.addEventListener('click', () => resetForm(profilePictureForm));
     if (clearSecurityFormBtn) clearSecurityFormBtn.addEventListener('click', () => resetForm(securityForm));
