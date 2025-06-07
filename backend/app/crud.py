@@ -749,3 +749,9 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-highlight"] = very_light_bg_hex
     custom_palette["--org-primary"] = theme_color_hex
     return json.dumps(custom_palette, indent=2)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:   
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:   
+    return pwd_context.hash(password)

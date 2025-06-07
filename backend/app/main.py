@@ -1896,3 +1896,34 @@ async def update_profile(
     db.refresh(user)
     user.verification_status = "Verified" if user.is_verified else "Not Verified"
     return {"message": "Profile updated successfully", "user": user}
+
+@app.post("/api/auth/change-password")
+async def change_password(
+    request: Request,
+    current_password: str = Form(..., description="The user's current password"),
+    new_password: str = Form(..., description="The new password to set"),
+    confirm_password: str = Form(..., description="Confirmation of the new password"),
+    db: Session = Depends(get_db),
+):
+    user, _ = get_current_user_with_org(request, db)
+    if not crud.verify_password(current_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect current password.",
+            headers={"WWW-Authenticate": "Bearer"}, 
+        )        
+    if len(new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 8 characters long.",
+        ) 
+    if new_password != confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New passwords do not match.",
+        )    
+    user.hashed_password = crud.get_password_hash(new_password)
+    db.add(user) 
+    db.commit() 
+    db.refresh(user)  
+    return {"message": "Password updated successfully!"}

@@ -126,7 +126,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!hasErrors) {
-            fetch('/api/profile/update/', { method: 'POST', body: formData })
+            let fetchUrl = '';         
+            if (formId === 'securityForm') {
+                fetchUrl = '/api/auth/change-password';
+            } else {
+                fetchUrl = '/api/profile/update/';
+            }
+
+            fetch(fetchUrl, { method: 'POST', body: formData })
                 .then(response => {
                     console.log("Fetch Response:", response);
                     if (!response.ok) return response.json().then(errorData => {
@@ -241,4 +248,3 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearRegistrationFormOnlyBtn) clearRegistrationFormOnlyBtn.addEventListener('click', () => resetForm(registrationFormOnly));
     
 });
-
