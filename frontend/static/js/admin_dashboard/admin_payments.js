@@ -427,7 +427,7 @@
                         row.insertCell().textContent = `₱${expense.amount.toFixed(2)}`;
                         row.insertCell().textContent = expense.category || 'N/A';
                         row.insertCell().textContent = expense.incurred_at;
-                        row.insertCell().textContent = expense.admin ? `${expense.admin.name} (${expense.admin.position || 'Admin'})` : 'Unknown Admin';
+                        row.insertCell().textContent = expense.admin ? `${expense.admin.first_name} ${expense.admin.last_name} (${expense.admin.position || 'Admin'})` : 'Unknown Admin';
                         totalExpenses += expense.amount;
                     });
                     totalExpensesSumElement.textContent = `₱${totalExpenses.toFixed(2)}`;

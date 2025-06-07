@@ -50,11 +50,18 @@
   <div class="post-card">
     <div class="post-header">
       <div class="profile-info">
+        {# Corrected: Display admin's initial in profile-image #}
         <div class="profile-image">
-          {% if post.admin and post.admin.name %}
-          <div
+          {% if post.admin and post.admin.first_name %}
+          <div class="initial-circle"
             style="width: 100%; height: 100%; border-radius: 50%; background-color: #bbb; display: flex; justify-content: center; align-items: center; font-size: 1.2em; color: white;">
-            {{ post.admin.name[0]|upper }}
+            {{ post.admin.first_name[0]|upper }}
+          </div>
+          {% else %}
+          {# Fallback if no admin or first name exists for initial #}
+          <div class="initial-circle" 
+            style="width: 100%; height: 100%; border-radius: 50%; background-color: #ccc; display: flex; justify-content: center; align-items: center; font-size: 1.2em; color: #666;">
+            ?
           </div>
           {% endif %}
         </div>
@@ -64,7 +71,8 @@
           {% endif %}
           </div>
           <div class="post-details">
-            <div>by {% if post.admin %} {{ post.admin.name }} {% else %}
+            {# Corrected: Display only admin's first name #}
+            <div>by {% if post.admin and post.admin.first_name %} {{ post.admin.first_name }} {% else %}
             Unknown Admin {% endif %}
             </div>
             <div class="post-date">date posted: {{ post.created_at.strftime('%m/%d/%Y') }}</div>

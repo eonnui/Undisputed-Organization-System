@@ -778,10 +778,12 @@ async def payments_total_members(
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
 async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
-    posts = db.query(models.BulletinBoard).join(models.Admin).join(models.Admin.organizations).filter(
+    posts = db.query(models.BulletinBoard).options(
+        joinedload(models.BulletinBoard.admin) 
+    ).join(models.Admin).join(models.Admin.organizations).filter(
         models.Organization.id == admin_org.id
     ).order_by(models.BulletinBoard.created_at.desc()).all()
-    
+
     context = await get_base_template_context(request, db)
     context.update({"posts": posts})
     return templates.TemplateResponse("admin_dashboard/admin_bulletin_board.html", context)
