@@ -272,13 +272,6 @@ button:hover {
     opacity: 0.7; 
 }
 
-.form-switch {
-    text-align: center;
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
 .link-button {
     background: none;
     border: none;
@@ -308,4 +301,47 @@ button:hover {
     font-size: 0.75rem;
     color: var(--text-secondary)!important;
     margin-top: 0.25rem;
+}
+
+.registration-options {
+    display: flex;
+    justify-content: center; /* Centers the items horizontally */
+    align-items: center; /* Vertically aligns them */
+    gap: 0.5rem; /* Space between the buttons and the divider */
+    margin-top: 0.5rem; /* Space below the "Register" text */
+}
+
+/* Modify the divider within the new container */
+.registration-options .divider {
+    display: flex; /* Make it a flex container to center the '|' */
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.25rem; /* Add some padding around the divider */
+}
+
+.registration-options .divider p {
+    margin: 0; /* Remove default paragraph margin */
+    color: var(--text-secondary); /* Ensure divider color matches other text */
+    font-size: 0.9rem; /* Match font size if needed */
+}
+
+/* Keep the existing form-switch styles, but they might be less critical for layout now */
+.form-switch {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Ensure the link-buttons are styled correctly within this new layout */
+.form-switch .link-button {
+    /* Existing link-button styles */
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0;
+    transition: color var(--animation-duration) ease, opacity 0.3s ease;
 }

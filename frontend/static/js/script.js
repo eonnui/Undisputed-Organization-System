@@ -74,16 +74,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button type="submit" class="login-button">Login</button>
                     <button type="button" class="forgot-password" id="toggle-to-forgot-password">Forgot Password?</button>
                     <div class="form-switch">
-                        <p>Don't have an account?</p>
-                        <button type="button" class="link-button" id="toggle-to-signup">
-                            Register here
-                        </button>
-                    </div>
-                    <div class="form-switch" style="margin-top: 10px;">
-                        <p>Are you an admin?</p>
-                        <button type="button" class="link-button" id="toggle-to-admin-signup">
-                            Admin Registration
-                        </button>
+                        <p>REGISTER</p>
+                        <div class="registration-options">
+                            <button type="button" class="link-button" id="toggle-to-signup">
+                                As a student
+                            </button>
+                            <div class="divider">
+                                <p> | </p>
+                            </div>
+                            <button type="button" class="link-button" id="toggle-to-admin-signup">
+                                As an admin
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
