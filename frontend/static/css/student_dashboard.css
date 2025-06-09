@@ -279,6 +279,17 @@ body {margin: 0; padding: 0;}
     width: 100%; 
 }
 
+.bulletin-container {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-self: center; 
+}
+
 .bulletin-header {
     font-size: 2.2em;
     font-weight: bold;
@@ -291,6 +302,31 @@ body {margin: 0; padding: 0;}
     max-width: 700px; 
     margin-left: 0; 
     margin-right: auto; 
+}
+
+.post-card {
+    background-color: transparent; /* No background color, or use a very subtle one if preferred */
+    border-radius: 0; /* No rounded corners */
+    box-shadow: none; /* No box shadow */
+    padding: 15px 0; /* Adjust padding: vertical padding to separate posts, no horizontal padding */
+    border: none; /* No border around the post itself */
+    border-bottom: 1px solid white; /* THIS IS THE CHANGE: Add a white bottom border for separation */
+    transition: none; /* Remove transform and box-shadow transitions */
+    animation: none; /* Remove animation if you don't want it */
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Reduce gap between elements within the post */
+    width: 100%;
+}
+
+.post-card:last-child {
+    border-bottom: none; /* No border for the last post */
+}
+
+.post-card:hover {
+    background-color: var(--org-hover-bg); /* Add a subtle background color on hover */
+    transform: none; /* No transform on hover */
+    box-shadow: none; /* No box-shadow on hover */
 }
 
 .post-header {

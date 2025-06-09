@@ -89,7 +89,7 @@ body {
 }
 
 .sidebar .logo {
-    margin-bottom: -.1vw;
+    margin-bottom: 2.2vw;
     width: 100%;
     display: flex; 
     gap: 10px;          
@@ -122,7 +122,7 @@ body {
 .sidebar nav ul {
     list-style: none;
     padding: 0;
-    margin: 0;
+    margin-top: 2vw;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -160,8 +160,7 @@ body {
 .sidebar nav ul li a i {
     margin-right: 0.69vw;
     font-size: 1.4em;
-    transition: margin-right var(--sidebar-transition-duration) ease,
-        transform var(--crazy-animation-duration) ease;
+    transition: margin-right var(--sidebar-transition-duration) ease;
     color: var(--org-nav-icon-color);
     opacity: 0.8;
 }
@@ -171,10 +170,9 @@ body {
     margin-right: 0;
 }
 
-.sidebar nav ul li:hover {
-    background-color: var(--org-nav-item-hover-bg);
+.sidebar nav ul li:hover {   
     transform: scale(1.03);
-    border-left: 0.2vw solid var(--org-nav-hover-accent-color);
+    border-radius: 8px;
 }
 
 .sidebar nav ul li:hover a {
@@ -200,6 +198,14 @@ body {
     min-height: 3vw !important;
     box-sizing: border-box !important;
    
+}
+
+.sidebar.collapsed nav ul li.selected {    
+    width: 27px !important; 
+    border-left: 0.2vw solid var(--org-nav-selected-border-color)  !important; 
+    justify-content: center;     
+    min-height: auto !important; 
+    background-color: var(--org-nav-item-hover-bg) !important;     
 }
 
 @keyframes spin {
@@ -556,5 +562,11 @@ body {
 
 .sidebar-divider {
     border-top: 1px solid #e0e0e0;
-    margin: 20px 0;
+ 
 }
+
+.sidebar.collapsed .sidebar-divider {
+    border-top: none;
+    margin: 0;
+}
+
