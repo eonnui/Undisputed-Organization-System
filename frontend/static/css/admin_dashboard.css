@@ -1103,7 +1103,7 @@ tr:hover td {
     color: var(--org-button-text);
     text-decoration: none;
     transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
-    background-color: var(--org-primary-hover);
+    background-color: var(--org-table-header-bg-payments);
     padding: 10px 20px;
     border-radius: 28px;
     font-size: 1rem;

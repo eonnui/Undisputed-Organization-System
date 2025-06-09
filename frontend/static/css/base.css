@@ -4,11 +4,9 @@
     padding: 0;
 }
 
-/* Theme variables and dimensions */
 :root {
     font-size: 100%;
-
-    --sidebar-width: 16vw;
+    --sidebar-width: 14vw;
     --sidebar-collapsed-width: 4.68vw;
     --sidebar-transition-duration: 0.3s;
     --crazy-animation-duration: 0.7s;
@@ -22,7 +20,7 @@
     --org-menu-button-hover-bg: #333;
     --org-nav-item-bg: #2d2d2d;
     --org-nav-item-hover-bg: #404040;
-    --org-nav-item-selected-bg: #4a4a4a;
+    --org-nav-item-selected-bg: #4a4a4a; 
     --org-nav-icon-color: #ffffff;
     --org-nav-hover-accent-color: #ffffff;
     --org-nav-selected-border-color: #ffffff;
@@ -32,12 +30,7 @@
     --org-dropdown-border: #333;
     --org-dropdown-item-hover-bg: #404040;
     --org-border-light: #333;
-    --org-border-medium: #666;
-    --org-focus-border: #0066cc;
-    --org-error: #ff4444;
-    --scrollbar-color: #666;
-    --organization-theme-color: var(--org-button-bg, #0066cc);
-    --org-button-bg: #0066cc;
+    --org-border-medium: #666;      
 }
 
 body {
@@ -47,7 +40,6 @@ body {
     display: flex;
 }
 
-/* Sidebar Styles */
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--org-sidebar-bg-color);
@@ -97,9 +89,11 @@ body {
 }
 
 .sidebar .logo {
-    margin-bottom: 1.38vw;
+    margin-bottom: -.1vw;
     width: 100%;
-    display: flex;
+    display: flex; 
+    gap: 10px;          
+    padding: 2px; 
     justify-content: center;
     transition: opacity var(--sidebar-transition-duration) ease,
         transform var(--sidebar-transition-duration) ease;
@@ -112,12 +106,11 @@ body {
 }
 
 .sidebar .logo img {
-    border-radius: 50%;
+    border-radius: 100%;
     object-fit: cover;
-    width: 10.41vw;
-    height: 10.41vw;
-    border: 0.27vw solid var(--org-logo-border-color);
-    box-shadow: 0 0.13vw 0.34vw rgba(0, 0, 0, 0.2);
+    height: 70px; 
+    width: auto;
+    flex-shrink: 0; 
 }
 
 .sidebar nav {
@@ -135,19 +128,6 @@ body {
     width: 100%;
 }
 
-.sidebar nav ul li {
-    margin-bottom: 1.04vw;
-    background-color: var(--org-nav-item-bg);
-    transition: background-color 0.3s ease,
-        transform var(--crazy-animation-duration) ease,
-        opacity 0.3s ease;
-    position: relative;
-    width: 100%;
-    box-shadow: 0 0.13vw 0.34vw rgba(0, 0, 0, 0.2);
-    border-radius: 0.55vw;
-    opacity: 1;
-}
-
 .sidebar nav ul li.fade-out {
     opacity: 0;
     transform: scale(0.95);
@@ -162,7 +142,7 @@ body {
     align-items: center;
     text-decoration: none;
     color: var(--org-text-inverse);
-    padding: 0.83vw 1.04vw;
+    padding: 0.83vw .04vw;
     width: 100%;
     text-align: left;
     font-size: clamp(0.9rem, 1.25vw, 1.3rem);
@@ -204,22 +184,28 @@ body {
 
 .sidebar nav ul li:hover i,
 .sidebar nav ul li:hover .material-symbols-outlined {
-    transform: rotate(360deg) scale(1.2);
-    box-shadow: 0 0 0.69vw var(--org-nav-hover-accent-color);
+    transform: rotate(360deg) scale(1.2); 
 }
 
 .sidebar nav ul li.selected {
-    background-color: var(--org-nav-item-selected-bg);
+    background-color: var(--org-nav-item-selected-bg) !important;
     font-weight: 500;
-    animation: spin 1s infinite, pulse 2s infinite alternate;
-    border-left: 0.2vw solid var(--org-nav-selected-border-color);
+    border-left: 0.2vw solid var(--org-nav-selected-border-color) !important;
+    border-radius: 6px;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 3vw !important;
+    box-sizing: border-box !important;
+   
 }
 
 @keyframes spin {
     from {
         transform: rotate(0deg);
     }
-
     to {
         transform: rotate(360deg);
     }
@@ -229,7 +215,6 @@ body {
     from {
         opacity: 0.7;
     }
-
     to {
         opacity: 1;
     }
@@ -242,14 +227,13 @@ body {
 .sidebar nav ul li.selected i,
 .sidebar nav ul li.selected .material-symbols-outlined {
     color: var(--org-text-inverse);
-    box-shadow: 0 0 0.34vw rgba(255, 255, 255, 0.5);
+    
 }
 
 .sidebar nav ul li:last-child {
     margin-bottom: 2.08vw;
 }
 
-/* Main Content Styles */
 .main-content {
     flex-grow: 1;
     display: flex;
@@ -263,7 +247,6 @@ body {
     margin-left: var(--sidebar-collapsed-width);
 }
 
-/* Top Bar Styles */
 .top-bar {
     background-color: var(--org-text-inverse);
     padding: 1.04vw 1.38vw;
@@ -273,7 +256,6 @@ body {
     border-bottom: 0.069vw solid var(--org-top-bar-border-color);
     height: 4.86vw;
     box-shadow: 0 0.13vw 0.34vw rgba(0, 0, 0, 0.08);
-
     position: fixed;
     top: 0;
     left: var(--sidebar-width);
@@ -375,7 +357,6 @@ body {
     color: var(--org-text-primary);
 }
 
-/* Dropdown Styles */
 .dropdown-content {
     display: none;
     position: absolute;
@@ -396,7 +377,6 @@ body {
         opacity: 0;
         transform: translateY(-0.69vw);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -476,19 +456,19 @@ body {
 #unread-notifications-badge { 
     position: absolute;
     top: 5px;   
-    right: 10px;  
+    right: 10px;    
     min-width: 20px; 
-    height: 20px;    
-    border-radius: 50%;    
+    height: 20px;       
+    border-radius: 50%;     
     background-color: #f44336;
     color: white; 
     font-size: 0.75em; 
     font-weight: bold; 
-    text-align: center;    
+    text-align: center;     
     display: flex;
     align-items: center;
-    justify-content: center;   
-    z-index: 10;  
+    justify-content: center;    
+    z-index: 10;    
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
     transform: scale(1); 
 }
@@ -509,7 +489,7 @@ body {
 
 .notification-actions {
     display: flex; 
-    justify-content: flex-end;    
+    justify-content: flex-end;      
     padding: 2px; 
     border-bottom: .5px solid #eee; 
 }
@@ -528,7 +508,6 @@ body {
     color: #333;
 }
 
-/* Content Styles */
 .content {
     padding: 1.38vw;
     flex-grow: 1;
@@ -543,7 +522,6 @@ body {
     font-size: clamp(0.7rem, 0.9vw, 1rem);
 }
 
-/* Form Styles */
 .form-group input {
     width: 100%;
     padding: 0.83vw;
@@ -569,4 +547,14 @@ body {
     color: var(--org-error);
     margin-top: 0.34vw;
     font-size: clamp(0.75rem, 0.8vw, 0.9rem);
+}
+
+.ph {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.sidebar-divider {
+    border-top: 1px solid #e0e0e0;
+    margin: 20px 0;
 }

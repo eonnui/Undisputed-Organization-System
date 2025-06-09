@@ -137,7 +137,6 @@ async def get_base_template_context(request: Request, db: Session) -> Dict[str, 
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
     user_role = request.session.get("user_role")
-
     logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     organization_id = None
 
@@ -148,19 +147,21 @@ async def get_base_template_context(request: Request, db: Session) -> Dict[str, 
             organization_id = organization.id
             if organization.logo_url:
                 logo_url = organization.logo_url
+                
     elif user_role == "user" and user_id:
         user = db.query(models.User).options(joinedload(models.User.organization)).filter(models.User.id == user_id).first()
         if user and user.organization:
-            organization_id = user.organization.id
-            if user.organization.logo_url:
-                logo_url = user.organization.logo_url
+            organization = user.organization
+            organization_id = organization.id
+            if organization.logo_url:
+                logo_url = organization.logo_url
 
     return {
         "request": request,
         "year": str(datetime.now().year),
         "logo_url": logo_url,
         "organization_id": organization_id,
-        "current_user_id": user_id 
+        "current_user_id": user_id
     }
 
 # Router for API endpoints

@@ -630,11 +630,10 @@ def generate_custom_palette(theme_color_hex: str) -> str:
         "--org-error": "#F44336", "--org-warning": "#FFC107", "--org-info": "#2196F3",
         "--org-bg-secondary": "#FFFFFF", "--org-bg-dark": "#1a1a1a", "--org-border-light": "transparent",
         "--org-border-medium": "transparent", "--org-nav-item-bg": "transparent",
-        "--org-nav-item-hover-bg": "rgba(154, 20, 21, 0.05)", "--org-nav-item-selected-bg": "rgba(154, 20, 21, 0.1)",
+        "--org-nav-item-hover-bg": "rgba(154, 20, 21, 0.05)", "--org-nav-item-selected-bg":"#a83232", "--org-nav-selected-border-color": "#a83232",
         "--org-sidebar-bg-color": "#a83232", "--org-sidebar-border-color": "transparent",
         "--org-logo-border-color": "transparent", "--org-nav-icon-color": "#FFFFFF",
-        "--org-nav-hover-accent-color": "#fdf5f5", "--org-nav-selected-border-color": "transparent",
-        "--org-top-bar-border-color": "transparent", "--org-menu-button-hover-bg": "rgba(0, 0, 0, 0.05)",
+        "--org-nav-hover-accent-color": "#fdf5f5", "--org-top-bar-border-color": "transparent", "--org-menu-button-hover-bg": "rgba(0, 0, 0, 0.05)",
         "--org-profile-pic-border-color": "transparent", "--org-dropdown-bg": "#FFFFFF",
         "--org-dropdown-border": "transparent", "--org-dropdown-item-hover-bg": "#f5f5f5",
         "--org-dashboard-bg-color": "#fdf5f5", "--org-dashboard-title-color": "#5c0b0b",
@@ -696,6 +695,8 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     darker_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.5)
     light_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.2)
     lighter_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.6)
+    mid_dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.85) 
+    mid_dark_theme_hex = rgb_to_hex(mid_dark_theme_rgb)
     dark_theme_hex = rgb_to_hex(dark_theme_rgb)
     darker_theme_hex = rgb_to_hex(darker_theme_rgb)
     light_theme_hex = rgb_to_hex(light_theme_rgb)
@@ -730,9 +731,10 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-primary-light"] = lighter_theme_hex
     custom_palette["--org-dashboard-accent-primary"] = light_theme_hex
     custom_palette["--org-login-bg"] = darker_theme_hex
-    custom_palette["--org-sidebar-bg-color"] = dark_theme_hex
+    custom_palette["--org-sidebar-bg-color"] = theme_color_hex
     custom_palette["--org-nav-item-hover-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.05)"
-    custom_palette["--org-nav-item-selected-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.1)"
+    custom_palette["--org-nav-item-selected-bg"] = mid_dark_theme_hex
+    custom_palette["--org-nav-selected-border-color"] = lighter_theme_hex
     custom_palette["--org-nav-icon-color"] = button_text_color
     custom_palette["--org-button-text"] = "#FFFFFF"
     custom_palette["--org-dashboard-title-color"] = darker_theme_hex
@@ -742,7 +744,7 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
     custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex)
     custom_palette["--org-settings-title-color"] = darker_theme_hex
-    custom_palette["--org-button-group-button-update-bg"] = dark_theme_hex
+    custom_palette["--org-button-group-button-update-bg"] = theme_color_hex
     custom_palette["--org-button-group-button-update-hover-bg"] = darker_theme_hex
     custom_palette["--org-change-profile-pic-bg"] = dark_theme_hex
     custom_palette["--org-change-profile-pic-hover-bg"] = darker_theme_hex
