@@ -6,7 +6,9 @@
     <title>{% block title %} Organization System - Admin {% endblock %}</title>
     <link rel="stylesheet" href="/static/css/base.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Poppins:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" /> 
     {% block head %}
     {% endblock %}
 </head>
@@ -36,19 +38,39 @@
                         {% set home_link_url_obj = url_for('home') %}
                         {% set home_link_normalized_path = get_normalized_path_segments(home_link_url_obj) %}
                         {% if current_normalized_path == home_link_normalized_path %}selected{% endif %}">
-                        <a href="{{ home_link_url_obj }}"><i class="ph ph-house"></i> <span class="nav-text">Home</span></a>
+                        <a href="{{ home_link_url_obj }}">
+                            <i class="ph ph-house regular-icon"></i> 
+                            <i class="ph-fill ph-house filled-icon"></i> 
+                            <span class="nav-text">Home</span>
+                        </a>
                     </li>
                     <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_bulletin_board')) %}selected{% endif %}">
-                        <a href="{{ url_for('admin_bulletin_board') }}"><i class="ph ph-megaphone"></i> <span class="nav-text">Bulletin Board</span></a>
+                        <a href="{{ url_for('admin_bulletin_board') }}">
+                            <i class="ph ph-megaphone regular-icon"></i> 
+                            <i class="ph-fill ph-megaphone filled-icon"></i> 
+                            <span class="nav-text">Bulletin Board</span>
+                        </a>
                     </li>
                     <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_events')) %}selected{% endif %}">
-                        <a href="{{ url_for('admin_events') }}"><i class="ph ph-calendar-check"></i> <span class="nav-text">Events</span></a>
+                        <a href="{{ url_for('admin_events') }}">
+                            <i class="ph ph-calendar-check regular-icon"></i> 
+                            <i class="ph-fill ph-calendar-check filled-icon"></i> 
+                            <span class="nav-text">Events</span>
+                        </a>
                     </li>
                     <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_payments')) %}selected{% endif %}">
-                        <a href="{{ url_for('admin_payments') }}"><i class="ph ph-credit-card"></i> <span class="nav-text">Membership and Payments</span></a>
+                        <a href="{{ url_for('admin_payments') }}">
+                            <i class="ph ph-credit-card regular-icon"></i> 
+                            <i class="ph-fill ph-credit-card filled-icon"></i> 
+                            <span class="nav-text">Membership and Payments</span>
+                        </a>
                     </li>
                     <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_financial_statement')) %}selected{% endif %}">
-                        <a href="{{ url_for('admin_financial_statement') }}"><i class="ph ph-receipt"></i> <span class="nav-text">Financial Statement</span></a>
+                        <a href="{{ url_for('admin_financial_statement') }}">
+                            <i class="ph ph-receipt regular-icon"></i> 
+                            <i class="ph-fill ph-receipt filled-icon"></i> 
+                            <span class="nav-text">Financial Statement</span>
+                        </a>
                     </li>
                 </ul>
             </div>

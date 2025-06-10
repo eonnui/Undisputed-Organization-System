@@ -30,7 +30,7 @@
     --org-dropdown-border: #333;
     --org-dropdown-item-hover-bg: #404040;
     --org-border-light: #333;
-    --org-border-medium: #666;      
+    --org-border-medium: #666;       
 }
 
 body {
@@ -92,7 +92,7 @@ body {
     margin-bottom: 2.2vw;
     width: 100%;
     display: flex; 
-    gap: 10px;          
+    gap: 10px;           
     padding: 2px; 
     justify-content: center;
     transition: opacity var(--sidebar-transition-duration) ease,
@@ -142,7 +142,7 @@ body {
     align-items: center;
     text-decoration: none;
     color: var(--org-text-inverse);
-    padding: 0.83vw .04vw;
+    padding: 1.2vw .04vw;
     width: 100%;
     text-align: left;
     font-size: clamp(0.9rem, 1.25vw, 1.3rem);
@@ -154,6 +154,22 @@ body {
 .sidebar.collapsed nav ul li a {
     padding: 0.83vw;
     justify-content: center;
+}
+
+.sidebar nav ul li a .regular-icon {
+    display: inline-block;
+}
+
+.sidebar nav ul li a .filled-icon {
+    display: none;
+}
+
+.sidebar nav ul li.selected a .regular-icon {
+    display: none;
+}
+
+.sidebar nav ul li.selected a .filled-icon {
+    display: inline-block;
 }
 
 .sidebar nav ul li a .material-symbols-outlined,
@@ -170,9 +186,16 @@ body {
     margin-right: 0;
 }
 
+.sidebar nav ul li:hover i,
+.sidebar nav ul li:hover .material-symbols-outlined {
+    transform: rotate(360deg) scale(1.2); 
+}
+
 .sidebar nav ul li:hover {   
     transform: scale(1.03);
+    color: var(--org-nav-hover-accent-color);
     border-radius: 8px;
+    background-color: var(--org-nav-item-selected-bg); 
 }
 
 .sidebar nav ul li:hover a {
@@ -180,15 +203,8 @@ body {
     text-shadow: 0.13vw 0.13vw 0.27vw rgba(0, 0, 0, 0.3);
 }
 
-.sidebar nav ul li:hover i,
-.sidebar nav ul li:hover .material-symbols-outlined {
-    transform: rotate(360deg) scale(1.2); 
-}
-
-.sidebar nav ul li.selected {
-    background-color: var(--org-nav-item-selected-bg) !important;
-    font-weight: 500;
-    border-left: 0.2vw solid var(--org-nav-selected-border-color) !important;
+.sidebar nav ul li.selected {  
+    font-weight: 500;    
     border-radius: 6px;
     display: flex !important;
     visibility: visible !important;
@@ -197,12 +213,11 @@ body {
     height: auto !important;
     min-height: 3vw !important;
     box-sizing: border-box !important;
-   
+    
 }
 
 .sidebar.collapsed nav ul li.selected {    
-    width: 27px !important; 
-    border-left: 0.2vw solid var(--org-nav-selected-border-color)  !important; 
+    width: 27px !important;     
     justify-content: center;     
     min-height: auto !important; 
     background-color: var(--org-nav-item-hover-bg) !important;     
@@ -260,7 +275,7 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 0.069vw solid var(--org-top-bar-border-color);
-    height: 4.86vw;
+    height: 3.86vw;
     box-shadow: 0 0.13vw 0.34vw rgba(0, 0, 0, 0.08);
     position: fixed;
     top: 0;
@@ -350,8 +365,8 @@ body {
 
 .top-bar .user-actions .profile-btn img {
     border-radius: 50%;
-    width: 3.47vw;
-    height: 3.47vw;
+    width: 3vw;
+    height: 3vw;
     object-fit: cover;
     box-shadow: 0 0.069vw 0.2vw rgba(0, 0, 0, 0.1);
     border: 0.13vw solid var(--org-profile-pic-border-color);
@@ -463,8 +478,8 @@ body {
     position: absolute;
     top: 5px;   
     right: 10px;    
-    min-width: 20px; 
-    height: 20px;       
+    min-width: 15px; 
+    height: 15px;       
     border-radius: 50%;     
     background-color: #f44336;
     color: white; 
@@ -569,4 +584,3 @@ body {
     border-top: none;
     margin: 0;
 }
-

@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, or_, extract, desc
-from . import models, schemas, crud 
+from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
 from datetime import datetime, date, timedelta
@@ -38,9 +38,14 @@ app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
 # Define base directories
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-STATIC_DIR = BASE_DIR / "frontend" / "static"
-UPLOAD_BASE_DIRECTORY = STATIC_DIR / "images"
-UPLOAD_BASE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+STATIC_DIR = BASE_DIR / "frontend" / "static" 
+
+# Define the subdirectory relative to STATIC_DIR for wiki images
+WIKI_IMAGES_SUBDIRECTORY = "images/wiki_images"
+# Define the full path where wiki images will be saved
+FULL_WIKI_UPLOAD_PATH = STATIC_DIR / WIKI_IMAGES_SUBDIRECTORY
+# Ensure the directory exists
+FULL_WIKI_UPLOAD_PATH.mkdir(parents=True, exist_ok=True)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -65,20 +70,21 @@ def generate_secure_filename(original_filename: str) -> str:
 # Helper to delete old files
 def delete_file_from_path(file_path: Optional[str]):
     if file_path:
-        full_path = STATIC_DIR / file_path.lstrip("/")
+        full_path = STATIC_DIR / file_path.lstrip("/static/")
         if os.path.exists(full_path):
             try:
                 os.remove(full_path)
+                logger.info(f"Successfully deleted old file: {full_path}")
             except Exception as e:
-                logging.error(f"Error deleting old file {full_path}: {e}")
+                logger.error(f"Error deleting old file {full_path}: {e}")
 
 # Helper to handle file uploads
 async def handle_file_upload(
     upload_file: UploadFile,
-    subdirectory: str,
+    subdirectory: str, 
     allowed_types: List[str],
     max_size_bytes: Optional[int] = None,
-    old_file_path: Optional[str] = None
+    old_file_path: Optional[str] = None 
 ) -> str:
     if upload_file.content_type not in allowed_types:
         raise HTTPException(
@@ -105,9 +111,10 @@ async def handle_file_upload(
             f.write(file_content)
         return f"/static/{subdirectory}/{filename}"
     except Exception as e:
+        logger.error(f"Failed to save file to {save_path}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save file to {save_path}: {e}",
+            detail=f"Failed to save file: {e}",
         )
 
 # Helper to get current admin and their organization
@@ -217,7 +224,7 @@ async def mark_notifications_as_read_bulk(
         return {"message": "Notifications marked as read successfully."}
     except Exception as e:
         db.rollback() 
-        logging.error(f"Error marking notifications {notification_ids} as read: {e}")
+        logger.error(f"Error marking notifications {notification_ids} as read: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to mark notifications as read: {e}")
 
 @router.delete("/notifications/clear_all", status_code=status.HTTP_200_OK)
@@ -397,6 +404,9 @@ async def admin_delete_bulletin_post(post_id: int, db: Session = Depends(get_db)
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
     
+    if post.image_path:
+        delete_file_from_path(post.image_path)
+
     db.query(models.Notification).filter(
         models.Notification.bulletin_post_id == post_id 
     ).delete(synchronize_session=False)
@@ -787,19 +797,194 @@ async def payments_total_members(
     })
     return templates.TemplateResponse("admin_dashboard/payments/total_members.html", context)
 
-# Admin Bulletin Board Page
+# Admin Bulletin Board Page (Modified to fetch wiki_posts)
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
 async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
+
     posts = db.query(models.BulletinBoard).options(
-        joinedload(models.BulletinBoard.admin) 
+        joinedload(models.BulletinBoard.admin)
     ).join(models.Admin).join(models.Admin.organizations).filter(
         models.Organization.id == admin_org.id
     ).order_by(models.BulletinBoard.created_at.desc()).all()
 
+    wiki_posts = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).order_by(models.RuleWikiEntry.updated_at.desc()).all()
+
     context = await get_base_template_context(request, db)
-    context.update({"posts": posts})
+    context.update({
+        "posts": posts,
+        "wiki_posts": wiki_posts 
+    })
     return templates.TemplateResponse("admin_dashboard/admin_bulletin_board.html", context)
+
+# --- Rules & Wiki specific: New Route for creating Rule/Wiki entries ---
+@router.post('/admin/rules_wiki', response_class=RedirectResponse, name='admin_post_rule_wiki')
+async def admin_post_rule_wiki(
+    request: Request,
+    title: str = Form(...),
+    category: str = Form(...),
+    content: str = Form(...),
+    image: Optional[UploadFile] = File(None), 
+    db: Session = Depends(get_db)
+):
+    """
+    Handles the creation of a new Rule/Wiki entry, including optional image upload.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    image_path = None
+    if image and image.filename: 
+        image_path = await handle_file_upload(
+            image,
+            WIKI_IMAGES_SUBDIRECTORY, 
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+            max_size_bytes=5 * 1024 * 1024 
+        )
+
+    db_rule_wiki = models.RuleWikiEntry(
+        title=title,
+        category=category,
+        content=content,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        image_path=image_path 
+    )
+    db.add(db_rule_wiki)
+    db.commit()
+    db.refresh(db_rule_wiki)
+
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
+
+
+# --- Rules & Wiki specific: Route for displaying edit form ---
+@router.get('/admin/rules_wiki/edit/{post_id}', name='admin_edit_rule_wiki')
+async def admin_edit_rule_wiki(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Redirects to the main bulletin board page with a flag to activate
+    the edit form for a specific Rule/Wiki entry.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id 
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
+       
+    redirect_url = request.url_for('admin_bulletin_board') + f"?edit_wiki_post_id={post_id}"
+    return RedirectResponse(url=redirect_url, status_code=302)
+
+@router.post('/admin/rules_wiki/update/{post_id}', name='admin_update_rule_wiki')
+async def admin_update_rule_wiki(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found.")
+
+    form = await request.form()
+    rule_wiki_entry.title = form.get('title')
+    rule_wiki_entry.category = form.get('category')
+    rule_wiki_entry.content = form.get('content')
+    uploaded_image = form.get('image')
+    if uploaded_image and uploaded_image.filename:
+        pass 
+
+    db.add(rule_wiki_entry)
+    db.commit()
+    db.refresh(rule_wiki_entry)
+
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=302)
+
+
+# --- Rules & Wiki specific: Route for updating Rule/Wiki entries ---
+@router.post('/admin/rules_wiki/edit/{post_id}', response_class=RedirectResponse, name='admin_update_rule_wiki')
+async def admin_update_rule_wiki(
+    request: Request,
+    post_id: int,
+    title: str = Form(...),
+    category: str = Form(...),
+    content: str = Form(...),
+    image: Optional[UploadFile] = File(None), 
+    db: Session = Depends(get_db)
+):
+    """
+    Handles the submission of the edited Rule/Wiki entry form, including optional image upload.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
+
+    if image and image.filename:
+        new_image_path = await handle_file_upload(
+            image,
+            WIKI_IMAGES_SUBDIRECTORY, 
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+            max_size_bytes=5 * 1024 * 1024, 
+            old_file_path=rule_wiki_entry.image_path 
+        )
+        rule_wiki_entry.image_path = new_image_path
+
+
+    rule_wiki_entry.title = title
+    rule_wiki_entry.category = category
+    rule_wiki_entry.content = content
+
+    db.add(rule_wiki_entry)
+    db.commit()
+    db.refresh(rule_wiki_entry)
+
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
+
+
+# --- Rules & Wiki specific: Route for deleting Rule/Wiki entries ---
+@router.post('/admin/rules_wiki/delete/{post_id}', response_class=RedirectResponse, name='admin_delete_rule_wiki')
+async def admin_delete_rule_wiki(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Handles the deletion of a Rule/Wiki entry and its associated image file.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
+
+    if rule_wiki_entry.image_path:
+        delete_file_from_path(rule_wiki_entry.image_path)
+
+    db.delete(rule_wiki_entry)
+    db.commit()
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
 
 # Admin Events Page
 @router.get('/admin/events', response_class=HTMLResponse)
@@ -881,7 +1066,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
 
     net_income_ytd = total_revenue_ytd - total_expenses_ytd
     profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
-
+    
     top_revenue_source_query = db.query(models.PaymentItem.academic_year, models.PaymentItem.semester, func.sum(models.PaymentItem.fee).label('total_fee')).join(models.User).filter(
         extract('year', models.PaymentItem.updated_at) == current_year, models.PaymentItem.is_paid == True, models.User.organization_id == organization.id
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).order_by(func.sum(models.PaymentItem.fee).desc()).first()
@@ -1078,11 +1263,13 @@ async def update_organization_logo_route(
     if organization.logo_url and organization.logo_url != request.url_for('static', path='images/patrick_logo.jpg'):
         delete_file_from_path(organization.logo_url)
 
-    file_path = UPLOAD_BASE_DIRECTORY / suggested_filename
+    file_path = STATIC_DIR / "images" / suggested_filename 
+    file_path.parent.mkdir(parents=True, exist_ok=True) 
+
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(logo_file.file, buffer)
-        logo_url = f"/static/images/{suggested_filename}"
+        logo_url = f"/static/images/{suggested_filename}" 
         organization.logo_url = logo_url
         db.add(organization)
         db.commit()

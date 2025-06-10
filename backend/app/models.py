@@ -18,11 +18,14 @@ class Organization(Base):
     name = Column(String, unique=True, index=True)
     theme_color = Column(String, nullable=True)
     custom_palette = Column(Text, nullable=True)
-    logo_url = Column(String, nullable=True) 
+    logo_url = Column(String, nullable=True)
     primary_course_code = Column(String, nullable=True, unique=True, index=True)
     admins = relationship("Admin", secondary="organization_admins", back_populates="organizations")
     students = relationship("User", back_populates="organization")
     notifications = relationship("Notification", back_populates="organization", foreign_keys="[Notification.organization_id]")
+    
+    rule_wiki_entries_org = relationship("RuleWikiEntry", back_populates="organization")
+
 
 organization_admins = Table(
     'organization_admins',
@@ -88,7 +91,7 @@ class User(Base):
 
 class Admin(Base):
     __tablename__ = "admins"
-    admin_id = Column(Integer, primary_key=True, index=True)    
+    admin_id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     email = Column(String, unique=True, index=True)
@@ -99,6 +102,8 @@ class Admin(Base):
     events = relationship("Event", back_populates="admin")
     organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")
     notifications = relationship("Notification", back_populates="admin", foreign_keys="[Notification.admin_id]")
+    
+    rule_wiki_entries = relationship("RuleWikiEntry", back_populates="admin")
 
 class BulletinBoard(Base):
     __tablename__ = "bulletin_board"
@@ -165,19 +170,22 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) 
-    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True) 
-    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True) 
-    
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
+
     message = Column(Text, nullable=False)
-    event_identifier = Column(String, nullable=True, index=True) 
-    notification_type = Column(String, default="general") 
- 
+    event_identifier = Column(String, nullable=True, index=True)
+    notification_type = Column(String, default="general")
+
     bulletin_post_id = Column(Integer, ForeignKey("bulletin_board.post_id", ondelete='CASCADE'), nullable=True)
     event_id = Column(Integer, ForeignKey("events.event_id", ondelete='CASCADE'), nullable=True)
     payment_id = Column(Integer, ForeignKey("payments.id", ondelete='CASCADE'), nullable=True)
     payment_item_id = Column(Integer, ForeignKey("payment_items.id", ondelete='CASCADE'), nullable=True)
     verified_user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), nullable=True)
+   
+    rule_wiki_entry_id = Column(Integer, ForeignKey("rule_wiki_entries.id", ondelete='CASCADE'), nullable=True)
+
 
     is_read = Column(Boolean, default=False)
     is_dismissed = Column(Boolean, default=False)
@@ -188,12 +196,14 @@ class Notification(Base):
     user = relationship("User", back_populates="notifications", foreign_keys=[user_id])
     admin = relationship("Admin", back_populates="notifications", foreign_keys=[admin_id])
     organization = relationship("Organization", back_populates="notifications", foreign_keys=[organization_id])
- 
+
     bulletin_post = relationship("BulletinBoard", back_populates="notifications", foreign_keys=[bulletin_post_id])
     event = relationship("Event", back_populates="notifications", foreign_keys=[event_id])
     payment = relationship("Payment", back_populates="notifications", foreign_keys=[payment_id])
     payment_item = relationship("PaymentItem", back_populates="notifications", foreign_keys=[payment_item_id])
     verified_user = relationship("User", foreign_keys=[verified_user_id])
+  
+    rule_wiki_entry = relationship("RuleWikiEntry", back_populates="notifications")
 
 
 class NotificationTypeConfig(Base):
@@ -213,8 +223,26 @@ class NotificationTypeConfig(Base):
 class UserLike(Base):
     __tablename__ = "user_likes"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id")) 
+    user_id = Column(Integer, ForeignKey("users.id"))
     post_id = Column(Integer, ForeignKey("bulletin_board.post_id"))
-    
+
     user = relationship("User", back_populates="liked_posts")
     bulletin_post = relationship("BulletinBoard", back_populates="likes")
+
+class RuleWikiEntry(Base):
+    __tablename__ = "rule_wiki_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    category = Column(String) 
+    content = Column(Text)
+    admin_id = Column(Integer, ForeignKey("admins.admin_id")) 
+    organization_id = Column(Integer, ForeignKey("organizations.id")) 
+    image_path = Column(String, nullable=True) 
+
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    admin = relationship("Admin", back_populates="rule_wiki_entries")
+    organization = relationship("Organization", back_populates="rule_wiki_entries_org")
+    notifications = relationship("Notification", back_populates="rule_wiki_entry")

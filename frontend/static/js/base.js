@@ -101,7 +101,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
         clearAllBtn.onclick = async () => {
             if (await clearAllNotifications()) {
                 await fetchAndDisplayNotifications(true);
-                updateBadgeBasedOnNewUnread();
+                updateBadgeBasedOnNewUnread(); 
             } else {
                 alert('Failed to clear all notifications.');
             }
@@ -139,7 +139,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
 
                         if (success) {
                             await fetchAndDisplayNotifications(true);
-                            updateBadgeBasedOnNewUnread();
+                            updateBadgeBasedOnNewUnread(); 
 
                             if (notification.url && notification.url !== '#' && notificationItem.href === '#') {
                                 window.location.href = notification.url;
@@ -167,7 +167,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
 
                 if (successCount > 0) {
                     await fetchAndDisplayNotifications(true);
-                    updateBadgeBasedOnNewUnread();
+                    updateBadgeBasedOnNewUnread(); 
                 } else {
                     alert('Failed to clear notification.');
                 }
@@ -231,30 +231,27 @@ async function clearAllNotifications() {
     }
 }
 
+
 async function updateBadgeBasedOnNewUnread() {
-    if (isNotificationsDropdownOpen) return;
+    if (isNotificationsDropdownOpen) return; 
 
     const unreadBadge = document.getElementById('unread-notifications-badge');
     try {
-        const notifications = await fetchAndDisplayNotifications(false);
-        let newUnreadCount = 0;
-        const currentUnreadIds = new Set();
+        
+        const currentUnreadNotifications = await fetchAndDisplayNotifications(false);
+        
+        let totalUnreadCount = 0; 
 
-        notifications.forEach(notification => {
-            if (!notification.is_read) {
-                (notification.group_ids || [notification.id]).forEach(id => currentUnreadIds.add(id));
-            }
+        const uniqueUnreadIds = new Set();
+        currentUnreadNotifications.forEach(notification => {
+            (notification.group_ids || [notification.id]).forEach(id => uniqueUnreadIds.add(id));
         });
-
-        currentUnreadIds.forEach(id => {
-            if (!lastSeenUnreadNotificationIds.has(id)) {
-                newUnreadCount++;
-            }
-        });
+        
+        totalUnreadCount = uniqueUnreadIds.size; 
 
         if (unreadBadge) {
-            unreadBadge.textContent = newUnreadCount || '';
-            unreadBadge.classList.toggle('hidden', newUnreadCount === 0);
+            unreadBadge.textContent = totalUnreadCount > 0 ? totalUnreadCount.toString() : ''; 
+            unreadBadge.classList.toggle('hidden', totalUnreadCount === 0); 
         }
     } catch (error) {
         console.error("Error updating unread badge:", error);
@@ -264,6 +261,7 @@ async function updateBadgeBasedOnNewUnread() {
         }
     }
 }
+
 
 function startNotificationPolling() {
     clearInterval(notificationPollingTimer);
@@ -285,22 +283,22 @@ function setupDropdown(buttonSelector, dropdownId) {
         if (dropdownId === 'notifications-dropdown') {
             isNotificationsDropdownOpen = isExpanded;
             if (isExpanded) {
-                if (unreadBadge) {
+                if (unreadBadge) {                 
                     unreadBadge.textContent = '';
                     unreadBadge.classList.add('hidden');
-                }
+                }               
                 fetchAndDisplayNotifications(true).then(notifications => {
                     lastSeenUnreadNotificationIds.clear();
                     notifications.forEach(notification => {
                         if (!notification.is_read) {
                             (notification.group_ids || [notification.id]).forEach(id => lastSeenUnreadNotificationIds.add(id));
                         }
-                    });
+                    });                  
                     localStorage.setItem('lastSeenUnreadNotificationIds', JSON.stringify(Array.from(lastSeenUnreadNotificationIds)));
                 });
-                clearInterval(notificationPollingTimer);
+                clearInterval(notificationPollingTimer); 
             } else {
-                startNotificationPolling();
+                startNotificationPolling(); 
             }
         }
 
