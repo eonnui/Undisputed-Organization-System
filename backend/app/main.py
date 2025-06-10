@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_, or_, extract, desc
-from . import models, schemas, crud
+from . import models, schemas, crud 
 from .database import SessionLocal, engine
 from pathlib import Path
 from datetime import datetime, date, timedelta
@@ -309,7 +309,7 @@ async def admin_post_bulletin(
             organization_id=admin_org.id,
             user_id=user.id,
             notification_type="bulletin_post",
-            entity_id=db_post.post_id,
+            bulletin_post_id=db_post.post_id, 
             url=f"/BulletinBoard#{db_post.post_id}",
             event_identifier=f"bulletin_post_user_{user.id}_post_{db_post.post_id}"
             )
@@ -368,7 +368,7 @@ async def admin_create_event(
             organization_id=admin_org.id,
             user_id=user.id,
             notification_type="event",
-            entity_id=db_event.event_id,
+            event_id=db_event.event_id, 
             url=f"/Events#{db_event.event_id}",
             event_identifier=f"new_event_user_{user.id}_event_{db_event.event_id}"
         )
@@ -380,7 +380,12 @@ async def admin_create_event(
 async def admin_delete_event(event_id: int, db: Session = Depends(get_db)):
     event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")    
+   
+    db.query(models.Notification).filter(
+        models.Notification.event_id == event_id 
+    ).delete(synchronize_session=False)
+
     db.delete(event)
     db.commit()
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
@@ -391,6 +396,13 @@ async def admin_delete_bulletin_post(post_id: int, db: Session = Depends(get_db)
     post = db.query(models.BulletinBoard).filter(models.BulletinBoard.post_id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    
+    db.query(models.Notification).filter(
+        models.Notification.bulletin_post_id == post_id 
+    ).delete(synchronize_session=False)
+
+    db.query(models.UserLike).filter(models.UserLike.post_id == post_id).delete(synchronize_session=False)
+
     db.delete(post)
     db.commit()
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
@@ -1148,7 +1160,10 @@ async def payment_success(
     if user and user.organization:
         for admin in user.organization.admins:
             message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
-            crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success", entity_id=payment.id, url=f"/admin/payments/total_members?student_number={user.student_number}",event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
+            crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success",
+                                     payment_id=payment.id, 
+                                     url=f"/admin/payments/total_members?student_number={user.student_number}",
+                                     event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
     
     db.commit() 
     logging.info(f"PayMaya payment success: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
@@ -1230,7 +1245,8 @@ async def home(request: Request, db: Session = Depends(get_db)):
             for past_due_user in past_due_users:
                 crud.create_notification(db, f"Past Due Payments: {past_due_user.first_name} {past_due_user.last_name} has past due payment items.",
                                          admin_id=admin.admin_id, organization_id=context["organization_id"],
-                                         notification_type="past_due_payments", entity_id=past_due_user.id,
+                                         notification_type="past_due_payments", 
+                                         payment_item_id=None, 
                                          url=f"/admin/payments/total_members?student_number={past_due_user.student_number}",
                                          event_identifier=f"admin_past_due_user_{past_due_user.id}_admin_{admin.admin_id}")
         db.commit() 
@@ -1243,10 +1259,12 @@ async def home(request: Request, db: Session = Depends(get_db)):
             user_past_due_items = db.query(models.PaymentItem).filter(
                 models.PaymentItem.user_id == user_id, models.PaymentItem.is_past_due == True, models.PaymentItem.is_paid == False
             ).all()
-            if user_past_due_items:
+            if user_past_due_items:                
                 crud.create_notification(db, "You have past due payment items. Please check your payments page.",
                                          user_id=user_id, organization_id=context["organization_id"],
-                                         notification_type="user_past_due", url="/Payments",
+                                         notification_type="user_past_due", 
+                                         payment_item_id=None,
+                                         url="/Payments",
                                          event_identifier=f"user_past_due_alert_user_{user_id}")
         db.commit() 
         temporary_faqs = [
@@ -1692,7 +1710,8 @@ async def heart_post(
             post.heart_count += 1
             crud.create_notification(db, f"{user.first_name} {user.last_name} liked your post: '{post.title}'",
                                      organization_id=user_org.id, admin_id=post.admin_id,
-                                     notification_type="bulletin_like", entity_id=post_id,
+                                     notification_type="bulletin_like", 
+                                     bulletin_post_id=post_id, 
                                      url=f"/admin/bulletin_board#{post_id}",
                                      event_identifier=f"bulletin_like_admin_{post.admin_id}_post_{post_id}_user_{user.id}")
     elif action == 'unheart':
@@ -1722,7 +1741,8 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
     event.participants.append(user)
     crud.create_notification(db, f"{user.first_name} {user.last_name} joined your event: '{event.title}'", 
                              organization_id=user_org.id, admin_id=event.admin_id, notification_type="event_join",
-                             entity_id=event_id, url=f"/admin/events#{event_id}",
+                             event_id=event_id, 
+                             url=f"/admin/events#{event_id}",
                              event_identifier=f"event_join_admin_{event.admin_id}_event_{event_id}_user_{user.id}")
     db.commit() 
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
@@ -1890,7 +1910,8 @@ async def update_profile(
         for admin in db.query(models.Admin).join(models.organization_admins).filter(models.organization_admins.c.organization_id == user.organization_id).all():
             crud.create_notification(db=db, message=f"Member {user.first_name} {user.last_name} has been verified.",
                                      organization_id=user.organization_id, admin_id=admin.admin_id, notification_type="member_verification",
-                                     entity_id=user.id, url=f"/admin/payments/total_members?student_number={user.student_number}",
+                                     verified_user_id=user.id, 
+                                     url=f"/admin/payments/total_members?student_number={user.student_number}",
                                      event_identifier=f"member_verified_admin_{admin.admin_id}_user_{user.id}")
 
     db.commit()
@@ -1933,4 +1954,3 @@ async def change_password(
     db.commit()
     db.refresh(user)
     return {"message": "Password updated successfully!"}
-
