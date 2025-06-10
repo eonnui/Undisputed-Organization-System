@@ -755,3 +755,31 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:   
     return pwd_context.hash(password)
+
+def create_password_reset_token(db: Session, user_id: int, token: str, expiration: datetime):
+    db_token = models.PasswordResetToken(user_id=user_id, token=token, expiration_time=expiration)
+    db.add(db_token)
+    db.commit()
+    db.refresh(db_token)
+    return db_token
+
+def get_password_reset_token_by_token(db: Session, token: str):
+    return db.query(models.PasswordResetToken).filter(models.PasswordResetToken.token == token).first()
+
+def delete_password_reset_token(db: Session, token_id: int):
+    db_token = db.query(models.PasswordResetToken).filter(models.PasswordResetToken.id == token_id).first()
+    if db_token:
+        db.delete(db_token)
+        db.commit()
+        return True
+    return False
+
+def update_user_password(db: Session, user_id: int, new_password: str):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        user.hashed_password = get_password_hash(new_password) # Assuming your User model has 'hashed_password'
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+    return None

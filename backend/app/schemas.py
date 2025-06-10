@@ -82,6 +82,14 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+class ForgotPasswordRequest(BaseModel):
+    identifier: str # Can be student number or email
+
+class ResetPasswordRequest(BaseModel):
+    identifier: str # Can be student number or email
+    code: str
+    new_password: str
+
 class UserUpdate(BaseModel):
     name: Optional[str]
     campus: Optional[str]

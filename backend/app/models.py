@@ -99,6 +99,16 @@ class Admin(Base):
     organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")
     notifications = relationship("Notification", back_populates="admin")
 
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False) # Ensure "users.id" matches your User model's table name and primary key
+    token = Column(String, unique=True, index=True, nullable=False)
+    expiration_time = Column(DateTime, nullable=False)
+
+    user = relationship("User") 
+    
 class BulletinBoard(Base):
     __tablename__ = "bulletin_board"
     post_id = Column(Integer, primary_key=True, index=True)

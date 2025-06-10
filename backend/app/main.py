@@ -10,8 +10,12 @@ from pathlib import Path
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 from collections import defaultdict, OrderedDict
-import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import secrets
+import string
+import os
 import re
 import requests
 import base64
@@ -1933,3 +1937,126 @@ async def change_password(
     db.refresh(user)
     return {"message": "Password updated successfully!"}
 
+@app.post("/api/forgot-password/")
+async def forgot_password_endpoint(
+    request_data: schemas.ForgotPasswordRequest, # Use the Pydantic schema
+    db: Session = Depends(get_db)
+):
+    identifier = request_data.identifier
+
+    # 1. Look up user by identifier (student number or email)
+    # Assuming crud.get_user can find a user by student_number or email
+    user = crud.get_user(db, identifier=identifier)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found with the provided identifier."
+        )
+
+    # 2. Generate a random 6-character alphanumeric reset code
+    alphabet = string.ascii_uppercase + string.digits
+    reset_code = ''.join(secrets.choice(alphabet) for i in range(6))
+
+    # 3. Store reset_code and its expiration in your database
+    # Delete any existing tokens for this user to ensure only one is active at a time
+    db.query(models.PasswordResetToken).filter(models.PasswordResetToken.user_id == user.id).delete()
+    db.commit()
+
+    expiration_time = datetime.now() + timedelta(minutes=10) # Code valid for 10 minutes
+    crud.create_password_reset_token(db, user_id=user.id, token=reset_code, expiration=expiration_time)
+
+    sender_email = "ic.markaaron.mayor@cvsu.edu.ph" # <--- IMPORTANT: Replace with your actual sender email
+    receiver_email = user.email # Use the user's email from the database
+    mailtrap_username = "e09c5a4e999a44" # Your Mailtrap username 
+    mailtrap_password = "a4c986c82c92fd" # Your Mailtrap password 
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = "Your Password Reset Code"
+    message["From"] = f"Your App Support <{sender_email}>"
+    message["To"] = receiver_email
+
+    text = f"""\
+    Hi {user.first_name},
+
+    Your password reset code is: {reset_code}
+
+    This code is valid for 10 minutes.
+
+    If you did not request a password reset, please ignore this email.
+
+    Thank you,
+    Your App Team
+    """
+    html = f"""\
+    <html>
+      <body>
+        <p>Hi {user.first_name},</p>
+        <p>Your password reset code is: <strong>{reset_code}</strong></p>
+        <p>This code is valid for 10 minutes.</p>
+        <p>If you did not request a password reset, please ignore this email.</p>
+        <p>Thank you,</p>
+        <p>Your App Team</p>
+      </body>
+    </html>
+    """
+
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    message.attach(part1)
+    message.attach(part2)
+
+    try:
+        with smtplib.SMTP("sandbox.smtp.mailtrap.io", 2525) as server:
+            server.starttls()
+            server.login(mailtrap_username, mailtrap_password)
+            server.sendmail(sender_email, receiver_email, message.as_string())
+        
+        return {"message": "Password reset code sent to your email."}, status.HTTP_200_OK
+    except Exception as e:
+        print(f"Error sending email: {e}") # Log the error for debugging
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send reset code. Please try again later."
+        )
+
+@app.post("/api/reset-password/")
+async def reset_password_endpoint(
+    request_data: schemas.ResetPasswordRequest, # Use the Pydantic schema
+    db: Session = Depends(get_db)
+):
+    identifier = request_data.identifier
+    code = request_data.code
+    new_password = request_data.new_password
+
+    # 1. Find the user by identifier
+    user = crud.get_user(db, identifier=identifier)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+
+    # 2. Verify the reset code and its expiration
+    db_token = crud.get_password_reset_token_by_token(db, code)
+    if not db_token or db_token.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset code."
+        )
+    
+    if db_token.expiration_time < datetime.now():
+        # Optionally, delete the expired token immediately to prevent reuse
+        crud.delete_password_reset_token(db, db_token.id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset code has expired. Please request a new one."
+        )
+
+    # 3. Update the user's password
+    crud.update_user_password(db, user.id, new_password)
+
+    # 4. Invalidate/delete the used token to prevent replay attacks
+    crud.delete_password_reset_token(db, db_token.id)
+
+    return {"message": "Password has been reset successfully."}, status.HTTP_200_OK
