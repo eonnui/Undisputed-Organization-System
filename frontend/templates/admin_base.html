@@ -7,10 +7,22 @@
     <link rel="stylesheet" href="/static/css/base.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Poppins:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" /> 
     {% block head %}
     {% endblock %}
 </head>
 <body>
+    {% macro get_normalized_path_segments(url_object) %}
+        {% set path_str = url_object.path | string | trim %}
+        {% set segments = path_str.split('/') | select('ne', '') | list %}
+        {% if segments %}
+            {{ '/' + segments | join('/') }}
+        {% else %}
+            /
+        {% endif %}
+    {% endmacro %}
+
     <div class="sidebar">
         <div class="logo">
             <a href="{{ url_for('home') }}">
@@ -18,13 +30,48 @@
             </a>
         </div>
         <nav>
+            <div class="sidebar-divider"></div>
             <div class="nav-container">
                 <ul>
-                    <li class="{% if request.path == url_for('home') %}selected{% endif %}"><a href="{{ url_for('home') }}"><span class="material-symbols-outlined">home</span> <span class="nav-text">Home</span></a></li>
-                    <li class="{% if request.path == url_for('admin_bulletin_board') %}selected{% endif %}"><a href="{{ url_for('admin_bulletin_board') }}"><span class="material-symbols-outlined">breaking_news</span> <span class="nav-text">Bulletin Board</span></a></li>
-                    <li class="{% if request.path == url_for('admin_events') %}selected{% endif %}"><a href="{{ url_for('admin_events') }}"><span class="material-symbols-outlined">event</span> <span class="nav-text">Events</span></a></li>
-                    <li class="{% if request.path == url_for('admin_payments') %}selected{% endif %}"><a href="{{ url_for('admin_payments') }}"><span class="material-symbols-outlined">payments</span> <span class="nav-text">Membership and Payments</span></a></li>
-                    <li class="{% if request.path == url_for('admin_financial_statement') %}selected{% endif %}"><a href="{{ url_for('admin_financial_statement') }}"><span class="material-symbols-outlined">request_quote</span> <span class="nav-text">Financial Statement</span></a></li>
+                    {% set current_normalized_path = get_normalized_path_segments(request) %}
+                    <li class="
+                        {% set home_link_url_obj = url_for('home') %}
+                        {% set home_link_normalized_path = get_normalized_path_segments(home_link_url_obj) %}
+                        {% if current_normalized_path == home_link_normalized_path %}selected{% endif %}">
+                        <a href="{{ home_link_url_obj }}">
+                            <i class="ph ph-house regular-icon"></i> 
+                            <i class="ph-fill ph-house filled-icon"></i> 
+                            <span class="nav-text">Home</span>
+                        </a>
+                    </li>
+                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_bulletin_board')) %}selected{% endif %}">
+                        <a href="{{ url_for('admin_bulletin_board') }}">
+                            <i class="ph ph-megaphone regular-icon"></i> 
+                            <i class="ph-fill ph-megaphone filled-icon"></i> 
+                            <span class="nav-text">Bulletin Board</span>
+                        </a>
+                    </li>
+                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_events')) %}selected{% endif %}">
+                        <a href="{{ url_for('admin_events') }}">
+                            <i class="ph ph-calendar-check regular-icon"></i> 
+                            <i class="ph-fill ph-calendar-check filled-icon"></i> 
+                            <span class="nav-text">Events</span>
+                        </a>
+                    </li>
+                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_payments')) %}selected{% endif %}">
+                        <a href="{{ url_for('admin_payments') }}">
+                            <i class="ph ph-credit-card regular-icon"></i> 
+                            <i class="ph-fill ph-credit-card filled-icon"></i> 
+                            <span class="nav-text">Membership and Payments</span>
+                        </a>
+                    </li>
+                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_financial_statement')) %}selected{% endif %}">
+                        <a href="{{ url_for('admin_financial_statement') }}">
+                            <i class="ph ph-receipt regular-icon"></i> 
+                            <i class="ph-fill ph-receipt filled-icon"></i> 
+                            <span class="nav-text">Financial Statement</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -32,17 +79,16 @@
     <div class="main-content">
         <div class="top-bar">
             <div class="menu-icon" id="menu-toggle">
-                <span class="material-symbols-outlined">menu</span>
+                <i class="ph ph-list"></i>
                 <span class="menu-text">Menu</span>
             </div>
             <div class="user-actions">
                 <div class="notification-container">
                     <button class="notification-btn" aria-haspopup="true" aria-expanded="false" aria-controls="notifications-dropdown">
-                        <span class="material-symbols-outlined">notifications</span>
+                        <i class="ph ph-bell"></i>
                         <span id="unread-notifications-badge" class="notification-badge"></span>
                     </button>
                     <div id="notifications-dropdown" class="dropdown-content">
-                        {# Iterate over the notifications passed from the backend #}
                         {% if notifications %}
                             {% for notification in notifications %}
                                 <div class="notification-item">{{ notification }}</div>

@@ -101,7 +101,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
         clearAllBtn.onclick = async () => {
             if (await clearAllNotifications()) {
                 await fetchAndDisplayNotifications(true);
-                updateBadgeBasedOnNewUnread();
+                updateBadgeBasedOnNewUnread(); 
             } else {
                 alert('Failed to clear all notifications.');
             }
@@ -139,7 +139,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
 
                         if (success) {
                             await fetchAndDisplayNotifications(true);
-                            updateBadgeBasedOnNewUnread();
+                            updateBadgeBasedOnNewUnread(); 
 
                             if (notification.url && notification.url !== '#' && notificationItem.href === '#') {
                                 window.location.href = notification.url;
@@ -167,7 +167,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
 
                 if (successCount > 0) {
                     await fetchAndDisplayNotifications(true);
-                    updateBadgeBasedOnNewUnread();
+                    updateBadgeBasedOnNewUnread(); 
                 } else {
                     alert('Failed to clear notification.');
                 }
@@ -231,30 +231,27 @@ async function clearAllNotifications() {
     }
 }
 
+
 async function updateBadgeBasedOnNewUnread() {
-    if (isNotificationsDropdownOpen) return;
+    if (isNotificationsDropdownOpen) return; 
 
     const unreadBadge = document.getElementById('unread-notifications-badge');
     try {
-        const notifications = await fetchAndDisplayNotifications(false);
-        let newUnreadCount = 0;
-        const currentUnreadIds = new Set();
+        
+        const currentUnreadNotifications = await fetchAndDisplayNotifications(false);
+        
+        let totalUnreadCount = 0; 
 
-        notifications.forEach(notification => {
-            if (!notification.is_read) {
-                (notification.group_ids || [notification.id]).forEach(id => currentUnreadIds.add(id));
-            }
+        const uniqueUnreadIds = new Set();
+        currentUnreadNotifications.forEach(notification => {
+            (notification.group_ids || [notification.id]).forEach(id => uniqueUnreadIds.add(id));
         });
-
-        currentUnreadIds.forEach(id => {
-            if (!lastSeenUnreadNotificationIds.has(id)) {
-                newUnreadCount++;
-            }
-        });
+        
+        totalUnreadCount = uniqueUnreadIds.size; 
 
         if (unreadBadge) {
-            unreadBadge.textContent = newUnreadCount || '';
-            unreadBadge.classList.toggle('hidden', newUnreadCount === 0);
+            unreadBadge.textContent = totalUnreadCount > 0 ? totalUnreadCount.toString() : ''; 
+            unreadBadge.classList.toggle('hidden', totalUnreadCount === 0); 
         }
     } catch (error) {
         console.error("Error updating unread badge:", error);
@@ -264,6 +261,7 @@ async function updateBadgeBasedOnNewUnread() {
         }
     }
 }
+
 
 function startNotificationPolling() {
     clearInterval(notificationPollingTimer);
@@ -285,22 +283,22 @@ function setupDropdown(buttonSelector, dropdownId) {
         if (dropdownId === 'notifications-dropdown') {
             isNotificationsDropdownOpen = isExpanded;
             if (isExpanded) {
-                if (unreadBadge) {
+                if (unreadBadge) {                 
                     unreadBadge.textContent = '';
                     unreadBadge.classList.add('hidden');
-                }
+                }               
                 fetchAndDisplayNotifications(true).then(notifications => {
                     lastSeenUnreadNotificationIds.clear();
                     notifications.forEach(notification => {
                         if (!notification.is_read) {
                             (notification.group_ids || [notification.id]).forEach(id => lastSeenUnreadNotificationIds.add(id));
                         }
-                    });
+                    });                  
                     localStorage.setItem('lastSeenUnreadNotificationIds', JSON.stringify(Array.from(lastSeenUnreadNotificationIds)));
                 });
-                clearInterval(notificationPollingTimer);
+                clearInterval(notificationPollingTimer); 
             } else {
-                startNotificationPolling();
+                startNotificationPolling(); 
             }
         }
 
@@ -338,23 +336,57 @@ function setupDropdown(buttonSelector, dropdownId) {
     button.addEventListener('keydown', handleKeyboardNavigation);
 }
 
-function initializeSidebarToggle() {
+function setSidebarState(isCollapsed) {
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
-    const menuToggle = document.getElementById('menu-toggle');
     const menuText = document.querySelector('.top-bar .menu-text');
     const navTexts = document.querySelectorAll('.sidebar nav ul li a .nav-text');
     const logo = document.querySelector('.sidebar .logo');
-    let isCollapsed = false;
+    
+    if (!sidebar || !mainContent || !menuText || !logo) {
+        console.warn("Sidebar elements not fully present to set state.");
+        return;
+    }
 
+    if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('collapsed');
+        menuText.textContent = ''; 
+        logo.style.opacity = 0;
+        logo.style.pointerEvents = 'none';
+        navTexts.forEach(span => span.style.display = 'none');
+        localStorage.setItem('sidebarState', 'collapsed');
+    } else {
+        sidebar.classList.remove('collapsed');
+        mainContent.classList.remove('collapsed');
+        menuText.textContent = 'Menu'; 
+        logo.style.opacity = 1;
+        logo.style.pointerEvents = 'auto';
+        navTexts.forEach(span => span.style.display = 'inline-block'); 
+        localStorage.setItem('sidebarState', 'expanded');
+    }
+}
+
+
+function initializeSidebarToggle() {
+    const menuToggle = document.getElementById('menu-toggle');
+
+    if (!menuToggle) {
+        console.error("Menu toggle button not found. Sidebar persistence will not work.");
+        return;
+    }
+    
+    const savedState = localStorage.getItem('sidebarState');
+    if (savedState === 'collapsed') {
+        setSidebarState(true);
+    } else {
+        setSidebarState(false);
+    }
+
+    
     menuToggle.addEventListener('click', () => {
-        isCollapsed = !isCollapsed;
-        sidebar.classList.toggle('collapsed', isCollapsed);
-        mainContent.classList.toggle('collapsed', isCollapsed);
-        menuText.textContent = isCollapsed ? '' : 'Menu';
-        logo.style.opacity = isCollapsed ? 0 : 1;
-        logo.style.pointerEvents = isCollapsed ? 'none' : 'auto';
-        navTexts.forEach(span => span.style.display = isCollapsed ? 'none' : 'inline-block');
+        const isCurrentlyCollapsed = document.querySelector('.sidebar').classList.contains('collapsed');
+        setSidebarState(!isCurrentlyCollapsed); 
     });
 }
 
@@ -376,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    initializeSidebarToggle();
+    initializeSidebarToggle(); 
 
     const storedIds = localStorage.getItem('lastSeenUnreadNotificationIds');
     if (storedIds) {

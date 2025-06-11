@@ -42,9 +42,20 @@ app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
 # Define base directories
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-STATIC_DIR = BASE_DIR / "frontend" / "static"
-UPLOAD_BASE_DIRECTORY = STATIC_DIR / "images"
-UPLOAD_BASE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+STATIC_DIR = BASE_DIR / "frontend" / "static" 
+
+# Define the subdirectory relative to STATIC_DIR for wiki images
+WIKI_IMAGES_SUBDIRECTORY = "images/wiki_images"
+# Define the full path where wiki images will be saved
+FULL_WIKI_UPLOAD_PATH = STATIC_DIR / WIKI_IMAGES_SUBDIRECTORY
+# Ensure the directory exists
+FULL_WIKI_UPLOAD_PATH.mkdir(parents=True, exist_ok=True)
+
+# Define the subdirectory for event classification images
+EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY = "images/event_classifications"
+# Ensure the directory exists for event classification images
+(STATIC_DIR / EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
+
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -69,20 +80,21 @@ def generate_secure_filename(original_filename: str) -> str:
 # Helper to delete old files
 def delete_file_from_path(file_path: Optional[str]):
     if file_path:
-        full_path = STATIC_DIR / file_path.lstrip("/")
+        full_path = STATIC_DIR / file_path.lstrip("/static/")
         if os.path.exists(full_path):
             try:
                 os.remove(full_path)
+                logger.info(f"Successfully deleted old file: {full_path}")
             except Exception as e:
-                logging.error(f"Error deleting old file {full_path}: {e}")
+                logger.error(f"Error deleting old file {full_path}: {e}")
 
 # Helper to handle file uploads
 async def handle_file_upload(
     upload_file: UploadFile,
-    subdirectory: str,
+    subdirectory: str, 
     allowed_types: List[str],
     max_size_bytes: Optional[int] = None,
-    old_file_path: Optional[str] = None
+    old_file_path: Optional[str] = None 
 ) -> str:
     if upload_file.content_type not in allowed_types:
         raise HTTPException(
@@ -109,9 +121,10 @@ async def handle_file_upload(
             f.write(file_content)
         return f"/static/{subdirectory}/{filename}"
     except Exception as e:
+        logger.error(f"Failed to save file to {save_path}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save file to {save_path}: {e}",
+            detail=f"Failed to save file: {e}",
         )
 
 # Helper to get current admin and their organization
@@ -141,7 +154,6 @@ async def get_base_template_context(request: Request, db: Session) -> Dict[str, 
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
     user_role = request.session.get("user_role")
-
     logo_url = request.url_for('static', path='images/patrick_logo.jpg')
     organization_id = None
 
@@ -152,19 +164,21 @@ async def get_base_template_context(request: Request, db: Session) -> Dict[str, 
             organization_id = organization.id
             if organization.logo_url:
                 logo_url = organization.logo_url
+                
     elif user_role == "user" and user_id:
         user = db.query(models.User).options(joinedload(models.User.organization)).filter(models.User.id == user_id).first()
         if user and user.organization:
-            organization_id = user.organization.id
-            if user.organization.logo_url:
-                logo_url = user.organization.logo_url
+            organization = user.organization
+            organization_id = organization.id
+            if organization.logo_url:
+                logo_url = organization.logo_url
 
     return {
         "request": request,
         "year": str(datetime.now().year),
         "logo_url": logo_url,
         "organization_id": organization_id,
-        "current_user_id": user_id 
+        "current_user_id": user_id
     }
 
 # Router for API endpoints
@@ -220,7 +234,7 @@ async def mark_notifications_as_read_bulk(
         return {"message": "Notifications marked as read successfully."}
     except Exception as e:
         db.rollback() 
-        logging.error(f"Error marking notifications {notification_ids} as read: {e}")
+        logger.error(f"Error marking notifications {notification_ids} as read: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to mark notifications as read: {e}")
 
 @router.delete("/notifications/clear_all", status_code=status.HTTP_200_OK)
@@ -269,6 +283,70 @@ async def clear_single_notification_route(
       
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+@router.get("/api/admin/org_chart_data", response_model=List[Dict[str, str]])
+async def get_organizational_chart_data(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    # This variable will hold the authenticated entity (Admin or User) and their organization
+    authenticated_entity = None
+    organization = None
+
+    # --- Attempt Admin Authentication First ---
+    try:
+        authenticated_entity, organization = get_current_admin_with_org(request, db)
+    except HTTPException as e:
+        # If Admin authentication fails with 401 (Unauthorized) or 403 (Forbidden),
+        # then try to authenticate as a regular User.
+        if e.status_code == status.HTTP_401_UNAUTHORIZED or e.status_code == status.HTTP_403_FORBIDDEN:
+            try:
+                authenticated_entity, organization = get_current_user_with_org(request, db)
+            except HTTPException:
+                # If regular user authentication also fails, re-raise the original
+                # admin authentication error. This keeps the error message consistent
+                # with the primary access attempt.
+                raise e
+        else:
+            # Re-raise any other type of HTTP exception (e.g., database connection issues)
+            raise
+
+    # If no organization was found after attempting both types of authentication,
+    # it means the user isn't associated with any organization or isn't authenticated.
+    if not organization:
+        # You might want to raise a 404 or 403 here if an organization is strictly required
+        # For now, returning an empty list based on your original logic for no organization.
+        return []
+
+    # --- Fetch Admin Data for the Organization ---
+    # This part remains focused on fetching 'models.Admin' objects.
+    # The 'position' attribute is expected to exist on 'models.Admin'.
+    admins = db.query(models.Admin).join(models.organization_admins).filter(
+        models.organization_admins.c.organization_id == organization.id
+    ).all()
+
+    org_chart_data = []
+    for admin in admins:
+        admin_data = {
+            "first_name": admin.first_name if admin.first_name else "",
+            "last_name": admin.last_name if admin.last_name else "",
+            "email": admin.email if admin.email else "",
+            "position": admin.position if admin.position else "", # This expects 'position' on 'admin' (models.Admin)
+            "organization_name": organization.name if organization and organization.name else "N/A",
+        }
+        org_chart_data.append(admin_data)
+
+    return org_chart_data
+
+@router.get("/api/admin/organizations/{organization_id}/taken_positions", response_model=List[str])
+async def get_taken_positions(organization_id: int, db: Session = Depends(get_db)):
+    taken_positions_query = db.query(models.Admin.position).join(models.Admin.organizations).filter(
+        models.Organization.id == organization_id
+    ).distinct().all()
+
+    taken_positions = [position[0] for position in taken_positions_query if position[0]]
+
+    return taken_positions
+
 # Admin Bulletin Board Post Creation
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
 async def admin_post_bulletin(
@@ -312,7 +390,7 @@ async def admin_post_bulletin(
             organization_id=admin_org.id,
             user_id=user.id,
             notification_type="bulletin_post",
-            entity_id=db_post.post_id,
+            bulletin_post_id=db_post.post_id, 
             url=f"/BulletinBoard#{db_post.post_id}",
             event_identifier=f"bulletin_post_user_{user.id}_post_{db_post.post_id}"
             )
@@ -331,7 +409,7 @@ async def admin_settings(request: Request, db: Session = Depends(get_db)):
     })
     return templates.TemplateResponse("admin_dashboard/admin_settings.html", context)
 
-# Admin Event Creation
+# Admin Event Creation 
 @router.post("/admin/events/create", name="admin_create_event")
 async def admin_create_event(
     request: Request,
@@ -341,6 +419,7 @@ async def admin_create_event(
     date: str = Form(...),
     location: str = Form(...),
     max_participants: int = Form(...),
+    classification_image: Optional[UploadFile] = File(None), 
     db: Session = Depends(get_db)
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
@@ -350,6 +429,15 @@ async def admin_create_event(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date and time format. Please use Year-MM-DDTHH:MM (e.g., 2025-05-27T14:30).")
 
+    classification_image_url = None
+    if classification_image and classification_image.filename:
+        classification_image_url = await handle_file_upload(
+            classification_image,
+            EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY,
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"], 
+            max_size_bytes=5 * 1024 * 1024 
+        )
+
     db_event = models.Event(
         title=title,
         classification=classification,
@@ -358,6 +446,7 @@ async def admin_create_event(
         location=location,
         max_participants=max_participants,
         admin_id=admin.admin_id,
+        classification_image_url=classification_image_url, 
     )
     db.add(db_event)
     db.commit()
@@ -371,19 +460,27 @@ async def admin_create_event(
             organization_id=admin_org.id,
             user_id=user.id,
             notification_type="event",
-            entity_id=db_event.event_id,
+            event_id=db_event.event_id, 
             url=f"/Events#{db_event.event_id}",
             event_identifier=f"new_event_user_{user.id}_event_{db_event.event_id}"
         )
     db.commit() 
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
 
-# Admin Event Deletion
+# Admin Event Deletion 
 @router.post("/admin/events/delete/{event_id}", response_class=HTMLResponse, name="admin_delete_event")
 async def admin_delete_event(event_id: int, db: Session = Depends(get_db)):
     event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")    
+   
+    if event.classification_image_url:
+        delete_file_from_path(event.classification_image_url)
+
+    db.query(models.Notification).filter(
+        models.Notification.event_id == event_id 
+    ).delete(synchronize_session=False)
+
     db.delete(event)
     db.commit()
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
@@ -394,6 +491,16 @@ async def admin_delete_bulletin_post(post_id: int, db: Session = Depends(get_db)
     post = db.query(models.BulletinBoard).filter(models.BulletinBoard.post_id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    
+    if post.image_path:
+        delete_file_from_path(post.image_path)
+
+    db.query(models.Notification).filter(
+        models.Notification.bulletin_post_id == post_id 
+    ).delete(synchronize_session=False)
+
+    db.query(models.UserLike).filter(models.UserLike.post_id == post_id).delete(synchronize_session=False)
+
     db.delete(post)
     db.commit()
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
@@ -778,21 +885,196 @@ async def payments_total_members(
     })
     return templates.TemplateResponse("admin_dashboard/payments/total_members.html", context)
 
-# Admin Bulletin Board Page
+# Admin Bulletin Board Page 
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
 async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
+
     posts = db.query(models.BulletinBoard).options(
-        joinedload(models.BulletinBoard.admin) 
+        joinedload(models.BulletinBoard.admin)
     ).join(models.Admin).join(models.Admin.organizations).filter(
         models.Organization.id == admin_org.id
     ).order_by(models.BulletinBoard.created_at.desc()).all()
 
+    wiki_posts = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).order_by(models.RuleWikiEntry.updated_at.desc()).all()
+
     context = await get_base_template_context(request, db)
-    context.update({"posts": posts})
+    context.update({
+        "posts": posts,
+        "wiki_posts": wiki_posts 
+    })
     return templates.TemplateResponse("admin_dashboard/admin_bulletin_board.html", context)
 
-# Admin Events Page
+# --- Rules & Wiki specific: New Route for creating Rule/Wiki entries ---
+@router.post('/admin/rules_wiki', response_class=RedirectResponse, name='admin_post_rule_wiki')
+async def admin_post_rule_wiki(
+    request: Request,
+    title: str = Form(...),
+    category: str = Form(...),
+    content: str = Form(...),
+    image: Optional[UploadFile] = File(None), 
+    db: Session = Depends(get_db)
+):
+    """
+    Handles the creation of a new Rule/Wiki entry, including optional image upload.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    image_path = None
+    if image and image.filename: 
+        image_path = await handle_file_upload(
+            image,
+            WIKI_IMAGES_SUBDIRECTORY, 
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+            max_size_bytes=5 * 1024 * 1024 
+        )
+
+    db_rule_wiki = models.RuleWikiEntry(
+        title=title,
+        category=category,
+        content=content,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        image_path=image_path 
+    )
+    db.add(db_rule_wiki)
+    db.commit()
+    db.refresh(db_rule_wiki)
+
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
+
+
+# --- Rules & Wiki specific: Route for displaying edit form ---
+@router.get('/admin/rules_wiki/edit/{post_id}', name='admin_edit_rule_wiki')
+async def admin_edit_rule_wiki(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Redirects to the main bulletin board page with a flag to activate
+    the edit form for a specific Rule/Wiki entry.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id 
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
+       
+    redirect_url = request.url_for('admin_bulletin_board') + f"?edit_wiki_post_id={post_id}"
+    return RedirectResponse(url=redirect_url, status_code=302)
+
+@router.post('/admin/rules_wiki/update/{post_id}', name='admin_update_rule_wiki')
+async def admin_update_rule_wiki(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found.")
+
+    form = await request.form()
+    rule_wiki_entry.title = form.get('title')
+    rule_wiki_entry.category = form.get('category')
+    rule_wiki_entry.content = form.get('content')
+    uploaded_image = form.get('image')
+    if uploaded_image and uploaded_image.filename:
+        pass 
+
+    db.add(rule_wiki_entry)
+    db.commit()
+    db.refresh(rule_wiki_entry)
+
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=302)
+
+
+# --- Rules & Wiki specific: Route for updating Rule/Wiki entries ---
+@router.post('/admin/rules_wiki/edit/{post_id}', response_class=RedirectResponse, name='admin_update_rule_wiki')
+async def admin_update_rule_wiki(
+    request: Request,
+    post_id: int,
+    title: str = Form(...),
+    category: str = Form(...),
+    content: str = Form(...),
+    image: Optional[UploadFile] = File(None), 
+    db: Session = Depends(get_db)
+):
+    """
+    Handles the submission of the edited Rule/Wiki entry form, including optional image upload.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
+
+    if image and image.filename:
+        new_image_path = await handle_file_upload(
+            image,
+            WIKI_IMAGES_SUBDIRECTORY, 
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+            max_size_bytes=5 * 1024 * 1024, 
+            old_file_path=rule_wiki_entry.image_path 
+        )
+        rule_wiki_entry.image_path = new_image_path
+
+
+    rule_wiki_entry.title = title
+    rule_wiki_entry.category = category
+    rule_wiki_entry.content = content
+
+    db.add(rule_wiki_entry)
+    db.commit()
+    db.refresh(rule_wiki_entry)
+
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
+
+
+# --- Rules & Wiki specific: Route for deleting Rule/Wiki entries ---
+@router.post('/admin/rules_wiki/delete/{post_id}', response_class=RedirectResponse, name='admin_delete_rule_wiki')
+async def admin_delete_rule_wiki(
+    request: Request,
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Handles the deletion of a Rule/Wiki entry and its associated image file.
+    """
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
+        models.RuleWikiEntry.id == post_id,
+        models.RuleWikiEntry.organization_id == admin_org.id
+    ).first()
+
+    if not rule_wiki_entry:
+        raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
+
+    if rule_wiki_entry.image_path:
+        delete_file_from_path(rule_wiki_entry.image_path)
+
+    db.delete(rule_wiki_entry)
+    db.commit()
+    return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
+
+# Admin Events Page 
 @router.get('/admin/events', response_class=HTMLResponse)
 async def admin_events(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
@@ -872,7 +1154,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
 
     net_income_ytd = total_revenue_ytd - total_expenses_ytd
     profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
-
+    
     top_revenue_source_query = db.query(models.PaymentItem.academic_year, models.PaymentItem.semester, func.sum(models.PaymentItem.fee).label('total_fee')).join(models.User).filter(
         extract('year', models.PaymentItem.updated_at) == current_year, models.PaymentItem.is_paid == True, models.User.organization_id == organization.id
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).order_by(func.sum(models.PaymentItem.fee).desc()).first()
@@ -1069,11 +1351,13 @@ async def update_organization_logo_route(
     if organization.logo_url and organization.logo_url != request.url_for('static', path='images/patrick_logo.jpg'):
         delete_file_from_path(organization.logo_url)
 
-    file_path = UPLOAD_BASE_DIRECTORY / suggested_filename
+    file_path = STATIC_DIR / "images" / suggested_filename 
+    file_path.parent.mkdir(parents=True, exist_ok=True) 
+
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(logo_file.file, buffer)
-        logo_url = f"/static/images/{suggested_filename}"
+        logo_url = f"/static/images/{suggested_filename}" 
         organization.logo_url = logo_url
         db.add(organization)
         db.commit()
@@ -1151,7 +1435,10 @@ async def payment_success(
     if user and user.organization:
         for admin in user.organization.admins:
             message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
-            crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success", entity_id=payment.id, url=f"/admin/payments/total_members?student_number={user.student_number}",event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
+            crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success",
+                                     payment_id=payment.id, 
+                                     url=f"/admin/payments/total_members?student_number={user.student_number}",
+                                     event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
     
     db.commit() 
     logging.info(f"PayMaya payment success: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
@@ -1233,7 +1520,8 @@ async def home(request: Request, db: Session = Depends(get_db)):
             for past_due_user in past_due_users:
                 crud.create_notification(db, f"Past Due Payments: {past_due_user.first_name} {past_due_user.last_name} has past due payment items.",
                                          admin_id=admin.admin_id, organization_id=context["organization_id"],
-                                         notification_type="past_due_payments", entity_id=past_due_user.id,
+                                         notification_type="past_due_payments", 
+                                         payment_item_id=None, 
                                          url=f"/admin/payments/total_members?student_number={past_due_user.student_number}",
                                          event_identifier=f"admin_past_due_user_{past_due_user.id}_admin_{admin.admin_id}")
         db.commit() 
@@ -1246,10 +1534,12 @@ async def home(request: Request, db: Session = Depends(get_db)):
             user_past_due_items = db.query(models.PaymentItem).filter(
                 models.PaymentItem.user_id == user_id, models.PaymentItem.is_past_due == True, models.PaymentItem.is_paid == False
             ).all()
-            if user_past_due_items:
+            if user_past_due_items:                
                 crud.create_notification(db, "You have past due payment items. Please check your payments page.",
                                          user_id=user_id, organization_id=context["organization_id"],
-                                         notification_type="user_past_due", url="/Payments",
+                                         notification_type="user_past_due", 
+                                         payment_item_id=None,
+                                         url="/Payments",
                                          event_identifier=f"user_past_due_alert_user_{user_id}")
         db.commit() 
         temporary_faqs = [
@@ -1267,20 +1557,25 @@ async def home(request: Request, db: Session = Depends(get_db)):
 async def bulletin_board(request: Request, db: Session = Depends(get_db)):
     user, user_org = get_current_user_with_org(request, db)
     posts = []
+    wiki_posts = []  
     hearted_post_ids = set()
 
     if user_org:
         posts = db.query(models.BulletinBoard)\
-                  .join(models.Admin).join(models.Admin.organizations)\
-                  .filter(models.Organization.id == user_org.id)\
-                  .order_by(desc(models.BulletinBoard.created_at)).all()
+                    .join(models.Admin).join(models.Admin.organizations)\
+                    .filter(models.Organization.id == user_org.id)\
+                    .order_by(desc(models.BulletinBoard.created_at)).all()
+
+        wiki_posts = db.query(models.RuleWikiEntry)\
+                        .filter(models.RuleWikiEntry.organization_id == user_org.id)\
+                        .order_by(desc(models.RuleWikiEntry.created_at)).all()
 
         if user:
             user_likes = db.query(models.UserLike).filter(models.UserLike.user_id == user.id).all()
             hearted_post_ids = {like.post_id for like in user_likes}
 
     context = await get_base_template_context(request, db)
-    context.update({"posts": posts, "hearted_posts": hearted_post_ids})
+    context.update({"posts": posts, "hearted_posts": hearted_post_ids, "wiki_posts": wiki_posts})
 
     return templates.TemplateResponse("student_dashboard/bulletin_board.html", context)
 
@@ -1695,7 +1990,8 @@ async def heart_post(
             post.heart_count += 1
             crud.create_notification(db, f"{user.first_name} {user.last_name} liked your post: '{post.title}'",
                                      organization_id=user_org.id, admin_id=post.admin_id,
-                                     notification_type="bulletin_like", entity_id=post_id,
+                                     notification_type="bulletin_like", 
+                                     bulletin_post_id=post_id, 
                                      url=f"/admin/bulletin_board#{post_id}",
                                      event_identifier=f"bulletin_like_admin_{post.admin_id}_post_{post_id}_user_{user.id}")
     elif action == 'unheart':
@@ -1725,7 +2021,8 @@ async def join_event(event_id: int, request: Request, db: Session = Depends(get_
     event.participants.append(user)
     crud.create_notification(db, f"{user.first_name} {user.last_name} joined your event: '{event.title}'", 
                              organization_id=user_org.id, admin_id=event.admin_id, notification_type="event_join",
-                             entity_id=event_id, url=f"/admin/events#{event_id}",
+                             event_id=event_id, 
+                             url=f"/admin/events#{event_id}",
                              event_identifier=f"event_join_admin_{event.admin_id}_event_{event_id}_user_{user.id}")
     db.commit() 
     return RedirectResponse(url="/Events", status_code=status.HTTP_303_SEE_OTHER)
@@ -1803,7 +2100,7 @@ async def update_profile(
                     if re.match(r"^\d{4}-\d{2}-\d{2}$", value):
                         user.birthdate = value
                     elif re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", value):
-                        user.birthdate = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+                        user.birthdate = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d")
                     elif re.match(r"^\d{2}/\d{2}/\d{4}$", value):
                         user.birthdate = datetime.strptime(value, "%m/%d/%Y").strftime("%Y-%m-%d")
                     else:
@@ -1849,7 +2146,7 @@ async def update_profile(
                         if re.match(r"^\d{4}-\d{2}-\d{2}$", value):
                             user.birthdate = value
                         elif re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", value):
-                            user.birthdate = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+                            user.birthdate = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d")
                         elif re.match(r"^\d{2}/\d{2}/\d{4}$", value):
                             user.birthdate = datetime.strptime(value, "%m/%d/%Y").strftime("%Y-%m-%d")
                         else:
@@ -1893,7 +2190,8 @@ async def update_profile(
         for admin in db.query(models.Admin).join(models.organization_admins).filter(models.organization_admins.c.organization_id == user.organization_id).all():
             crud.create_notification(db=db, message=f"Member {user.first_name} {user.last_name} has been verified.",
                                      organization_id=user.organization_id, admin_id=admin.admin_id, notification_type="member_verification",
-                                     entity_id=user.id, url=f"/admin/payments/total_members?student_number={user.student_number}",
+                                     verified_user_id=user.id, 
+                                     url=f"/admin/payments/total_members?student_number={user.student_number}",
                                      event_identifier=f"member_verified_admin_{admin.admin_id}_user_{user.id}")
 
     db.commit()

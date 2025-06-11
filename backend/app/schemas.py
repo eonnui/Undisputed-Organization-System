@@ -163,3 +163,29 @@ class Notification(NotificationBase):
 
     class Config:
         from_attributes = True 
+
+class RuleWikiEntryBase(BaseModel):
+    title: str
+    category: str
+    content: str
+    image_path: Optional[str] = None 
+
+class RuleWikiEntryCreate(RuleWikiEntryBase):
+    """Schema for creating a new Rule/Wiki entry."""
+    pass 
+
+class RuleWikiEntryUpdate(RuleWikiEntryBase):
+    """Schema for updating an existing Rule/Wiki entry."""
+    pass 
+
+class RuleWikiEntry(RuleWikiEntryBase):
+    """Schema for returning Rule/Wiki entry data, including database-generated fields."""
+    id: int
+    admin_id: int
+    organization_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+     

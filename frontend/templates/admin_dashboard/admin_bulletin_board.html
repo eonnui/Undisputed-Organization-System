@@ -8,95 +8,197 @@
 {% endblock %}
 
 {% block content %}
-<div class="bulletin-board-container">
-  <h2 class="bulletin-header">Bulletin Board</h2>
-  <div class="create-post-container">
-    <div class="create-post-header">
-      <input type="text" class="create-post-input" placeholder="Share something with the community..."
-        onclick="this.style.display='none'; document.querySelector('.create-post-form-fields').style.display='block'; document.querySelector('.back-to-bulletin').style.display='block';">
+<div class="main-content-flex-container">
+
+  <div class="bulletin-board-container">
+    <h2 class="bulletin-header">Bulletin Board</h2>
+    <div class="create-post-container">
+      <div class="create-post-header">
+        <input type="text" class="create-post-input" placeholder="Share something with the community...">
+      </div>
+
+      <form class="create-post-form-fields" action="{{ url_for('admin_post_bulletin') }}" method="post"
+        enctype="multipart/form-data">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required>
+
+        <label for="category">Category:</label>
+        <select id="category" name="category">
+          <option value="Announcement">Announcement</option>
+          <option value="Event">Event</option>
+          <option value="General">General</option>
+        </select>
+
+        <label for="content">Content:</label>
+        <textarea id="content" name="content" rows="5" required></textarea>
+
+        <label for="is_pinned" class="checkbox-label">
+          <input type="checkbox" id="is_pinned" name="is_pinned"> Pin Post
+        </label>
+
+        <label for="image">Upload Image (Optional):</label>
+        <input type="file" id="image" name="image">
+
+        <button type="submit" class="create-post-submit-button">Post</button>
+      </form>
     </div>
 
-    <form class="create-post-form-fields" action="{{ url_for('admin_post_bulletin') }}" method="post"
-      enctype="multipart/form-data">
-      <label for="title">Title:</label>
-      <input type="text" id="title" name="title" required>
+    <a href="{{ url_for('admin_bulletin_board') }}" class="back-to-bulletin">Back to Bulletin Board</a>
 
-      <label for="category">Category:</label>
-      <select id="category" name="category">
-        <option value="Announcement">Announcement</option>
-        <option value="Event">Event</option>
-        <option value="General">General</option>
-      </select>
-
-      <label for="content">Content:</label>
-      <textarea id="content" name="content" rows="5" required></textarea>
-
-      <label for="is_pinned" class="checkbox-label">
-        <input type="checkbox" id="is_pinned" name="is_pinned"> Pin Post
-      </label>
-
-      <label for="image">Upload Image (Optional):</label>
-      <input type="file" id="image" name="image">
-
-      <button type="submit" class="create-post-submit-button">Post</button>
-    </form>
+    <h2 class="existing-posts-title">Recent Posts</h2>
+    {% if posts %}
+    {% for post in posts %}
+    <div class="post-card">
+      <div class="post-header">
+        <div class="profile-info">
+          <div class="profile-image">
+            {% if post.admin and post.admin.first_name %}
+            <div class="initial-circle">
+              {{ post.admin.first_name[0]|upper }}
+            </div>
+            {% else %}
+            <div class="initial-circle">
+              ?
+            </div>
+            {% endif %}
+          </div>
+          <div class="post-meta">
+            <div class="post-title">{{ post.title }} {% if post.is_pinned %}
+              <span class="pinned">Pinned</span>
+              {% endif %}
+            </div>
+            <div class="post-details">
+              <div>by {% if post.admin and post.admin.first_name %} {{ post.admin.first_name }} {% else %}
+                Unknown Admin {% endif %}
+              </div>
+              <div class="post-date">date posted: {{ post.created_at.strftime('%m/%d/%Y') }}</div>
+            </div>
+          </div>
+        </div>
+        <form action="{% if post.post_id %}{{ url_for('admin_delete_bulletin_post', post_id=post.post_id) }}{% endif %}"
+          method="post">
+          <button type="submit" class="delete-button">Delete</button>
+        </form>
+      </div>
+      {% if post.image_path %}
+      <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
+      {% endif %}
+      <div class="post-content">{{ post.content | safe }}</div>
+      <div class="post-actions">
+        <span class="heart-count">❤️ {{ post.heart_count }}</span>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No bulletin board posts yet.</p>
+    {% endif %}
   </div>
 
-  <a href="{{ url_for('admin_bulletin_board') }}" class="back-to-bulletin">Back to Bulletin Board</a>
-
-  <h2 class="existing-posts-title">Recent Posts</h2>
-  {% if posts %}
-  {% for post in posts %}
-  <div class="post-card">
-    <div class="post-header">
-      <div class="profile-info">
-        {# Corrected: Display admin's initial in profile-image #}
-        <div class="profile-image">
-          {% if post.admin and post.admin.first_name %}
-          <div class="initial-circle"
-            style="width: 100%; height: 100%; border-radius: 50%; background-color: #bbb; display: flex; justify-content: center; align-items: center; font-size: 1.2em; color: white;">
-            {{ post.admin.first_name[0]|upper }}
-          </div>
-          {% else %}
-          {# Fallback if no admin or first name exists for initial #}
-          <div class="initial-circle" 
-            style="width: 100%; height: 100%; border-radius: 50%; background-color: #ccc; display: flex; justify-content: center; align-items: center; font-size: 1.2em; color: #666;">
-            ?
-          </div>
-          {% endif %}
-        </div>
-        <div class="post-meta">
-          <div class="post-title">{{ post.title }} {% if post.is_pinned %}
-          <span class="pinned">Pinned</span>
-          {% endif %}
-          </div>
-          <div class="post-details">
-            {# Corrected: Display only admin's first name #}
-            <div>by {% if post.admin and post.admin.first_name %} {{ post.admin.first_name }} {% else %}
-            Unknown Admin {% endif %}
-            </div>
-            <div class="post-date">date posted: {{ post.created_at.strftime('%m/%d/%Y') }}</div>
+  <div class="rules-wiki-container">
+    {# NEW: Organizational Chart Section #}
+    <div class="org-chart-section">
+      <h2 class="org-chart-header">Organizational Chart</h2>
+      <button id="viewOrgChartButton" class="view-org-chart-button">View Chart</button>
+      <div id="orgChartModal" class="modal">
+        <div class="modal-content">
+          <span class="close-button">&times;</span>
+          <h3>Organizational Chart</h3>
+          <div class="organization-chart-display" id="organizationChartContainer">
+            {# This div will be populated dynamically by JavaScript #}
+            <p class="loading-message">Loading organizational chart...</p>
           </div>
         </div>
       </div>
-      <form action="{% if post.post_id %}{{ url_for('admin_delete_bulletin_post', post_id=post.post_id) }}{% endif %}"
-        method="post">
-        <button type="submit" class="delete-button">Delete</button>
+    </div>
+
+    <hr class="section-divider">
+
+    <div class="create-wiki-post-container">
+      <h3 class="create-wiki-post-title">Create New Rule/Wiki Entry</h3>
+      <div class="create-wiki-input-wrapper">
+        <input type="text" class="create-wiki-input" placeholder="Start a new Rule/Wiki entry...">
+      </div>
+      <form class="create-wiki-post-form" action="{{ url_for('admin_post_rule_wiki') }}" method="post" enctype="multipart/form-data">
+        <label for="wiki_title">Title:</label>
+        <input type="text" id="wiki_title" name="title" required>
+
+        <label for="wiki_category">Category:</label>
+        <select id="wiki_category" name="category">
+          <option value="Rules">Rules</option>
+          <option value="Wiki">Wiki</option>
+        </select>
+
+        <label for="wiki_content">Content:</label>
+        <textarea id="wiki_content" name="content" rows="10" required></textarea>
+
+        <label for="wiki_image">Upload Image (Optional):</label>
+        <input type="file" id="wiki_image" name="image" accept="image/*">
+
+        <button type="submit" class="create-wiki-submit-button">Save Entry</button>
+        <button type="button" class="cancel-create-wiki-button">Cancel</button>
       </form>
     </div>
-    {% if post.image_path %}
-    <img src="{{ post.image_path }}" alt="{{ post.title }}" 
-    style="max-width: 75%; height: auto; margin-bottom: 10px; border-radius: 5px; display: block; margin: 0 auto;">      
-    {% endif %}
-    <div class="post-content">{{ post.content | safe }}</div>
-    <div class="post-actions">
-      <span class="heart-count">❤️ {{ post.heart_count }}</span>
+
+    <hr class="section-divider">
+
+    <div class="existing-wiki-post-container">
+      <h3 class="existing-wiki-posts-title">Rules & Wiki Entries</h3>
+      <div class="wiki-posts-list">
+        {% if wiki_posts %}
+          {% for post in wiki_posts %}
+          <div class="wiki-post-card" id="wiki-post-{{ post.id }}">
+            <div class="wiki-post-display-mode">
+              <div class="wiki-post-header">
+                <h3 class="wiki-post-title">{{ post.title }} {{ post.category }}</h3>
+                <div class="wiki-post-actions">
+                  <button type="button" class="edit-button wiki-edit-button" data-post-id="{{ post.id }}">Edit</button>
+                  <form action="{{ url_for('admin_delete_rule_wiki', post_id=post.id) }}" method="post">
+                    <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this entry?');">Delete</button>
+                  </form>
+                </div>
+              </div>
+              {% if post.image_path %}
+              <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
+              {% endif %}
+              <div class="wiki-post-content">
+                {{ post.content | safe }}
+              </div>
+            </div>
+
+            <div class="wiki-post-edit-mode">
+              <form class="edit-wiki-post-form" action="{{ url_for('admin_update_rule_wiki', post_id=post.id) }}" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="post_id" value="{{ post.id }}">
+
+                <label for="edit_wiki_title_{{ post.id }}">Title:</label>
+                <input type="text" id="edit_wiki_title_{{ post.id }}" name="title" value="{{ post.title }}" required>
+
+                <label for="edit_wiki_category_{{ post.id }}">Category:</label>
+                <select id="edit_wiki_category_{{ post.id }}" name="category">
+                  <option value="Rules" {% if post.category == 'Rules' %}selected{% endif %}>Rules</option>
+                  <option value="Mission" {% if post.category == 'Mission' %}selected{% endif %}>Mission</option>
+                  <option value="Vision" {% if post.category == 'Vision' %}selected{% endif %}>Vision</option>
+                  <option value="OrgChart" {% if post.category == 'OrgChart' %}selected{% endif %}>Organizational Chart</option>
+                  <option value="General" {% if post.category == 'General' %}selected{% endif %}>General Wiki</option>
+                </select>
+
+                <label for="edit_wiki_content_{{ post.id }}">Content:</label>
+                <textarea id="edit_wiki_content_{{ post.id }}" name="content" rows="10" required>{{ post.content }}</textarea>
+
+                <label for="edit_wiki_image_{{ post.id }}">Upload New Image (Optional):</label>
+                <input type="file" id="edit_wiki_image_{{ post.id }}" name="image" accept="image/*">
+
+                <button type="submit" class="save-edit-button">Save Changes</button>
+                <button type="button" class="cancel-edit-button" data-post-id="{{ post.id }}">Cancel</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p>No rules or wiki entries yet.</p>
+        {% endif %}
+      </div>
     </div>
   </div>
-  {% endfor %}
-  {% else %}
-  <p>No bulletin board posts yet.</p>
-  {% endif %}
 </div>
 {% endblock %}
 

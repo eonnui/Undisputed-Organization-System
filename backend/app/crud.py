@@ -198,7 +198,11 @@ def create_notification(
     user_id: Optional[int] = None,
     admin_id: Optional[int] = None,
     notification_type: Optional[str] = None,
-    entity_id: Optional[int] = None,
+    bulletin_post_id: Optional[int] = None,
+    event_id: Optional[int] = None,
+    payment_id: Optional[int] = None,
+    payment_item_id: Optional[int] = None,
+    verified_user_id: Optional[int] = None,
     url: Optional[str] = None
 ) -> Optional[models.Notification]:
 
@@ -217,6 +221,17 @@ def create_notification(
 
     all_combined_filters = [models.Notification.event_identifier == event_identifier, and_(*owner_filters)]
 
+    if bulletin_post_id is not None:
+        all_combined_filters.append(models.Notification.bulletin_post_id == bulletin_post_id)
+    if event_id is not None:
+        all_combined_filters.append(models.Notification.event_id == event_id)
+    if payment_id is not None:
+        all_combined_filters.append(models.Notification.payment_id == payment_id)
+    if payment_item_id is not None:
+        all_combined_filters.append(models.Notification.payment_item_id == payment_item_id)
+    if verified_user_id is not None:
+        all_combined_filters.append(models.Notification.verified_user_id == verified_user_id)
+
     existing_notification = db.query(models.Notification).filter(and_(*all_combined_filters)).first()
 
     if existing_notification:
@@ -231,7 +246,11 @@ def create_notification(
             user_id=user_id,
             admin_id=admin_id,
             notification_type=notification_type,
-            entity_id=entity_id,
+            bulletin_post_id=bulletin_post_id,
+            event_id=event_id,
+            payment_id=payment_id,
+            payment_item_id=payment_item_id,
+            verified_user_id=verified_user_id,
             url=url,
             event_identifier=event_identifier,
             is_read=False,
@@ -241,7 +260,6 @@ def create_notification(
         db.add(db_notification)
         return db_notification
 
-# Function to mark a single notification as dismissed
 def mark_notification_as_dismissed_by_owner(
     db: Session,
     notification_id: int,
@@ -271,7 +289,6 @@ def mark_notification_as_dismissed_by_owner(
         return notification_to_dismiss
     return None
 
-# Function to mark all notifications for an owner as dismissed
 def mark_all_notifications_as_dismissed_by_owner(
     db: Session,
     user_id: Optional[int] = None,
@@ -286,7 +303,7 @@ def mark_all_notifications_as_dismissed_by_owner(
     elif organization_id:
         query = query.filter(models.Notification.organization_id == organization_id)
     else:
-        return 0   
+        return 0  
     notifications_to_dismiss = query.all()
     count = 0
     for notif in notifications_to_dismiss:
@@ -297,7 +314,6 @@ def mark_all_notifications_as_dismissed_by_owner(
     logging.info(f"Marked {count} notifications as dismissed for owner.")
     return count
 
-# Gets Notification
 def get_notifications(
     db: Session,
     user_id: Optional[int] = None,
@@ -344,7 +360,7 @@ def get_notifications(
         filters.append(models.Notification.is_read == False)
     if filters:
         notifications_query = notifications_query.filter(*filters)
-        
+         
     notifications = notifications_query.order_by(models.Notification.created_at.desc()).all()
     return notifications
 
@@ -363,7 +379,6 @@ def get_all_notification_configs_as_map(db: Session) -> Dict[str, Dict[str, Any]
         } for config in notification_configs
     }
 
-# Fetch dynamic entity titles for notifications
 def fetch_dynamic_entity_titles(
     db_session: Session,
     dynamic_entity_ids_to_fetch: defaultdict,
@@ -412,7 +427,6 @@ def fetch_dynamic_entity_titles(
                 dynamic_entity_titles_local[f"{model_name}_{entity_key}"] = f"Unknown {model_name} (ID: {entity_key})"
     return dynamic_entity_titles_local
 
-# Process and format notifications for display
 def process_and_format_notifications(db: Session, raw_notifications: list, config_map: dict) -> list:
     individual_notifications_always = []
     notifications_for_grouping = defaultdict(lambda: {"count": 0, "latest_notification": None, "notifications": []})
@@ -420,24 +434,49 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
 
     for notification in raw_notifications:
         config = config_map.get(notification.notification_type)
-        if notification.entity_id and config and config.get("entity_model_name"):
-            model_name = config["entity_model_name"]
-            dynamic_entity_ids_to_fetch[model_name].add(notification.entity_id)
+        
+        if notification.bulletin_post_id and config and config.get("entity_model_name") == "BulletinBoard":
+            dynamic_entity_ids_to_fetch["BulletinBoard"].add(notification.bulletin_post_id)
+        elif notification.event_id and config and config.get("entity_model_name") == "Event":
+            dynamic_entity_ids_to_fetch["Event"].add(notification.event_id)
+        elif notification.payment_id and config and config.get("entity_model_name") == "Payment":
+            dynamic_entity_ids_to_fetch["Payment"].add(notification.payment_id)
+        elif notification.payment_item_id and config and config.get("entity_model_name") == "PaymentItem":
+            dynamic_entity_ids_to_fetch["PaymentItem"].add(notification.payment_item_id)
+        elif notification.verified_user_id and config and config.get("entity_model_name") == "User":
+            dynamic_entity_ids_to_fetch["User"].add(notification.verified_user_id)
 
         if not config or config.get("always_individual"):
             individual_notifications_always.append(notification)
             continue
 
         grouping_key_parts = [notification.notification_type]
-        if not config.get("group_by_type_only") and notification.entity_id:
-            grouping_key_parts.append(str(notification.entity_id))
+        if not config.get("group_by_type_only"):
+            if notification.bulletin_post_id:
+                grouping_key_parts.append(f"bulletin_post_{notification.bulletin_post_id}")
+            elif notification.event_id:
+                grouping_key_parts.append(f"event_{notification.event_id}")
+            elif notification.payment_id:
+                grouping_key_parts.append(f"payment_{notification.payment_id}")
+            elif notification.payment_item_id:
+                grouping_key_parts.append(f"payment_item_{notification.payment_item_id}")
+            elif notification.verified_user_id:
+                grouping_key_parts.append(f"verified_user_{notification.verified_user_id}")
+            if not (notification.bulletin_post_id or notification.event_id or notification.payment_id or notification.payment_item_id or notification.verified_user_id):
+                if notification.user_id:
+                    grouping_key_parts.append(f"user_{notification.user_id}")
+                elif notification.admin_id:
+                    grouping_key_parts.append(f"admin_{notification.admin_id}")
+                elif notification.organization_id:
+                    grouping_key_parts.append(f"org_{notification.organization_id}")
+
         grouping_key = tuple(grouping_key_parts)
 
         notifications_for_grouping[grouping_key]["notifications"].append(notification)
         
         current_created_at = notification.created_at
         if not isinstance(current_created_at, datetime):
-            try:         
+            try:    
                 current_created_at = datetime.fromisoformat(current_created_at) if isinstance(current_created_at, str) else datetime.min
             except ValueError:
                 current_created_at = datetime.min
@@ -457,7 +496,7 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
             continue
         final_notifications_data.append({
             "id": individual_notif.id,
-            "message": individual_notif.message,  # Use original message
+            "message": individual_notif.message,
             "url": individual_notif.url,
             "notification_type": individual_notif.notification_type,
             "created_at": created_at_iso,
@@ -471,7 +510,7 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
 
         if not latest_notif:
             logging.warning(f"Skipping empty group for key: {key}")
-            continue         
+            continue        
         
         group_is_read = all(n.is_read for n in notifications_in_group) 
         
@@ -518,7 +557,6 @@ def process_and_format_notifications(db: Session, raw_notifications: list, confi
     logging.info(f"Finished processing notifications. Total formatted: {len(final_notifications_data)}")
     return final_notifications_data
 
-# Format a grouped notification message
 def _format_grouped_notification_message(
     count: int,
     latest_notif: models.Notification,
@@ -528,11 +566,29 @@ def _format_grouped_notification_message(
     grouping_key: Tuple[str, ...]
 ) -> str:
     notification_type = grouping_key[0]
-    entity_id = grouping_key[1] if len(grouping_key) > 1 else None
+    
+    entity_identifier_part = grouping_key[1] if len(grouping_key) > 1 else None
+    entity_id = None
+    model_name_from_grouping = None
+    if entity_identifier_part and '_' in entity_identifier_part:
+        parts = entity_identifier_part.split('_')
+        if len(parts) >= 2:
+            model_prefix = parts[0]
+            try:
+                entity_id = int(parts[-1])
+                if model_prefix == "bulletin_post": model_name_from_grouping = "BulletinBoard"
+                elif model_prefix == "event": model_name_from_grouping = "Event"
+                elif model_prefix == "payment": model_name_from_grouping = "Payment"
+                elif model_prefix == "payment_item": model_name_from_grouping = "PaymentItem"
+                elif model_prefix == "verified_user": model_name_from_grouping = "User"
+            except ValueError:
+                pass
+
     base_display_name = type_config.get("display_name_plural") or notification_type.replace('_', ' ').lower()
     context_phrase = ""
-    if entity_id and type_config.get("entity_model_name"):
-        model_name = type_config["entity_model_name"]
+
+    if entity_id is not None and model_name_from_grouping:
+        model_name = model_name_from_grouping
         fetched_title = dynamic_entity_titles.get(f"{model_name}_{entity_id}")
         if fetched_title:
             if type_config.get("context_phrase_template"):
@@ -542,6 +598,7 @@ def _format_grouped_notification_message(
                     context_phrase = f" for {fetched_title}"
             else:
                 context_phrase = f" for {fetched_title}"
+
     MAX_CHARS_IN_SUMMARY = 60
     unique_messages = list(set([n.message for n in notifications_in_group]))
     summary_items_list = []
@@ -586,12 +643,11 @@ def _format_grouped_notification_message(
     else:
         return f"{count} {base_display_name}{context_phrase}: {summary_items_with_others}."
 
-# Mark Notifications as Read
-def mark_notification_as_read(db: Session, notification_id: int) -> Optional[models.Notification]:    
+def mark_notification_as_read(db: Session, notification_id: int) -> Optional[models.Notification]:     
     db_notification = db.query(models.Notification).filter(models.Notification.id == notification_id).first()
     if db_notification:
         db_notification.is_read = True
-        db_notification.updated_at = datetime.now(timezone.utc) # Assuming an 'updated_at' field exists
+        db_notification.read_at = datetime.utcnow()
         db.add(db_notification)
         logging.info(f"Notification with id: {notification_id} marked as read.")
         return db_notification
@@ -599,7 +655,6 @@ def mark_notification_as_read(db: Session, notification_id: int) -> Optional[mod
         logging.warning(f"Notification with id: {notification_id} not found for marking as read.")
     return None
 
-# Color palette helpers
 def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
@@ -619,7 +674,6 @@ def get_contrast_text_color(bg_hex: str) -> str:
     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return "#000000" if luminance > 0.5 else "#FFFFFF"
 
-# Generate a custom CSS color palette
 def generate_custom_palette(theme_color_hex: str) -> str:
     base_palette = {
         "--org-bg-color": "#fdf5f5", "--org-login-bg": "#5c1011", "--org-button-bg": "#9a1415",
@@ -630,11 +684,10 @@ def generate_custom_palette(theme_color_hex: str) -> str:
         "--org-error": "#F44336", "--org-warning": "#FFC107", "--org-info": "#2196F3",
         "--org-bg-secondary": "#FFFFFF", "--org-bg-dark": "#1a1a1a", "--org-border-light": "transparent",
         "--org-border-medium": "transparent", "--org-nav-item-bg": "transparent",
-        "--org-nav-item-hover-bg": "rgba(154, 20, 21, 0.05)", "--org-nav-item-selected-bg": "rgba(154, 20, 21, 0.1)",
+        "--org-nav-item-hover-bg": "rgba(154, 20, 21, 0.05)", "--org-nav-item-selected-bg":"#a83232", "--org-nav-selected-border-color": "#a83232",
         "--org-sidebar-bg-color": "#a83232", "--org-sidebar-border-color": "transparent",
         "--org-logo-border-color": "transparent", "--org-nav-icon-color": "#FFFFFF",
-        "--org-nav-hover-accent-color": "#fdf5f5", "--org-nav-selected-border-color": "transparent",
-        "--org-top-bar-border-color": "transparent", "--org-menu-button-hover-bg": "rgba(0, 0, 0, 0.05)",
+        "--org-nav-hover-accent-color": "#fdf5f5", "--org-top-bar-border-color": "transparent", "--org-menu-button-hover-bg": "rgba(0, 0, 0, 0.05)",
         "--org-profile-pic-border-color": "transparent", "--org-dropdown-bg": "#FFFFFF",
         "--org-dropdown-border": "transparent", "--org-dropdown-item-hover-bg": "#f5f5f5",
         "--org-dashboard-bg-color": "#fdf5f5", "--org-dashboard-title-color": "#5c0b0b",
@@ -696,6 +749,8 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     darker_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.5)
     light_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.2)
     lighter_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.6)
+    mid_dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.85) 
+    mid_dark_theme_hex = rgb_to_hex(mid_dark_theme_rgb)
     dark_theme_hex = rgb_to_hex(dark_theme_rgb)
     darker_theme_hex = rgb_to_hex(darker_theme_rgb)
     light_theme_hex = rgb_to_hex(light_theme_rgb)
@@ -730,9 +785,10 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-primary-light"] = lighter_theme_hex
     custom_palette["--org-dashboard-accent-primary"] = light_theme_hex
     custom_palette["--org-login-bg"] = darker_theme_hex
-    custom_palette["--org-sidebar-bg-color"] = dark_theme_hex
+    custom_palette["--org-sidebar-bg-color"] = theme_color_hex
     custom_palette["--org-nav-item-hover-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.05)"
-    custom_palette["--org-nav-item-selected-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.1)"
+    custom_palette["--org-nav-item-selected-bg"] = mid_dark_theme_hex
+    custom_palette["--org-nav-selected-border-color"] = lighter_theme_hex
     custom_palette["--org-nav-icon-color"] = button_text_color
     custom_palette["--org-button-text"] = "#FFFFFF"
     custom_palette["--org-dashboard-title-color"] = darker_theme_hex
@@ -742,7 +798,7 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
     custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex)
     custom_palette["--org-settings-title-color"] = darker_theme_hex
-    custom_palette["--org-button-group-button-update-bg"] = dark_theme_hex
+    custom_palette["--org-button-group-button-update-bg"] = theme_color_hex
     custom_palette["--org-button-group-button-update-hover-bg"] = darker_theme_hex
     custom_palette["--org-change-profile-pic-bg"] = dark_theme_hex
     custom_palette["--org-change-profile-pic-hover-bg"] = darker_theme_hex
