@@ -1,5 +1,3 @@
-// This script assumes it runs after the DOM is fully loaded.
-
 document.addEventListener('DOMContentLoaded', () => {
     // --- Bulletin Board Post Logic ---
     const createPostInput = document.querySelector('.create-post-input');
@@ -126,18 +124,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const orgChartModal = document.getElementById('orgChartModal');
     const closeButton = orgChartModal.querySelector('.close-button');
     const organizationChartContainer = document.getElementById('organizationChartContainer');
-
-    // Helper to create an admin node div with profile, position, and name
     const createAdminNodeDiv = (admin, positionOverride = null) => {
         const adminNode = document.createElement('div');
-        // Apply org-node for general styling and admin-node for specific admin styling
         adminNode.className = 'org-node admin-node';
-        // Add flex for internal layout of profile/text if needed, or rely on outer org-node flex
         adminNode.style.display = 'flex';
-        adminNode.style.flexDirection = 'column'; // Stack profile and text vertically inside the node
-        adminNode.style.alignItems = 'center'; // Center content within the node
+        adminNode.style.flexDirection = 'column'; 
+        adminNode.style.alignItems = 'center'; 
 
-        // Profile Circle
         const profileDiv = document.createElement('div');
         profileDiv.className = 'profile-circle';
         
@@ -147,8 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (admin.profile_picture_url) {
             img.src = admin.profile_picture_url;
         } else {
-            // Use the default image if no profile_picture_url is provided
-            // IMPORTANT: Replace '/static/images/your_image_name.jpg' with your actual default image path
             img.src = '/static/images/your_image_name.jpg'; 
         }
         profileDiv.appendChild(img);
@@ -156,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Position and Name Text Container
         const textContainer = document.createElement('div');
-        textContainer.style.textAlign = 'center'; // Center text horizontally
+        textContainer.style.textAlign = 'center'; 
 
         const positionSpan = document.createElement('span');
         positionSpan.className = 'position-text';
@@ -180,18 +171,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function createOrgChartDisplayElements(admins) {
         const fragment = document.createDocumentFragment();
 
-        // Safely get the organization name from the first admin, and default if not found
         const organizationName = (admins.length > 0 && admins[0].organization_name) ?
             String(admins[0].organization_name).toUpperCase() :
             'UNKNOWN ORGANIZATION';
 
-        // 1. Organization Name Node (Root)
         const organizationNameNode = document.createElement('div');
-        organizationNameNode.className = 'org-node org-root'; // Use org-root for the main organization
+        organizationNameNode.className = 'org-node org-root'; 
         organizationNameNode.textContent = organizationName;
         fragment.appendChild(organizationNameNode);
 
-        // Group admins by position for easier processing
         const positions = {
             'President': [],
             'Vice President-Internal': [],
@@ -208,18 +196,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- Build the main hierarchy ---
-        let previousGroupAdded = false; // To track if a group was added to decide on lines
+        let previousGroupAdded = false; 
 
         // PRESIDENT(S)
         if (positions['President'].length > 0) {
-            // Line from organization name to President
             const lineToPresident = document.createElement('div');
             lineToPresident.classList.add('org-line', 'org-vertical-to-branch');
             fragment.appendChild(lineToPresident);
 
             const presidentBranchContainer = document.createElement('div');
-            presidentBranchContainer.classList.add('org-branch-container'); // This will handle horizontal layout for multiple presidents
+            presidentBranchContainer.classList.add('org-branch-container');
 
             positions['President'].forEach((admin, index) => {
                 const presidentNode = createAdminNodeDiv(admin);
@@ -237,13 +223,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // VPs (Internal/External) - assume they report to President (or the President group)
         const vps = [...positions['Vice President-Internal'], ...positions['Vice President-External']];
         if (vps.length > 0) {
-            // Line from previous group to VPs
             const lineToVPs = document.createElement('div');
             lineToVPs.classList.add('org-line', 'org-vertical-to-branch');
             fragment.appendChild(lineToVPs);
 
             const vpBranchContainer = document.createElement('div');
-            vpBranchContainer.classList.add('org-branch-container'); // Horizontal layout for VPs
+            vpBranchContainer.classList.add('org-branch-container'); 
 
             vps.forEach((admin, index) => {
                 const vpNode = createAdminNodeDiv(admin);
@@ -258,8 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
             previousGroupAdded = true;
         }
 
-        // Other core positions (Secretary, Treasurer, Auditor, PRO)
-        // Assume they are also direct reports, potentially on a new "tier" or side branch.
         const otherCorePositions = [
             ...positions['Secretary'],
             ...positions['Treasurer'],
@@ -268,7 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         if (otherCorePositions.length > 0) {
-            // Add a vertical line if a previous group was added, otherwise start from the org name.
             if (previousGroupAdded) {
                 const lineToOthers = document.createElement('div');
                 lineToOthers.classList.add('org-line', 'org-vertical-to-branch');
@@ -293,7 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Advisers (as a separate section) ---
         if (positions['Adviser'].length > 0) {
-            // Add a vertical line if there were other groups before the advisers
             if (previousGroupAdded) {
                 const lineToAdvisers = document.createElement('div');
                 lineToAdvisers.classList.add('org-line', 'org-vertical-to-branch');
@@ -302,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const adviserSectionHeader = document.createElement('h4');
             adviserSectionHeader.textContent = 'ADVISERS';
-            // Apply inline styles to the header for better visual separation
             Object.assign(adviserSectionHeader.style, {
                 marginTop: '2rem',
                 color: 'var(--org-text-primary)',
@@ -315,10 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
             fragment.appendChild(adviserSectionHeader);
 
             const adviserGroupContainer = document.createElement('div');
-            adviserGroupContainer.classList.add('org-branch-container'); // To lay out horizontally if multiple
+            adviserGroupContainer.classList.add('org-branch-container'); 
 
             positions['Adviser'].forEach((admin, index) => {
-                // Override position text to just 'Adviser' for consistency
                 const adviserNode = createAdminNodeDiv(admin, 'Adviser');
                 adviserGroupContainer.appendChild(adviserNode);
                 if (index < positions['Adviser'].length - 1) {
@@ -335,20 +314,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to fetch and render the organizational chart content
     async function fetchAndRenderOrgChart() {
-        if (!organizationChartContainer) return; // Ensure container exists
+        if (!organizationChartContainer) return; 
 
         organizationChartContainer.innerHTML = '<p class="loading-message">Loading organizational chart...</p>';
 
         try {
-            const response = await fetch('/api/admin/org_chart_data'); // Your backend endpoint
+            const response = await fetch('/api/admin/org_chart_data'); 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const admins = await response.json();
 
-            organizationChartContainer.innerHTML = ''; // Clear loading message
+            organizationChartContainer.innerHTML = ''; 
 
-            // Generate the HTML structure for the chart and append it
             const chartElements = createOrgChartDisplayElements(admins);
             organizationChartContainer.appendChild(chartElements);
 
@@ -361,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listener to open the modal
     orgChartButton.addEventListener('click', function() {
         orgChartModal.style.display = 'block';
-        fetchAndRenderOrgChart(); // Call the function to load content when modal opens
+        fetchAndRenderOrgChart(); 
     });
 
     // Event listener to close the modal
@@ -381,59 +359,53 @@ document.addEventListener('DOMContentLoaded', () => {
     style.innerHTML = `  
       
         .profile-circle {
-            width: 60px; /* Larger circles */
+            width: 60px; 
             height: 60px;
             border-radius: 50%;
-            background-color: #f0f0f0; /* Light background */
-            color: #555; /* Dark text for initials */
+            background-color: #f0f0f0; 
+            color: #555; 
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            font-size: 1.5rem; /* Larger font for initials if no image */
-            margin-bottom: 8px; /* Space between circle and text */
-            overflow: hidden; /* Hide overflowing images */
-            border: 2px solid #ddd; /* Slightly darker border */
+            font-size: 1.5rem; 
+            margin-bottom: 8px; 
+            overflow: hidden; 
+            border: 2px solid #ddd;
         }
 
         .profile-circle img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Cover the circle area */
+            object-fit: cover;
         }
        
         .name-text {
-            color: #444; /* Slightly darker than default text */
+            color: #444; 
             font-size: 0.85rem;
-            display: block; /* Make it a block to stack below position */
-            margin-top: 4px; /* Small margin above name */
-        }
-
-        /* Specific styling for the organization name node, ensuring it's a root */
- 
-        /* Containers for horizontal branches (e.g., peers at the same level) */
-        
+            display: block; 
+            margin-top: 4px; 
+        }       
 
         .org-vertical-to-branch {
-            width: 2px; /* Thin vertical line */
-            height: 30px; /* Length of vertical line */
-            margin: 0 auto; /* Center the line */
+            width: 2px; 
+            height: 30px; 
+            margin: 0 auto; 
         }
 
         .org-line-horizontal {
-            height: 2px; /* Thin horizontal line */
-            width: 30px; /* Length of horizontal line between peer nodes */
-            margin: 0 5px; /* Small margin around horizontal line */
-            align-self: center; /* Vertically center the line if parent is flex */
+            height: 2px; 
+            width: 30px; 
+            margin: 0 5px; 
+            align-self: center; 
         }
 
-        /* Specific styles for adviser group if needed */
         .adviser-group {
-            margin-top: 30px; /* More separation from main hierarchy */
-            border-top: 1px dashed #ccc; /* Dashed line to separate advisers */
+            margin-top: 30px; 
+            border-top: 1px dashed #ccc; 
             padding-top: 20px;
             text-align: center;
-            width: 100%; /* Take full width for adviser section */
+            width: 100%; 
         }
 
         .adviser-group h4 {
@@ -444,11 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         .org-node.adviser-node {
-            border: 1px dashed #b0b0b0; /* Dashed border for adviser nodes */
-            background-color: #f9f9f9; /* Slightly different background */
+            border: 1px dashed #b0b0b0; 
+            background-color: #f9f9f9; 
         }
 
-        /* Utility classes for messages */
         .loading-message, .error-message {
             text-align: center;
             padding: 20px;
@@ -457,11 +428,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         .error-message {
-            color: #dc3545; /* Red for errors */
+            color: #dc3545; 
             font-weight: bold;
         }
 
-        /* Message box for post updates */
         .message-box {
             position: fixed;
             top: 20px;
@@ -476,25 +446,23 @@ document.addEventListener('DOMContentLoaded', () => {
             transition: opacity 0.5s ease-in-out;
         }     
 
-        /* Media queries for responsiveness */
         @media (max-width: 768px) {
             .modal-content {
                 width: 95%;
-                margin: 2.5vh auto; /* Adjust margin for smaller screens */
+                margin: 2.5vh auto; 
                 padding: 15px;
             }
             .org-branch-container {
-                flex-direction: column; /* Stack branches vertically on small screens */
-                gap: 0.5rem; /* Reduce gap */
+                flex-direction: column; 
+                gap: 0.5rem; 
             }
             .org-line.org-line-horizontal {
-                 /* Hide horizontal lines when stacking vertically, as they lose meaning */
                  display: none;
             }
             .org-node {
-                min-width: unset; /* Remove min-width to allow more flexibility */
-                width: 90%; /* Take more width in column layout */
-                margin: 8px auto; /* Center nodes and adjust margin */
+                min-width: unset; 
+                width: 90%; 
+                margin: 8px auto; 
             }
             .org-node.org-root {
                 min-width: unset;
@@ -503,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             .profile-circle {
-                width: 50px; /* Slightly smaller circles on mobile */
+                width: 50px; 
                 height: 50px;
                 font-size: 1.2rem;
             }

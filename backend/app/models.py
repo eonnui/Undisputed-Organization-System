@@ -110,7 +110,7 @@ class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False) # Ensure "users.id" matches your User model's table name and primary key
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String, unique=True, index=True, nullable=False)
     expiration_time = Column(DateTime, nullable=False)
 

@@ -21,10 +21,10 @@
                         <th>Academic Year</th>
                         <th>Semester</th>
                         <th>Fee</th>
-                        <th>Transaction</th> {# Added column for amount paid #}
+                        <th>Transaction</th> 
                         <th>Status</th>
                         <th>Due Date</th>
-                        <th>Payment Date</th> {# Added column for payment date #}
+                        <th>Payment Date</th> 
                     </tr>
                 </thead>
                 <tbody>
@@ -53,8 +53,7 @@
                                 N/A
                             {% endif %}
                         </td>
-                        <td>
-                            {# Display the amount from the Payment object #}
+                        <td>                            
                             ₱{{ "{:,.2f}".format(item.amount) }}
                         </td>
                         <td>
@@ -73,8 +72,7 @@
                                 N/A
                             {% endif %}
                         </td>
-                        <td>
-                            {# Display the creation date from the Payment object #}
+                        <td>                            
                             {% if item.created_at %}
                                 {{ item.created_at.strftime('%Y-%m-%d') }}
                             {% else %}

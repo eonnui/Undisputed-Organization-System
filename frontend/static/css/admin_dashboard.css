@@ -1094,7 +1094,7 @@ tr:hover td {
     background-color: var(--org-input-bg);
     border: 1px dashed var(--org-border-medium);
     border-radius: 6px;
-    padding: 1rem 3rem 1rem 1rem; /* Added extra space on the right */
+    padding: 1rem 3rem 1rem 1rem; 
     overflow: auto;
     gap: 0.5rem;
 }
@@ -1199,9 +1199,9 @@ tr:hover td {
     transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     font-family: "DM Sans", sans-serif;
     box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
-    width: auto; /* Allow button to size based on content */
-    display: inline-block; /* Ensures it respects margin/padding correctly */
-    margin-top: 1rem; /* Add some space above the button */
+    width: auto; 
+    display: inline-block; 
+    margin-top: 1rem; 
 }
 
 .view-org-chart-button:hover {

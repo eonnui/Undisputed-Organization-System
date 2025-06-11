@@ -5,10 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let forgotPasswordIdentifier = '';
     let organizations = [];
     let courseToOrganizationMap = {};
-    // New state variable to store taken positions for the selected organization
     let takenPositions = [];
 
-    // Applies user theme based on organization
     async function applyUserTheme() {
         try {
             const response = await fetch('/get_user_data', {
@@ -252,7 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
             organizationOptions = '<option value="" disabled>Loading organizations...</option>';
         }
 
-        // Define all possible positions
         const allPositions = [
             "President",
             "Vice President-Internal",
@@ -264,10 +261,8 @@ document.addEventListener('DOMContentLoaded', function() {
             "Public Relation Officer"
         ];
 
-        // Generate position options, filtering out taken positions
         let positionOptions = '<option value="" disabled selected>Select your position</option>';
         allPositions.forEach(pos => {
-            // Only add the option if it's not in the takenPositions array
             if (!takenPositions.includes(pos)) {
                 positionOptions += `<option value="${pos}">${pos}</option>`;
             }
@@ -390,8 +385,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (currentForm === 'admin-signup') {
             app.innerHTML = renderAdminSignupForm();
             setupEventListenersForAdminSignupForm();
-            // If we are rendering the admin signup form and an organization is already selected,
-            // we should fetch taken positions again to ensure the dropdown is up-to-date.
             const selectOrgInput = document.getElementById('admin-signup-select-organization');
             if (selectOrgInput && selectOrgInput.value && !document.getElementById('new-organization-radio').checked) {
                 fetchTakenPositions(parseInt(selectOrgInput.value));
@@ -413,7 +406,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('login-form')?.addEventListener('submit', handleLogin);
         document.getElementById('toggle-to-admin-signup')?.addEventListener('click', () => {
             currentForm = 'admin-signup';
-            // Clear taken positions when switching to admin signup to ensure fresh fetch
             takenPositions = [];
             render();
         });
@@ -778,12 +770,11 @@ Please log in.`;
             }
             const data = await response.json();
             takenPositions = data;
-            // Update the position dropdown directly instead of re-rendering the whole form
             updatePositionDropdown();
         } catch (error) {
             displayNotification('Failed to load taken positions for the selected organization.', 'error');
-            takenPositions = []; // Clear taken positions on error
-            updatePositionDropdown(); // Update dropdown even on error to clear options
+            takenPositions = []; 
+            updatePositionDropdown(); 
         }
     }
 
@@ -792,7 +783,6 @@ Please log in.`;
         const positionSelect = document.getElementById('admin-signup-position');
         if (!positionSelect) return;
 
-        // Define all possible positions
         const allPositions = [
             "President",
             "Vice President-Internal",
@@ -839,9 +829,8 @@ Please log in.`;
                     if (primaryCourseInput) primaryCourseInput.required = true;
                     if (selectOrgInput) selectOrgInput.required = false;
                     displayError('admin-signup-select-organization', '');
-                    // Clear taken positions as we are registering a new organization
                     takenPositions = [];
-                    updatePositionDropdown(); // Update the dropdown directly
+                    updatePositionDropdown();
                 } else {
                     newOrgFields.style.display = 'none';
                     existingOrgFields.style.display = 'block';
@@ -854,13 +843,11 @@ Please log in.`;
                     displayError('admin-signup-theme-color', '');
                     displayError('admin-signup-primary-course', '');
 
-                    // If an organization is already selected when switching to existing, fetch positions
                     if (selectOrgInput.value) {
                         fetchTakenPositions(parseInt(selectOrgInput.value));
                     } else {
-                        // If no organization is selected yet, clear taken positions
                         takenPositions = [];
-                        updatePositionDropdown(); // Update the dropdown directly
+                        updatePositionDropdown(); 
                     }
                 }
             });
@@ -872,9 +859,8 @@ Please log in.`;
             if (!isNaN(selectedOrgId)) {
                 fetchTakenPositions(selectedOrgId);
             } else {
-                // If selection is cleared or invalid, clear taken positions
                 takenPositions = [];
-                updatePositionDropdown(); // Update the dropdown directly
+                updatePositionDropdown(); 
             }
         });
 

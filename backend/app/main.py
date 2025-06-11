@@ -283,43 +283,33 @@ async def clear_single_notification_route(
       
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+# Fetching Organization Admin Postition
 @router.get("/api/admin/org_chart_data", response_model=List[Dict[str, str]])
 async def get_organizational_chart_data(
     request: Request,
     db: Session = Depends(get_db)
-):
-    # This variable will hold the authenticated entity (Admin or User) and their organization
+):  
     authenticated_entity = None
     organization = None
 
-    # --- Attempt Admin Authentication First ---
     try:
         authenticated_entity, organization = get_current_admin_with_org(request, db)
     except HTTPException as e:
-        # If Admin authentication fails with 401 (Unauthorized) or 403 (Forbidden),
-        # then try to authenticate as a regular User.
+
         if e.status_code == status.HTTP_401_UNAUTHORIZED or e.status_code == status.HTTP_403_FORBIDDEN:
             try:
                 authenticated_entity, organization = get_current_user_with_org(request, db)
             except HTTPException:
-                # If regular user authentication also fails, re-raise the original
-                # admin authentication error. This keeps the error message consistent
-                # with the primary access attempt.
+                
                 raise e
         else:
-            # Re-raise any other type of HTTP exception (e.g., database connection issues)
+
             raise
 
-    # If no organization was found after attempting both types of authentication,
-    # it means the user isn't associated with any organization or isn't authenticated.
     if not organization:
-        # You might want to raise a 404 or 403 here if an organization is strictly required
-        # For now, returning an empty list based on your original logic for no organization.
+
         return []
 
-    # --- Fetch Admin Data for the Organization ---
-    # This part remains focused on fetching 'models.Admin' objects.
-    # The 'position' attribute is expected to exist on 'models.Admin'.
     admins = db.query(models.Admin).join(models.organization_admins).filter(
         models.organization_admins.c.organization_id == organization.id
     ).all()
@@ -330,7 +320,7 @@ async def get_organizational_chart_data(
             "first_name": admin.first_name if admin.first_name else "",
             "last_name": admin.last_name if admin.last_name else "",
             "email": admin.email if admin.email else "",
-            "position": admin.position if admin.position else "", # This expects 'position' on 'admin' (models.Admin)
+            "position": admin.position if admin.position else "", 
             "organization_name": organization.name if organization and organization.name else "N/A",
         }
         org_chart_data.append(admin_data)
@@ -2237,13 +2227,11 @@ async def change_password(
 
 @app.post("/api/forgot-password/")
 async def forgot_password_endpoint(
-    request_data: schemas.ForgotPasswordRequest, # Use the Pydantic schema
+    request_data: schemas.ForgotPasswordRequest, 
     db: Session = Depends(get_db)
 ):
     identifier = request_data.identifier
 
-    # 1. Look up user by identifier (student number or email)
-    # Assuming crud.get_user can find a user by student_number or email
     user = crud.get_user(db, identifier=identifier)
     if not user:
         raise HTTPException(
@@ -2251,22 +2239,19 @@ async def forgot_password_endpoint(
             detail="User not found with the provided identifier."
         )
 
-    # 2. Generate a random 6-character alphanumeric reset code
     alphabet = string.ascii_uppercase + string.digits
     reset_code = ''.join(secrets.choice(alphabet) for i in range(6))
 
-    # 3. Store reset_code and its expiration in your database
-    # Delete any existing tokens for this user to ensure only one is active at a time
     db.query(models.PasswordResetToken).filter(models.PasswordResetToken.user_id == user.id).delete()
     db.commit()
 
-    expiration_time = datetime.now() + timedelta(minutes=10) # Code valid for 10 minutes
+    expiration_time = datetime.now() + timedelta(minutes=10) 
     crud.create_password_reset_token(db, user_id=user.id, token=reset_code, expiration=expiration_time)
 
-    sender_email = "ic.markaaron.mayor@cvsu.edu.ph" # <--- IMPORTANT: Replace with your actual sender email
-    receiver_email = user.email # Use the user's email from the database
-    mailtrap_username = "e09c5a4e999a44" # Your Mailtrap username 
-    mailtrap_password = "a4c986c82c92fd" # Your Mailtrap password 
+    sender_email = "ic.markaaron.mayor@cvsu.edu.ph"
+    receiver_email = user.email 
+    mailtrap_username = "e09c5a4e999a44" 
+    mailtrap_password = "a4c986c82c92fd" 
 
     message = MIMEMultipart("alternative")
     message["Subject"] = "Your Password Reset Code"
@@ -2312,7 +2297,7 @@ async def forgot_password_endpoint(
         
         return {"message": "Password reset code sent to your email."}, status.HTTP_200_OK
     except Exception as e:
-        print(f"Error sending email: {e}") # Log the error for debugging
+        print(f"Error sending email: {e}") 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to send reset code. Please try again later."
@@ -2320,14 +2305,13 @@ async def forgot_password_endpoint(
 
 @app.post("/api/reset-password/")
 async def reset_password_endpoint(
-    request_data: schemas.ResetPasswordRequest, # Use the Pydantic schema
+    request_data: schemas.ResetPasswordRequest, 
     db: Session = Depends(get_db)
 ):
     identifier = request_data.identifier
     code = request_data.code
     new_password = request_data.new_password
 
-    # 1. Find the user by identifier
     user = crud.get_user(db, identifier=identifier)
     if not user:
         raise HTTPException(
@@ -2335,7 +2319,6 @@ async def reset_password_endpoint(
             detail="User not found."
         )
 
-    # 2. Verify the reset code and its expiration
     db_token = crud.get_password_reset_token_by_token(db, code)
     if not db_token or db_token.user_id != user.id:
         raise HTTPException(
@@ -2344,17 +2327,14 @@ async def reset_password_endpoint(
         )
     
     if db_token.expiration_time < datetime.now():
-        # Optionally, delete the expired token immediately to prevent reuse
         crud.delete_password_reset_token(db, db_token.id)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Reset code has expired. Please request a new one."
         )
 
-    # 3. Update the user's password
     crud.update_user_password(db, user.id, new_password)
 
-    # 4. Invalidate/delete the used token to prevent replay attacks
     crud.delete_password_reset_token(db, db_token.id)
 
     return {"message": "Password has been reset successfully."}, status.HTTP_200_OK

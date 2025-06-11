@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchRulesWiki() {
         const rulesWikiContainer = document.querySelector('.wiki-posts-list');
-        if (!rulesWikiContainer) return; // Ensure element exists before trying to manipulate it
+        if (!rulesWikiContainer) return; 
 
         rulesWikiContainer.innerHTML = '<p>Loading rules and wiki entries...</p>'; 
 
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Organizational Chart Logic ---
     const orgChartButton = document.getElementById('viewOrgChartButton');
     const orgChartModal = document.getElementById('orgChartModal');
-    const closeButton = orgChartModal ? orgChartModal.querySelector('.close-button') : null; // Safely get close button
+    const closeButton = orgChartModal ? orgChartModal.querySelector('.close-button') : null; 
     const organizationChartContainer = document.getElementById('organizationChartContainer');
 
     // Helper to create an admin node div with profile, position, and name
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (admin.profile_picture_url) {
             img.src = admin.profile_picture_url;
         } else {
-            img.src = '/static/images/your_image_name.jpg'; // Ensure this path is correct
+            img.src = '/static/images/your_image_name.jpg'; 
         }
         profileDiv.appendChild(img);
         adminNode.appendChild(profileDiv);
@@ -308,28 +308,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Ensure elements exist before attaching listeners
     if (orgChartButton && orgChartModal && closeButton) {
         orgChartButton.addEventListener('click', function() {
-            orgChartModal.style.display = 'flex'; // Use 'flex' to make it visible and centered
+            orgChartModal.style.display = 'flex'; 
             fetchAndRenderOrgChart();
         });
 
         closeButton.addEventListener('click', function() {
-            orgChartModal.style.display = 'none'; // Hide it
+            orgChartModal.style.display = 'none'; 
         });
 
         window.addEventListener('click', function(event) {
             if (event.target === orgChartModal) {
-                orgChartModal.style.display = 'none'; // Hide it
+                orgChartModal.style.display = 'none'; 
             }
         });
     } else {
         console.warn("Organizational chart elements not found. Modal functionality will not be available.");
     }
 
-
-    // Basic modal styling for demonstration and ensuring responsive layout
     const style = document.createElement('style');
     style.innerHTML = ` 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -416,16 +413,15 @@ document.addEventListener('DOMContentLoaded', function() {
             transition: background-color 0.2s ease;
         }
 
-        /* Organizational Chart Specific Styles */
         .organization-chart-display {
-            --org-node-bg: #e0f7fa; /* Light blue */
-            --org-node-border: #00bcd4; /* Cyan */
-            --org-root-bg: #80deea; /* Slightly darker blue */
-            --org-root-border: #0097a7; /* Darker cyan */
-            --org-line-color: #78909c; /* Blue-grey */
-            --org-text-primary: #263238; /* Dark text */
-            --org-text-secondary: #455a64; /* Slightly lighter dark text */
-            --org-border-medium: #b0bec5; /* Medium blue-grey for lines */
+            --org-node-bg: #e0f7fa; 
+            --org-node-border: #00bcd4; 
+            --org-root-bg: #80deea; 
+            --org-root-border: #0097a7; 
+            --org-line-color: #78909c; 
+            --org-text-primary: #263238; 
+            --org-text-secondary: #455a64; 
+            --org-border-medium: #b0bec5; 
 
             display: flex;
             flex-direction: column;
@@ -556,7 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
             font-weight: bold;
         }
 
-        /* Media queries for responsiveness */
         @media (max-width: 768px) {
             .modal-content {
                 width: 95%;
