@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener to open the modal
     orgChartButton.addEventListener('click', function() {
-        orgChartModal.style.display = 'block';
+        orgChartModal.style.display = 'flex';
         fetchAndRenderOrgChart(); 
     });
 

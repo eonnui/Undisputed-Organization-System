@@ -1217,11 +1217,13 @@ tr:hover td {
 
 /* Events */
 .events-page-container {
-    max-width: 1070px;
-    margin: 20px auto;
+    width: 100%; 
+    margin: 20px auto; 
     background-color: var(--org-bg-color);
     font-family: "DM Sans", sans-serif;
-    text-align: center;
+    text-align: center; 
+    padding: 0 20px; 
+    box-sizing: border-box; 
 }
 
 .events-header {
@@ -1232,6 +1234,8 @@ tr:hover td {
     text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
     animation: fadeIn 0.5s ease-out;
     text-align: left;
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 .create-event-container {
@@ -1245,13 +1249,13 @@ tr:hover td {
     flex-direction: column;
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
     transform: translateY(0);
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%; 
+    box-sizing: border-box; 
     text-align: left;
 }
 
 .create-event-input {
-    width: 100%;
+    width: 100%; 
     padding: 0.75rem;
     margin-bottom: 1rem;
     border: 1px solid var(--org-border-light);
@@ -1260,13 +1264,16 @@ tr:hover td {
     color: var(--org-text-primary);
     font-size: 0.95rem;
     cursor: pointer;
-    text-align: left; 
+    text-align: left;
+    box-sizing: border-box; 
 }
 
 .create-event-form-fields {
     display: none;
     padding-top: 1rem;
-    text-align: left; 
+    text-align: left;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .create-event-form-fields label {
@@ -1281,10 +1288,10 @@ tr:hover td {
 .create-event-form-fields input[type="number"],
 .create-event-form-fields input[type="date"],
 .create-event-form-fields input[type="datetime-local"],
-.create-event-form-fields input[type="file"], 
+.create-event-form-fields input[type="file"],
 .create-event-form-fields textarea,
 .create-event-form-fields select {
-    width: 100%;
+    width: 100%; 
     padding: 0.75rem;
     margin-bottom: 1rem;
     border: 1px solid var(--org-border-light);
@@ -1293,6 +1300,7 @@ tr:hover td {
     color: var(--org-text-primary);
     font-size: 0.95rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box; 
 }
 
 .create-event-form-fields input:focus,
@@ -1308,11 +1316,14 @@ tr:hover td {
     flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1rem;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .form-row > div {
-    flex: 1;
+    flex: 1; 
     min-width: 150px;
+    box-sizing: border-box; 
 }
 
 .create-event-submit-button {
@@ -1325,8 +1336,9 @@ tr:hover td {
     font-size: 1rem;
     font-weight: 600;
     transition: background-color 0.2s ease;
-    align-self: center; 
     margin-top: 1rem;
+    width: 100%;   
+    box-sizing: border-box;
 }
 
 .create-event-submit-button:hover {
@@ -1339,7 +1351,9 @@ tr:hover td {
     color: var(--org-primary);
     text-decoration: none;
     font-size: 0.9rem;
-    text-align: center; 
+    text-align: center;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .back-to-events:hover {
@@ -1354,6 +1368,8 @@ tr:hover td {
     margin-bottom: 1.5rem;
     text-shadow: 1px 1px 3px rgba(var(--org-shadow-base-rgb), 0.05);
     text-align: left;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .event-card {
@@ -1365,10 +1381,9 @@ tr:hover td {
     border: 1px solid var(--org-border-medium);
     display: flex;
     flex-direction: column;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 100%;
+    width: 100%; 
     text-align: left;
+    box-sizing: border-box; 
 }
 
 .event-header {
@@ -1376,7 +1391,9 @@ tr:hover td {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
-    text-align: left; 
+    text-align: left;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .event-title {
@@ -1394,7 +1411,7 @@ tr:hover td {
     text-transform: uppercase;
     color: var(--org-event-tag-text);
     background-color: var(--org-event-tag-bg);
-    position: relative; 
+    position: relative;
 }
 
 .event-tag:hover {
@@ -1419,7 +1436,6 @@ tr:hover td {
     background-color: var(--org-card-bg);
 }
 
-
 .tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
 .tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
 .tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); }
@@ -1431,7 +1447,9 @@ tr:hover td {
     font-size: 0.85rem;
     color: var(--org-text-secondary);
     margin-bottom: 0.8rem;
-    text-align: left; 
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .event-meta span {
@@ -1443,12 +1461,16 @@ tr:hover td {
     color: var(--org-event-description-color);
     line-height: 1.7;
     white-space: pre-line;
-    text-align: left; 
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .event-actions {
     display: flex;
-    justify-content: space-between; 
+    justify-content: space-between;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .participants-count {
@@ -1462,6 +1484,8 @@ tr:hover td {
     background-color: var(--org-bg-secondary);
     border-bottom: 2px solid var(--org-border-medium);
     box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.05);
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 .tab-button {
@@ -1473,6 +1497,9 @@ tr:hover td {
     font-size: 1.05rem;
     transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
+    flex-grow: 1; 
+    text-align: center; 
+    box-sizing: border-box;
 }
 
 .tab-button::after {
@@ -1504,6 +1531,8 @@ tr:hover td {
     display: none;
     padding: 25px;
     animation: fadeIn 0.4s ease-out;
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 .tab-content.active {
@@ -1511,13 +1540,14 @@ tr:hover td {
 }
 
 .payments-page-container {
-    max-width: 1200px;
-    margin: 30px auto;
+    width: 100%; 
+    margin: 30px auto; 
     background-color: var(--org-text-inverse);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.15);
     animation: slideInUp 0.5s ease-out;
+    box-sizing: border-box; 
 }
 
 .payments-header {
@@ -1529,28 +1559,35 @@ tr:hover td {
     animation: fadeIn 0.5s ease-out;
     border-bottom: none;
     padding-bottom: 0;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .header-actions {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 20px;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .payments-table-container {
-    overflow-x: auto;
+    overflow-x: auto; 
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.05);
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .payments-table {
-    width: 100%;
+    width: 100%; 
     border-collapse: collapse;
     margin-top: 0;
     background-color: var(--org-card-bg);
     border: 1px solid var(--org-border-light);
     border-radius: 8px;
-    overflow: hidden;
+    overflow: hidden; 
+    box-sizing: border-box;
 }
 
 .payments-table th,
@@ -1558,6 +1595,7 @@ tr:hover td {
     padding: 15px 20px;
     text-align: left;
     border-bottom: 1px solid var(--org-border-light);
+    box-sizing: border-box; 
 }
 
 .payments-table th {
@@ -1588,6 +1626,8 @@ tr:hover td {
     border: 1px solid var(--org-border-light);
     box-shadow: 0 2px 6px rgba(var(--org-shadow-base-rgb), 0.08);
     animation: slideInBottom 0.5s ease-out;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .payment-settings-section h2 {
@@ -1596,11 +1636,15 @@ tr:hover td {
     border-bottom: 2px solid var(--org-border-medium);
     padding-bottom: 10px;
     font-size: 1.6rem;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .custom-select-wrapper {
     position: relative;
     user-select: none;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .custom-select-trigger {
@@ -1615,6 +1659,8 @@ tr:hover td {
     border-radius: 6px;
     cursor: pointer;
     transition: border-color 0.3s ease;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .custom-select-trigger:hover {
@@ -1641,7 +1687,7 @@ tr:hover td {
     position: absolute;
     top: 100%;
     left: 0;
-    right: 0;
+    right: 0; 
     border: 1px solid var(--org-dropdown-border);
     border-top: none;
     background-color: var(--org-dropdown-bg);
@@ -1651,12 +1697,16 @@ tr:hover td {
     display: none;
     box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.08);
     animation: slideDown 0.3s ease-out;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .custom-options ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .custom-options li {
@@ -1665,6 +1715,8 @@ tr:hover td {
     color: var(--org-text-primary);
     cursor: pointer;
     transition: background-color 0.3s ease, color 0.3s ease;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .custom-options li:hover {
@@ -1686,23 +1738,12 @@ tr:hover td {
     border-radius: 28px;
     font-size: 1rem;
     display: inline-block;
+    box-sizing: border-box;
 }
 
 .payments-table tbody td a:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.page-title {
-    font-size: 2.5em;
-    color: var(--org-dashboard-title-color);
-    margin-bottom: 25px;
-    text-align: left;
-    margin-left: 20px;
-    text-shadow: 1px 1px 3px rgba(var(--org-shadow-base-rgb), 0.08);
-    animation: fadeInTitle 0.7s ease-out, slideInLeft 0.6s ease-out;
-    opacity: 0;
-    transform: translateX(-20px);
 }
 
 .page-description {
@@ -1714,6 +1755,8 @@ tr:hover td {
     animation: slideInRight 0.6s ease-out;
     transform: translateX(20px);
     opacity: 0;
+    width: calc(100% - 40px); 
+    box-sizing: border-box;
 }
 
 .year-info {
@@ -1724,12 +1767,16 @@ tr:hover td {
     margin-left: 20px;
     animation: fadeIn 0.8s ease-out;
     opacity: 0;
+    width: calc(100% - 40px); 
+    box-sizing: border-box;
 }
 
 .action-button-container {
     display: flex;
     gap: 10px;
     align-items: center;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .action-button-container select {
@@ -1740,6 +1787,8 @@ tr:hover td {
     background-color: var(--org-highlight);
     color: var(--org-text-primary);
     transition: border-color 0.3s ease;
+    flex-grow: 1; 
+    box-sizing: border-box;
 }
 
 .action-button-container select:focus {
@@ -1758,6 +1807,7 @@ tr:hover td {
     font-size: 15px;
     transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.08);
+    box-sizing: border-box;
 }
 
 .action-button-container button:hover {
@@ -1793,6 +1843,8 @@ tr:hover td {
     gap: 15px;
     margin-bottom: 15px;
     animation: fadeIn 0.5s ease-out;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .filter-container label {
@@ -1806,6 +1858,8 @@ tr:hover td {
     border-radius: 6px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
+    flex-grow: 1; 
+    box-sizing: border-box;
 }
 
 .filter-container input:focus {
@@ -1824,6 +1878,7 @@ tr:hover td {
     font-size: 1rem;
     transition: background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.08);
+    box-sizing: border-box;
 }
 
 .filter-container button:hover {
@@ -1837,6 +1892,7 @@ th.sortable {
     transition: background;
     position: relative;
     padding-right: 25px;
+    box-sizing: border-box;
 }
 
 th.sortable:hover {
@@ -1844,7 +1900,7 @@ th.sortable:hover {
 }
 
 th.sortable::after {
-    content: "\2195"; 
+    content: "\2195";
     font-size: 0.8em;
     position: absolute;
     top: 50%;
@@ -1855,13 +1911,13 @@ th.sortable::after {
 }
 
 th.sortable.asc::after {
-    content: "\2191"; 
+    content: "\2191";
     color: var(--org-accent-dark);
     opacity: 10;
 }
 
 th.sortable.desc::after {
-    content: "\2193"; 
+    content: "\2193";
     color: var(--org-accent-dark);
     opacity: 10;
 }
@@ -2012,7 +2068,6 @@ th.sortable.desc::after {
     transform: translateY(0);
 }
 
-/* Modal body status colors */
 .modal-body .pending { color: var(--org-warning); font-weight: bold; }
 .modal-body .paid { color: var(--org-success); font-weight: bold; }
 .modal-body .failed { color: var(--org-error); font-weight: bold; }
@@ -2027,6 +2082,8 @@ th.sortable.desc::after {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.1);
     animation: fadeIn 0.5s ease-in-out;
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 #expenses .payments-header {
@@ -2035,23 +2092,28 @@ th.sortable.desc::after {
     font-size: 1.8em;
     border-bottom: 2px solid var(--org-border-light);
     padding-bottom: 10px;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 #add-expense-form {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-width: 500px;
-    margin: 0 auto;
+    margin: 0 auto; 
+    width: 100%; 
     padding: 25px;
     background-color: var(--org-card-bg);
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.08);
+    box-sizing: border-box; 
 }
 
 #add-expense-form div {
     display: flex;
     flex-direction: column;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 #add-expense-form label {
@@ -2069,6 +2131,8 @@ th.sortable.desc::after {
     border-radius: 6px;
     font-size: 1em;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 #add-expense-form input[type="text"]:focus,
@@ -2089,6 +2153,8 @@ th.sortable.desc::after {
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
     margin-top: 15px;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 #add-expense-form button[type="submit"]:hover {
@@ -2109,6 +2175,8 @@ th.sortable.desc::after {
     font-weight: bold;
     display: none;
     animation: slideIn 0.4s ease-out;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 #expense-message-box.info {

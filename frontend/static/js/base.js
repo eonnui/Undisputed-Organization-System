@@ -231,34 +231,43 @@ async function clearAllNotifications() {
     }
 }
 
-
 async function updateBadgeBasedOnNewUnread() {
-    if (isNotificationsDropdownOpen) return; 
-
     const unreadBadge = document.getElementById('unread-notifications-badge');
-    try {
-        
-        const currentUnreadNotifications = await fetchAndDisplayNotifications(false);
-        
-        let totalUnreadCount = 0; 
+    if (!unreadBadge) return;
 
-        const uniqueUnreadIds = new Set();
+    if (isNotificationsDropdownOpen) {
+        unreadBadge.textContent = '';
+        unreadBadge.classList.add('hidden');
+        return;
+    }
+
+    try {
+        const currentUnreadNotifications = await fetchAndDisplayNotifications(false);
+        const currentUnreadIds = new Set();
         currentUnreadNotifications.forEach(notification => {
-            (notification.group_ids || [notification.id]).forEach(id => uniqueUnreadIds.add(id));
+            (notification.group_ids || [notification.id]).forEach(id => currentUnreadIds.add(id));
+        });
+
+        const newUnreadIds = new Set();
+        currentUnreadIds.forEach(id => {
+            if (!lastSeenUnreadNotificationIds.has(id)) {
+                newUnreadIds.add(id);
+            }
         });
         
-        totalUnreadCount = uniqueUnreadIds.size; 
+        const totalNewUnreadCount = newUnreadIds.size;
 
-        if (unreadBadge) {
-            unreadBadge.textContent = totalUnreadCount > 0 ? totalUnreadCount.toString() : ''; 
-            unreadBadge.classList.toggle('hidden', totalUnreadCount === 0); 
-        }
-    } catch (error) {
-        console.error("Error updating unread badge:", error);
-        if (unreadBadge) {
+        if (totalNewUnreadCount > 0) {
+            unreadBadge.textContent = totalNewUnreadCount.toString();
+            unreadBadge.classList.remove('hidden');
+        } else {
             unreadBadge.textContent = '';
             unreadBadge.classList.add('hidden');
         }
+    } catch (error) {
+        console.error("Error updating unread badge:", error);
+        unreadBadge.textContent = '';
+        unreadBadge.classList.add('hidden');
     }
 }
 
@@ -283,22 +292,25 @@ function setupDropdown(buttonSelector, dropdownId) {
         if (dropdownId === 'notifications-dropdown') {
             isNotificationsDropdownOpen = isExpanded;
             if (isExpanded) {
-                if (unreadBadge) {                 
+                
+                if (unreadBadge) {
                     unreadBadge.textContent = '';
                     unreadBadge.classList.add('hidden');
-                }               
+                }
+              
                 fetchAndDisplayNotifications(true).then(notifications => {
                     lastSeenUnreadNotificationIds.clear();
                     notifications.forEach(notification => {
                         if (!notification.is_read) {
                             (notification.group_ids || [notification.id]).forEach(id => lastSeenUnreadNotificationIds.add(id));
                         }
-                    });                  
+                    });
+                    
                     localStorage.setItem('lastSeenUnreadNotificationIds', JSON.stringify(Array.from(lastSeenUnreadNotificationIds)));
                 });
                 clearInterval(notificationPollingTimer); 
-            } else {
-                startNotificationPolling(); 
+            } else {               
+                startNotificationPolling();
             }
         }
 
