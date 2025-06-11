@@ -362,11 +362,13 @@ tr:hover td {
 
 /* Bulletin */
 .bulletin-board-container {
-    max-width: 1055px;
-    margin: 20px auto;
+    max-width: 100%;
+    margin: 20px 0;
     background-color: var(--org-bg-color);
     font-family: "DM Sans", sans-serif;
     text-align: center;
+    flex: 2.5;
+    padding: 0 1rem;
 }
 
 .bulletin-header {
@@ -393,8 +395,9 @@ tr:hover td {
     transform: translateY(10px);
     animation: slideUp 0.5s ease-out 0.2s forwards;
     text-align: left;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 0;
+    margin-right: 0;
+    width: auto;
 }
 
 .create-post-container:hover {
@@ -404,11 +407,11 @@ tr:hover td {
 
 .create-post-header {
     margin-bottom: 1rem;
-    text-align: left;  
+    text-align: left;
 }
 
 .create-post-input {
-    width: calc(100% - 0.5rem);
+    width: 100%;
     padding: 0.75rem 1rem;
     border: 1px solid var(--org-border-medium);
     border-radius: 20px;
@@ -421,9 +424,9 @@ tr:hover td {
     opacity: 0;
     transform: translateY(10px);
     animation: slideUp 0.5s ease-out 0.3s forwards;
-    margin-left: auto;
-    margin-right: auto;
-    display: block; 
+    margin-left: 0;
+    margin-right: 0;
+    display: block;
 }
 
 .create-post-input:focus {
@@ -436,7 +439,7 @@ tr:hover td {
     margin-top: 1rem;
     display: none;
     animation: slideIn 0.5s ease-in-out;
-    text-align: left; 
+    text-align: left;
 }
 
 .create-post-form-fields label {
@@ -451,7 +454,7 @@ tr:hover td {
 .create-post-form-fields textarea,
 .create-post-form-fields select,
 .create-post-form-fields input[type="file"] {
-    width: calc(100% - 0.75rem);
+    width: 100%;
     padding: 0.6rem;
     margin-bottom: 0.9rem;
     border: 1px solid var(--org-border-medium);
@@ -461,9 +464,9 @@ tr:hover td {
     box-sizing: border-box;
     font-family: "DM Sans", sans-serif;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    margin-left: auto;
-    margin-right: auto;
-    display: block; 
+    margin-left: 0;
+    margin-right: 0;
+    display: block;
 }
 
 .create-post-form-fields textarea {
@@ -507,9 +510,9 @@ tr:hover td {
     opacity: 0;
     transform: translateY(10px);
     animation: slideUp 0.5s ease-out 0.4s forwards;
-    margin-left: auto;
-    margin-right: auto;
-    display: block; 
+    margin-left: 0;
+    margin-right: 0;
+    display: block;
 }
 
 .create-post-submit-button:hover {
@@ -525,7 +528,7 @@ tr:hover td {
     text-decoration: none;
     font-size: 0.95rem;
     transition: color 0.15s ease;
-    text-align: center; 
+    text-align: center;
 }
 
 .back-to-bulletin:hover {
@@ -540,7 +543,7 @@ tr:hover td {
     font-weight: 700;
     border-bottom: 2px solid var(--org-border-medium);
     padding-bottom: 0.5rem;
-    animation: slideIn 0.5s ease-in-out;   
+    animation: slideIn 0.5s ease-in-out;
     text-align: left;
 }
 
@@ -548,8 +551,8 @@ tr:hover td {
     background-color: transparent;
     border-radius: 0;
     box-shadow: none;
-    padding: 15px 15px;   
-    border: 1px solid var(--org-text-inverse);    
+    padding: 15px 0;
+    border: 1px solid var(--org-text-inverse);
     transition: none;
     animation: none;
     display: flex;
@@ -639,8 +642,8 @@ tr:hover td {
     align-items: center;
     gap: 1.25rem;
     color: var(--org-post-actions-color);
-    font-size: 1.1rem;  
-    width: fit-content; 
+    font-size: 1.1rem;
+    width: fit-content;
 }
 
 .heart-count {
@@ -673,7 +676,35 @@ tr:hover td {
 }
 
 .rules-wiki-container {
-    flex: 0 0 250px; 
+    flex: 1;
+    min-width: 250px;
+}
+
+.create-wiki-input-wrapper {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.create-wiki-input {
+    width: calc(100% - 0.5rem);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--org-border-medium);
+    border-radius: 20px;
+    font-size: 1rem;
+    color: var(--org-text-primary);
+    box-sizing: border-box;
+    font-family: "DM Sans", sans-serif;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.create-wiki-input:focus {
+    outline: none;
+    border-color: var(--org-primary);
+    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
 }
 
 .create-wiki-post-container {
@@ -692,9 +723,9 @@ tr:hover td {
     text-align: left;
     margin-left: auto;
     margin-right: auto;
-    max-width: 800px; 
-    width: 100%; 
-    flex-shrink: 0; 
+    max-width: 800px;
+    width: 100%;
+    flex-shrink: 0;
 }
 
 .create-wiki-post-title {
@@ -706,7 +737,7 @@ tr:hover td {
 }
 
 .create-wiki-post-form {
-    display: flex;
+    display: none;
     flex-direction: column;
     resize: vertical;
     min-height: 120px;
@@ -811,9 +842,9 @@ tr:hover td {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    width: 100%; 
-    box-sizing: border-box; 
-    flex-shrink: 0; 
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .wiki-post-header {
@@ -841,10 +872,12 @@ tr:hover td {
     border-radius: 5px;
     text-decoration: none;
     transition: background-color 0.15s ease;
+    border: none; 
+    outline: none; 
 }
 
 .wiki-edit-button:hover {
-    background-color: var(--org-info);
+    background-color: var(--org-hover-accent);
 }
 
 .wiki-delete-button {
@@ -883,52 +916,128 @@ tr:hover td {
 }
 
 .wiki-post-edit-mode {
-    padding-top: 15px; 
-    border-top: 1px dashed #e0e0e0; 
+    display: none;
+    padding-top: 15px;
+    border-top: 1px dashed #e0e0e0;
     margin-top: 15px;
-    width: 2px; 
-    max-width: 100%; 
+    width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
 }
 
 .edit-wiki-post-form {
-    background-color: #fff; 
-    border: 1px solid #dcdcdc; 
-    padding: 1px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+    background-color: var(--org-card-bg);
+    border: 1px solid var(--org-border-medium);
+    padding: 0.75rem;
+    box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    margin: 0 auto;
+    min-height: 40px;
+    max-height: 400px;
+    height: auto;
+    resize: vertical;
+    overflow: auto;
 }
 
 .edit-wiki-post-form label {
-    font-size: 0.95em;
-    color: #444;
+    font-size: 0.95rem;
+    color: var(--org-text-secondary);
+    font-weight: 500;
 }
 
 .edit-wiki-post-form input[type="text"],
 .edit-wiki-post-form textarea,
 .edit-wiki-post-form select {
-    background-color: #f5f5f5;
+    background-color: var(--org-input-bg);
+    border: 1px solid var(--org-border-medium);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: var(--org-text-primary);
+    box-sizing: border-box;
+    font-family: "DM Sans", sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+}
+
+.edit-wiki-post-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.edit-wiki-post-form input[type="text"]:focus,
+.edit-wiki-post-form textarea:focus,
+.edit-wiki-post-form select:focus {
+    outline: none;
+    border-color: var(--org-primary);
+    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
 }
 
 .save-edit-button {
-    background-color: #28a745; 
-    color: white;
-    margin-right: 10px; 
+    background-color: var(--org-button-bg);
+    color: var(--org-button-text);
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+    margin-right: 10px;
 }
 
 .save-edit-button:hover {
-    background-color: #218838;
+    background-color: var(--org-hover-effect);
+    transform: translateY(-1px);
 }
 
 .cancel-edit-button {
-    background-color: #6c757d; 
-    color: white;
+    background-color: var(--org-secondary-button-bg);
+    color: var(--org-secondary-button-text);
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
 .cancel-edit-button:hover {
-    background-color: #5a6268;
+    background-color: var(--org-secondary-button-hover-bg);
+    transform: translateY(-1px);
+}
+
+.cancel-create-wiki-button {
+    background-color: var(--org-secondary-button-bg);
+    color: var(--org-secondary-button-text);
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+    margin-top: 1rem;
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cancel-create-wiki-button:hover {
+    background-color: var(--org-secondary-button-hover-bg);
+    transform: translateY(-1px);
 }
 
 
+.cancel-create-wiki-button:hover {
+    background-color: var(--org-secondary-button-hover-bg);
+    transform: translateY(-1px);
+}
 /* Events */
 .events-page-container {
     max-width: 1070px;

@@ -1469,20 +1469,25 @@ async def home(request: Request, db: Session = Depends(get_db)):
 async def bulletin_board(request: Request, db: Session = Depends(get_db)):
     user, user_org = get_current_user_with_org(request, db)
     posts = []
+    wiki_posts = []  
     hearted_post_ids = set()
 
     if user_org:
         posts = db.query(models.BulletinBoard)\
-                  .join(models.Admin).join(models.Admin.organizations)\
-                  .filter(models.Organization.id == user_org.id)\
-                  .order_by(desc(models.BulletinBoard.created_at)).all()
+                    .join(models.Admin).join(models.Admin.organizations)\
+                    .filter(models.Organization.id == user_org.id)\
+                    .order_by(desc(models.BulletinBoard.created_at)).all()
+
+        wiki_posts = db.query(models.RuleWikiEntry)\
+                        .filter(models.RuleWikiEntry.organization_id == user_org.id)\
+                        .order_by(desc(models.RuleWikiEntry.created_at)).all()
 
         if user:
             user_likes = db.query(models.UserLike).filter(models.UserLike.user_id == user.id).all()
             hearted_post_ids = {like.post_id for like in user_likes}
 
     context = await get_base_template_context(request, db)
-    context.update({"posts": posts, "hearted_posts": hearted_post_ids})
+    context.update({"posts": posts, "hearted_posts": hearted_post_ids, "wiki_posts": wiki_posts})
 
     return templates.TemplateResponse("student_dashboard/bulletin_board.html", context)
 

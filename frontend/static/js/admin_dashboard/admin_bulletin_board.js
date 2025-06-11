@@ -85,3 +85,70 @@
         });
     });
 });
+document.addEventListener('DOMContentLoaded', function() {
+    const createPostInput = document.querySelector('.create-post-input');
+    const createPostFormFields = document.querySelector('.create-post-form-fields');
+    const backToBulletinLink = document.querySelector('.back-to-bulletin');
+
+    if (createPostInput && createPostFormFields && backToBulletinLink) {
+        createPostInput.addEventListener('click', function() {
+            createPostInput.style.display = 'none';
+            createPostFormFields.style.display = 'block';
+            backToBulletinLink.style.display = 'block';
+        });
+    }
+
+    const createWikiInput = document.querySelector('.create-wiki-input');
+    const createWikiPostForm = document.querySelector('.create-wiki-post-form');
+    const cancelCreateWikiButton = document.querySelector('.cancel-create-wiki-button');
+
+    if (createWikiInput && createWikiPostForm && cancelCreateWikiButton) {
+        createWikiInput.addEventListener('click', function() {
+            createWikiInput.style.display = 'none';
+            createWikiPostForm.style.display = 'flex';
+            cancelCreateWikiButton.style.display = 'inline-block';
+        });
+
+        cancelCreateWikiButton.addEventListener('click', function() {
+            createWikiInput.style.display = 'block';
+            createWikiPostForm.style.display = 'none';
+            cancelCreateWikiButton.style.display = 'none';
+            createWikiPostForm.reset();
+        });
+    }
+
+    const wikiEditButtons = document.querySelectorAll('.wiki-edit-button');
+    const cancelEditButtons = document.querySelectorAll('.cancel-edit-button');
+
+    wikiEditButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const wikiPostCard = document.getElementById(`wiki-post-${postId}`);
+            if (wikiPostCard) {
+                const displayMode = wikiPostCard.querySelector('.wiki-post-display-mode');
+                const editMode = wikiPostCard.querySelector('.wiki-post-edit-mode');
+
+                if (displayMode && editMode) {
+                    displayMode.style.display = 'none';
+                    editMode.style.display = 'block';
+                }
+            }
+        });
+    });
+
+    cancelEditButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const wikiPostCard = document.getElementById(`wiki-post-${postId}`);
+            if (wikiPostCard) {
+                const displayMode = wikiPostCard.querySelector('.wiki-post-display-mode');
+                const editMode = wikiPostCard.querySelector('.wiki-post-edit-mode');
+
+                if (displayMode && editMode) {
+                    displayMode.style.display = 'block';
+                    editMode.style.display = 'none';
+                }
+            }
+        });
+    });
+});

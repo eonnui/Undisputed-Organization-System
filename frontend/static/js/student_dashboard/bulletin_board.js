@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                // *** CRUCIAL FIXES START HERE ***
                 heartCountSpan.textContent = data.heart_count;
 
                 if (data.is_hearted_by_user) {
@@ -39,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     this.classList.remove('hearted');
                 }
-                // *** CRUCIAL FIXES END HERE ***
             })
             .catch(error => {
                 console.error('Error hearting post:', error);
@@ -53,4 +51,34 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    function fetchRulesWiki() {
+        const rulesWikiContainer = document.querySelector('.wiki-posts-list');
+        rulesWikiContainer.innerHTML = '<p>Loading rules and wiki entries...</p>'; 
+
+        fetch('/BulletinBoard')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text(); 
+            })
+            .then(htmlString => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
+                const newRulesWikiContent = doc.querySelector('.wiki-posts-list');
+
+                if (newRulesWikiContent) {
+                    rulesWikiContainer.innerHTML = newRulesWikiContent.innerHTML;
+                } else {
+                    rulesWikiContainer.innerHTML = '<p>Error: Could not load rules and wiki entries.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching rules and wiki:', error);
+                rulesWikiContainer.innerHTML = '<p>Failed to load rules and wiki entries.</p>';
+            });
+    }
+    
+    fetchRulesWiki();
 });
