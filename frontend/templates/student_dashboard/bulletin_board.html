@@ -59,26 +59,46 @@
     </div>
 
     <div class="rules-wiki-container">
-        <h2 class="existing-wiki-posts-title">Rules & Wiki Entries</h2>
-        <div class="wiki-posts-list">
-            {% if wiki_posts %}
-            {% for post in wiki_posts %}
-            <div class="wiki-post-card">
-                <div class="wiki-post-header">
-                    <h3 class="wiki-post-title">{{ post.title }}</h3>
-                    <span class="wiki-post-category">{{ post.category }}</span>
-                </div>
-                {% if post.image_path %}
-                <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
-                {% endif %}
-                <div class="wiki-post-content">
-                    {{ post.content | safe }}
+        {# NEW: Organizational Chart Section #}
+        <div class="org-chart-section">
+            <h2 class="org-chart-header">Organizational Chart</h2>
+            <button id="viewOrgChartButton" class="view-org-chart-button">View Chart</button>
+            <div id="orgChartModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-button">&times;</span>
+                    <h3>Organizational Chart</h3>
+                    <div class="organization-chart-display" id="organizationChartContainer">
+                        {# This div will be populated dynamically by JavaScript #}
+                        <p class="loading-message">Loading organizational chart...</p>
+                    </div>
                 </div>
             </div>
-            {% endfor %}
-            {% else %}
-            <p>No rules or wiki entries yet.</p>
-            {% endif %}
+        </div>
+
+        <hr class="section-divider"> {# Add a divider for separation #}
+
+        <div class="existing-wiki-section">
+            <h2 class="existing-wiki-posts-title">Rules & Wiki</h2>
+            <div class="wiki-posts-list">
+                {% if wiki_posts %}
+                {% for post in wiki_posts %}
+                <div class="wiki-post-card">
+                    <div class="wiki-post-header">
+                        <h3 class="wiki-post-title">{{ post.title }}</h3>
+                        <span class="wiki-post-category">{{ post.category }}</span>
+                    </div>
+                    {% if post.image_path %}
+                    <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
+                    {% endif %}
+                    <div class="wiki-post-content">
+                        {{ post.content | safe }}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p>No rules or wiki entries yet.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

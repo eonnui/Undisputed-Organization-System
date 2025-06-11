@@ -281,11 +281,11 @@ body {margin: 0; padding: 0;}
 }
 
 .bulletin-board-container {
-    flex: 3;
+    flex: 2.5;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: flex-start;
+    justify-content: flex-start;  
     width: 100%;
 }
 
@@ -322,19 +322,34 @@ body {margin: 0; padding: 0;}
 .post-card {
     background-color: transparent;
     border-radius: 0;
+    border-left: 1px solid var(--org-text-inverse);
+    border-right: 1px solid var(--org-text-inverse);
+    border-top: none;
+    border-bottom: 1px solid var(--org-text-inverse);
     box-shadow: none;
     padding: 15px 15px;
-    border: 1px solid var(--org-text-inverse);
     transition: none;
     animation: none;
     display: flex;
     flex-direction: column;
     gap: 5px;
     width: 100%;
+    margin-bottom: 0;
+}
+
+.bulletin-container .post-card:first-child {
+    border-top: 1px solid var(--org-text-inverse);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;    
+}
+
+.bulletin-container .post-card:last-child {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
 }
 
 .post-card:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid var(--org-text-inverse); 
 }
 
 .post-card:hover {
@@ -387,12 +402,6 @@ body {margin: 0; padding: 0;}
 
 .post-title:hover {
     color: var(--org-dashboard-accent-primary);
-}
-
-.post-date {
-    color: var(--org-post-date-color);
-    font-style: italic;
-    margin-top: 3px;
 }
 
 .bulletin-post-image {
@@ -489,52 +498,96 @@ body {margin: 0; padding: 0;}
 .wiki-posts-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 0px;
     width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .wiki-post-card {
-    background-color: var(--org-background-color);
-    border: 1px solid var(--org-text-inverse);
+    background-color: transparent;
+    border-radius: 0;
+    border-left: 1px solid var(--org-text-inverse);
+    border-right: 1px solid var(--org-text-inverse);
+    border-top: none;
+    border-bottom: 1px solid var(--org-text-inverse);
+    box-shadow: none;
+    padding: 15px 15px;
+    transition: none;
+    animation: none;
+}
+
+.wiki-posts-list .wiki-post-card:first-child {
+    border-top: 1px solid var(--org-text-inverse);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.wiki-posts-list .wiki-post-card:last-child {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-bottom: 1px solid var(--org-text-inverse);;
+}
+
+.wiki-post-card:hover {
+    background-color: var(--org-hover-bg);
+    transform: none;
+    box-shadow: none;
+}
+
+.existing-wiki-section{ 
     border-radius: 8px;
-    padding: 10px;
-    box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.05);
-    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--org-text-inverse);
+    padding: 1rem;  
+    text-align: left;
 }
 
-.wiki-post-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+/* Organizational Chart Button */
+.view-org-chart-button {
+    padding: .5rem .5rem;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--org-button-bg);
+    color: var(--org-button-text);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: "DM Sans", sans-serif;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    width: auto; /* Allow button to size based on content */
+    display: inline-block; /* Ensures it respects margin/padding correctly */
+    margin-top: 1rem; /* Add some space above the button */
 }
 
-.wiki-post-title {
-    font-size: 1.5em;
-    font-weight: bold;
-    color: var(--org-dashboard-title-color);
+.view-org-chart-button:hover {
+    background-color: var(--org-hover-effect);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12);
 }
 
-.wiki-post-category {
-    background-color: var(--org-pinned-bg);
-    color: var(--org-dashboard-title-color);
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8em;
+.view-org-chart-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+
+.org-chart-section {
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--org-text-inverse);
+    padding: 1rem;  
+    text-align: left;
+}
+
+.org-chart-header {
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--org-text-primary);
     font-weight: 600;
-}
-
-.wiki-post-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 5px;
-    margin-bottom: 15px;
-}
-
-.wiki-post-content {
-    color: var(--org-post-content-color);
-    line-height: 1.6;
-    white-space: pre-line;
+    border-bottom: 2px solid var(--org-border-medium);
+    padding-bottom: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -556,6 +609,7 @@ body {margin: 0; padding: 0;}
         flex: none;
     }
 }
+
 /* EVENTS */
 .events-page {  
     flex-grow: 1;

@@ -279,6 +279,70 @@ async def clear_single_notification_route(
       
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+@router.get("/api/admin/org_chart_data", response_model=List[Dict[str, str]])
+async def get_organizational_chart_data(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    # This variable will hold the authenticated entity (Admin or User) and their organization
+    authenticated_entity = None
+    organization = None
+
+    # --- Attempt Admin Authentication First ---
+    try:
+        authenticated_entity, organization = get_current_admin_with_org(request, db)
+    except HTTPException as e:
+        # If Admin authentication fails with 401 (Unauthorized) or 403 (Forbidden),
+        # then try to authenticate as a regular User.
+        if e.status_code == status.HTTP_401_UNAUTHORIZED or e.status_code == status.HTTP_403_FORBIDDEN:
+            try:
+                authenticated_entity, organization = get_current_user_with_org(request, db)
+            except HTTPException:
+                # If regular user authentication also fails, re-raise the original
+                # admin authentication error. This keeps the error message consistent
+                # with the primary access attempt.
+                raise e
+        else:
+            # Re-raise any other type of HTTP exception (e.g., database connection issues)
+            raise
+
+    # If no organization was found after attempting both types of authentication,
+    # it means the user isn't associated with any organization or isn't authenticated.
+    if not organization:
+        # You might want to raise a 404 or 403 here if an organization is strictly required
+        # For now, returning an empty list based on your original logic for no organization.
+        return []
+
+    # --- Fetch Admin Data for the Organization ---
+    # This part remains focused on fetching 'models.Admin' objects.
+    # The 'position' attribute is expected to exist on 'models.Admin'.
+    admins = db.query(models.Admin).join(models.organization_admins).filter(
+        models.organization_admins.c.organization_id == organization.id
+    ).all()
+
+    org_chart_data = []
+    for admin in admins:
+        admin_data = {
+            "first_name": admin.first_name if admin.first_name else "",
+            "last_name": admin.last_name if admin.last_name else "",
+            "email": admin.email if admin.email else "",
+            "position": admin.position if admin.position else "", # This expects 'position' on 'admin' (models.Admin)
+            "organization_name": organization.name if organization and organization.name else "N/A",
+        }
+        org_chart_data.append(admin_data)
+
+    return org_chart_data
+
+@router.get("/api/admin/organizations/{organization_id}/taken_positions", response_model=List[str])
+async def get_taken_positions(organization_id: int, db: Session = Depends(get_db)):
+    taken_positions_query = db.query(models.Admin.position).join(models.Admin.organizations).filter(
+        models.Organization.id == organization_id
+    ).distinct().all()
+
+    taken_positions = [position[0] for position in taken_positions_query if position[0]]
+
+    return taken_positions
+
 # Admin Bulletin Board Post Creation
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
 async def admin_post_bulletin(
