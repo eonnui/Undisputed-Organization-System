@@ -15,13 +15,12 @@
             <input type="text" class="create-event-input" placeholder="What's the event about?"
                 onclick="this.style.display='none'; document.querySelector('.create-event-form-fields').style.display='block'; document.querySelector('.back-to-events').style.display='block';">
         </div>
-
-        <form action="{{ url_for('admin_create_event') }}" method="post" class="create-event-form-fields">
+   
+        <form action="{{ url_for('admin_create_event') }}" method="post" class="create-event-form-fields" enctype="multipart/form-data">
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" required><br>
 
             <label for="classification">Classification:</label>
-            {# MODIFIED: Changed to a dropdown (select) for classification #}
             <select id="classification" name="classification">
                 <option value="Academic">Academic</option>
                 <option value="Sports">Sports</option>
@@ -30,13 +29,15 @@
                 <option value="Esports">Esports</option>
                 <option value="Cultural">Cultural</option>
             </select><br>
+          
+            <label for="classification_image">Classification Image:</label>
+            <input type="file" id="classification_image" name="classification_image" accept="image/*"><br>
 
             <label for="description">Description:</label>
             <textarea id="description" name="description" rows="3"></textarea><br>
 
             <div class="form-row">
                 <div>
-                    {# MODIFIED: Changed input type to datetime-local to capture both date and time #}
                     <label for="date">Date and Time:</label>
                     <input type="datetime-local" id="date" name="date" required>
                 </div>
@@ -62,10 +63,14 @@
     <div class="event-card">
         <div class="event-header">
             <h3 class="event-title">{{ event.title }}</h3>
-            <span class="event-tag tag-{{ event.classification|lower }}">{{ event.classification }}</span>
+            <span class="event-tag tag-{{ event.classification|lower }}">
+                {{ event.classification }}
+                {% if event.classification_image_url %}
+                <img src="{{ event.classification_image_url }}" alt="Classification Image" class="image-on-hover">
+                {% endif %}
+            </span>
         </div>
         <div class="event-meta">
-            {# Ensure event.date is a datetime object before formatting #}
             <span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') if event.date else 'N/A' }}</span>
             <span><i>Time:</i> {{ event.date.strftime('%I:%M %p') if event.date else 'N/A' }}</span>
             <span><i>Location:</i> {{ event.location }}</span>

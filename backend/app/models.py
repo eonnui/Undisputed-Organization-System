@@ -45,6 +45,7 @@ class Event(Base):
     location = Column(String)
     admin_id = Column(Integer, ForeignKey("admins.admin_id"))
     max_participants = Column(Integer)
+    classification_image_url = Column(String)
     created_at = Column(DateTime, default=func.now())
     participants = relationship("User", secondary=event_participants, back_populates="joined_events")
     admin = relationship("Admin", back_populates="events")

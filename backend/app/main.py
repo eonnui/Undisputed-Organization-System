@@ -47,6 +47,12 @@ FULL_WIKI_UPLOAD_PATH = STATIC_DIR / WIKI_IMAGES_SUBDIRECTORY
 # Ensure the directory exists
 FULL_WIKI_UPLOAD_PATH.mkdir(parents=True, exist_ok=True)
 
+# Define the subdirectory for event classification images
+EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY = "images/event_classifications"
+# Ensure the directory exists for event classification images
+(STATIC_DIR / EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
+
+
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -335,7 +341,7 @@ async def admin_settings(request: Request, db: Session = Depends(get_db)):
     })
     return templates.TemplateResponse("admin_dashboard/admin_settings.html", context)
 
-# Admin Event Creation
+# Admin Event Creation 
 @router.post("/admin/events/create", name="admin_create_event")
 async def admin_create_event(
     request: Request,
@@ -345,6 +351,7 @@ async def admin_create_event(
     date: str = Form(...),
     location: str = Form(...),
     max_participants: int = Form(...),
+    classification_image: Optional[UploadFile] = File(None), 
     db: Session = Depends(get_db)
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
@@ -354,6 +361,15 @@ async def admin_create_event(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date and time format. Please use Year-MM-DDTHH:MM (e.g., 2025-05-27T14:30).")
 
+    classification_image_url = None
+    if classification_image and classification_image.filename:
+        classification_image_url = await handle_file_upload(
+            classification_image,
+            EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY,
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"], 
+            max_size_bytes=5 * 1024 * 1024 
+        )
+
     db_event = models.Event(
         title=title,
         classification=classification,
@@ -362,6 +378,7 @@ async def admin_create_event(
         location=location,
         max_participants=max_participants,
         admin_id=admin.admin_id,
+        classification_image_url=classification_image_url, 
     )
     db.add(db_event)
     db.commit()
@@ -382,13 +399,16 @@ async def admin_create_event(
     db.commit() 
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
 
-# Admin Event Deletion
+# Admin Event Deletion 
 @router.post("/admin/events/delete/{event_id}", response_class=HTMLResponse, name="admin_delete_event")
 async def admin_delete_event(event_id: int, db: Session = Depends(get_db)):
     event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")    
    
+    if event.classification_image_url:
+        delete_file_from_path(event.classification_image_url)
+
     db.query(models.Notification).filter(
         models.Notification.event_id == event_id 
     ).delete(synchronize_session=False)
@@ -797,7 +817,7 @@ async def payments_total_members(
     })
     return templates.TemplateResponse("admin_dashboard/payments/total_members.html", context)
 
-# Admin Bulletin Board Page (Modified to fetch wiki_posts)
+# Admin Bulletin Board Page 
 @router.get('/admin/bulletin_board', response_class=HTMLResponse)
 async def admin_bulletin_board(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
@@ -986,7 +1006,7 @@ async def admin_delete_rule_wiki(
     db.commit()
     return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
 
-# Admin Events Page
+# Admin Events Page 
 @router.get('/admin/events', response_class=HTMLResponse)
 async def admin_events(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
@@ -2012,7 +2032,7 @@ async def update_profile(
                     if re.match(r"^\d{4}-\d{2}-\d{2}$", value):
                         user.birthdate = value
                     elif re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", value):
-                        user.birthdate = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+                        user.birthdate = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d")
                     elif re.match(r"^\d{2}/\d{2}/\d{4}$", value):
                         user.birthdate = datetime.strptime(value, "%m/%d/%Y").strftime("%Y-%m-%d")
                     else:
@@ -2058,7 +2078,7 @@ async def update_profile(
                         if re.match(r"^\d{4}-\d{2}-\d{2}$", value):
                             user.birthdate = value
                         elif re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", value):
-                            user.birthdate = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d")
+                            user.birthdate = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d")
                         elif re.match(r"^\d{2}/\d{2}/\d{4}$", value):
                             user.birthdate = datetime.strptime(value, "%m/%d/%Y").strftime("%Y-%m-%d")
                         else:
@@ -2146,3 +2166,4 @@ async def change_password(
     db.commit()
     db.refresh(user)
     return {"message": "Password updated successfully!"}
+

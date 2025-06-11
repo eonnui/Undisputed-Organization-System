@@ -1104,6 +1104,7 @@ tr:hover td {
 .create-event-form-fields input[type="number"],
 .create-event-form-fields input[type="date"],
 .create-event-form-fields input[type="datetime-local"],
+.create-event-form-fields input[type="file"], 
 .create-event-form-fields textarea,
 .create-event-form-fields select {
     width: 100%;
@@ -1216,7 +1217,31 @@ tr:hover td {
     text-transform: uppercase;
     color: var(--org-event-tag-text);
     background-color: var(--org-event-tag-bg);
+    position: relative; 
 }
+
+.event-tag:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 2px 8px rgba(var(--org-shadow-base-rgb), 0.12);
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.event-tag .image-on-hover {
+    display: none;
+    position: absolute;
+    top: 10%;
+    right: 10%;
+    transform: translateX(-50%);
+    z-index: 10;
+    max-width: 200px;
+    height: auto;
+    border: 1px solid var(--org-border-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.2);
+    background-color: var(--org-card-bg);
+}
+
 
 .tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
 .tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
@@ -1246,7 +1271,7 @@ tr:hover td {
 
 .event-actions {
     display: flex;
-    justify-content: space-between;        
+    justify-content: space-between; 
 }
 
 .participants-count {
