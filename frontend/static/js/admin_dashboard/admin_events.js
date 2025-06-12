@@ -94,18 +94,17 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(participantsUrl);
             if (!response.ok) {
-                // If the API returns a 404 (Event not found) or other error
                 const errorData = await response.json();
                 throw new Error(`Error ${response.status}: ${errorData.detail || 'Failed to fetch participants.'}`);
             }
             const participants = await response.json(); 
 
-            // Clear loading message and populate list
             modalParticipantsList.innerHTML = '';
             if (participants && participants.length > 0) {
                 participants.forEach(participant => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = participant.name; // <--- This now correctly uses 'name'
+                    // Display name and section
+                    listItem.textContent = participant.name + (participant.section ? ` (${participant.section})` : '');
                     modalParticipantsList.appendChild(listItem);
                 });
             } else {

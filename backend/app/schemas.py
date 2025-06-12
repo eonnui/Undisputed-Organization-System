@@ -9,6 +9,7 @@ class OrganizationBase(BaseModel):
 
 class ParticipantResponse(BaseModel):
     name: str
+    section: Optional[str] = None 
 
 class OrganizationCreate(OrganizationBase):
     pass

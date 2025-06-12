@@ -57,9 +57,9 @@ class Event(Base):
     # Ensure this is exactly as shown, with @property decorator
     @property
     def participants_list_json(self):
-        """Returns a list of participant usernames for JSON serialization."""
-        return [{'name': p.name} for p in self.participants]
-
+        """Returns a list of participant names and sections for JSON serialization."""
+        # Include 'section' if it exists on the User model
+        return [{'name': p.name, 'section': p.section if hasattr(p, 'section') else None} for p in self.participants]
 class User(Base):
     __tablename__ = "users"
 
