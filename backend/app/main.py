@@ -677,7 +677,7 @@ async def update_payment_status(
     if not payment_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Payment item {payment_item_id} not found")
 
-    old_status_text = "Unpaid" # Default if not explicitly set before
+    old_status_text = "Unpaid" 
     if payment_item.is_not_responsible:
         old_status_text = "NOT RESPONSIBLE"
     elif payment_item.is_paid:
@@ -1125,7 +1125,7 @@ async def admin_update_rule_wiki(
 
     old_title = rule_wiki_entry.title
     old_category = rule_wiki_entry.category
-    old_content_snippet = rule_wiki_entry.content[:50] # Take a snippet for logging
+    old_content_snippet = rule_wiki_entry.content[:50]
 
     if image and image.filename:
         new_image_path = await handle_file_upload(
@@ -1184,7 +1184,7 @@ async def admin_delete_rule_wiki(
     if not rule_wiki_entry:
         raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
 
-    title_deleted = rule_wiki_entry.title # Capture title before deletion
+    title_deleted = rule_wiki_entry.title
     
     if rule_wiki_entry.image_path:
         delete_file_from_path(rule_wiki_entry.image_path)
@@ -1409,12 +1409,6 @@ async def create_organization_route(
     organization_data: schemas.OrganizationCreate,
     db: Session = Depends(get_db)
 ):
-    # This route might not have an admin logged in yet if it's for initial setup,
-    # so we log with a generic admin_id or ensure a SuperAdmin is doing it.
-    # For now, let's assume it might be done by a SuperAdmin or during initial setup
-    # and adjust logging if a specific admin is required here.
-    # If this is for initial setup, 'admin' might not be available from session.
-    # You might need a separate mechanism to log initial setup.
     
     if db.query(models.Organization).filter(models.Organization.name == organization_data.name).first():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Organization with name '{organization_data.name}' already exists.")
@@ -1435,13 +1429,12 @@ async def create_organization_route(
     db.refresh(new_org)
     logging.info(f"Action Required: Please upload the organization logo to your web server at the path: {new_org.logo_url}. Suggested filename: {suggested_filename}")
     
-    # Log the action (assuming a placeholder admin_id if no specific admin is logged in for initial setup)
-    # You might want to get an actual admin_id here if this route is protected by admin auth
-    admin_id_for_log = request.session.get("admin_id") or 0 # Use 0 or a specific system admin ID if not logged in
+    # Log the action
+    admin_id_for_log = request.session.get("admin_id") or 0 
     description = f"Organization '{new_org.name}' created with primary course code '{new_org.primary_course_code}'."
     await crud.create_admin_log(
         db=db,
-        admin_id=admin_id_for_log, # Replace with actual admin.admin_id if route is protected
+        admin_id=admin_id_for_log, 
         organization_id=new_org.id,
         action_type="Organization Created",
         description=description,
@@ -1476,13 +1469,13 @@ async def create_admin_user_route(
     db.refresh(new_admin)
 
     # Log the action
-    admin_performing_action = request.session.get("admin_id") # The admin creating this new admin
-    admin_org_id = admin_data.organization_id # The organization the new admin is associated with
+    admin_performing_action = request.session.get("admin_id") 
+    admin_org_id = admin_data.organization_id 
 
     description = f"Admin '{admin_performing_action or 'System'}' created new admin user: '{new_admin.first_name} {new_admin.last_name}' with email '{new_admin.email}' and role '{new_admin.role}'."
     await crud.create_admin_log(
         db=db,
-        admin_id=admin_performing_action or 0, # Log with the creating admin's ID, or 0 if system
+        admin_id=admin_performing_action or 0, 
         organization_id=admin_org_id,
         action_type="Admin User Created",
         description=description,
@@ -1506,8 +1499,8 @@ async def update_organization_theme_color_route(
     if not organization:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Organization with ID {org_id} not found.")
     
-    old_theme_color = organization.theme_color # Capture old value
-    old_custom_palette = organization.custom_palette # Capture old value
+    old_theme_color = organization.theme_color 
+    old_custom_palette = organization.custom_palette 
 
     organization.theme_color = theme_update.new_theme_color
     organization.custom_palette = crud.generate_custom_palette(theme_update.new_theme_color)
@@ -1554,7 +1547,7 @@ async def update_organization_logo_route(
     organization_name_slug = ''.join(e for e in organization.name.lower().replace(' ', '_') if e.isalnum() or e == '_')
     suggested_filename = f"{organization_name_slug}_logo{file_extension}"
     
-    old_logo_url = organization.logo_url # Capture old logo URL
+    old_logo_url = organization.logo_url 
     
     if organization.logo_url and organization.logo_url != request.url_for('static', path='images/patrick_logo.jpg'):
         delete_file_from_path(organization.logo_url)
@@ -1707,7 +1700,6 @@ async def payment_cancel(request: Request, paymentId: int = Query(...), db: Sess
 app.include_router(router)
 
 # User Logout
-# User Logout
 @app.get("/logout", response_class=RedirectResponse, name="logout")
 async def logout(request: Request, db: Session = Depends(get_db)):
     admin_id = request.session.get("admin_id")
@@ -1718,23 +1710,19 @@ async def logout(request: Request, db: Session = Depends(get_db)):
         if admin:
             organization_id_to_log = None
             
-            # --- NEW: Explicitly query for the admin's organizations ---
-            # As Admin has a many-to-many relationship with Organization
-            # We need to query through the association table (organization_admins)
             admin_organizations = db.query(models.Organization)\
                 .join(models.organization_admins)\
                 .filter(models.organization_admins.c.admin_id == admin.admin_id)\
-                .limit(1).first() # Get the first organization if multiple exist
+                .limit(1).first()
 
-            if admin_organizations: # If the admin is linked to at least one organization
+            if admin_organizations: 
                 organization_id_to_log = admin_organizations.id
-            # --- END NEW ---
 
             description = f"Admin '{admin.first_name} {admin.last_name}' successfully logged out."
             await crud.create_admin_log(
                 db=db,
                 admin_id=admin.admin_id,
-                organization_id=organization_id_to_log, # Pass the retrieved organization_id (can be None)
+                organization_id=organization_id_to_log, 
                 action_type="Admin Logout",
                 description=description,
                 request=request
@@ -2225,17 +2213,13 @@ async def login(request: Request, form_data: schemas.UserLogin, db: Session = De
 
             organization_id_to_log = None
             
-            # --- NEW: Explicitly query for the admin's organizations ---
-            # As Admin has a many-to-many relationship with Organization
-            # We need to query through the association table (organization_admins)
             admin_organizations = db.query(models.Organization)\
                 .join(models.organization_admins)\
                 .filter(models.organization_admins.c.admin_id == admin.admin_id)\
-                .limit(1).first() # Get the first organization if multiple exist
+                .limit(1).first()
 
-            if admin_organizations: # If the admin is linked to at least one organization
+            if admin_organizations: 
                 organization_id_to_log = admin_organizations.id
-            # --- END NEW ---
             
             description = f"Admin '{admin.first_name} {admin.last_name}' successfully logged in."
             await crud.create_admin_log(
@@ -2508,7 +2492,7 @@ async def update_profile(
     
     # Log general user profile update (if an admin is performing it)
     admin_id_for_log = request.session.get("admin_id")
-    if admin_id_for_log and changes: # Only log if an admin is logged in and changes occurred
+    if admin_id_for_log and changes: 
         admin_performing_action = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_log).first()
         if admin_performing_action:
             description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' updated profile for user: '{user.first_name} {user.last_name}' (ID: {user.id}). Changes: {'; '.join(changes)}"
@@ -2562,7 +2546,7 @@ async def change_password(
     
     # Log the action (if an admin is changing their own password)
     admin_id_for_log = request.session.get("admin_id")
-    if admin_id_for_log == user.id: # Assuming admin_id in session directly corresponds to user.id if it's an admin
+    if admin_id_for_log == user.id: 
         admin_performing_action = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_log).first()
         if admin_performing_action:
             description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' changed their own password."
@@ -2649,9 +2633,9 @@ async def forgot_password_endpoint(
             server.login(mailtrap_username, mailtrap_password)
             server.sendmail(sender_email, receiver_email, message.as_string())
         
-        # Log the action (if an admin is logging into their own account)
+        # Log the action
         admin_id_for_log = request.session.get("admin_id")
-        if admin_id_for_log: # Assuming this is an admin who forgot password
+        if admin_id_for_log: 
             admin_performing_action = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_log).first()
             if admin_performing_action:
                 description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' requested a password reset code."
@@ -2664,12 +2648,8 @@ async def forgot_password_endpoint(
                     target_entity_type="Admin",
                     target_entity_id=admin_performing_action.admin_id
                 )
-        else: # For a regular user
+        else: 
             description = f"User '{user.first_name} {user.last_name}' requested a password reset code."
-            # No admin_id for user actions, so just log the user part
-            # You might need a separate logging table for general user actions or just rely on backend logs.
-            # For simplicity, if no admin_id is present, we won't log to admin_logs here.
-            # await crud.create_user_log(...) 
             pass
 
         return {"message": "Password reset code sent to your email."}, status.HTTP_200_OK
@@ -2715,11 +2695,9 @@ async def reset_password_endpoint(
 
     crud.delete_password_reset_token(db, db_token.id)
 
-    # Log the action (if an admin is resetting their own password)
-    # This might need refinement based on how you handle admin vs. regular user password resets.
-    # If the identifier is an admin's email, log it as an admin action.
+    # Log the action
     admin_performing_action = db.query(models.Admin).filter(models.Admin.email == identifier).first()
-    if admin_performing_action and admin_performing_action.admin_id == user.id: # Check if the user is indeed an admin account
+    if admin_performing_action and admin_performing_action.admin_id == user.id: 
         description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' successfully reset their password via reset code."
         await crud.create_admin_log(
             db=db,
@@ -2730,8 +2708,6 @@ async def reset_password_endpoint(
             target_entity_type="Admin",
             target_entity_id=admin_performing_action.admin_id
         )
-    # else: For a regular user, you might log to a separate user_logs table or omit.
-    # For now, we're focusing on admin logs.
 
     return {"message": "Password has been reset successfully."}, status.HTTP_200_OK
 
@@ -2742,7 +2718,6 @@ async def get_all_admin_users(db: Session = Depends(get_db)):
     This is used to populate the admin filter dropdown in the activity log.
     """
     admins = db.query(models.Admin).all()
-    # Return a list of dictionaries with relevant admin info
     return [
         {
             "admin_id": admin.admin_id,
@@ -2756,32 +2731,24 @@ async def get_all_admin_users(db: Session = Depends(get_db)):
 async def get_all_admin_logs_api(
     request: Request,
     db: Session = Depends(get_db),
-    # This dependency ensures the user is an authenticated admin
-    # and provides their Admin object and associated Organization object.
     admin_info_tuple: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=200),
     admin_id: Optional[int] = Query(None, description="Filter by specific admin ID within the organization"),
-    # The organization_id query parameter is no longer used for filtering across organizations.
-    # It remains in the signature to avoid breaking existing requests but will be overridden.
-    organization_id: Optional[int] = Query(None, include_in_schema=False), # Exclude from OpenAPI docs if not used
+    organization_id: Optional[int] = Query(None, include_in_schema=False), 
     action_type: Optional[str] = Query(None, description="Filter by type of action (e.g., 'Theme Change')"),
     start_date: Optional[date] = Query(None, description="Start date for logs (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="End date for logs (YYYY-MM-DD)"),
     search: Optional[str] = Query(None, description="Search keyword in log description")
 ):
-    # Unpack the admin and organization objects from the tuple returned by the dependency.
     current_admin, current_organization = admin_info_tuple
 
-    # Authorization is handled by get_current_admin_with_org;
-    # if we reach here, the user is an authenticated admin linked to an organization.
-    # Logs are strictly filtered to the current admin's organization.
     logs = crud.get_admin_logs(
         db=db,
         skip=skip,
         limit=limit,
         admin_id=admin_id,
-        organization_id=current_organization.id, # ALWAYS filter by the current admin's organization ID
+        organization_id=current_organization.id, 
         action_type=action_type,
         start_date=start_date,
         end_date=end_date,

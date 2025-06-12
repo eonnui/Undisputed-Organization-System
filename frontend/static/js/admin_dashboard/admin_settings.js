@@ -1,10 +1,10 @@
-// Function to display notifications
 function displayNotification(message, type = 'info') {
     const notification = document.createElement('div');
     // Applying minimal inline styles for visibility, no external CSS classes
     notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
+    notification.style.bottom = '20px';
+    notification.style.left = '50%';
+    notification.style.transform = 'translateX(-50%)';
     notification.style.padding = '15px';
     notification.style.borderRadius = '8px';
     notification.style.zIndex = '1000';
@@ -17,7 +17,7 @@ function displayNotification(message, type = 'info') {
     notification.textContent = message;
     document.body.appendChild(notification);
 
-    void notification.offsetWidth; // Trigger reflow for transition
+    void notification.offsetWidth;
     notification.style.opacity = '1';
 
     setTimeout(() => {
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const themeColorInput = document.getElementById('themeColorInput');
     const themeColorPicker = document.getElementById('themeColorPicker');
     const saveThemeButton = document.getElementById('saveThemeColorButton');
-    const themeColorError = document.getElementById('themeColorError'); // Corrected assignment here
+    const themeColorError = document.getElementById('themeColorError');
 
     const logoFileInput = document.getElementById('logoFileInput');
     const uploadLogoButton = document.getElementById('uploadLogoButton');
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!allowedTypes.includes(file.type)) {
                 logoUploadError.textContent = 'Invalid file type. Only PNG, JPG, JPEG, GIF, SVG are allowed.';
                 uploadLogoButton.disabled = true;
-                currentLogoPreview.style.display = 'none'; 
+                currentLogoPreview.style.display = 'none';
             } else {
                 logoUploadError.textContent = '';
                 uploadLogoButton.disabled = false;
@@ -107,12 +107,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     currentLogoPreview.src = e.target.result;
-                    currentLogoPreview.style.display = 'block'; 
+                    currentLogoPreview.style.display = 'block';
                 };
                 reader.readAsDataURL(file);
             }
         } else {
-            uploadLogoButton.disabled = true; 
+            uploadLogoButton.disabled = true;
             if (currentLogoPreview.getAttribute('data-initial-src')) {
                 currentLogoPreview.src = currentLogoPreview.getAttribute('data-initial-src');
                 currentLogoPreview.style.display = 'block';
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                displayNotification(data.message, 'success'); 
+                displayNotification(data.message, 'success');
             } else {
                 displayNotification('Error uploading logo: ' + (data.detail || 'Unknown error'), 'error');
             }
@@ -189,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const logs = await response.json();
             renderLogs(logs);
-            updatePaginationControls(logs.length);
         } catch (error) {
             console.error("Error fetching admin logs:", error);
             displayNotification("An error occurred while fetching admin logs.", 'error');
@@ -202,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function() {
         tableBody.innerHTML = '';
 
         if (logs.length === 0) {
-            // Updated colspan to match the new number of columns (5)
             tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 10px; color: #555;">No logs found.</td></tr>';
             return;
         }
@@ -212,10 +210,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const timestamp = new Date(log.timestamp).toLocaleString();
             const adminName = log.admin_name || 'N/A';
-            // Removed organizationName as per request and to fix the ReferenceError
             const actionType = log.action_type || 'N/A';
             const description = log.description || 'No description provided.';
-            // Removed targetEntity as per request and to fix the ReferenceError
             const ipAddress = log.ip_address || 'N/A';
 
             row.innerHTML = `
@@ -224,17 +220,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${actionType}</td>
                 <td>${description}</td>
                 <td>${ipAddress}</td>
-            `; // Removed the <td> for organizationName and targetEntity
+            `;
             tableBody.appendChild(row);
         });
     }
-
-    function updatePaginationControls(currentResultsCount) {
-        document.getElementById('pageInfo').textContent = `Page ${currentPage}`;
-        document.getElementById('prevPageBtn').disabled = currentPage === 1;
-        document.getElementById('nextPageBtn').disabled = currentResultsCount < limit;
-    }
-
+    
     fetchAdminLogs();
 
     document.getElementById('prevPageBtn').addEventListener('click', () => {

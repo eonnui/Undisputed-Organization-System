@@ -868,11 +868,11 @@ async def create_admin_log(
         user_agent=user_agent,
         target_entity_type=target_entity_type,
         target_entity_id=target_entity_id,
-        timestamp=ph_time # Assign the calculated PH time
+        timestamp=ph_time 
     )
     db.add(db_admin_log)
-    db.commit() # Re-added db.commit()
-    db.refresh(db_admin_log) # Re-added db.refresh()
+    db.commit() 
+    db.refresh(db_admin_log) 
     return db_admin_log
 
 # Function to retrieve admin logs with filtering
@@ -916,7 +916,6 @@ def get_admin_logs(
         log_dict = log.__dict__.copy()
         log_dict["admin_name"] = admin_name
         log_dict["organization_name"] = organization_name
-        # Exclude SQLAlchemy internal state from being passed to Pydantic model
         log_dict.pop('_sa_instance_state', None) 
         formatted_logs.append(schemas.AdminLog(**log_dict))
     
