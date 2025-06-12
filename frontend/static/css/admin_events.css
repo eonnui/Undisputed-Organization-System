@@ -1,5 +1,44 @@
 /* --- Admin Events Specific Styles --- */
 
+/* Define your organization-specific CSS variables */
+/* If these are already defined in a global stylesheet (e.g., styles.css) and included
+   before admin_events.css, you can remove this :root block to avoid redundancy. */
+:root {
+    --org-bg-color: #f0f2f5;
+    --org-card-bg: #ffffff;
+    --org-text-primary: #333333;
+    --org-text-secondary: #777777;
+    --org-border-light: #e0e0e0;
+    --org-border-medium: #d0d0d0;
+    --org-accent-color-dark: #0056b3;
+    --org-accent-color-rgb: 0, 123, 255;
+    --org-button-bg: #007bff;
+    --org-button-text: #ffffff;
+    --org-hover-accent: #0069d9;
+    --org-primary: #007bff;
+    --org-info: #17a2b8;
+    --org-shadow-base-rgb: 0,0,0;
+    --org-event-description-color: #666;
+    --org-participants-count-color: #555;
+    --org-event-tag-text: #ffffff; /* Default tag text color */
+    --org-event-tag-bg: #6c757d; /* Default tag background (gray) */
+
+    /* Specific tag colors */
+    --org-academic-tag-bg: #3498db; /* Blue */
+    --org-academic-tag-text: #ffffff;
+    --org-sports-tag-bg: #27ae60; /* Green */
+    --org-sports-tag-text: #ffffff;
+    --org-arts-tag-bg: #9b59b6; /* Purple */
+    --org-arts-tag-text: #ffffff;
+    --org-music-tag-bg: #e67e22; /* Orange */
+    --org-music-tag-text: #ffffff;
+    --org-esports-tag-bg: #c0392b; /* Red */
+    --org-esports-tag-text: #ffffff;
+    --org-cultural-tag-bg: #f39c12; /* Yellow/Orange */
+    --org-cultural-tag-text: #ffffff;
+}
+
+
 /* Events Page Container */
 .events-page-container {
     max-width: 1070px;
@@ -541,9 +580,9 @@
 }
 
 /* Specific tag colors for the modal, consistent with card tags */
-.modal-classification #modalEventClassification.tag-academic { background-color: #3498db; }
-.modal-classification #modalEventClassification.tag-sports { background-color: #27ae60; }
-.modal-classification #modalEventClassification.tag-arts { background-color: #9b59b6; }
-.modal-classification #modalEventClassification.tag-music { background-color: #e67e22; }
-.modal-classification #modalEventClassification.tag-esports { background-color: #c0392b; }
-.modal-classification #modalEventClassification.tag-cultural { background-color: #f39c12; }
+.modal-classification #modalEventClassification.tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
+.modal-classification #modalEventClassification.tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
+.modal-classification #modalEventClassification.tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); }
+.modal-classification #modalEventClassification.tag-music { background-color: var(--org-music-tag-bg); color: var(--org-music-tag-text); }
+.modal-classification #modalEventClassification.tag-esports { background-color: var(--org-esports-tag-bg); color: var(--org-esports-tag-text); }
+.modal-classification #modalEventClassification.tag-cultural { background-color: var(--org-cultural-tag-bg); color: var(--org-cultural-tag-text); }
