@@ -1,0 +1,664 @@
+/* General Variables and Body Styling */
+:root {
+    --org-bg-color: #e6f7ff; /* Lighter blue for overall background to make cards pop slightly more */
+    --org-card-bg: #ffffff; /* White for cards and forms */
+    --org-text-primary: #333333; /* Dark grey for primary text */
+    --org-text-secondary: #666666; /* Medium grey for secondary text */
+    --org-text-light: #ffffff; /* White for text on dark backgrounds */
+    --org-primary: #007bff; /* Blue for primary accents/buttons */
+    --org-hover-effect: #0056b3; /* Darker blue on hover */
+    --org-button-bg: #007bff; /* Blue button background */
+    --org-button-text: #ffffff; /* White button text */
+    --org-border-medium: #e0e0e0; /* Light grey for borders */
+    --org-shadow-base-rgb: 0, 0, 0; /* Base for shadows */
+    --org-pinned-bg: #ffc107; /* Amber for pinned tag */
+    --org-profile-image-bg: #6c757d; /* Grey for profile image placeholder */
+    --org-profile-picture-border: #cccccc; /* Lighter grey for profile border */
+    --org-post-info-color: #333333; /* Dark grey for post titles */
+    --org-post-date-color: #777777; /* Slightly darker grey for dates */
+    --org-post-content-color: #444444; /* Darker grey for main content */
+    --org-heart-button-color: #dc3545; /* Red for heart icon */
+    --org-leave-button-bg: #dc3545; /* Red for delete buttons */
+    --org-leave-button-hover-bg: #c82333; /* Darker red on hover */
+    --org-secondary-button-bg: #6c757d; /* Grey for secondary buttons */
+    --org-secondary-button-hover-bg: #5a6268; /* Darker grey on hover */
+    --org-info: #17a2b8; /* Cyan for info links */
+    --org-hover-bg: #f8f9fa; /* Lighter grey for hover backgrounds */
+    --org-hover-accent: #0056b3; /* Darker blue for accent hovers */
+    --org-danger-hover: #c82333; /* Darker red for danger hovers */
+    --org-text-inverse: #f0f2f5; /* For borders that should be light on a dark bg. Reused for consistency. */
+}
+
+body {
+    font-family: "DM Sans", sans-serif;
+    background-color: var(--org-bg-color); /* Overall background */
+    color: var(--org-text-primary);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(var(--org-shadow-base-rgb), 0.4); } 70% { box-shadow: 0 0 0 10px rgba(var(--org-shadow-base-rgb), 0); } 100% { box-shadow: 0 0 0 0 rgba(var(--org-shadow-base-rgb), 0); } }
+@keyframes heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.05); } 30% { transform: scale(1); } 45% { transform: scale(1.05); } 60% { transform: scale(1); } }
+
+/* Main Layout */
+.main-content-flex-container {
+    display: flex;
+    justify-content: center; /* Center the entire flex container */
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 20px;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+/* Bulletin Board Container - REVISED FOR SOLID UI AND DIVIDERS */
+.bulletin-board-container {
+    flex: 2.5;
+    min-width: 400px;
+    font-family: "DM Sans", sans-serif;
+    text-align: center;
+    padding: 0; /* Ensures inner cards/sections handle padding */
+    box-sizing: border-box;
+}
+
+.bulletin-header {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: var(--org-text-primary);
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
+    animation: fadeIn 0.5s ease-out;
+    text-align: left;
+}
+
+/* Create Post Section - REVISED FOR SOLID UI AND DIVIDERS */
+.create-post-container {
+    background-color: var(--org-card-bg);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    border: 1px solid var(--org-border-medium);
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    width: auto;
+
+    /* REVISED PADDING, MARGIN, AND BORDERS FOR LINE DIVIDER AND FLOW */
+    padding: 1.5rem; /* Consistent padding inside the card */
+    border-bottom: 1px solid var(--org-border-medium); /* The visual line divider */
+    padding-bottom: 2.5rem; /* Increased space below the line for better visual separation */
+    margin-bottom: 2rem; /* Added some margin below this section to separate it from the title */
+
+    /* Ensure top corners are rounded, bottom are sharp for the "solid" look */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+
+    /* Keep animation/hover effects */
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideUp 0.5s ease-out 0.2s forwards;
+}
+
+.create-post-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(var(--org-shadow-base-rgb), 0.15);
+}
+
+.create-post-header { margin-bottom: 1rem; text-align: left; }
+.create-post-input {
+    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--org-border-medium); border-radius: 20px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; opacity: 0;
+    transform: translateY(10px); animation: slideUp 0.5s ease-out 0.3s forwards; display: block;
+}
+.create-post-input:focus { outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3); }
+.create-post-form-fields { margin-top: 1rem; display: none; animation: slideIn 0.5s ease-in-out; text-align: left; }
+.create-post-form-fields label { display: block; margin-bottom: 0.4rem; color: var(--org-text-secondary); font-weight: 500; font-size: 0.95rem; }
+.create-post-form-fields input[type="text"], .create-post-form-fields textarea, .create-post-form-fields select, .create-post-form-fields input[type="file"] {
+    width: 100%; padding: 0.6rem; margin-bottom: 0.9rem; border: 1px solid var(--org-border-medium); border-radius: 6px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease; display: block;
+}
+.create-post-form-fields textarea { min-height: 4rem; resize: vertical; }
+.create-post-form-fields input[type="text"]:focus, .create-post-form-fields textarea:focus, .create-post-form-fields select:focus, .create-post-form-fields input[type="file"]:focus {
+    outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
+}
+.create-post-form-fields input[type="checkbox"] { width: auto; margin-right: 0.5rem; vertical-align: middle; }
+.create-post-form-fields .checkbox-label { display: inline-block; font-weight: 400; }
+.create-post-submit-button {
+    padding: 0.75rem 1.25rem; border: none; border-radius: 8px; background-color: var(--org-button-bg);
+    color: var(--org-button-text); font-size: 1rem; font-weight: 500; cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: "DM Sans", sans-serif; box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    margin-top: 1rem; opacity: 0; transform: translateY(10px); animation: slideUp 0.5s ease-out 0.4s forwards;
+    display: block;
+}
+.create-post-submit-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12); }
+.back-to-bulletin { display: none; margin-top: 1rem; color: var(--org-primary); text-decoration: none; font-size: 0.95rem; transition: color 0.15s ease; text-align: center; }
+.back-to-bulletin:hover { color: var(--org-info); }
+
+/* Existing Posts Title - REVISED FOR SOLID UI AND DIVIDERS */
+.existing-posts-title {
+    font-size: 1.5rem;
+    margin-top: 0; /* Remove top margin, `create-post-container`'s margin-bottom handles separation */
+    margin-bottom: 1.25rem; /* Space below the title before the first post */
+    color: var(--org-text-primary);
+    font-weight: 700;
+    padding-bottom: 0.5rem; /* Still relevant for internal title spacing */
+    text-align: left;
+    padding-left: 1.5rem; /* Match card padding for alignment */
+    padding-right: 1.5rem; /* Match card padding for alignment */
+
+    /* To visually integrate it with the posts list below */
+    background-color: var(--org-card-bg);
+    border-top-left-radius: 8px; /* Top corners rounded to connect visually to the list */
+    border-top-right-radius: 8px;
+    border: 1px solid var(--org-border-medium);
+    border-bottom: none; /* No bottom border as the posts connect directly */
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08); /* Match card shadow */
+
+    animation: slideIn 0.5s ease-in-out;
+}
+
+
+/* Post Cards (Individual Bulletin Posts) - REVISED FOR SOLID UI FLOW */
+.post-card {
+    background-color: var(--org-card-bg);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    padding: 1.5rem;
+    border: 1px solid var(--org-border-medium);
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+
+    /* To make the title integrate seamlessly with the posts, remove top radius and border */
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: none; /* Remove top border, will be added selectively for first-of-type */
+}
+
+.post-card:first-of-type {
+    /* For the very first post card, ensure it visually connects to the 'Recent Posts' title */
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: 1px solid var(--org-border-medium); /* Re-add top border for the first card to connect to the title */
+}
+
+.post-card:last-child {
+    margin-bottom: 0; /* No margin after the very last post card */
+    border-bottom-left-radius: 8px; /* Ensure last card has bottom rounded corners */
+    border-bottom-right-radius: 8px;
+}
+
+.post-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(var(--org-shadow-base-rgb), 0.15); }
+
+.post-header { display: flex; align-items: center; justify-content: space-between; text-align: left; }
+.profile-info { display: flex; align-items: center; }
+.profile-image {
+    width: 3.5rem; height: 3.5rem; border-radius: 50%; margin-right: 1rem; background-color: var(--org-profile-image-bg);
+    display: flex; justify-content: center; align-items: center; font-size: 1.4rem; color: var(--org-text-light);
+    overflow: hidden; border: 2px solid var(--org-profile-picture-border);
+}
+.post-meta { flex: 1; text-align: left; }
+.post-title { font-size: 1.3rem; font-weight: 600; color: var(--org-post-info-color); margin-bottom: 0.4rem; }
+.post-title span.pinned {
+    background-color: var(--org-pinned-bg); color: var(--org-text-primary); padding: 0.3rem 0.7rem; border-radius: 0.375rem;
+    font-size: 0.85rem; margin-left: 0.8rem; vertical-align: middle; animation: pulse 1.5s infinite;
+    box-shadow: 0 0 0.25rem rgba(var(--org-shadow-base-rgb), 0.5);
+}
+.post-details { font-size: 0.95rem; color: var(--org-post-date-color); }
+.post-content { color: var(--org-post-content-color); line-height: 1.7; font-size: 1.05rem; white-space: pre-line; text-align: left; }
+.wiki-post-image {
+    max-width: 100%; height: auto; margin-bottom: 0.75rem; border-radius: 5px; display: block;
+    margin-left: auto; margin-right: auto; box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+.post-actions {
+    display: flex; align-items: center; gap: 1.5rem; color: var(--org-post-actions-color); font-size: 1.2rem;
+    width: fit-content;
+}
+.heart-count { color: var(--org-heart-button-color); font-size: 1.2rem; animation: heartbeat 1s infinite; }
+.delete-button {
+    padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer;
+    background-color: var(--org-leave-button-bg); color: var(--org-button-text); transition: background-color 0.15s ease; border: none;
+}
+.delete-button:hover { background-color: var(--org-leave-button-hover-bg); }
+
+/* Rules & Wiki Container - REVISED FOR SOLID UI AND DIVIDERS */
+.rules-wiki-container {
+    flex: 1;
+    min-width: 300px;
+    /* NEW: Apply card styling to the main container, making it solid */
+    background-color: var(--org-card-bg);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    border: 1px solid var(--org-border-medium);
+
+    padding: 0; /* Remove internal padding, inner sections handle it */
+    box-sizing: border-box;
+    display: flex; /* Use flexbox to stack its children cleanly */
+    flex-direction: column; /* Stack children vertically */
+    gap: 0; /* Remove gap between immediate children (sections) */
+}
+
+/* Individual Sections within Rules & Wiki Container - REVISED FOR SOLID UI AND DIVIDERS */
+
+/* Organizational Chart Section (first section in the solid block) */
+.org-chart-section {
+    padding: 1.5rem; /* Consistent internal padding */
+    text-align: left;
+    border-bottom: 1px solid var(--org-border-medium); /* Divider for sections */
+    padding-bottom: 2rem; /* Space below divider */
+    /* Apply top rounded corners to this first section of the solid block */
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    /* Remove default individual card styles */
+    border-radius: 0; /* Override default to ensure connection */
+    margin-bottom: 0;
+    border: none; /* Remove individual border */
+    background-color: transparent; /* Make transparent to show parent's background */
+    box-shadow: none;
+    transition: none; /* Disable hover effect if it's part of a solid block */
+}
+
+.org-chart-section:hover {
+    transform: none; /* Disable hover effect if it's now part of a solid block */
+    box-shadow: none;
+}
+
+.org-chart-header {
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--org-text-primary);
+    border-bottom: 2px solid var(--org-border-medium); /* Internal header divider */
+    padding-bottom: 0.5rem;
+}
+
+/* Create Wiki Post Section (middle section in the solid block) */
+.create-wiki-post-container {
+    padding: 1.5rem; /* Consistent internal padding */
+    border-bottom: 1px solid var(--org-border-medium); /* Divider for sections */
+    padding-bottom: 2rem; /* Space below divider */
+    /* Remove default individual card styles */
+    border-radius: 0;
+    margin-bottom: 0;
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+    transition: none;
+}
+.create-wiki-post-container:hover { transform: none; box-shadow: none; } /* Disable hover */
+
+/* Adjust text truncation/spacing within "Create New Rule/Wiki Entry" */
+.create-wiki-input-wrapper {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+.create-wiki-post-container p { /* For the "Start a new Rule/Wiki entry..." text */
+    margin-top: 0.5rem; /* Add some space above the text */
+    margin-bottom: 1rem; /* Add space below the text */
+    font-size: 0.95rem; /* Adjust font size if too large */
+    line-height: 1.5; /* Ensure readable line height */
+    color: var(--org-text-secondary); /* Softer color for secondary text */
+}
+
+/* Existing Wiki Posts Container (last section in the solid block) */
+.existing-wiki-post-container {
+    padding: 1.5rem; /* Consistent internal padding */
+    /* Remove default individual card styles */
+    border-radius: 0;
+    margin-bottom: 0;
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+    transition: none;
+    /* Apply bottom rounded corners to this last section of the solid block */
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+.existing-wiki-post-container:hover { transform: none; box-shadow: none; } /* Disable hover */
+
+
+/* Ensure internal section titles still have their styles */
+.create-wiki-post-title {
+    margin-top: 0; margin-bottom: 1rem; font-size: 1.5rem; color: var(--org-text-primary);
+    font-weight: 600; text-align: left;
+}
+.existing-wiki-posts-title {
+    font-size: 1.5rem; margin-top: 0; margin-bottom: 1.25rem; color: var(--org-text-primary);
+    font-weight: 700; border-bottom: 2px solid var(--org-border-medium); padding-bottom: 0.5rem;
+    animation: slideIn 0.5s ease-in-out; text-align: left;
+}
+
+/* Create Wiki Post Section - Form Fields and Buttons */
+.create-wiki-input-wrapper { margin-bottom: 1rem; text-align: left; }
+.create-wiki-input {
+    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--org-border-medium); border-radius: 20px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; display: block;
+}
+.create-wiki-input:focus { outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3); }
+.create-wiki-post-form { display: none; flex-direction: column; resize: vertical; min-height: 120px; max-height: 200px; overflow: auto; }
+.create-wiki-post-form label { display: block; margin-bottom: 0.4rem; color: var(--org-text-secondary); font-weight: 500; font-size: 0.95rem; }
+.create-wiki-post-form input[type="text"], .create-wiki-post-form textarea, .create-wiki-post-form select, .create-wiki-post-form input[type="file"] {
+    width: 100%; padding: 0.6rem; margin-bottom: 0.9rem; border: 1px solid var(--org-border-medium); border-radius: 6px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease; display: block;
+}
+.create-wiki-post-form textarea { min-height: 4rem; resize: vertical; }
+.create-wiki-post-form input[type="text"]:focus, .create-wiki-post-form textarea:focus, .create-wiki-post-form select:focus, .create-wiki-post-form input[type="file"]:focus {
+    outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
+}
+.create-wiki-submit-button {
+    padding: 0.75rem 1.25rem; border: none; border-radius: 8px; background-color: var(--org-button-bg);
+    color: var(--org-button-text); font-size: 1rem; font-weight: 500; cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: "DM Sans", sans-serif; box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    margin-top: 1rem; opacity: 0; transform: translateY(10px); animation: slideUp 0.5s ease-out 0.4s forwards;
+    display: block;
+}
+.create-wiki-submit-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12); }
+.cancel-create-wiki-button {
+    background-color: var(--org-secondary-button-bg); color: var(--org-secondary-button-text);
+    padding: 0.75rem 1.25rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500;
+    cursor: pointer; transition: background-color 0.15s ease, transform 0.15s ease; margin-top: 1rem; display: none;
+}
+.cancel-create-wiki-button:hover { background-color: var(--org-secondary-button-hover-bg); transform: translateY(-1px); }
+
+/* Wiki Posts List and Card */
+.wiki-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Space between wiki cards */
+}
+.wiki-post-card {
+    background-color: var(--org-card-bg);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    padding: 1.5rem;
+    border: 1px solid var(--org-border-medium);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 1rem; /* Added: margin between individual wiki cards */
+}
+.wiki-post-card:last-child {
+    margin-bottom: 0; /* No margin after the last wiki card */
+}
+
+.wiki-post-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(var(--org-shadow-base-rgb), 0.15); }
+.wiki-post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; }
+.wiki-post-title { margin: 0; font-size: 1.2em; color: var(--org-post-info-color); }
+.wiki-post-actions { display: flex; gap: 0.5rem; }
+.wiki-edit-button, .save-edit-button, .cancel-edit-button {
+    padding: 0.6rem 1.1rem; border-radius: 6px; font-size: 0.95rem; font-weight: 500; cursor: pointer; border: none; outline: none; transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.wiki-edit-button { background-color: var(--org-primary); color: var(--org-button-text); }
+.wiki-edit-button:hover { background-color: var(--org-hover-accent); }
+.wiki-delete-button {
+    background-color: var(--org-leave-button-bg); color: white; padding: 0.6rem 1.1rem; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.15s ease; font-size: 0.95rem; font-weight: 500;
+}
+.wiki-delete-button:hover { background-color: var(--org-danger-hover); }
+.wiki-post-content { font-size: 1em; color: var(--org-text-secondary); line-height: 1.6; white-space: pre-line; }
+.inline-form { display: inline; }
+.wiki-post-edit-mode {
+    display: none; padding-top: 1.5rem; border-top: 1px dashed var(--org-border-medium); margin-top: 1.5rem; width: 100%; box-sizing: border-box;
+}
+.edit-wiki-post-form {
+    background-color: var(--org-card-bg); border: 1px solid var(--org-border-medium); padding: 1rem; box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
+    border-radius: 8px; display: flex; flex-direction: column; gap: 1rem; width: 100%; margin: 0 auto; min-height: 40px; max-height: 400px; height: auto; resize: vertical; overflow: auto;
+}
+.edit-wiki-post-form label { font-size: 0.95rem; color: var(--org-text-secondary); font-weight: 500; }
+.edit-wiki-post-form input[type="text"], .edit-wiki-post-form textarea, .edit-wiki-post-form select {
+    background-color: var(--org-input-bg); border: 1px solid var(--org-border-medium); padding: 0.75rem 1rem; border-radius: 6px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease; width: 100%;
+}
+.edit-wiki-post-form textarea { min-height: 80px; resize: vertical; }
+.edit-wiki-post-form input[type="text"]:focus, .edit-wiki-post-form textarea:focus, .edit-wiki-post-form select:focus {
+    outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
+}
+.save-edit-button { background-color: var(--org-button-bg); color: var(--org-button-text); margin-right: 10px; }
+.save-edit-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); }
+.cancel-edit-button { background-color: var(--org-secondary-button-bg); color: var(--org-secondary-button-text); }
+.cancel-edit-button:hover { background-color: var(--org-secondary-button-hover-bg); transform: translateY(-1px); }
+
+/* Organizational Chart Button */
+.view-org-chart-button {
+    padding: .6rem 1rem; border: none; border-radius: 8px; background-color: var(--org-button-bg);
+    color: var(--org-button-text); font-size: 1rem; font-weight: 500; cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: "DM Sans", sans-serif; box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    width: auto; display: inline-block; margin-top: 1rem;
+}
+.view-org-chart-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12); }
+.view-org-chart-button:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1); }
+
+/* MODAL STYLES (Crucial: display: none; by default) */
+.modal {
+    display: none; /* This ensures the modal is hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center; /* Used by JS to set to 'flex' for centering */
+    align-items: center; /* Used by JS to set to 'flex' for centering */
+}
+
+.modal-content {
+    background-color: var(--org-card-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(var(--org-shadow-base-rgb), 0.3);
+    width: 90%;
+    max-width: 900px;
+    position: relative;
+    box-sizing: border-box;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    color: var(--org-text-primary);
+    border-bottom: 2px solid var(--org-border-medium);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.close-button {
+    color: #aaaaaa;
+    font-size: 32px;
+    font-weight: bold;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--org-text-primary);
+    text-decoration: none;
+}
+
+/* Organizational Chart Display within Modal */
+.organization-chart-display {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    color: var(--org-text-secondary);
+    font-style: italic;
+    background-color: var(--org-input-bg);
+    border: 1px dashed var(--org-border-medium);
+    border-radius: 6px;
+    padding: 1.5rem;
+    overflow: auto;
+    gap: 0.75rem;
+    max-height: calc(90vh - 150px);
+}
+
+.loading-message { color: var(--org-text-secondary); font-size: 0.9rem; }
+.org-node {
+    background-color: var(--org-card-bg); border: 1px solid var(--org-border-medium); border-radius: 25px;
+    padding: 0.8rem 1.6rem; margin: 0.25rem 0; font-size: 1rem; font-weight: 600; color: var(--org-text-primary);
+    text-align: center; box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1); transition: transform 0.2s ease-in-out;
+    white-space: nowrap; min-width: 160px; display: flex; justify-content: center; align-items: center;
+}
+.org-node:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.15); }
+.org-node.org-root { border-radius: 12px; font-size: 1.2rem; padding: 1rem 2.2rem; margin-bottom: 1.2rem; min-width: 220px; }
+.org-line { background-color: var(--org-primary); width: 2px; height: 1.5rem; margin: -0.25rem 0; position: relative; }
+.org-line.org-line-horizontal { height: 2px; width: 4rem; margin: 0 0.5rem; align-self: center; transform: none; }
+.org-branch-container {
+    display: flex; justify-content: center; align-items: flex-start; width: 100%; margin-top: 1.2rem; gap: 2.5rem;
+}
+.org-branch-container .org-node { margin: 0; }
+.org-line.org-vertical-to-branch { height: 2.5rem; margin-bottom: 0.5rem; }
+.org-line.org-vertical-from-branch-top { height: 1.5rem; position: absolute; top: -1.5rem; left: 50%; transform: translateX(-50%); }
+.org-line.org-vertical-to-branch-bottom { height: 1.5rem; position: absolute; bottom: -1.5rem; left: 50%; transform: translateX(-50%); }
+
+
+/* Responsive adjustments */
+@media (max-width: 992px) { /* Adjust for medium screens */
+    .main-content-flex-container {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .bulletin-board-container,
+    .rules-wiki-container {
+        min-width: unset;
+        width: 100%;
+        padding: 0; /* Ensures full width */
+    }
+
+    /* Adjust padding for individual content sections */
+    .create-post-container,
+    .post-card,
+    .org-chart-section,
+    .create-wiki-post-container,
+    .existing-wiki-post-container {
+        padding: 1.2rem;
+    }
+
+    /* Re-apply top/bottom radius for the main sidebar block */
+    .rules-wiki-container {
+        border-radius: 8px; /* Ensure main container remains rounded */
+    }
+    .org-chart-section { /* First child */
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+    .existing-wiki-post-container { /* Last child */
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .modal-content {
+        width: 90%;
+        max-width: 700px;
+    }
+}
+
+@media (max-width: 768px) {
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .post-header form {
+        width: 100%;
+        text-align: right;
+    }
+
+    .delete-button {
+        width: auto;
+    }
+
+    .wiki-post-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .wiki-edit-button, .wiki-delete-button {
+        width: 100%;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-width: 500px;
+        padding: 1rem;
+    }
+
+    .organization-chart-display {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .bulletin-header,
+    .existing-posts-title,
+    .create-wiki-post-title,
+    .existing-wiki-posts-title,
+    .org-chart-header {
+        font-size: 1.8em;
+    }
+
+    .post-title {
+        font-size: 1.1rem;
+    }
+
+    .profile-image {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
+    }
+
+    .create-post-form-fields input[type="text"],
+    .create-post-form-fields textarea,
+    .create-post-form-fields select,
+    .create-post-form-fields input[type="file"],
+    .create-wiki-post-form input[type="text"],
+    .create-wiki-post-form textarea,
+    .create-wiki-post-form select,
+    .create-wiki-post-form input[type="file"],
+    .edit-wiki-post-form input[type="text"],
+    .edit-wiki-post-form textarea,
+    .edit-wiki-post-form select {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+
+    .create-post-submit-button,
+    .create-wiki-submit-button,
+    .save-edit-button,
+    .cancel-edit-button,
+    .view-org-chart-button {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+}
