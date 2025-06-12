@@ -25,6 +25,7 @@ class Organization(Base):
     notifications = relationship("Notification", back_populates="organization", foreign_keys="[Notification.organization_id]")
     
     rule_wiki_entries_org = relationship("RuleWikiEntry", back_populates="organization")
+    admin_logs = relationship("AdminLog", back_populates="organization")
 
 
 organization_admins = Table(
@@ -105,6 +106,8 @@ class Admin(Base):
     notifications = relationship("Notification", back_populates="admin", foreign_keys="[Notification.admin_id]")
     
     rule_wiki_entries = relationship("RuleWikiEntry", back_populates="admin")
+    admin_logs = relationship("AdminLog", back_populates="admin")
+
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
@@ -194,7 +197,7 @@ class Notification(Base):
     payment_id = Column(Integer, ForeignKey("payments.id", ondelete='CASCADE'), nullable=True)
     payment_item_id = Column(Integer, ForeignKey("payment_items.id", ondelete='CASCADE'), nullable=True)
     verified_user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), nullable=True)
-   
+    
     rule_wiki_entry_id = Column(Integer, ForeignKey("rule_wiki_entries.id", ondelete='CASCADE'), nullable=True)
 
 
@@ -213,7 +216,7 @@ class Notification(Base):
     payment = relationship("Payment", back_populates="notifications", foreign_keys=[payment_id])
     payment_item = relationship("PaymentItem", back_populates="notifications", foreign_keys=[payment_item_id])
     verified_user = relationship("User", foreign_keys=[verified_user_id])
-  
+    
     rule_wiki_entry = relationship("RuleWikiEntry", back_populates="notifications")
 
 
@@ -257,3 +260,20 @@ class RuleWikiEntry(Base):
     admin = relationship("Admin", back_populates="rule_wiki_entries")
     organization = relationship("Organization", back_populates="rule_wiki_entries_org")
     notifications = relationship("Notification", back_populates="rule_wiki_entry")
+
+class AdminLog(Base):
+    __tablename__ = "admin_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, default=func.now(), nullable=False) 
+    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=False)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)
+    action_type = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    target_entity_type = Column(String, nullable=True)
+    target_entity_id = Column(Integer, nullable=True)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(Text, nullable=True)
+
+    admin = relationship("Admin", back_populates="admin_logs")
+    organization = relationship("Organization", back_populates="admin_logs")

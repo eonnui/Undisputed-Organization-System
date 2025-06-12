@@ -67,7 +67,6 @@ function applyUserTheme() {
         });
 }
 
-document.addEventListener('DOMContentLoaded', applyUserTheme);
 
 async function fetchAndDisplayNotifications(includeRead = true) {
     const notificationsDropdown = document.getElementById('notifications-dropdown');
@@ -101,7 +100,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
         clearAllBtn.onclick = async () => {
             if (await clearAllNotifications()) {
                 await fetchAndDisplayNotifications(true);
-                updateBadgeBasedOnNewUnread(); 
+                updateBadgeBasedOnNewUnread();
             } else {
                 alert('Failed to clear all notifications.');
             }
@@ -139,7 +138,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
 
                         if (success) {
                             await fetchAndDisplayNotifications(true);
-                            updateBadgeBasedOnNewUnread(); 
+                            updateBadgeBasedOnNewUnread();
 
                             if (notification.url && notification.url !== '#' && notificationItem.href === '#') {
                                 window.location.href = notification.url;
@@ -167,7 +166,7 @@ async function fetchAndDisplayNotifications(includeRead = true) {
 
                 if (successCount > 0) {
                     await fetchAndDisplayNotifications(true);
-                    updateBadgeBasedOnNewUnread(); 
+                    updateBadgeBasedOnNewUnread();
                 } else {
                     alert('Failed to clear notification.');
                 }
@@ -254,7 +253,7 @@ async function updateBadgeBasedOnNewUnread() {
                 newUnreadIds.add(id);
             }
         });
-        
+
         const totalNewUnreadCount = newUnreadIds.size;
 
         if (totalNewUnreadCount > 0) {
@@ -292,12 +291,12 @@ function setupDropdown(buttonSelector, dropdownId) {
         if (dropdownId === 'notifications-dropdown') {
             isNotificationsDropdownOpen = isExpanded;
             if (isExpanded) {
-                
+
                 if (unreadBadge) {
                     unreadBadge.textContent = '';
                     unreadBadge.classList.add('hidden');
                 }
-              
+
                 fetchAndDisplayNotifications(true).then(notifications => {
                     lastSeenUnreadNotificationIds.clear();
                     notifications.forEach(notification => {
@@ -305,11 +304,11 @@ function setupDropdown(buttonSelector, dropdownId) {
                             (notification.group_ids || [notification.id]).forEach(id => lastSeenUnreadNotificationIds.add(id));
                         }
                     });
-                    
+
                     localStorage.setItem('lastSeenUnreadNotificationIds', JSON.stringify(Array.from(lastSeenUnreadNotificationIds)));
                 });
-                clearInterval(notificationPollingTimer); 
-            } else {               
+                clearInterval(notificationPollingTimer);
+            } else {
                 startNotificationPolling();
             }
         }
@@ -354,7 +353,7 @@ function setSidebarState(isCollapsed) {
     const menuText = document.querySelector('.top-bar .menu-text');
     const navTexts = document.querySelectorAll('.sidebar nav ul li a .nav-text');
     const logo = document.querySelector('.sidebar .logo');
-    
+
     if (!sidebar || !mainContent || !menuText || !logo) {
         console.warn("Sidebar elements not fully present to set state.");
         return;
@@ -363,7 +362,7 @@ function setSidebarState(isCollapsed) {
     if (isCollapsed) {
         sidebar.classList.add('collapsed');
         mainContent.classList.add('collapsed');
-        menuText.textContent = ''; 
+        menuText.textContent = '';
         logo.style.opacity = 0;
         logo.style.pointerEvents = 'none';
         navTexts.forEach(span => span.style.display = 'none');
@@ -371,10 +370,10 @@ function setSidebarState(isCollapsed) {
     } else {
         sidebar.classList.remove('collapsed');
         mainContent.classList.remove('collapsed');
-        menuText.textContent = 'Menu'; 
+        menuText.textContent = 'Menu';
         logo.style.opacity = 1;
         logo.style.pointerEvents = 'auto';
-        navTexts.forEach(span => span.style.display = 'inline-block'); 
+        navTexts.forEach(span => span.style.display = 'inline-block');
         localStorage.setItem('sidebarState', 'expanded');
     }
 }
@@ -387,7 +386,7 @@ function initializeSidebarToggle() {
         console.error("Menu toggle button not found. Sidebar persistence will not work.");
         return;
     }
-    
+
     const savedState = localStorage.getItem('sidebarState');
     if (savedState === 'collapsed') {
         setSidebarState(true);
@@ -395,14 +394,16 @@ function initializeSidebarToggle() {
         setSidebarState(false);
     }
 
-    
+
     menuToggle.addEventListener('click', () => {
         const isCurrentlyCollapsed = document.querySelector('.sidebar').classList.contains('collapsed');
-        setSidebarState(!isCurrentlyCollapsed); 
+        setSidebarState(!isCurrentlyCollapsed);
     });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    applyUserTheme();
+
     setupDropdown('.profile-btn', 'profile-dropdown');
     setupDropdown('.notification-btn', 'notifications-dropdown');
 
@@ -420,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    initializeSidebarToggle(); 
+    initializeSidebarToggle();
 
     const storedIds = localStorage.getItem('lastSeenUnreadNotificationIds');
     if (storedIds) {
@@ -433,56 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     startNotificationPolling();
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Existing menu toggle logic (if any)
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const mainContent = document.querySelector('.main-content');
-
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('shifted');
-        });
-    }
-
-    // Existing dropdown logic (if any)
-    const profileBtn = document.querySelector('.profile-btn');
-    const profileDropdown = document.getElementById('profile-dropdown');
-    if (profileBtn) {
-        profileBtn.addEventListener('click', function() {
-            const isExpanded = profileBtn.getAttribute('aria-expanded') === 'true';
-            profileBtn.setAttribute('aria-expanded', !isExpanded);
-            profileDropdown.classList.toggle('show');
-        });
-    }
-
-    const notificationBtn = document.querySelector('.notification-btn');
-    const notificationsDropdown = document.getElementById('notifications-dropdown');
-    if (notificationBtn) {
-        notificationBtn.addEventListener('click', function() {
-            const isExpanded = notificationBtn.getAttribute('aria-expanded') === 'true';
-            notificationBtn.setAttribute('aria-expanded', !isExpanded);
-            notificationsDropdown.classList.toggle('show');
-        });
-    }
-
-    // Close dropdowns if clicked outside
-    window.addEventListener('click', function(event) {
-        if (profileBtn && !profileBtn.contains(event.target) && !profileDropdown.contains(event.target)) {
-            profileDropdown.classList.remove('show');
-            profileBtn.setAttribute('aria-expanded', 'false');
-        }
-        if (notificationBtn && !notificationBtn.contains(event.target) && !notificationsDropdown.contains(event.target)) {
-            notificationsDropdown.classList.remove('show');
-            notificationBtn.setAttribute('aria-expanded', 'false');
-        }
-    });
-
-
-    // --- FOR DATE TODAY ---
     const todayDateElement = document.getElementById('today-date');
     if (todayDateElement) {
         const today = new Date();
@@ -490,4 +442,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const formattedDate = today.toLocaleDateString('en-PH', options);
         todayDateElement.textContent = formattedDate;
     }
+
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
 });

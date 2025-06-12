@@ -1,13 +1,14 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from . import models, schemas
 from passlib.context import CryptContext
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timezone, timedelta
 import logging
 from sqlalchemy.sql import exists
 from sqlalchemy import and_
 from typing import Optional, Tuple, List, Dict, Any
 import json
 from collections import defaultdict
+from fastapi import Request
 
 logging.basicConfig(level=logging.INFO)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -833,9 +834,90 @@ def delete_password_reset_token(db: Session, token_id: int):
 def update_user_password(db: Session, user_id: int, new_password: str):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user:
-        user.hashed_password = get_password_hash(new_password) # Assuming your User model has 'hashed_password'
+        user.hashed_password = get_password_hash(new_password) 
         db.add(user)
         db.commit()
         db.refresh(user)
         return user
     return None
+
+# Function to create an admin log entry
+async def create_admin_log(
+    db: Session,
+    admin_id: int,
+    action_type: str,
+    description: str,
+    request: Request,
+    organization_id: Optional[int] = None,
+    target_entity_type: Optional[str] = None,
+    target_entity_id: Optional[int] = None,
+):
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+
+    # Calculate current time in PH timezone (UTC+8)
+    utc_now = datetime.utcnow()
+    ph_time = utc_now + timedelta(hours=8)
+
+    db_admin_log = models.AdminLog(
+        admin_id=admin_id,
+        organization_id=organization_id,
+        action_type=action_type,
+        description=description,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        target_entity_type=target_entity_type,
+        target_entity_id=target_entity_id,
+        timestamp=ph_time # Assign the calculated PH time
+    )
+    db.add(db_admin_log)
+    db.commit() # Re-added db.commit()
+    db.refresh(db_admin_log) # Re-added db.refresh()
+    return db_admin_log
+
+# Function to retrieve admin logs with filtering
+def get_admin_logs(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    admin_id: Optional[int] = None,
+    organization_id: Optional[int] = None,
+    action_type: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    search_query: Optional[str] = None
+) -> List[schemas.AdminLog]:
+    query = db.query(models.AdminLog).join(models.Admin)
+    if admin_id:
+        query = query.filter(models.AdminLog.admin_id == admin_id)
+    if organization_id:
+        query = query.filter(models.AdminLog.organization_id == organization_id)
+    if action_type:
+        query = query.filter(models.AdminLog.action_type == action_type)
+    if start_date:
+        query = query.filter(models.AdminLog.timestamp >= start_date)
+    if end_date:
+        query = query.filter(models.AdminLog.timestamp < end_date + timedelta(days=1))
+    if search_query:
+        query = query.filter(models.AdminLog.description.ilike(f"%{search_query}%"))
+    
+    query = query.options(
+        joinedload(models.AdminLog.admin),
+        joinedload(models.AdminLog.organization)
+    )
+
+    logs = query.order_by(models.AdminLog.timestamp.desc()).offset(skip).limit(limit).all()
+    
+    formatted_logs = []
+    for log in logs:
+        admin_name = f"{log.admin.first_name} {log.admin.last_name}" if log.admin and log.admin.first_name and log.admin.last_name else log.admin.email if log.admin else None
+        organization_name = log.organization.name if log.organization else None
+        
+        log_dict = log.__dict__.copy()
+        log_dict["admin_name"] = admin_name
+        log_dict["organization_name"] = organization_name
+        # Exclude SQLAlchemy internal state from being passed to Pydantic model
+        log_dict.pop('_sa_instance_state', None) 
+        formatted_logs.append(schemas.AdminLog(**log_dict))
+    
+    return formatted_logs

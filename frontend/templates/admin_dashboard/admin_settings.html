@@ -1,6 +1,6 @@
 {% extends 'admin_base.html' %}
 
-{% block title %}Admin_Settings{% endblock %}
+{% block title %}Admin Settings & Activity Log{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/admin_dashboard.css"> 
@@ -43,9 +43,40 @@
             <div class="error-message" id="logoUploadError"></div>
         </div>
     </div>
-</div>
+
+    <div class="admin-activity-log-section">
+        <h1>Admin Activity Log</h1>      
+
+        <div class="log-table-section">
+            <h2>Recent Activities</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Admin</th>
+                            {# Removed "Org" column header #}
+                            <th>Action Type</th>
+                            <th>Description</th>
+                            {# Removed "Target" column header #}
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-controls">
+                <button id="prevPageBtn">Previous</button>
+                <span id="pageInfo">Page 1</span>
+                <button id="nextPageBtn">Next</button>
+            </div>
+        </div>
+    </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/admin_dashboard/admin_settings.js"></script>
+<script src="../../static/js/admin_dashboard/admin_settings.js"></script> 
 {% endblock %}

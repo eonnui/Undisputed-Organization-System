@@ -154,7 +154,7 @@ class NotificationBase(BaseModel):
     message: str
     url: Optional[str] = None
     is_read: bool = False 
-class NotificationCreate(NotificationBase):   
+class NotificationCreate(NotificationBase): 
     pass
 
 class Notification(NotificationBase):
@@ -171,15 +171,12 @@ class RuleWikiEntryBase(BaseModel):
     image_path: Optional[str] = None 
 
 class RuleWikiEntryCreate(RuleWikiEntryBase):
-    """Schema for creating a new Rule/Wiki entry."""
     pass 
 
 class RuleWikiEntryUpdate(RuleWikiEntryBase):
-    """Schema for updating an existing Rule/Wiki entry."""
     pass 
 
 class RuleWikiEntry(RuleWikiEntryBase):
-    """Schema for returning Rule/Wiki entry data, including database-generated fields."""
     id: int
     admin_id: int
     organization_id: int
@@ -188,4 +185,25 @@ class RuleWikiEntry(RuleWikiEntryBase):
 
     class Config:
         from_attributes = True
-     
+
+class AdminLogBase(BaseModel):
+    action_type: str
+    description: str
+    target_entity_type: Optional[str] = None
+    target_entity_id: Optional[int] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    organization_id: Optional[int] = None
+
+class AdminLogCreate(AdminLogBase):
+    pass
+
+class AdminLog(AdminLogBase):
+    id: int
+    timestamp: datetime
+    admin_id: int
+    admin_name: Optional[str] = None
+    organization_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
