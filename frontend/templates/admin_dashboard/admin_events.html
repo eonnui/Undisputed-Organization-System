@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/admin_dashboard.css">
+<link rel="stylesheet" href="/static/css/admin_events.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
@@ -39,6 +40,7 @@
             <div class="form-row">
                 <div>
                     <label for="date">Date and Time:</label>
+                    <!-- Added min attribute via JavaScript for client-side date restriction -->
                     <input type="datetime-local" id="date" name="date" required>
                 </div>
                 <div>
@@ -47,7 +49,8 @@
                 </div>
                 <div>
                     <label for="max_participants">Max Participants:</label>
-                    <input type="number" id="max_participants" name="max_participants" required>
+                    <!-- Added min attribute to ensure non-negative values -->
+                    <input type="number" id="max_participants" name="max_participants" min="0" required>
                 </div>
             </div>
 
@@ -59,31 +62,49 @@
 
     <h2 class="existing-events-title">Current Events</h2>
     {% if events %}
-    {% for event in events %}
-    <div class="event-card">
-        <div class="event-header">
-            <h3 class="event-title">{{ event.title }}</h3>
-            <span class="event-tag tag-{{ event.classification|lower }}">
-                {{ event.classification }}
-                {% if event.classification_image_url %}
-                <img src="{{ event.classification_image_url }}" alt="Classification Image" class="image-on-hover">
-                {% endif %}
-            </span>
+    <!-- New container for the grid layout of event cards -->
+    <div class="event-cards-grid">
+        {% for event in events %}
+        <div class="event-card">
+            <!-- Image container placed at the top of the card -->
+            {% if event.classification_image_url %}
+            <div class="event-card-image-container">
+                <img src="{{ event.classification_image_url }}" alt="{{ event.classification }} Image" class="event-card-image">
+            </div>
+            {% else %}
+            <!-- Placeholder image if no classification image is provided -->
+            <div class="event-card-image-container">
+                <img src="https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image" alt="Placeholder Image" class="event-card-image">
+            </div>
+            {% endif %}
+            
+            <!-- Content of the card below the image -->
+            <div class="event-card-content">
+                <div class="event-header">
+                    <h3 class="event-title">{{ event.title }}</h3>
+                    <!-- Classification tag is positioned beside the title, to the right -->
+                    <span class="event-tag tag-{{ event.classification|lower }}">
+                        {{ event.classification }}
+                        {# The image-on-hover has been removed as per request #}
+                    </span>
+                </div>
+                <div class="event-meta">
+                    <!-- Each item now in its own div to ensure new lines -->
+                    <div><span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') if event.date else 'N/A' }}</span></div>
+                    <div><span><i>Time:</i> {{ event.date.strftime('%I:%M %p') if event.date else 'N/A' }}</span></div>
+                    <div><span><i>Location:</i> {{ event.location }}</span></div>
+                </div>
+                <p class="event-description">{{ event.description }}</p>
+                <div class="event-actions">
+                    <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
+                    <form action="{{ url_for('admin_delete_event', event_id=event.event_id) }}" method="post">
+                        <button class="delete-button" type="submit">Delete</button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="event-meta">
-            <span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') if event.date else 'N/A' }}</span>
-            <span><i>Time:</i> {{ event.date.strftime('%I:%M %p') if event.date else 'N/A' }}</span>
-            <span><i>Location:</i> {{ event.location }}</span>
-        </div>
-        <p class="event-description">{{ event.description }}</p>
-        <div class="event-actions">
-            <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
-            <form action="{{ url_for('admin_delete_event', event_id=event.event_id) }}" method="post">
-                <button class="delete-button" type="submit">Delete</button>
-            </form>
-        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
     {% else %}
     <p>No current events.</p>
     {% endif %}
@@ -91,5 +112,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/admin_dashboard/admin_events.js"></script>
+<!-- Link to the JavaScript file for client-side validation -->
+<script src="/static/js/admin_dashboard/admin_events.js"></script>
 {% endblock %}
