@@ -7,6 +7,9 @@ class OrganizationBase(BaseModel):
     theme_color: Optional[str] = None
     primary_course_code: Optional[str] = None
 
+class ParticipantResponse(BaseModel):
+    name: str
+
 class OrganizationCreate(OrganizationBase):
     pass
 

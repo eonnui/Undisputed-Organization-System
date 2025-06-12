@@ -65,17 +65,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalEventDate = document.getElementById('modalEventDate');
     const modalEventTime = document.getElementById('modalEventTime');
     const modalEventLocation = document.getElementById('modalEventLocation');
-    // Ensure this targets the span inside the participants-header
     const modalEventParticipantsCount = document.getElementById('modalEventParticipantsCount'); 
     const modalParticipantsList = document.getElementById('modalParticipantsList');
 
-    // Function to open the modal
-    function openModal(eventData) {
+    // Function to open the modal (now handles fetching participants)
+    async function openModal(eventData) { // Make this function async
         modalEventImage.src = eventData.imageUrl;
         modalEventTitle.textContent = eventData.title;
 
         modalEventClassification.textContent = eventData.classification;
-        modalEventClassification.className = ''; // Clear existing classes
+        modalEventClassification.className = ''; 
         modalEventClassification.classList.add(`tag-${eventData.classification.toLowerCase()}`);
 
         modalEventDescription.textContent = eventData.description;
@@ -83,26 +82,44 @@ document.addEventListener('DOMContentLoaded', function() {
         modalEventTime.textContent = eventData.time;
         modalEventLocation.textContent = eventData.location;
         
-        // Update the participant count in its new header location
         modalEventParticipantsCount.textContent = `(${eventData.joinedCount}/${eventData.maxParticipants})`; 
 
-        // Clear previous participant list
-        modalParticipantsList.innerHTML = '';
+        // Clear previous list and show loading message
+        modalParticipantsList.innerHTML = '<li>Loading participants...</li>';
 
-        // Populate participants list
-        if (eventData.participants && eventData.participants.length > 0) {
-            eventData.participants.forEach(participant => {
+        // --- Fetch participants from API ---
+        const eventId = eventData.eventId; 
+        const participantsUrl = `/api/events/${eventId}/participants`;
+
+        try {
+            const response = await fetch(participantsUrl);
+            if (!response.ok) {
+                // If the API returns a 404 (Event not found) or other error
+                const errorData = await response.json();
+                throw new Error(`Error ${response.status}: ${errorData.detail || 'Failed to fetch participants.'}`);
+            }
+            const participants = await response.json(); 
+
+            // Clear loading message and populate list
+            modalParticipantsList.innerHTML = '';
+            if (participants && participants.length > 0) {
+                participants.forEach(participant => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = participant.name; // <--- This now correctly uses 'name'
+                    modalParticipantsList.appendChild(listItem);
+                });
+            } else {
                 const listItem = document.createElement('li');
-                listItem.textContent = participant.username || participant; // Handles both object {username: "..."} and plain string
+                listItem.textContent = 'No participants yet.';
                 modalParticipantsList.appendChild(listItem);
-            });
-        } else {
-            const listItem = document.createElement('li');
-            listItem.textContent = 'No participants yet.';
-            modalParticipantsList.appendChild(listItem);
+            }
+        } catch (error) {
+            console.error("Error fetching participants:", error);
+            modalParticipantsList.innerHTML = `<li>Error loading participants: ${error.message || 'Unknown error'}.</li>`;
         }
+        // --- END FETCH LOGIC ---
 
-        modal.style.display = 'flex'; // Use 'flex' for overlay to center content
+        modal.style.display = 'flex'; // Display the modal
     }
 
     // Function to close the modal
@@ -113,22 +130,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners for opening the modal by clicking the entire card
     clickableCards.forEach(card => {
         card.addEventListener('click', function(event) {
-            // Prevent modal from opening if delete button/form is clicked
             if (event.target.closest('.delete-button') || event.target.closest('.delete-form')) {
                 return;
             }
 
-            // Parse participants JSON data
-            let participants = [];
-            try {
-                if (this.dataset.participantsJson) {
-                    participants = JSON.parse(this.dataset.participantsJson);
-                }
-            } catch (e) {
-                console.error("Error parsing participants JSON:", e);
-            }
-
+            // Extract all data attributes
             const eventData = {
+                eventId: this.dataset.eventId, 
                 title: this.dataset.title,
                 classification: this.dataset.classification,
                 description: this.dataset.description,
@@ -138,31 +146,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 maxParticipants: this.dataset.maxParticipants,
                 joinedCount: this.dataset.joinedCount,
                 imageUrl: this.dataset.imageUrl,
-                participants: participants
             };
             openModal(eventData);
         });
 
-        // Add keyboard accessibility: allow opening modal with Enter key
+        // Add keyboard accessibility
         card.addEventListener('keydown', function(event) {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
 
-                // If focus is on delete button inside the card, let its action happen
                 if (document.activeElement.closest('.delete-button') || document.activeElement.closest('.delete-form')) {
                     return;
                 }
 
-                let participants = [];
-                try {
-                    if (this.dataset.participantsJson) {
-                        participants = JSON.parse(this.dataset.participantsJson);
-                    }
-                } catch (e) {
-                    console.error("Error parsing participants JSON:", e);
-                }
-
+                // Extract all data attributes
                 const eventData = {
+                    eventId: this.dataset.eventId, 
                     title: this.dataset.title,
                     classification: this.dataset.classification,
                     description: this.dataset.description,
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     maxParticipants: this.dataset.maxParticipants,
                     joinedCount: this.dataset.joinedCount,
                     imageUrl: this.dataset.imageUrl,
-                    participants: participants
                 };
                 openModal(eventData);
             }
@@ -180,22 +178,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Event listeners for closing the modal
-    // Ensure the close button works directly
     if (closeButton) {
         closeButton.addEventListener('click', closeModal);
     }
     
-    // Close modal when clicking outside the modal-content (on the overlay itself)
     if (modal) {
         modal.addEventListener('click', function(event) {
-            // Only close if the click directly targets the modal-overlay, not its children
-            if (event.target === modal) {
+            if (event.target === modal) { 
                 closeModal();
             }
         });
     }
 
-    // Close modal with Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape' && modal.style.display === 'flex') {
             closeModal();

@@ -52,7 +52,13 @@ class Event(Base):
     notifications = relationship("Notification", back_populates="event")
 
     def joined_count(self):
-        return len(self.participants)
+        return len(self.participants) # This is correct because joinedload makes it a list
+
+    # Ensure this is exactly as shown, with @property decorator
+    @property
+    def participants_list_json(self):
+        """Returns a list of participant usernames for JSON serialization."""
+        return [{'name': p.name} for p in self.participants]
 
 class User(Base):
     __tablename__ = "users"

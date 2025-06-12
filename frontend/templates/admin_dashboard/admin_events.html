@@ -63,7 +63,7 @@
     <div class="event-cards-grid">
         {% for event in events %}
         <div class="event-card clickable-card"
-            data-event-id="{{ event.event_id }}"
+            data-event-id="{{ event.event_id }}" {# CRUCIAL: Pass event_id for API fetch #}
             data-title="{{ event.title }}"
             data-classification="{{ event.classification }}"
             data-description="{{ event.description }}"
@@ -73,7 +73,7 @@
             data-max-participants="{{ event.max_participants }}"
             data-joined-count="{{ event.joined_count() }}"
             data-image-url="{{ event.classification_image_url if event.classification_image_url else 'https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image' }}"
-            data-participants-json="{{ event.participants | tojson }}" {# Pass participants as JSON #}
+            {# REMOVED: data-participants-json="..." #}
             role="button" tabindex="0"
         >
             {% if event.classification_image_url %}
@@ -114,6 +114,7 @@
     {% endif %}
 </div>
 
+<!-- Event Details Modal Structure -->
 <div id="eventDetailsModal" class="modal-overlay">
     <div class="modal-content">
         <span class="modal-close-button">&times;</span>
@@ -126,12 +127,12 @@
                 <p><strong>Date:</strong> <span id="modalEventDate"></span></p>
                 <p><strong>Time:</strong> <span id="modalEventTime"></span></p>
                 <p><strong>Location:</strong> <span id="modalEventLocation"></span></p>
-                {# This line has been moved from here #}
             </div>
             <div class="modal-right-column">
                 <h4 class="participants-header">Participants List <span id="modalEventParticipantsCount" class="participants-header-count"></span></h4>
                 <ul id="modalParticipantsList" class="participants-list">
-                    </ul>
+                    <!-- Temporary loading message will be added/removed by JS -->
+                </ul>
             </div>
         </div>
     </div>

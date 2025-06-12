@@ -1100,6 +1100,26 @@ async def admin_delete_rule_wiki(
     db.commit()
     return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
 
+
+
+@app.get("/api/events/{event_id}/participants", response_model=List[schemas.ParticipantResponse])
+async def get_event_participants_api(event_id: int, db: Session = Depends(get_db)):
+    """
+    Fetches the list of participants for a given event ID.
+    Returns a list of dictionaries, each with a 'name' key.
+    """
+    event = db.query(models.Event).options(joinedload(models.Event.participants)).filter(
+        models.Event.event_id == event_id
+    ).first()
+    
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Use the existing participants_list_json property from the Event model
+    # FastAPI's JSONResponse will automatically serialize this list of dicts
+    # according to the response_model.
+    return event.participants_list_json
+
 # Admin Events Page 
 @router.get('/admin/events', response_class=HTMLResponse)
 async def admin_events(request: Request, db: Session = Depends(get_db)):
