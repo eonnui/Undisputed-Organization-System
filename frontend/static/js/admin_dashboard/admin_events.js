@@ -65,7 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalEventDate = document.getElementById('modalEventDate');
     const modalEventTime = document.getElementById('modalEventTime');
     const modalEventLocation = document.getElementById('modalEventLocation');
-    const modalEventParticipantsCount = document.getElementById('modalEventParticipantsCount'); // This ID is now inside the header
+    // Ensure this targets the span inside the participants-header
+    const modalEventParticipantsCount = document.getElementById('modalEventParticipantsCount'); 
     const modalParticipantsList = document.getElementById('modalParticipantsList');
 
     // Function to open the modal
@@ -81,7 +82,8 @@ document.addEventListener('DOMContentLoaded', function() {
         modalEventDate.textContent = eventData.date;
         modalEventTime.textContent = eventData.time;
         modalEventLocation.textContent = eventData.location;
-        // Update the participant count in its new location
+        
+        // Update the participant count in its new header location
         modalEventParticipantsCount.textContent = `(${eventData.joinedCount}/${eventData.maxParticipants})`; 
 
         // Clear previous participant list
@@ -100,7 +102,12 @@ document.addEventListener('DOMContentLoaded', function() {
             modalParticipantsList.appendChild(listItem);
         }
 
-        modal.style.display = 'flex';
+        modal.style.display = 'flex'; // Use 'flex' for overlay to center content
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        modal.style.display = 'none';
     }
 
     // Event listeners for opening the modal by clicking the entire card
@@ -141,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
 
+                // If focus is on delete button inside the card, let its action happen
                 if (document.activeElement.closest('.delete-button') || document.activeElement.closest('.delete-form')) {
                     return;
                 }
@@ -172,16 +180,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Event listeners for closing the modal
+    // Ensure the close button works directly
     if (closeButton) {
         closeButton.addEventListener('click', closeModal);
     }
+    
+    // Close modal when clicking outside the modal-content (on the overlay itself)
     if (modal) {
         modal.addEventListener('click', function(event) {
+            // Only close if the click directly targets the modal-overlay, not its children
             if (event.target === modal) {
                 closeModal();
             }
         });
     }
+
+    // Close modal with Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape' && modal.style.display === 'flex') {
             closeModal();
