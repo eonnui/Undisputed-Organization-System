@@ -2135,6 +2135,12 @@ th.sortable.desc::after {
     box-sizing: border-box; 
 }
 
+#add-expense-form input[type="number"]::-webkit-outer-spin-button,
+#add-expense-form input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0; 
+}
+
 #add-expense-form input[type="text"]:focus,
 #add-expense-form input[type="number"]:focus,
 #add-expense-form input[type="date"]:focus {

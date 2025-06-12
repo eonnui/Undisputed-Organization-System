@@ -534,45 +534,67 @@ async def admin_payments(
 
 # Admin Payment History
 @router.get("/admin/Payments/History", response_class=JSONResponse, name="admin_payment_history")
-async def admin_payment_history(request: Request, db: Session = Depends(get_db)):
+async def admin_payment_history(
+    request: Request,
+    db: Session = Depends(get_db),
+    student_number: Optional[str] = None 
+):
     admin, organization = get_current_admin_with_org(request, db)
 
-    member_ids = [member.id for member in db.query(models.User).filter(models.User.organization_id == organization.id).all()]
-    payments = db.query(models.Payment).options(joinedload(models.Payment.payment_item), joinedload(models.Payment.user)).filter(
-        models.Payment.user_id.in_(member_ids)
-    ).order_by(models.Payment.created_at.desc(), models.Payment.id.desc()).all()
+    query = db.query(models.Payment).options(
+        joinedload(models.Payment.payment_item),
+        joinedload(models.Payment.user)
+    ).join(models.User).filter( 
+        models.User.organization_id == organization.id
+    )
+
+    if student_number:
+        query = query.filter(models.User.student_number == student_number)
+   
+    payments = query.order_by(
+        models.Payment.created_at.desc(),
+        models.Payment.id.desc()
+    ).all()
 
     payment_history_data = []
     for payment in payments:
         payment_item = payment.payment_item
         user = payment.user
 
-        if not all([payment_item, user, payment_item.academic_year, payment_item.semester, payment_item.fee, payment.amount, payment.status, payment_item.due_date, payment.created_at, user.first_name, user.last_name, user.student_number]):
+        if not all([
+            payment_item, user, payment_item.academic_year, payment_item.semester,
+            payment_item.fee, payment.amount, payment.status, payment_item.due_date,
+            payment.created_at, user.first_name, user.last_name, user.student_number
+        ]):
+            print(f"Skipping payment {payment.id} due to missing related data.")
             continue
 
         status_text = payment.status
         if status_text == "pending": status_text = "Pending"
-        elif status_text == "success": status_text = "Paid"                
+        elif status_text == "success": status_text = "Paid"
         elif status_text == "failed": status_text = "Failed"
         elif status_text == "cancelled": status_text = "Cancelled"
+        elif status_text == "past_due": status_text = "Past Due"
+        elif status_text == "unpaid": status_text = "Unpaid"
+
 
         payment_history_data.append({
             "item": {
                 "id": payment.id,
-                "amount": payment.amount,
+                "amount": float(payment.amount), 
                 "paymaya_payment_id": payment.paymaya_payment_id,
-                "status": payment.status,
+                "status": payment.status, 
                 "created_at": payment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 "updated_at": payment.updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment.updated_at else None,
                 "payment_item": {
                     "academic_year": payment_item.academic_year,
                     "semester": payment_item.semester,
-                    "fee": payment_item.fee,
+                    "fee": float(payment_item.fee), 
                     "due_date": payment_item.due_date.strftime('%Y-%m-%d'),
                     "is_not_responsible": payment_item.is_not_responsible
                 }
             },
-            "status": status_text,
+            "status": status_text, 
             "user_name": f"{user.first_name} {user.last_name}",
             "student_number": user.student_number,
             "payment_date": payment.created_at.strftime('%Y-%m-%d %H:%M:%S')

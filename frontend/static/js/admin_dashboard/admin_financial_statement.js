@@ -207,8 +207,7 @@ let revenueExpenseChart;
             const row = revenuesBreakdownBody.insertRow();
             row.innerHTML = `
                 <td>${item.source}</td>
-                <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td><span class="trend ${item.trend.toLowerCase()}">${item.trend}</span></td>
+                <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>               
                 <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
             `;
         });
@@ -222,7 +221,6 @@ let revenueExpenseChart;
             row.innerHTML = `
                 <td>${item.category}</td>
                 <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td><span class="trend ${item.trend.toLowerCase()}">${item.trend}</span></td>
                 <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
             `;
         });
