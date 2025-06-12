@@ -419,23 +419,49 @@ async def admin_create_event(
     date: str = Form(...),
     location: str = Form(...),
     max_participants: int = Form(...),
-    classification_image: Optional[UploadFile] = File(None), 
+    classification_image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
 
+    # --- Server-side Validation ---
+
+    # Validate Date and Time
     try:
         event_date = datetime.strptime(date, "%Y-%m-%dT%H:%M")
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid date and time format. Please use Year-MM-DDTHH:MM (e.g., 2025-05-27T14:30).")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date and time format. Please use YYYY-MM-DDTHH:MM (e.g., 2025-05-27T14:30)."
+        )
+
+    # Ensure the event date is not in the past
+    current_datetime = datetime.now()
+    # For accurate comparison, clear seconds and microseconds if the client-side also clears them.
+    # However, it's generally safer to compare with a slight buffer or compare to the minute.
+    # Here, we'll just compare directly, which is strict.
+    if event_date < current_datetime:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Event date and time cannot be in the past. Please select a future date and time."
+        )
+
+    # Validate Max Participants
+    if max_participants < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Max participants cannot be less than 0. Please enter a valid non-negative number."
+        )
+
+    # --- End Server-side Validation ---
 
     classification_image_url = None
     if classification_image and classification_image.filename:
         classification_image_url = await handle_file_upload(
             classification_image,
             EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY,
-            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"], 
-            max_size_bytes=5 * 1024 * 1024 
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+            max_size_bytes=5 * 1024 * 1024
         )
 
     db_event = models.Event(
@@ -446,7 +472,7 @@ async def admin_create_event(
         location=location,
         max_participants=max_participants,
         admin_id=admin.admin_id,
-        classification_image_url=classification_image_url, 
+        classification_image_url=classification_image_url,
     )
     db.add(db_event)
     db.commit()
@@ -460,11 +486,11 @@ async def admin_create_event(
             organization_id=admin_org.id,
             user_id=user.id,
             notification_type="event",
-            event_id=db_event.event_id, 
+            event_id=db_event.event_id,
             url=f"/Events#{db_event.event_id}",
             event_identifier=f"new_event_user_{user.id}_event_{db_event.event_id}"
         )
-    db.commit() 
+    db.commit()
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
 
 # Admin Event Deletion 
