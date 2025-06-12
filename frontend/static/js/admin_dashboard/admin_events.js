@@ -1,25 +1,21 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- Event Creation Form Toggle ---
     const createEventInput = document.querySelector('.create-event-input');
-    const createEventFormFields = document.querySelector('.create-event-form-fields'); // Using consistent naming
+    const createEventFormFields = document.querySelector('.create-event-form-fields');
     const backToEventsLink = document.querySelector('.back-to-events');
 
-    // Show form when input is clicked
     if (createEventInput && createEventFormFields && backToEventsLink) {
         createEventInput.addEventListener('click', function() {
             this.style.display = 'none';
             createEventFormFields.style.display = 'block';
             backToEventsLink.style.display = 'block';
         });
-    }
 
-    // Hide form and show input when "Back to Events" is clicked
-    if (backToEventsLink && createEventInput && createEventFormFields) { // Ensure all elements exist
         backToEventsLink.addEventListener('click', function(event) {
-            event.preventDefault(); // Prevent default link behavior (page refresh)
+            event.preventDefault();
             createEventInput.style.display = 'block';
             createEventFormFields.style.display = 'none';
-            this.style.display = 'none'; // Hide the "Back to Events" link itself
+            this.style.display = 'none';
         });
     }
 
@@ -36,8 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Image on Hover Functionality (If still in HTML) ---
-    // Please confirm if the .image-on-hover elements are still part of your HTML.
-    // If not, you can remove this entire block.
+    // If you've removed .image-on-hover elements from your HTML, you can delete this block.
     const eventTags = document.querySelectorAll('.event-tag');
     eventTags.forEach(tag => {
         const imageOnHover = tag.querySelector('.image-on-hover');
@@ -62,7 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Modal Functionality ---
     const modal = document.getElementById('eventDetailsModal');
     const closeButton = document.querySelector('.modal-close-button');
-    const viewDetailsButtons = document.querySelectorAll('.view-details-button');
+    // Select all clickable event cards instead of specific buttons
+    const clickableCards = document.querySelectorAll('.event-card.clickable-card');
 
     const modalEventImage = document.getElementById('modalEventImage');
     const modalEventTitle = document.getElementById('modalEventTitle');
@@ -78,7 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modalEventImage.src = eventData.imageUrl;
         modalEventTitle.textContent = eventData.title;
 
-        // Update classification tag
         modalEventClassification.textContent = eventData.classification;
         modalEventClassification.className = ''; // Clear existing classes
         modalEventClassification.classList.add(`tag-${eventData.classification.toLowerCase()}`);
@@ -89,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalEventLocation.textContent = eventData.location;
         modalEventParticipants.textContent = `${eventData.joinedCount}/${eventData.maxParticipants}`;
 
-        modal.style.display = 'flex'; // Use flex to center the modal
+        modal.style.display = 'flex';
     }
 
     // Function to close the modal
@@ -97,27 +92,56 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.style.display = 'none';
     }
 
-    // Event listeners for opening the modal
-    viewDetailsButtons.forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.stopPropagation(); // Prevent card click if there's a listener on the card itself
-            const card = this.closest('.event-card');
-            if (card) {
+    // Event listeners for opening the modal by clicking the entire card
+    clickableCards.forEach(card => {
+        card.addEventListener('click', function(event) {
+            // Check if the click originated from the delete button or its form
+            // This prevents the modal from opening when the delete button is clicked
+            if (event.target.closest('.delete-button') || event.target.closest('.delete-form')) {
+                return; // Do nothing if a delete button/form was clicked
+            }
+
+            const eventData = {
+                title: this.dataset.title,
+                classification: this.dataset.classification,
+                description: this.dataset.description,
+                date: this.dataset.date,
+                time: this.dataset.time,
+                location: this.dataset.location,
+                maxParticipants: this.dataset.maxParticipants,
+                joinedCount: this.dataset.joinedCount,
+                imageUrl: this.dataset.imageUrl
+            };
+            openModal(eventData);
+        });
+
+        // Add keyboard accessibility: allow opening modal with Enter key
+        card.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') { // Enter key or Spacebar
+                // Prevent default scrolling for spacebar
+                event.preventDefault();
+
+                // Same logic as click: prevent if delete button is focused
+                if (document.activeElement.closest('.delete-button') || document.activeElement.closest('.delete-form')) {
+                    return;
+                }
+
                 const eventData = {
-                    title: card.dataset.title,
-                    classification: card.dataset.classification,
-                    description: card.dataset.description,
-                    date: card.dataset.date,
-                    time: card.dataset.time,
-                    location: card.dataset.location,
-                    maxParticipants: card.dataset.maxParticipants,
-                    joinedCount: card.dataset.joinedCount,
-                    imageUrl: card.dataset.imageUrl
+                    title: this.dataset.title,
+                    classification: this.dataset.classification,
+                    description: this.dataset.description,
+                    date: this.dataset.date,
+                    time: this.dataset.time,
+                    location: this.dataset.location,
+                    maxParticipants: this.dataset.maxParticipants,
+                    joinedCount: this.dataset.joinedCount,
+                    imageUrl: this.dataset.imageUrl
                 };
                 openModal(eventData);
             }
         });
     });
+
 
     // Event listener for closing the modal using the close button
     if (closeButton) {
@@ -133,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Optional: Close modal with Escape key
+    // Close modal with Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape' && modal.style.display === 'flex') {
             closeModal();

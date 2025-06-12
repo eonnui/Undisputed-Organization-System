@@ -505,3 +505,42 @@
         right: 15px;
     }
 }
+
+/* Add this to your existing admin_events.css */
+
+.event-card.clickable-card {
+    cursor: pointer; /* Change cursor to indicate clickability */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effect */
+}
+
+.event-card.clickable-card:hover {
+    transform: translateY(-3px); /* Slightly lift the card */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhance shadow on hover */
+}
+
+/* Remove or comment out these if they exist from previous changes */
+/*
+.view-details-button {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+.view-details-button:hover {
+    background-color: #0056b3;
+}
+*/
+
+/* Important: Adjust delete form to ensure it doesn't trigger card click */
+.event-card .delete-form {
+    /* Ensure the delete form doesn't take up full width or interfere with card click */
+    display: inline-block; /* Or use flex on parent and self-align */
+    margin: 0; /* Remove any default margins that might create dead space */
+    padding: 0;
+}

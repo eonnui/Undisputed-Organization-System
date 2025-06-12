@@ -16,7 +16,7 @@
             <input type="text" class="create-event-input" placeholder="What's the event about?"
                 onclick="this.style.display='none'; document.querySelector('.create-event-form-fields').style.display='block'; document.querySelector('.back-to-events').style.display='block';">
         </div>
-    
+
         <form action="{{ url_for('admin_create_event') }}" method="post" class="create-event-form-fields" enctype="multipart/form-data">
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" required><br>
@@ -30,7 +30,7 @@
                 <option value="Esports">Esports</option>
                 <option value="Cultural">Cultural</option>
             </select><br>
-          
+
             <label for="classification_image">Classification Image:</label>
             <input type="file" id="classification_image" name="classification_image" accept="image/*"><br>
 
@@ -62,7 +62,7 @@
     {% if events %}
     <div class="event-cards-grid">
         {% for event in events %}
-        <div class="event-card"
+        <div class="event-card clickable-card"
             data-event-id="{{ event.event_id }}"
             data-title="{{ event.title }}"
             data-classification="{{ event.classification }}"
@@ -73,6 +73,7 @@
             data-max-participants="{{ event.max_participants }}"
             data-joined-count="{{ event.joined_count() }}"
             data-image-url="{{ event.classification_image_url if event.classification_image_url else 'https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image' }}"
+            role="button" tabindex="0"  {# Added for accessibility #}
         >
             {% if event.classification_image_url %}
             <div class="event-card-image-container">
@@ -83,13 +84,12 @@
                 <img src="https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image" alt="Placeholder Image" class="event-card-image">
             </div>
             {% endif %}
-            
+
             <div class="event-card-content">
                 <div class="event-header">
                     <h3 class="event-title">{{ event.title }}</h3>
                     <span class="event-tag tag-{{ event.classification|lower }}">
                         {{ event.classification }}
-                        {# The image-on-hover has been removed as per request #}
                     </span>
                 </div>
                 <div class="event-meta">
@@ -100,10 +100,10 @@
                 <p class="event-description">{{ event.description }}</p>
                 <div class="event-actions">
                     <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
-                    <form action="{{ url_for('admin_delete_event', event_id=event.event_id) }}" method="post">
+                    <form action="{{ url_for('admin_delete_event', event_id=event.event_id) }}" method="post" class="delete-form">
                         <button class="delete-button" type="submit">Delete</button>
                     </form>
-                    <button class="view-details-button" data-event-id="{{ event.event_id }}">View Details</button>
+                    {# Removed the view-details-button #}
                 </div>
             </div>
         </div>
@@ -125,7 +125,7 @@
         <p><strong>Time:</strong> <span id="modalEventTime"></span></p>
         <p><strong>Location:</strong> <span id="modalEventLocation"></span></p>
         <p><strong>Participants:</strong> <span id="modalEventParticipants"></span></p>
-        </div>
+    </div>
 </div>
 
 {% endblock %}
