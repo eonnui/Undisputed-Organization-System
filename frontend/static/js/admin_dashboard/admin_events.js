@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Image on Hover Functionality (If still in HTML) ---
-    // If you've removed .image-on-hover elements from your HTML, you can delete this block.
     const eventTags = document.querySelectorAll('.event-tag');
     eventTags.forEach(tag => {
         const imageOnHover = tag.querySelector('.image-on-hover');
@@ -57,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Modal Functionality ---
     const modal = document.getElementById('eventDetailsModal');
     const closeButton = document.querySelector('.modal-close-button');
-    // Select all clickable event cards instead of specific buttons
     const clickableCards = document.querySelectorAll('.event-card.clickable-card');
 
     const modalEventImage = document.getElementById('modalEventImage');
@@ -67,7 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalEventDate = document.getElementById('modalEventDate');
     const modalEventTime = document.getElementById('modalEventTime');
     const modalEventLocation = document.getElementById('modalEventLocation');
-    const modalEventParticipants = document.getElementById('modalEventParticipants');
+    const modalEventParticipantsCount = document.getElementById('modalEventParticipantsCount'); // This ID is now inside the header
+    const modalParticipantsList = document.getElementById('modalParticipantsList');
 
     // Function to open the modal
     function openModal(eventData) {
@@ -82,23 +81,44 @@ document.addEventListener('DOMContentLoaded', function() {
         modalEventDate.textContent = eventData.date;
         modalEventTime.textContent = eventData.time;
         modalEventLocation.textContent = eventData.location;
-        modalEventParticipants.textContent = `${eventData.joinedCount}/${eventData.maxParticipants}`;
+        // Update the participant count in its new location
+        modalEventParticipantsCount.textContent = `(${eventData.joinedCount}/${eventData.maxParticipants})`; 
+
+        // Clear previous participant list
+        modalParticipantsList.innerHTML = '';
+
+        // Populate participants list
+        if (eventData.participants && eventData.participants.length > 0) {
+            eventData.participants.forEach(participant => {
+                const listItem = document.createElement('li');
+                listItem.textContent = participant.username || participant; // Handles both object {username: "..."} and plain string
+                modalParticipantsList.appendChild(listItem);
+            });
+        } else {
+            const listItem = document.createElement('li');
+            listItem.textContent = 'No participants yet.';
+            modalParticipantsList.appendChild(listItem);
+        }
 
         modal.style.display = 'flex';
-    }
-
-    // Function to close the modal
-    function closeModal() {
-        modal.style.display = 'none';
     }
 
     // Event listeners for opening the modal by clicking the entire card
     clickableCards.forEach(card => {
         card.addEventListener('click', function(event) {
-            // Check if the click originated from the delete button or its form
-            // This prevents the modal from opening when the delete button is clicked
+            // Prevent modal from opening if delete button/form is clicked
             if (event.target.closest('.delete-button') || event.target.closest('.delete-form')) {
-                return; // Do nothing if a delete button/form was clicked
+                return;
+            }
+
+            // Parse participants JSON data
+            let participants = [];
+            try {
+                if (this.dataset.participantsJson) {
+                    participants = JSON.parse(this.dataset.participantsJson);
+                }
+            } catch (e) {
+                console.error("Error parsing participants JSON:", e);
             }
 
             const eventData = {
@@ -110,20 +130,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 location: this.dataset.location,
                 maxParticipants: this.dataset.maxParticipants,
                 joinedCount: this.dataset.joinedCount,
-                imageUrl: this.dataset.imageUrl
+                imageUrl: this.dataset.imageUrl,
+                participants: participants
             };
             openModal(eventData);
         });
 
         // Add keyboard accessibility: allow opening modal with Enter key
         card.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter' || event.key === ' ') { // Enter key or Spacebar
-                // Prevent default scrolling for spacebar
+            if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
 
-                // Same logic as click: prevent if delete button is focused
                 if (document.activeElement.closest('.delete-button') || document.activeElement.closest('.delete-form')) {
                     return;
+                }
+
+                let participants = [];
+                try {
+                    if (this.dataset.participantsJson) {
+                        participants = JSON.parse(this.dataset.participantsJson);
+                    }
+                } catch (e) {
+                    console.error("Error parsing participants JSON:", e);
                 }
 
                 const eventData = {
@@ -135,20 +163,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     location: this.dataset.location,
                     maxParticipants: this.dataset.maxParticipants,
                     joinedCount: this.dataset.joinedCount,
-                    imageUrl: this.dataset.imageUrl
+                    imageUrl: this.dataset.imageUrl,
+                    participants: participants
                 };
                 openModal(eventData);
             }
         });
     });
 
-
-    // Event listener for closing the modal using the close button
+    // Event listeners for closing the modal
     if (closeButton) {
         closeButton.addEventListener('click', closeModal);
     }
-
-    // Event listener for closing the modal when clicking outside of it
     if (modal) {
         modal.addEventListener('click', function(event) {
             if (event.target === modal) {
@@ -156,8 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    // Close modal with Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape' && modal.style.display === 'flex') {
             closeModal();

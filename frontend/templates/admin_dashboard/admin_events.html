@@ -73,7 +73,8 @@
             data-max-participants="{{ event.max_participants }}"
             data-joined-count="{{ event.joined_count() }}"
             data-image-url="{{ event.classification_image_url if event.classification_image_url else 'https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image' }}"
-            role="button" tabindex="0"  {# Added for accessibility #}
+            data-participants-json="{{ event.participants | tojson }}" {# Pass participants as JSON #}
+            role="button" tabindex="0"
         >
             {% if event.classification_image_url %}
             <div class="event-card-image-container">
@@ -103,7 +104,6 @@
                     <form action="{{ url_for('admin_delete_event', event_id=event.event_id) }}" method="post" class="delete-form">
                         <button class="delete-button" type="submit">Delete</button>
                     </form>
-                    {# Removed the view-details-button #}
                 </div>
             </div>
         </div>
@@ -117,14 +117,23 @@
 <div id="eventDetailsModal" class="modal-overlay">
     <div class="modal-content">
         <span class="modal-close-button">&times;</span>
-        <img id="modalEventImage" src="" alt="Event Image" class="modal-image">
-        <h3 id="modalEventTitle"></h3>
-        <p class="modal-classification"><span id="modalEventClassification"></span></p>
-        <p id="modalEventDescription"></p>
-        <p><strong>Date:</strong> <span id="modalEventDate"></span></p>
-        <p><strong>Time:</strong> <span id="modalEventTime"></span></p>
-        <p><strong>Location:</strong> <span id="modalEventLocation"></span></p>
-        <p><strong>Participants:</strong> <span id="modalEventParticipants"></span></p>
+        <div class="modal-two-columns">
+            <div class="modal-left-column">
+                <img id="modalEventImage" src="" alt="Event Image" class="modal-image">
+                <h3 id="modalEventTitle"></h3>
+                <p class="modal-classification"><span id="modalEventClassification"></span></p>
+                <p id="modalEventDescription"></p>
+                <p><strong>Date:</strong> <span id="modalEventDate"></span></p>
+                <p><strong>Time:</strong> <span id="modalEventTime"></span></p>
+                <p><strong>Location:</strong> <span id="modalEventLocation"></span></p>
+                {# REMOVED from here: <p><strong>Participants:</strong> <span id="modalEventParticipantsCount"></span></p> #}
+            </div>
+            <div class="modal-right-column">
+                <h4 class="participants-header">Participants List <span id="modalEventParticipantsCount" class="participants-header-count"></span></h4>
+                <ul id="modalParticipantsList" class="participants-list">
+                    </ul>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -1,10 +1,11 @@
-/* Events */
+/* --- Admin Events Specific Styles --- */
+
+/* Events Page Container */
 .events-page-container {
     max-width: 1070px;
     margin: 20px auto;
     background-color: var(--org-bg-color);
     font-family: "DM Sans", sans-serif;
-    /* text-align: center; Removed central alignment for grid control */
 }
 
 .events-header {
@@ -17,6 +18,7 @@
     text-align: left;
 }
 
+/* Create Event Form */
 .create-event-container {
     background-color: var(--org-card-bg);
     border-radius: 8px;
@@ -139,17 +141,13 @@
     text-align: left;
 }
 
-/* Updated: Grid container for event cards to encourage 4 cards per row when space allows */
+/* Event Cards Grid */
 .event-cards-grid {
     display: grid;
-    /* This will try to fit as many cards as possible,
-       with each card having a minimum width of 250px and growing to fill space.
-       With a max-width of 1070px for the container and 15px gaps,
-       this will naturally arrange 4 cards per row (4 * 250px + 3 * 15px = 1045px). */
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px; /* Space between cards */
+    gap: 15px;
     padding-bottom: 20px;
-    justify-content: center; /* Center the grid within its container */
+    justify-content: center;
 }
 
 /* Event Card - Updated Styling */
@@ -163,12 +161,10 @@
     overflow: hidden;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
     text-align: left;
-    /* Explicit max-width to ensure cards do not become excessively wide,
-       even if the grid provides more space. This helps maintain a "small card" look. */
-    max-width: 250px; /* Aligned with the minmax in grid-template-columns */
-    width: 100%; /* Ensures it takes full available width within its grid cell up to max-width */
-    margin: 0 auto; /* Center the card within its grid cell if its width is less than the cell's */
-    position: relative; /* Needed for absolute positioning of the tag (for image-on-hover) */
+    max-width: 250px;
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
 }
 
 .event-card:hover {
@@ -176,17 +172,27 @@
     box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.15);
 }
 
-/* Updated: Image container for event cards - height adjusted for smaller cards */
+/* Clickable Card Specific Styles */
+.event-card.clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.event-card.clickable-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Event Card Image */
 .event-card-image-container {
     width: 100%;
-    height: 110px; /* Fixed height for the image area */
+    height: 110px;
     overflow: hidden;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
     background-color: var(--org-border-light);
 }
 
-/* Image within the event card remains the same, will fit container */
 .event-card-image {
     width: 100%;
     height: 100%;
@@ -194,22 +200,20 @@
     display: block;
 }
 
-/* Content area below the image in the card */
+/* Event Card Content */
 .event-card-content {
-    padding: 0.8rem; /* Slightly reduced padding */
+    padding: 0.8rem;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    /* No position: relative; here anymore */
 }
 
 .event-header {
     display: flex;
-    justify-content: space-between; /* Pushes title to left, tag to right */
-    align-items: center; /* Vertically aligns title and tag */
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.4rem;
     text-align: left; 
-    /* Removed flex-wrap: wrap; to ensure title and tag stay on one line if space allows */
 }
 
 .event-title {
@@ -217,12 +221,12 @@
     font-weight: 600;
     color: var(--org-text-primary);
     margin: 0;
-    flex-grow: 1; /* Allows title to take up available space */
+    flex-grow: 1;
     flex-shrink: 1; 
-    min-width: 0; /* Important for flex items to shrink below their content size */
-    white-space: nowrap; /* Prevent title from wrapping */
-    overflow: hidden; /* Hide overflowing text */
-    text-overflow: ellipsis; /* Add ellipsis for hidden text */
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .event-tag {
@@ -233,8 +237,8 @@
     text-transform: uppercase;
     color: var(--org-event-tag-text);
     background-color: var(--org-event-tag-bg);
-    flex-shrink: 0; /* Prevents tag from shrinking */
-    margin-left: 0.5rem; /* Add a little space between title and tag */
+    flex-shrink: 0;
+    margin-left: 0.5rem;
 }
 
 .event-tag:hover {
@@ -244,11 +248,11 @@
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Styles for the image that appears on hover within the tag */
+/* Image on Hover within Tag (if used) */
 .event-tag .image-on-hover {
     display: none;
     position: absolute;
-    top: 10%; /* Relative to the tag itself */
+    top: 10%;
     right: 10%;
     transform: translateX(-50%);
     z-index: 10;
@@ -260,6 +264,7 @@
     background-color: var(--org-card-bg);
 }
 
+/* Event Tag Colors */
 .tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
 .tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
 .tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); }
@@ -267,27 +272,25 @@
 .tag-esports { background-color: var(--org-esports-tag-bg); color: var(--org-esports-tag-text); }
 .tag-cultural { background-color: var(--org-cultural-tag-bg); color: var(--org-cultural-tag-text); }
 
+/* Event Meta (Date, Time, Location) */
 .event-meta {
     font-size: 0.8rem;
     color: var(--org-text-secondary);
     text-align: left; 
-    display: flex; /* Use flexbox to stack meta items */
-    flex-direction: column; /* Stack them vertically */
-    margin-bottom: 0.6rem; /* Add margin after the meta section */
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.6rem;
 }
 
 .event-meta div {
-    margin-bottom: 0.2rem; /* Small margin between each meta line */
+    margin-bottom: 0.2rem;
 }
 
 .event-meta div:last-child {
-    margin-bottom: 0; /* No margin after the last meta line */
+    margin-bottom: 0;
 }
 
-.event-meta span {
-    /* No margin-right needed anymore as they are stacked */
-}
-
+/* Event Description */
 .event-description {
     font-size: 0.85rem;
     color: var(--org-event-description-color);
@@ -295,10 +298,11 @@
     text-align: left; 
     flex-grow: 1;
     margin-bottom: 0.8rem;
-    word-break: break-all; /* Force words to break at any character to prevent overflow */
-    overflow-wrap: break-word; /* Modern alternative to word-wrap for older browsers */
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
 
+/* Event Actions (Participants Count, Delete Button) */
 .event-actions {
     display: flex;
     justify-content: space-between; 
@@ -326,7 +330,14 @@
     background-color: #c0392b;
 }
 
-/* Responsive adjustments for smaller screens */
+/* Ensure delete form doesn't interfere with card click */
+.event-card .delete-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- Responsive Adjustments for Cards --- */
 @media (max-width: 768px) {
     .event-cards-grid {
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -348,16 +359,15 @@
     .event-description {
         font-size: 0.8rem;
     }
-    .event-meta div { /* Apply to div, not span directly */
+    .event-meta div {
         margin-bottom: 0.15rem;
     }
     .delete-button {
         padding: 0.3rem 0.6rem;
         font-size: 0.75rem;
     }
-    /* Event tag positioning for smaller screens within the header */
     .event-tag {
-        margin-left: 0.3rem; /* Slightly reduced margin for smaller screens */
+        margin-left: 0.3rem;
     }
 }
 
@@ -380,17 +390,16 @@
 
 .modal-content {
     background-color: #fefefe;
-    margin: auto; /* Centered */
+    margin: auto;
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    max-width: 700px; /* Max width of the modal */
-    width: 90%; /* Responsive width */
+    max-width: 900px;
+    width: 95%;
     position: relative;
-    animation: fadeIn 0.3s ease-out; /* Simple fade-in animation */
-    display: flex; /* Use flexbox for content layout */
-    flex-direction: column;
-    gap: 15px; /* Space between elements */
+    animation: fadeIn 0.3s ease-out;
+    display: block; 
+    padding-bottom: 30px; /* Consistent padding */
 }
 
 @keyframes fadeIn {
@@ -417,10 +426,10 @@
 
 .modal-image {
     width: 100%;
-    max-height: 300px; /* Limit image height */
-    object-fit: cover; /* Cover the area, cropping if necessary */
+    max-height: 300px;
+    object-fit: cover;
     border-radius: 5px;
-    margin-bottom: 15px;
+    margin-bottom: 15px; /* Space below image in left column */
 }
 
 .modal-content h3 {
@@ -439,7 +448,6 @@
     color: #333;
 }
 
-/* Style for the classification tag in modal */
 .modal-classification {
     font-size: 0.9em;
     margin-bottom: 10px;
@@ -454,6 +462,84 @@
     text-transform: uppercase;
 }
 
+/* NEW: Two-column layout for modal content */
+.modal-two-columns {
+    display: flex;
+    flex-direction: row; /* Arranges children horizontally */
+    gap: 30px; /* Space between columns */
+    width: 100%;
+    margin-top: 15px; /* Example: to space from the close button if needed */
+}
+
+.modal-left-column {
+    flex: 2; /* Takes 2 parts of available space */
+    min-width: 0; /* Allows content to shrink */
+    display: flex; /* Use flex to control vertical spacing of its children */
+    flex-direction: column;
+    gap: 10px; /* Space between the text elements within the left column */
+}
+
+.modal-right-column {
+    flex: 1; /* Takes 1 part of available space */
+    min-width: 250px; /* Minimum width for the participants list */
+    border-left: 1px solid #eee; /* A subtle separator */
+    padding-left: 20px;
+    overflow-y: auto; /* Enable scrolling for long participant lists */
+    max-height: 400px; /* Limit height for the participant list (adjust as needed) */
+}
+
+.participants-header {
+    font-size: 1.2em;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    /* NEW: Flexbox for header to align text and count */
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline; /* Align text baselines */
+}
+
+.participants-header-count { /* New class for the participant count in the header */
+    font-size: 0.8em; /* Make it slightly smaller than the main header text */
+    color: var(--org-text-secondary); /* A lighter color */
+    font-weight: normal; /* Less bold than the "Participants List" text */
+    margin-left: 10px; /* Space from "Participants List" text */
+}
+
+.participants-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.participants-list li {
+    padding: 5px 0;
+    border-bottom: 1px dotted #eee;
+    color: #555;
+    font-size: 0.95em;
+}
+
+.participants-list li:last-child {
+    border-bottom: none;
+}
+
+/* Responsive adjustments for modal columns */
+@media (max-width: 768px) {
+    .modal-two-columns {
+        flex-direction: column; /* Stack columns on smaller screens */
+        gap: 20px;
+    }
+
+    .modal-right-column {
+        border-left: none; /* Remove vertical separator */
+        border-top: 1px solid #eee; /* Add horizontal separator on top instead */
+        padding-left: 0;
+        padding-top: 20px;
+    }
+}
+
 /* Specific tag colors for the modal, consistent with card tags */
 .modal-classification #modalEventClassification.tag-academic { background-color: #3498db; }
 .modal-classification #modalEventClassification.tag-sports { background-color: #27ae60; }
@@ -461,86 +547,3 @@
 .modal-classification #modalEventClassification.tag-music { background-color: #e67e22; }
 .modal-classification #modalEventClassification.tag-esports { background-color: #c0392b; }
 .modal-classification #modalEventClassification.tag-cultural { background-color: #f39c12; }
-
-/* Styles for the new "View Details" button */
-.view-details-button {
-    background-color: #007bff; /* A nice blue */
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease;
-    margin-top: 10px; /* Space from other actions */
-}
-
-.view-details-button:hover {
-    background-color: #0056b3;
-}
-
-/* Ensure existing event-actions can accommodate the new button */
-.event-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px; /* Adjust as needed */
-    flex-wrap: wrap; /* Allow wrapping if space is tight */
-    gap: 10px; /* Space between action items */
-}
-
-.event-actions .delete-button {
-    /* Keep your existing delete button styles */
-}
-
-/* Responsive adjustments for modal */
-@media (max-width: 768px) {
-    .modal-content {
-        padding: 20px;
-        width: 95%;
-    }
-    .modal-close-button {
-        font-size: 24px;
-        top: 10px;
-        right: 15px;
-    }
-}
-
-/* Add this to your existing admin_events.css */
-
-.event-card.clickable-card {
-    cursor: pointer; /* Change cursor to indicate clickability */
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effect */
-}
-
-.event-card.clickable-card:hover {
-    transform: translateY(-3px); /* Slightly lift the card */
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Enhance shadow on hover */
-}
-
-/* Remove or comment out these if they exist from previous changes */
-/*
-.view-details-button {
-    background-color: #007bff;
-    color: white;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease;
-    margin-top: 10px;
-}
-
-.view-details-button:hover {
-    background-color: #0056b3;
-}
-*/
-
-/* Important: Adjust delete form to ensure it doesn't trigger card click */
-.event-card .delete-form {
-    /* Ensure the delete form doesn't take up full width or interfere with card click */
-    display: inline-block; /* Or use flex on parent and self-align */
-    margin: 0; /* Remove any default margins that might create dead space */
-    padding: 0;
-}
