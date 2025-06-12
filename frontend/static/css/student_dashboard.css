@@ -630,8 +630,7 @@ body {margin: 0; padding: 0;}
     animation: fadeIn 0.5s ease-out;
     text-align: left;
     width: 100%; 
-    box-sizing: border-box; 
-    padding: 0 20px; 
+    box-sizing: border-box;     
 }
 
 .events-container {
