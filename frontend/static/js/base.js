@@ -434,3 +434,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
     startNotificationPolling();
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Existing menu toggle logic (if any)
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const mainContent = document.querySelector('.main-content');
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('shifted');
+        });
+    }
+
+    // Existing dropdown logic (if any)
+    const profileBtn = document.querySelector('.profile-btn');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', function() {
+            const isExpanded = profileBtn.getAttribute('aria-expanded') === 'true';
+            profileBtn.setAttribute('aria-expanded', !isExpanded);
+            profileDropdown.classList.toggle('show');
+        });
+    }
+
+    const notificationBtn = document.querySelector('.notification-btn');
+    const notificationsDropdown = document.getElementById('notifications-dropdown');
+    if (notificationBtn) {
+        notificationBtn.addEventListener('click', function() {
+            const isExpanded = notificationBtn.getAttribute('aria-expanded') === 'true';
+            notificationBtn.setAttribute('aria-expanded', !isExpanded);
+            notificationsDropdown.classList.toggle('show');
+        });
+    }
+
+    // Close dropdowns if clicked outside
+    window.addEventListener('click', function(event) {
+        if (profileBtn && !profileBtn.contains(event.target) && !profileDropdown.contains(event.target)) {
+            profileDropdown.classList.remove('show');
+            profileBtn.setAttribute('aria-expanded', 'false');
+        }
+        if (notificationBtn && !notificationBtn.contains(event.target) && !notificationsDropdown.contains(event.target)) {
+            notificationsDropdown.classList.remove('show');
+            notificationBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+
+    // --- FOR DATE TODAY ---
+    const todayDateElement = document.getElementById('today-date');
+    if (todayDateElement) {
+        const today = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = today.toLocaleDateString('en-PH', options);
+        todayDateElement.textContent = formattedDate;
+    }
+});

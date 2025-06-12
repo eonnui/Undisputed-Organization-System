@@ -13,14 +13,13 @@
     --scrollbar-width: 0.55vw;
     --scrollbar-track-color: transparent;
     --org-sidebar-bg-color: #0f0f0f;
-    --org-sidebar-border-color: #333;
     --org-text-inverse: #ffffff;
     --org-text-primary: #ffffff;
     --org-text-secondary: #cccccc;
     --org-menu-button-hover-bg: #333;
     --org-nav-item-bg: #2d2d2d;
     --org-nav-item-hover-bg: #404040;
-    --org-nav-item-selected-bg: #4a4a4a; 
+    --org-nav-item-selected-bg: #4a4a4a;
     --org-nav-icon-color: #ffffff;
     --org-nav-hover-accent-color: #ffffff;
     --org-nav-selected-border-color: #ffffff;
@@ -30,7 +29,14 @@
     --org-dropdown-border: #333;
     --org-dropdown-item-hover-bg: #404040;
     --org-border-light: #333;
-    --org-border-medium: #666;       
+    --org-border-medium: #666;
+    --org-bg-color: initial;
+    --org-top-bar-border-color: initial;
+    --org-focus-border: initial;
+    --org-error: initial;
+    --org-bg-secondary: initial;
+    --text-color: initial;
+    --hover-background-color: initial;
 }
 
 body {
@@ -91,9 +97,9 @@ body {
 .sidebar .logo {
     margin-bottom: 2.2vw;
     width: 100%;
-    display: flex; 
-    gap: 10px;           
-    padding: 2px; 
+    display: flex;
+    gap: 10px;
+    padding: 2px;
     justify-content: center;
     transition: opacity var(--sidebar-transition-duration) ease,
         transform var(--sidebar-transition-duration) ease;
@@ -108,9 +114,9 @@ body {
 .sidebar .logo img {
     border-radius: 100%;
     object-fit: cover;
-    height: 70px; 
+    height: 70px;
     width: auto;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .sidebar nav {
@@ -188,14 +194,14 @@ body {
 
 .sidebar nav ul li:hover i,
 .sidebar nav ul li:hover .material-symbols-outlined {
-    transform: rotate(360deg) scale(1.2); 
+    transform: rotate(360deg) scale(1.2);
 }
 
-.sidebar nav ul li:hover {   
+.sidebar nav ul li:hover {
     transform: scale(1.03);
     color: var(--org-nav-hover-accent-color);
     border-radius: 8px;
-    background-color: var(--org-nav-item-selected-bg); 
+    background-color: var(--org-nav-item-selected-bg);
 }
 
 .sidebar nav ul li:hover a {
@@ -203,8 +209,8 @@ body {
     text-shadow: 0.13vw 0.13vw 0.27vw rgba(0, 0, 0, 0.3);
 }
 
-.sidebar nav ul li.selected {  
-    font-weight: 500;    
+.sidebar nav ul li.selected {
+    font-weight: 500;
     border-radius: 6px;
     display: flex !important;
     visibility: visible !important;
@@ -213,14 +219,13 @@ body {
     height: auto !important;
     min-height: 3vw !important;
     box-sizing: border-box !important;
-    
 }
 
-.sidebar.collapsed nav ul li.selected {    
-    width: 27px !important;     
-    justify-content: center;     
-    min-height: auto !important; 
-    background-color: var(--org-nav-item-hover-bg) !important;     
+.sidebar.collapsed nav ul li.selected {
+    width: 27px !important;
+    justify-content: center;
+    min-height: auto !important;
+    background-color: var(--org-nav-item-hover-bg) !important;
 }
 
 @keyframes spin {
@@ -248,7 +253,6 @@ body {
 .sidebar nav ul li.selected i,
 .sidebar nav ul li.selected .material-symbols-outlined {
     color: var(--org-text-inverse);
-    
 }
 
 .sidebar nav ul li:last-child {
@@ -272,8 +276,8 @@ body {
     background-color: var(--org-text-inverse);
     padding: 1.04vw 1.38vw;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     border-bottom: 0.069vw solid var(--org-top-bar-border-color);
     height: 3.86vw;
     box-shadow: 0 0.13vw 0.34vw rgba(0, 0, 0, 0.08);
@@ -316,6 +320,17 @@ body {
     font-size: clamp(1rem, 1.25vw, 1.5rem);
     font-weight: 500;
     color: var(--org-text-primary);
+}
+
+.today-date {
+    font-size: clamp(0.9rem, 1.1vw, 1.3rem);
+    color: var(--org-text-primary);   
+    flex-grow: 1;
+    text-align: left;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    padding-top: 1px;  
 }
 
 .top-bar .user-actions {
@@ -474,49 +489,49 @@ body {
 
 .notification-btn{ position: relative;}
 
-#unread-notifications-badge { 
+#unread-notifications-badge {
     position: absolute;
-    top: 5px;   
-    right: 10px;    
-    min-width: 15px; 
-    height: 15px;       
-    border-radius: 50%;     
+    top: 5px;
+    right: 10px;
+    min-width: 15px;
+    height: 15px;
+    border-radius: 50%;
     background-color: #f44336;
-    color: white; 
-    font-size: 0.75em; 
-    font-weight: bold; 
-    text-align: center;     
+    color: white;
+    font-size: 0.75em;
+    font-weight: bold;
+    text-align: center;
     display: flex;
     align-items: center;
-    justify-content: center;    
-    z-index: 10;    
+    justify-content: center;
+    z-index: 10;
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-    transform: scale(1); 
+    transform: scale(1);
 }
 
 #unread-notifications-badge.hidden {
-    opacity: 0;         
-    transform: scale(0); 
-    pointer-events: none; 
+    opacity: 0;
+    transform: scale(0);
+    pointer-events: none;
 }
 
 .notification-container {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 3px; 
-    border-bottom: 1px solid #eee; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px;
+    border-bottom: 1px solid #eee;
 }
 
 .notification-actions {
-    display: flex; 
-    justify-content: flex-end;      
-    padding: 2px; 
-    border-bottom: .5px solid #eee; 
+    display: flex;
+    justify-content: flex-end;
+    padding: 2px;
+    border-bottom: .5px solid #eee;
 }
 
 .clear-notification-btn {
-    margin-left: 10px; 
+    margin-left: 10px;
     background: none;
     border: none;
     color: #888;
@@ -577,10 +592,27 @@ body {
 
 .sidebar-divider {
     border-top: 1px solid #e0e0e0;
- 
 }
 
 .sidebar.collapsed .sidebar-divider {
     border-top: none;
     margin: 0;
+}
+
+#profile-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: var(--text-color);
+    white-space: nowrap;
+}
+
+#profile-dropdown a:hover {
+    background-color: var(--hover-background-color);
+}
+
+#profile-dropdown a i {
+    font-size: 1.2em;
 }

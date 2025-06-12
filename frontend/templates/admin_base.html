@@ -82,6 +82,8 @@
                 <i class="ph ph-list"></i>
                 <span class="menu-text">Menu</span>
             </div>
+            <div class="today-date" id="today-date">
+                </div>
             <div class="user-actions">
                 <div class="notification-container">
                     <button class="notification-btn" aria-haspopup="true" aria-expanded="false" aria-controls="notifications-dropdown">
@@ -104,8 +106,12 @@
                         <span id="profile-name">Loading...</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
-                        <a href="{{ url_for('admin_settings')}}">Settings</a>
-                        <a href="{{ url_for('logout')}}">Log Out</a>
+                        <a href="{{ url_for('admin_settings')}}">
+                            <i class="ph ph-gear"></i> Settings
+                        </a>
+                        <a href="{{ url_for('logout')}}">
+                            <i class="ph ph-sign-out"></i> Log Out
+                        </a>
                     </div>
                 </div>
             </div>
