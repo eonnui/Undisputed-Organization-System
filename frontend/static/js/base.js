@@ -4,7 +4,10 @@ let notificationPollingTimer = null;
 const POLLING_INTERVAL_MS = 30000;
 
 function applyUserTheme() {
-    fetch('/get_user_data')
+    const isDarkMode = localStorage.getItem('theme') === 'dark'; 
+    const themeQueryParam = isDarkMode ? '?dark_mode=true' : '';
+
+    fetch(`/get_user_data${themeQueryParam}`) 
         .then(response => {
             if (!response.ok) {
                 if (response.status === 401) return null;
@@ -71,7 +74,6 @@ function applyUserTheme() {
 async function fetchAndDisplayNotifications(includeRead = true) {
     const notificationsDropdown = document.getElementById('notifications-dropdown');
     if (!notificationsDropdown) {
-        console.error("Notifications dropdown element not found.");
         return [];
     }
     notificationsDropdown.innerHTML = '<div class="notification-item">Loading notifications...</div>';
@@ -179,7 +181,6 @@ async function fetchAndDisplayNotifications(includeRead = true) {
 
         return notifications;
     } catch (error) {
-        console.error("Error fetching or displaying notifications:", error);
         notificationsDropdown.innerHTML = '<div class="notification-item">Failed to load notifications.</div>';
         return [];
     }
@@ -190,7 +191,6 @@ async function markNotificationAsRead(notificationId) {
         const response = await fetch(`/${notificationId}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
         return response.ok;
     } catch (error) {
-        console.error("Error marking notification as read:", error);
         return false;
     }
 }
@@ -200,7 +200,6 @@ async function markNotificationsAsReadBulk(notificationIds) {
         const response = await fetch(`/mark_notifications_as_read_bulk`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(notificationIds) });
         return response.ok;
     } catch (error) {
-        console.error("Error marking notifications as read in bulk:", error);
         return false;
     }
 }
@@ -211,11 +210,9 @@ async function clearNotification(notificationId) {
         if (response.status === 204) {
             return true;
         } else {
-            console.error(`Failed to clear notification ${notificationId}. Status: ${response.status}`);
             return false;
         }
     } catch (error) {
-        console.error(`Error clearing notification ${notificationId}:`, error);
         return false;
     }
 }
@@ -225,7 +222,6 @@ async function clearAllNotifications() {
         const response = await fetch(`/notifications/clear_all`, { method: 'DELETE' });
         return response.ok;
     } catch (error) {
-        console.error("Error clearing all notifications:", error);
         return false;
     }
 }
@@ -264,7 +260,6 @@ async function updateBadgeBasedOnNewUnread() {
             unreadBadge.classList.add('hidden');
         }
     } catch (error) {
-        console.error("Error updating unread badge:", error);
         unreadBadge.textContent = '';
         unreadBadge.classList.add('hidden');
     }
@@ -355,7 +350,6 @@ function setSidebarState(isCollapsed) {
     const logo = document.querySelector('.sidebar .logo');
 
     if (!sidebar || !mainContent || !menuText || !logo) {
-        console.warn("Sidebar elements not fully present to set state.");
         return;
     }
 
@@ -383,7 +377,6 @@ function initializeSidebarToggle() {
     const menuToggle = document.getElementById('menu-toggle');
 
     if (!menuToggle) {
-        console.error("Menu toggle button not found. Sidebar persistence will not work.");
         return;
     }
 
@@ -401,8 +394,16 @@ function initializeSidebarToggle() {
     });
 }
 
+function setTheme(dark) {
+    localStorage.setItem('theme', dark ? 'dark' : 'light'); 
+    applyUserTheme(); 
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    applyUserTheme();
+    if (localStorage.getItem('theme') === null) {
+        localStorage.setItem('theme', 'light'); 
+    }
+    applyUserTheme(); 
 
     setupDropdown('.profile-btn', 'profile-dropdown');
     setupDropdown('.notification-btn', 'notifications-dropdown');
@@ -428,7 +429,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             lastSeenUnreadNotificationIds = new Set(JSON.parse(storedIds));
         } catch (e) {
-            console.error("Error parsing stored notification IDs:", e);
             localStorage.removeItem('lastSeenUnreadNotificationIds');
         }
     }
@@ -446,4 +446,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
+
+    const themeToggleButton = document.getElementById('theme-toggle');
+    if (themeToggleButton) {
+        themeToggleButton.addEventListener('click', () => {
+            const isCurrentlyDarkMode = localStorage.getItem('theme') === 'dark';
+            setTheme(!isCurrentlyDarkMode); 
+        });
+    }
 });

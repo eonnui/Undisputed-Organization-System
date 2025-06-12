@@ -48,7 +48,7 @@ body {margin: 0; padding: 0;}
 .section-title {
     font-size: 1.8em;
     font-weight: bold;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 20px;
     text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
     animation: fadeIn 0.5s ease-out;
@@ -107,7 +107,7 @@ body {margin: 0; padding: 0;}
 }
 
 .view-details {
-    color: var(--org-dashboard-accent-primary);
+    color: var(--org-text-primary);
     text-decoration: none;
     font-weight: bold;
     transition: color 0.2s ease, transform 0.2s ease;
@@ -156,7 +156,7 @@ body {margin: 0; padding: 0;}
 
 .faq-title {
     font-size: 1.8em;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 20px;
     border-bottom: 2px solid var(--org-faq-border-color);
     padding-bottom: 15px;
@@ -188,7 +188,7 @@ body {margin: 0; padding: 0;}
 
 .faq-question {
     font-weight: bold;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 5px;
     cursor: pointer;
     padding: 15px;
@@ -394,7 +394,7 @@ body {margin: 0; padding: 0;}
 
 .post-title {
     font-weight: bold;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 5px;
     font-size: 1.3em;
     transition: color 0.2s ease;
@@ -417,7 +417,6 @@ body {margin: 0; padding: 0;}
     color: var(--org-post-content-color);
     line-height: 1.7;
     white-space: pre-line;
-    border-left: 3px solid var(--org-post-card-border);
     padding-left: 10px;
     border-radius: 5px;
     animation: fadeIn 0.3s ease-out;
@@ -893,7 +892,7 @@ body {margin: 0; padding: 0;}
 
 .payments-container {
     padding: 30px;
-    background-color: var(--org-text-inverse);
+    background-color: var(--org-card-bg);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(var(--org-shadow-base-rgb), 0.12);
     animation: slideInUp 0.6s ease-out;
@@ -952,7 +951,7 @@ body {margin: 0; padding: 0;}
 
 h2 {
     font-size: 2em;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 18px;
     border-bottom: 3px solid var(--org-border-light-darker);
     padding-bottom: 10px;
@@ -1287,7 +1286,7 @@ h2 {
 }
 
 .stat-card {
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border-radius: var(--org-radius-lg);
     box-shadow: var(--org-shadow-md);
     padding: 20px;
@@ -1337,7 +1336,7 @@ h2 {
     flex-wrap: wrap;
     gap: 25px;
     margin-bottom: 30px;
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     padding: 25px;
     border-radius: var(--org-radius-lg);
     box-shadow: var(--org-shadow-md);
@@ -1370,7 +1369,7 @@ h2 {
 
 .toggle-buttons {
     display: flex;
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border-radius: var(--org-radius-lg);
     padding: 6px;
     width: fit-content;
@@ -1401,7 +1400,7 @@ h2 {
 }
 
 .report-card {
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border-radius: var(--org-radius-lg);
     box-shadow: var(--org-shadow-md);
     margin-bottom: 24px;
@@ -1515,7 +1514,7 @@ tfoot td {
 }
 
 .monthly-toggles button {
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border: 1px solid var(--org-border-light);
     color: var(--org-text-secondary);
     padding: 10px 20px;
@@ -1553,7 +1552,7 @@ tfoot td {
 }
 
 .settings-section {
-    background-color: var(--org-settings-section-bg);
+    background-color: var(--org-registration-form-section-bg);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.1);
@@ -1567,7 +1566,7 @@ tfoot td {
 }
 
 .settings-section h2 {
-    color: var(--org-settings-title-color);
+    color: var(--org-text-primary   );
     margin-bottom: 25px;
     font-size: 1.8em;
     font-weight: bold;
@@ -1624,7 +1623,7 @@ tfoot td {
 }
 
 .profile-picture-section {
-    display: flex;
+    display: flex;    
     flex-direction: column;
     align-items: center;
 }
@@ -1668,7 +1667,7 @@ tfoot td {
 }
 
 .student-info-section h2 {
-    color: var(--org-settings-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 25px;
     font-size: 1.8em;
     font-weight: bold;
@@ -1814,7 +1813,7 @@ tfoot td {
   max-width: 800px;
   margin: 30px auto;
   padding: 30px;
-  background-color: var(--org-surface);
+  background-color: var(--org-card-bg);
   border-radius: 8px;
   box-shadow: 0 0 20px rgba(var(--org-shadow-base-rgb), 0.1);
   text-align: center;
@@ -1952,7 +1951,7 @@ tfoot td {
 
 .monthly-cashflow-detailed h2 {
     font-size: 1.8em;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 8px;
     border-bottom: 2px solid var(--org-border-medium);
     padding-bottom: 10px;
@@ -1976,7 +1975,7 @@ tfoot td {
     padding: 12px 15px;
     text-align: left;
     color: var(--org-table-data-text);
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
 }
 
 .monthly-cashflow-detailed tbody tr {
@@ -2021,6 +2020,13 @@ tfoot td {
     font-weight: 700;
     color: var(--org-table-header-text-payments);
     font-size: 1.1em;
+}
+
+.report-type-label {
+    font-weight: bold; 
+    color: var(--org-text-primary); 
+    margin-right: 10px; 
+    font-size: 1.1em; 
 }
 
 /* Common Styles */

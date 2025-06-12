@@ -675,7 +675,8 @@ def get_contrast_text_color(bg_hex: str) -> str:
     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return "#000000" if luminance > 0.5 else "#FFFFFF"
 
-def generate_custom_palette(theme_color_hex: str) -> str:
+def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> str:
+    # This is your existing base palette. It remains exactly as defined.
     base_palette = {
         "--org-bg-color": "#fdf5f5", "--org-login-bg": "#5c1011", "--org-button-bg": "#9a1415",
         "--org-button-text": "#FFFFFF", "--org-hover-effect": "#7a1012", "--org-accent-light": "#d32f2f",
@@ -744,38 +745,52 @@ def generate_custom_palette(theme_color_hex: str) -> str:
         "--org-form-group-label-color": "#212121", "--org-form-group-input-border": "transparent",
         "--org-form-group-input-focus-border": "transparent"
     }
+
     custom_palette = base_palette.copy()
+
     theme_rgb = hex_to_rgb(theme_color_hex)
-    dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.7)
-    darker_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.5)
-    light_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.2)
-    lighter_theme_rgb = adjust_rgb_lightness(theme_rgb, 1.6)
-    mid_dark_theme_rgb = adjust_rgb_lightness(theme_rgb, 0.85) 
-    mid_dark_theme_hex = rgb_to_hex(mid_dark_theme_rgb)
-    dark_theme_hex = rgb_to_hex(dark_theme_rgb)
-    darker_theme_hex = rgb_to_hex(darker_theme_rgb)
-    light_theme_hex = rgb_to_hex(light_theme_rgb)
-    lighter_theme_hex = rgb_to_hex(lighter_theme_rgb)
-    whiteness_factor = .9
-    very_light_bg_rgb = (
-        int(theme_rgb[0] * (1 - whiteness_factor) + 255 * whiteness_factor),
-        int(theme_rgb[1] * (1 - whiteness_factor) + 255 * whiteness_factor),
-        int(theme_rgb[2] * (1 - whiteness_factor) + 255 * whiteness_factor)
+
+    # --- Conditional setup for lightness factors and base colors based on dark_mode ---
+    if dark_mode:
+        dark_factor = 1.2
+        darker_factor = 1.0
+        light_factor = 0.7
+        lighter_factor = 0.5
+        mid_dark_factor = 1.1
+        whiteness_factor_bg = 0.05 
+        target_bg_component = 0 
+        button_text_color_to_use = "#FFFFFF" 
+        nav_hover_bg_opacity = 0.2
+    else:
+        dark_factor = 0.7
+        darker_factor = 0.5
+        light_factor = 1.2
+        lighter_factor = 1.6
+        mid_dark_factor = 0.85
+        whiteness_factor_bg = .9 
+        target_bg_component = 255 
+        button_text_color_to_use = get_contrast_text_color(theme_color_hex)
+        nav_hover_bg_opacity = 0.05
+
+    mid_dark_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, mid_dark_factor))
+    dark_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, dark_factor))
+    darker_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, darker_factor))
+    light_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, light_factor))
+    lighter_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, lighter_factor))
+
+    very_bg_rgb = (
+        int(theme_rgb[0] * (1 - whiteness_factor_bg) + target_bg_component * whiteness_factor_bg),
+        int(theme_rgb[1] * (1 - whiteness_factor_bg) + target_bg_component * whiteness_factor_bg),
+        int(theme_rgb[2] * (1 - whiteness_factor_bg) + target_bg_component * whiteness_factor_bg)
     )
-    very_light_bg_rgb = (
-        max(0, min(255, very_light_bg_rgb[0])),
-        max(0, min(255, very_light_bg_rgb[1])),
-        max(0, min(255, very_light_bg_rgb[2]))
+    very_bg_rgb = (
+        max(0, min(255, very_bg_rgb[0])),
+        max(0, min(255, very_bg_rgb[1])),
+        max(0, min(255, very_bg_rgb[2]))
     )
-    very_light_bg_hex = rgb_to_hex(very_light_bg_rgb)
-    custom_palette["--org-bg-color"] = very_light_bg_hex
-    custom_palette["--org-secondary-color"] = very_light_bg_hex
-    custom_palette["--org-dashboard-bg-color"] = very_light_bg_hex
-    custom_palette["--org-payments-container-bg"] = very_light_bg_hex
-    custom_palette["--org-nav-hover-accent-color"] = very_light_bg_hex
-    custom_palette["--org-settings-section-bg"] = very_light_bg_hex
-    custom_palette["--org-read-only-input-bg"] = very_light_bg_hex
-    button_text_color = get_contrast_text_color(theme_color_hex)
+    very_bg_hex = rgb_to_hex(very_bg_rgb)
+
+
     custom_palette["--org-primary"] = theme_color_hex
     custom_palette["--org-button-bg"] = theme_color_hex
     custom_palette["--org-hover-effect"] = dark_theme_hex
@@ -785,17 +800,14 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-primary-hover"] = dark_theme_hex
     custom_palette["--org-primary-light"] = lighter_theme_hex
     custom_palette["--org-dashboard-accent-primary"] = light_theme_hex
-    custom_palette["--org-login-bg"] = darker_theme_hex
-    custom_palette["--org-sidebar-bg-color"] = theme_color_hex
-    custom_palette["--org-nav-item-hover-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, 0.05)"
+    custom_palette["--org-login-bg"] = darker_theme_hex 
+    custom_palette["--org-sidebar-bg-color"] = theme_color_hex 
+    custom_palette["--org-nav-item-hover-bg"] = f"rgba({theme_rgb[0]}, {theme_rgb[1]}, {theme_rgb[2]}, {nav_hover_bg_opacity})"
     custom_palette["--org-nav-item-selected-bg"] = mid_dark_theme_hex
     custom_palette["--org-nav-selected-border-color"] = lighter_theme_hex
-    custom_palette["--org-nav-icon-color"] = button_text_color
-    custom_palette["--org-button-text"] = "#FFFFFF"
     custom_palette["--org-dashboard-title-color"] = darker_theme_hex
-    custom_palette["--org-text-light"] = button_text_color
     custom_palette["--org-event-tag-bg"] = lighter_theme_hex
-    custom_palette["--org-event-tag-text"] = dark_theme_hex  
+    custom_palette["--org-event-tag-text"] = dark_theme_hex
     custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
     custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex)
     custom_palette["--org-settings-title-color"] = darker_theme_hex
@@ -803,8 +815,145 @@ def generate_custom_palette(theme_color_hex: str) -> str:
     custom_palette["--org-button-group-button-update-hover-bg"] = darker_theme_hex
     custom_palette["--org-change-profile-pic-bg"] = dark_theme_hex
     custom_palette["--org-change-profile-pic-hover-bg"] = darker_theme_hex
-    custom_palette["--org-highlight"] = very_light_bg_hex
-    custom_palette["--org-primary"] = theme_color_hex
+
+    custom_palette["--org-bg-color"] = very_bg_hex
+    custom_palette["--org-secondary-color"] = very_bg_hex 
+    custom_palette["--org-dashboard-bg-color"] = very_bg_hex
+    custom_palette["--org-payments-container-bg"] = very_bg_hex
+    custom_palette["--org-nav-hover-accent-color"] = very_bg_hex
+    custom_palette["--org-settings-section-bg"] = very_bg_hex
+    custom_palette["--org-read-only-input-bg"] = very_bg_hex
+    custom_palette["--org-highlight"] = very_bg_hex 
+    custom_palette["--org-text-light"] = button_text_color_to_use 
+
+    if dark_mode:
+        custom_palette["--org-bg-color"] = "#1E1E1E"
+        custom_palette["--org-student-info-section-bg"] = "#252525"
+        custom_palette["--org-registration-form-section-bg"] = "#252525"
+        custom_palette["--org-dashboard-bg-color"] = "#1E1E1E"
+        custom_palette["--org-sidebar-bg-color"] = "#1E1E1E"
+        custom_palette["--org-text-primary"] = "#FFFFFF"
+        custom_palette["--org-nav-hover-accent-color"] = "#FFFFFF"
+        custom_palette["--org-text-secondary"] = "#B0B0B0"
+        custom_palette["--org-bg-secondary"] = "#1E1E1E" 
+        custom_palette["--org-bg-dark"] = "#1a1a1a" 
+        custom_palette["--org-background-light-alt-darker"] = "#1a1a1a"
+        custom_palette["--org-primary"] = "#464646"
+        custom_palette["--org-read-only-input-bg"] = "#464646"
+        custom_palette["--org-secondary-color"] = "#464646"
+        custom_palette["--org-button-group-button-clear-hover-bg"] = "#1E1E1E"
+        custom_palette["--org-button-group-button-clear-bg"] = "#464646"
+        custom_palette["--org-button-group-button-update-bg"] = "#1E1E1E"
+        custom_palette["--org-button-group-button-update-hover-bg"] = "#1a1a1a"
+        custom_palette["--org-change-profile-pic-bg"] = "#464646"
+        custom_palette["--org-change-profile-pic-hover-bg"] = "#1a1a1a"
+        custom_palette["--org-faq-question-hover-bg"] = "#464646"
+        custom_palette["--org-hover-effect"] = "#464646"
+        custom_palette["--org-highlight"] = "#1a1a1a"
+        custom_palette["--org-button-bg"] = "#1a1a1a"
+        custom_palette["--org-dashboard-accent-primary"] =  "#FFFFFF"
+        custom_palette["--org-accent-light"] = "#FFFFFF"
+        custom_palette["--org-nav-item-selected-bg"] = "#1a1a1a"
+        custom_palette["--org-accent-dark"] = "#FFFFFF"
+        custom_palette["--org-card-bg"] = "#252525"
+        custom_palette["--org-announcement-card-bg"] = "#1E1E1E"
+        custom_palette["--org-faq-item-bg"] = "#1E1E1E"
+        custom_palette["--org-empty-state-bg"] = "#1E1E1E"
+        custom_palette["--org-profile-image-bg"] = "#333333" 
+        custom_palette["--org-announcement-text-color"] = "#E0E0E0"
+        custom_palette["--org-announcement-meta-color"] = "#B0B0B0"
+        custom_palette["--org-faq-answer-color"] = "#B0B0B0"
+        custom_palette["--org-empty-state-color"] = "#B0B0B0"
+        custom_palette["--org-post-info-color"] = "#B0B0B0"
+        custom_palette["--org-post-date-color"] = "#888888"
+        custom_palette["--org-post-content-color"] = "#E0E0E0"
+        custom_palette["--org-post-actions-color"] = "#B0B0B0"
+        custom_palette["--org-event-meta-color"] = "#B0B0B0"
+        custom_palette["--org-event-description-color"] = "#E0E0E0"
+        custom_palette["--org-table-data-text"] = "#E0E0E0"
+        custom_palette["--org-button-disabled-text-darker"] = "#1E1E1E"
+        custom_palette["--org-full-button-text"] = "#E0E0E0"
+        custom_palette["--org-participants-count-color"] = "#B0B0B0"
+        custom_palette["--org-form-group-label-color"] = "#E0E0E0"
+        custom_palette["--org-read-only-input-text"] = "#B0B0B0"
+        custom_palette["--org-text-primary-darker"] = "#FFFFFF"
+        custom_palette["--org-verified-text"] = "#FFFFFF" 
+        custom_palette["--org-unverified-text"] = "#1A1A1A" 
+
+        custom_palette["--org-border-light"] = "#333333"
+        custom_palette["--org-border-medium"] = "#444444"
+        custom_palette["--org-border-light-darker"] = "#444444"
+        custom_palette["--org-top-bar-border-color"] = "#333333"
+        custom_palette["--org-profile-pic-border-color"] = "#333333"
+        custom_palette["--org-dropdown-border"] = "#444444"
+        custom_palette["--org-faq-border-color"] = "#444444"
+        custom_palette["--org-post-card-border"] = "#444444"
+        custom_palette["--org-event-item-border"] = "#FFFFFF"
+        custom_palette["--org-error-border"] = "#EF5350"
+        custom_palette["--org-profile-picture-border"] = "#444444"
+        custom_palette["--org-form-group-input-border"] = "#444444"
+        custom_palette["--org-form-group-input-focus-border"] = "#BBDEFB"
+        custom_palette["--org-shadow-md"] = "0 4px 10px rgba(0, 0, 0, 0.4)" 
+        custom_palette["--org-shadow-lg"] = "0 6px 15px rgba(0, 0, 0, 0.5)"
+        custom_palette["--org-shadow-sm"] = "0 2px 5px rgba(0, 0, 0, 0.3)"
+
+
+        custom_palette["--org-dropdown-bg"] = "#282828"
+        custom_palette["--org-dropdown-item-hover-bg"] = "#3A3A3A"
+        custom_palette["--org-verified-bg"] = "#2E7D32" 
+        custom_palette["--org-unverified-bg"] = "#F9A825" 
+        custom_palette["--org-edit-icon-bg"] = "#B9B9B9"
+        custom_palette["--org-edit-icon-hover-bg"] = "#3A3A3A"
+        custom_palette["--org-full-button-bg"] = "#424242"
+        custom_palette["--org-table-header-bg-payments"] = "#282828" 
+
+        custom_palette["--org-event-tag-bg"] = "#422020" 
+        custom_palette["--org-event-tag-text"] = "#FFEBEE" 
+        custom_palette["--org-academic-tag-bg"] = "#5C2626"
+        custom_palette["--org-academic-tag-text"] = "#FFCDD2"
+        custom_palette["--org-sports-tag-bg"] = "#2A522C"
+        custom_palette["--org-sports-tag-text"] = "#C8E6C9"
+        custom_palette["--org-arts-tag-bg"] = "#5F502B"
+        custom_palette["--org-arts-tag-text"] = "#FFF9C4"
+        custom_palette["--org-music-tag-bg"] = "#6F5C2F"
+        custom_palette["--org-music-tag-text"] = "#FFFDE7"
+        custom_palette["--org-esports-tag-bg"] = "#20585E"
+        custom_palette["--org-esports-tag-text"] = "#E0F7FA"
+        custom_palette["--org-cultural-tag-bg"] = "#4F2C5C"
+        custom_palette["--org-cultural-tag-text"] = "#F3E5F5"
+
+        custom_palette["--org-status-unpaid-bg"] = "#422020"
+        custom_palette["--org-status-unpaid-text"] = "#FFEBEE" 
+        custom_palette["--org-past-due-bg"] = "#422020"
+        custom_palette["--org-past-due-text"] = "#FFEBEE"
+        custom_palette["--org-past-due-hover-bg"] = "#5C2626" 
+
+        custom_palette["--org-join-btn-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#43a047"), 0.8))
+        custom_palette["--org-join-btn-hover-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#388e3c"), 0.8))
+        custom_palette["--org-leave-btn-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#e53935"), 0.8))
+        custom_palette["--org-leave-btn-hover-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#d32f2f"), 0.8))
+        custom_palette["--org-event-full-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#9e9e9e"), 0.8))
+        custom_palette["--org-event-full-text"] = "#FFFFFF"
+
+        custom_palette["--org-join-button-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#43a047"), 0.8))
+        custom_palette["--org-join-button-hover-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#45a049"), 0.8))
+        custom_palette["--org-leave-button-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#f44336"), 0.8))
+        custom_palette["--org-leave-button-hover-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#d32f2f"), 0.8))
+        custom_palette["--org-full-button-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#bdbdbd"), 0.8))
+
+        custom_palette["--org-heart-hover-color"] = "#FFCDD2"
+        custom_palette["--org-heart-button-color"] = "#EF9A9A"
+
+        custom_palette["--org-pinned-bg"] = "#FFECB3"
+
+        custom_palette["--org-pay-button-bg-payments"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#b12422"), 0.8))
+        custom_palette["--org-pay-button-hover-bg-payments"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#d32f2f"), 0.8))
+        custom_palette["--org-standby-button-bg-payments"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#bdbdbd"), 0.8))
+    
+    custom_palette["--org-button-text"] = button_text_color_to_use
+    custom_palette["--org-nav-icon-color"] = button_text_color_to_use
+
+
     return json.dumps(custom_palette, indent=2)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:   

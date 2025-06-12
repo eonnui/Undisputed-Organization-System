@@ -412,6 +412,7 @@ tr:hover td {
 
 .create-post-input {
     width: 100%;
+    background-color: var(--org-card-bg);
     padding: 0.75rem 1rem;
     border: 1px solid var(--org-border-medium);
     border-radius: 20px;
@@ -455,6 +456,7 @@ tr:hover td {
 .create-post-form-fields select,
 .create-post-form-fields input[type="file"] {
     width: 100%;
+    background-color: var(--org-card-bg);
     padding: 0.6rem;
     margin-bottom: 0.9rem;
     border: 1px solid var(--org-border-medium);
@@ -687,6 +689,7 @@ tr:hover td {
 
 .create-wiki-input {
     width: calc(100% - 0.5rem);
+    background-color: var(--org-card-bg);
     padding: 0.75rem 1rem;
     border: 1px solid var(--org-border-medium);
     border-radius: 20px;
@@ -758,6 +761,7 @@ tr:hover td {
 .create-wiki-post-form select,
 .create-wiki-post-form input[type="file"] {
     width: calc(100% - 0.75rem);
+    background-color: var(--org-card-bg);
     padding: 0.6rem;
     margin-bottom: 0.9rem;
     border: 1px solid var(--org-border-medium);
@@ -1542,7 +1546,7 @@ tr:hover td {
 .payments-page-container {
     width: 100%; 
     margin: 30px auto; 
-    background-color: var(--org-text-inverse);
+    background-color: var(--org-card-bg);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.15);
@@ -1654,7 +1658,7 @@ tr:hover td {
     justify-content: space-between;
     padding: 10px 16px;
     font-size: 1.05rem;
-    background-color: var(--org-text-inverse);
+    background-color: var(--org-card-bg);
     border: 1px solid var(--org-border-medium);
     border-radius: 6px;
     cursor: pointer;

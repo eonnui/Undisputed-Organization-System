@@ -35,7 +35,6 @@
     --org-focus-border: initial;
     --org-error: initial;
     --org-bg-secondary: initial;
-    --text-color: initial;
     --hover-background-color: initial;
 }
 
@@ -273,7 +272,7 @@ body {
 }
 
 .top-bar {
-    background-color: var(--org-text-inverse);
+    background-color: var(--org-card-bg);
     padding: 1.04vw 1.38vw;
     display: flex;
     align-items: center;
@@ -296,6 +295,7 @@ body {
 
 .top-bar .menu-icon {
     display: flex;
+    color: var(--org-text-primary);
     align-items: center;
     justify-content: center;
     padding: 0.69vw;
@@ -605,7 +605,7 @@ body {
     gap: 8px;
     padding: 10px 15px;
     text-decoration: none;
-    color: var(--text-color);
+    color: var(--org-text-primary);
     white-space: nowrap;
 }
 
@@ -616,3 +616,52 @@ body {
 #profile-dropdown a i {
     font-size: 1.2em;
 }
+
+.sidebar-footer {
+    position: absolute; 
+    bottom: 0; 
+    left: 0;
+    width: 100%;
+    padding: 1rem 0.5rem; 
+    box-sizing: border-box; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    background-color: var(--org-sidebar-bg); 
+    z-index: 10; 
+}
+
+.sidebar-toggle-button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; 
+    width: 100%; 
+    padding: 0.75rem 1rem; 
+    border: none; 
+    background-color: transparent; 
+    cursor: pointer;
+    font-size: 1rem; 
+    font-family: "DM Sans", sans-serif;
+    color: var(--org-sidebar-link-color); 
+    border-radius: 8px; 
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    text-align: left; 
+    white-space: nowrap; 
+    overflow: hidden; 
+}
+
+.sidebar-toggle-button:hover {
+    background-color: var(--org-sidebar-link-hover-bg); 
+    color: var(--org-sidebar-link-hover-color); 
+}
+
+.sidebar-toggle-button:active {
+    transform: translateY(1px); 
+}
+
+.sidebar-toggle-button .ph {
+    font-size: 1.5rem; 
+    margin-right: 0.8rem; 
+    flex-shrink: 0; 
+}
+

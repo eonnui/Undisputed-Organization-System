@@ -2165,7 +2165,11 @@ async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
 
 # Get User Data (for Navbar/Header)
 @app.get("/get_user_data", response_model=schemas.UserDataResponse)
-async def get_user_data(request: Request, db: Session = Depends(get_db)):
+async def get_user_data(
+    request: Request,
+    db: Session = Depends(get_db),
+    dark_mode: bool = Query(False, description="Request dark mode custom palette") 
+):
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
 
@@ -2174,6 +2178,7 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
     first_name = None
     profile_picture = None
     is_verified_status = None
+    organization_theme_color = None
 
     if user_id:
         current_entity = db.query(models.User).filter(models.User.id == user_id).first()
@@ -2183,17 +2188,29 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
             is_verified_status = current_entity.is_verified
             if current_entity.organization:
                 organization_data = schemas.Organization.model_validate(current_entity.organization)
+                organization_theme_color = current_entity.organization.theme_color 
     elif admin_id:
         current_entity = db.query(models.Admin).options(joinedload(models.Admin.organizations)).filter(models.Admin.admin_id == admin_id).first()
         if current_entity:
             first_name = current_entity.first_name 
             if current_entity.organizations:
                 organization_data = schemas.Organization.model_validate(current_entity.organizations[0])
+                organization_theme_color = current_entity.organizations[0].theme_color 
 
     if not current_entity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Authenticated user/admin not found in database for provided session ID.")
     if not user_id and not admin_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No authenticated user or admin ID found in session.")
+
+    if organization_data and organization_theme_color:
+        generated_palette_json = crud.generate_custom_palette(organization_theme_color, dark_mode)
+        
+        organization_data.custom_palette = generated_palette_json
+    else:
+       
+        if organization_data:
+            organization_data.custom_palette = None
+
 
     return schemas.UserDataResponse(first_name=first_name, profile_picture=profile_picture, organization=organization_data, is_verified=is_verified_status)
 
