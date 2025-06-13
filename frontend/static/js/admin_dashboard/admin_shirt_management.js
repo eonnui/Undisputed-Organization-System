@@ -22,12 +22,12 @@ document.addEventListener('DOMContentLoaded', function() {
             padding: 20px;
         }
         .modal-body .mb-3 {
-            /* Example 1: Add a light background and padding */
-            padding: 15px; /* Adds space inside the box */
-            margin-bottom: 15px; /* Slightly adjust default margin if desired */
-            background-color: #f8f9fa; /* Light grey background */
-            border: 1px solid #e2e6ea; /* Subtle border */
-            border-radius: 5px; /* Rounded corners */
+           
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #e2e6ea;
+            border-radius: 5px;
         }
 
         .modal-footer {
@@ -89,13 +89,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(style);
-
     const adminDataElement = document.getElementById('adminData');
-
     const adminId = adminDataElement ? (adminDataElement.dataset.adminId ? parseInt(adminDataElement.dataset.adminId) : null) : null;
     const organizationId = adminDataElement ? (adminDataElement.dataset.organizationId ? parseInt(adminDataElement.dataset.organizationId) : null) : null;
-
-    // getAuthToken() is REMOVED as sessions don't use client-side tokens
 
     function showCustomModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -162,9 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alertDiv.remove();
         });
         setTimeout(() => alertDiv.remove(), 5000);
-    }
-
-    // Helper function to create a size and price input row
+    }    
     function createSizePriceRow(size = '', price = '') {
         const row = document.createElement('div');
         row.classList.add('row', 'g-2', 'mb-2', 'align-items-center', 'size-price-row');
@@ -181,8 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         return row;
     }
-
-    // Add event listeners for adding size/price rows
+    
     document.getElementById('addCreateCampaignSizePrice').addEventListener('click', function() {
         document.getElementById('createCampaignSizePricesContainer').appendChild(createSizePriceRow());
     });
@@ -190,8 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addEditCampaignSizePrice').addEventListener('click', function() {
         document.getElementById('editCampaignSizePricesContainer').appendChild(createSizePriceRow());
     });
-
-    // Delegated event listener for removing size/price rows
+    
     document.querySelectorAll('#createCampaignSizePricesContainer, #editCampaignSizePricesContainer').forEach(container => {
         container.addEventListener('click', function(event) {
             if (event.target.classList.contains('remove-size-price-row')) {
@@ -199,8 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    // Helper function to collect size and price data from the form
+    
     function collectSizePriceData(containerId) {
         const pricesBySize = {};
         const container = document.getElementById(containerId);
@@ -216,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchCampaigns() {
         try {
-            // No Authorization header needed for session-based auth
+            
             const response = await fetch(`/campaigns/`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const campaigns = await response.json();
@@ -233,18 +224,17 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.innerHTML = '';
         campaigns.forEach(campaign => {
             const descriptionSnippet = campaign.description ? campaign.description.substring(0, Math.min(campaign.description.length, 50)) + '...' : 'No description';
-
             let priceDisplay = '';
             if (campaign.prices_by_size) {
                 const sizes = Object.keys(campaign.prices_by_size);
-                if (sizes.length > 0) { // Check if there's at least one size
+                if (sizes.length > 0) { 
                     const firstSize = sizes[0];
                     const firstPrice = campaign.prices_by_size[firstSize];
-                    priceDisplay = `₱${firstPrice.toFixed(2)} (${firstSize})`; // Display the first price and its size
+                    priceDisplay = `₱${firstPrice.toFixed(2)} (${firstSize})`; 
                 } else {
-                    priceDisplay = 'N/A'; // No sizes defined
+                    priceDisplay = 'N/A'; 
                 }
-            } else if (campaign.price_per_shirt) { // Fallback for old campaigns or if prices_by_size isn't available
+            } else if (campaign.price_per_shirt) { 
                 priceDisplay = `₱${campaign.price_per_shirt.toFixed(2)}`;
             } else {
                 priceDisplay = 'N/A';
@@ -276,18 +266,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         formData.set('is_active', form.querySelector('#campaignIsActive').checked ? 'true' : 'false');
 
-        // MODIFIED: Collect prices by size
+        
         const pricesBySize = collectSizePriceData('createCampaignSizePricesContainer');
         if (Object.keys(pricesBySize).length === 0) {
             showAlert('Please add at least one size and price.', 'danger');
             return;
         }
         formData.append('prices_by_size', JSON.stringify(pricesBySize));
-        // Remove the old price_per_shirt if it exists in formData (optional, depends on backend)
+        
         formData.delete('price_per_shirt');
 
         try {
-            // No Authorization header for session-based auth
+            
             const response = await fetch('/campaigns/', {
                 method: 'POST',
                 body: formData
@@ -301,9 +291,9 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchCampaigns();
             hideCustomModal('createCampaignModal');
             form.reset();
-            // Reset the dynamic size/price fields after successful creation
+            
             document.getElementById('createCampaignSizePricesContainer').innerHTML = '';
-            document.getElementById('createCampaignSizePricesContainer').appendChild(createSizePriceRow()); // Add an initial empty row
+            document.getElementById('createCampaignSizePricesContainer').appendChild(createSizePriceRow()); 
         } catch (error) {
             console.error('Error creating campaign:', error);
             showAlert(`Failed to create campaign: ${error.message}`, 'danger');
@@ -318,18 +308,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         formData.set('is_active', form.querySelector('#editCampaignIsActive').checked ? 'true' : 'false');
 
-        // MODIFIED: Collect prices by size for editing
+        
         const pricesBySize = collectSizePriceData('editCampaignSizePricesContainer');
         if (Object.keys(pricesBySize).length === 0) {
             showAlert('Please add at least one size and price.', 'danger');
             return;
         }
         formData.append('prices_by_size', JSON.stringify(pricesBySize));
-        // Remove the old price_per_shirt if it exists in formData (optional, depends on backend)
+        
         formData.delete('price_per_shirt');
 
         try {
-            // No Authorization header for session-based auth
+            
             const response = await fetch(`/campaigns/${campaignId}`, {
                 method: 'PUT',
                 body: formData
@@ -353,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         try {
-            // No Authorization header for session-based auth
+            
             const response = await fetch(`/campaigns/${campaignId}`, {
                 method: 'DELETE'
             });
@@ -373,39 +363,35 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target.classList.contains('edit-campaign-btn')) {
             const campaignId = event.target.dataset.campaignId;
             try {
-                // No Authorization header for session-based auth
+                
                 const response = await fetch(`/campaigns/${campaignId}`);
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
                 }
                 const campaign = await response.json();
-
                 document.getElementById('editCampaignId').value = campaign.id;
                 document.getElementById('editCampaignTitle').value = campaign.title;
-                document.getElementById('editCampaignDescription').value = campaign.description || '';
-                // document.getElementById('editCampaignPrice').value = campaign.price_per_shirt; // REMOVED: No longer a single price input
-                document.getElementById('editCampaignPreOrderDeadline').value = formatDateForInput(campaign.pre_order_deadline); // Changed to include time
+                document.getElementById('editCampaignDescription').value = campaign.description || '';                
+                document.getElementById('editCampaignPreOrderDeadline').value = formatDateForInput(campaign.pre_order_deadline); 
                 document.getElementById('editCampaignStock').value = campaign.available_stock;
                 document.getElementById('editCampaignIsActive').checked = campaign.is_active;
-
                 const currentImageDiv = document.getElementById('currentSizeChartImage');
                 if (campaign.size_chart_image_path) {
                     currentImageDiv.innerHTML = `<img src="${campaign.size_chart_image_path}" style="max-width: 150px; height: auto;"><p>Current Image</p>`;
                 } else {
                     currentImageDiv.innerHTML = `<p>No current image.</p>`;
                 }
-                document.getElementById('editCampaignSizeChart').value = ''; // Clear file input
-
-                // MODIFIED: Populate size and price inputs for editing
+                document.getElementById('editCampaignSizeChart').value = ''; 
+                
                 const editSizePricesContainer = document.getElementById('editCampaignSizePricesContainer');
-                editSizePricesContainer.innerHTML = ''; // Clear existing rows
+                editSizePricesContainer.innerHTML = ''; 
                 if (campaign.prices_by_size && Object.keys(campaign.prices_by_size).length > 0) {
                     for (const size in campaign.prices_by_size) {
                         editSizePricesContainer.appendChild(createSizePriceRow(size, campaign.prices_by_size[size]));
                     }
                 } else {
-                    // If no prices_by_size, add a default empty row to start
+                    
                     editSizePricesContainer.appendChild(createSizePriceRow());
                 }
 
@@ -419,22 +405,21 @@ document.addEventListener('DOMContentLoaded', function() {
             handleDeleteCampaign(campaignId);
         }
     });
-
-    // --- The crucial function for displaying orders (NO TOKEN REQUIRED HERE) ---
+    
     async function fetchOrders(campaignId = null) {
         let url;
 
-        // Construct the URL based on whether a campaign ID is provided
+        
         if (campaignId && campaignId !== '') {
             url = `/orders/campaign/${campaignId}`;
         } else {
-            url = `/orders/`; // This should fetch all orders for the admin's organization
+            url = `/orders/`; 
         }
 
-        url += `?skip=0&limit=200`; // Add pagination parameters
+        url += `?skip=0&limit=200`; 
 
         try {
-            // No Authorization header for session-based auth; browser automatically sends session cookie
+            
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
@@ -444,14 +429,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                // This will show any error from the backend, including 401 Unauthorized if no session
+                
                 throw new Error(`HTTP error! Status: ${response.status}, Detail: ${errorData.detail || response.statusText}`);
             }
             const orders = await response.json();
             populateOrdersTable(orders);
         } catch (error) {
             console.error('Error fetching orders:', error);
-            // Display the specific error message from the backend
+            
             showAlert(`Failed to load orders: ${error.message}`, 'danger');
             document.querySelector('#ordersTable tbody').innerHTML = `<tr><td colspan="6" class="text-center">Error loading orders: ${error.message}</td></tr>`;
         }
@@ -493,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
         createCampaignButton.addEventListener('click', function() {
             console.log('Add New Campaign button clicked.');
             showCustomModal('createCampaignModal');
-            // Ensure at least one size/price row is present when creating a new campaign
+            
             const createCampaignSizePricesContainer = document.getElementById('createCampaignSizePricesContainer');
             if (createCampaignSizePricesContainer.children.length === 0) {
                 createCampaignSizePricesContainer.appendChild(createSizePriceRow());
@@ -517,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchOrders(campaignId);
     });
 
-    // Initial calls when the page loads
+    
     fetchCampaigns();
-    fetchOrders(''); // This will attempt to load all orders immediately
+    fetchOrders(''); 
 });

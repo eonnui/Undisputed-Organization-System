@@ -9,43 +9,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const displayTotalAmount = document.getElementById('displayTotalAmount');
     const modalOrderTotalAmount = document.getElementById('modalOrderTotalAmount');
     const orderMessage = document.getElementById('orderMessage');
-    const orderButtons = document.querySelectorAll('.order-button');
-    // MODIFIED: This will now store prices by size for the currently selected campaign
+    const orderButtons = document.querySelectorAll('.order-button');    
     let currentCampaignPricesBySize = {}; 
-    let currentSelectedSize = ''; // To store the selected size for new orders
-
+    let currentSelectedSize = ''; 
     const orderDetailModal = document.getElementById('orderDetailModal');
     const closeOrderDetailModalButton = document.getElementById('closeOrderDetailModal');
     const orderDetailContent = document.getElementById('orderDetailContent');
     const modalOrderDetailIdDisplay = document.getElementById('modalOrderDetailId');
-
     const updateOrderModal = document.getElementById('updateOrderModal');
     const closeUpdateOrderModalButton = document.querySelector('#updateOrderModal .close-button');
     const updateOrderForm = document.getElementById('updateOrderForm');
     const updateOrderId = document.getElementById('updateOrderId');
     const updateQuantityInput = document.getElementById('updateQuantity');
-    const updateShirtSizeInput = document.getElementById('updateShirtSize'); // This should become a select/dropdown
+    const updateShirtSizeInput = document.getElementById('updateShirtSize'); 
     const updateDisplayTotalAmount = document.getElementById('updateDisplayTotalAmount');
     const updateOrderTotalAmount = document.getElementById('updateOrderTotalAmount');
-    const updateOrderMessage = document.getElementById('updateOrderMessage');
-    // MODIFIED: This will store prices by size for the campaign of the order being updated
+    const updateOrderMessage = document.getElementById('updateOrderMessage');    
     let currentUpdateCampaignPricesBySize = {}; 
-    let currentUpdateSelectedSize = ''; // To store the selected size for updates
-
-
+    let currentUpdateSelectedSize = ''; 
     const allOrderDisplayElements = document.querySelectorAll('.order-item, .order-card');
     const toggleCompletedOrdersButton = document.getElementById('toggleCompletedOrdersButton');
-    let hidingCompletedOrders = true;
-
-    // DEFINED: URL Endpoints
+    let hidingCompletedOrders = true;    
     const CREATE_ORDER_URL = '/orders/';
     const DELETE_ORDER_URL_BASE = '/orders/';
     const UPDATE_ORDER_URL_BASE = '/orders/';
-    const GET_ORDER_DETAILS_URL_BASE = '/orders/';
-    // IMPORTANT: Confirm this PayMaya URL with your backend
-    const PAYMAYA_CREATE_PAYMENT_URL = '/payments/paymaya/create'; 
-
-    // --- Modal Closing Logic ---
+    const GET_ORDER_DETAILS_URL_BASE = '/orders/';    
+    const PAYMAYA_CREATE_PAYMENT_URL = '/payments/paymaya/create';     
     closeButtonOrderModal.onclick = () => {
         orderModal.style.display = 'none';
     };
@@ -55,7 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
     closeUpdateOrderModalButton.onclick = () => {
         updateOrderModal.style.display = 'none';
     };
-
     window.onclick = (event) => {
         if (event.target === orderModal) {
             orderModal.style.display = 'none';
@@ -68,29 +56,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // --- New Order Functionality ---
+    
     orderButtons.forEach(button => {
-        button.addEventListener('click', async function() { // Added async here
+        button.addEventListener('click', async function() { 
             const campaignId = this.dataset.campaignId;
-            const campaignTitle = this.dataset.campaignTitle;
-            
+            const campaignTitle = this.dataset.campaignTitle;            
             orderMessage.textContent = 'Loading campaign details...';
             orderMessage.style.color = 'blue';
-
-            try {
-                // Fetch full campaign details to get prices_by_size
+            try {                
                 const response = await fetch(`/campaigns/${campaignId}`);
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
                 }
                 const campaign = await response.json();
-
-                currentCampaignPricesBySize = campaign.prices_by_size || {};
+                currentCampaignPricesBySize = campaign.prices_by_size || {};           
                 
-                // Populate size selection in the modal
-                const sizeSelect = document.getElementById('shirt_size'); // MODIFIED: Changed to 'shirt_size' to match HTML
-                sizeSelect.innerHTML = ''; // Clear previous options
+                const sizeSelect = document.getElementById('shirt_size'); 
+                sizeSelect.innerHTML = ''; 
 
                 if (Object.keys(currentCampaignPricesBySize).length > 0) {
                     for (const size in currentCampaignPricesBySize) {
@@ -99,44 +82,40 @@ document.addEventListener('DOMContentLoaded', function() {
                         option.textContent = `${size} (₱${currentCampaignPricesBySize[size].toFixed(2)})`;
                         sizeSelect.appendChild(option);
                     }
-                    currentSelectedSize = sizeSelect.value; // Set initial selected size
+                    currentSelectedSize = sizeSelect.value; 
                 } else {
                     sizeSelect.innerHTML = '<option value="">No sizes available</option>';
                     currentSelectedSize = '';
                     orderMessage.textContent = 'No sizes and prices defined for this campaign.';
                     orderMessage.style.color = 'red';
-                    return; // Prevent opening modal if no sizes
+                    return; 
                 }
 
                 modalCampaignId.value = campaignId;
                 modalCampaignTitle.textContent = campaignTitle;
                 quantityInput.value = 1;
-                updateTotalAmount(); // Calculate initial total based on first size
+                updateTotalAmount(); 
                 orderModal.style.display = 'block';
-                orderMessage.textContent = ''; // Clear message on successful load
+                orderMessage.textContent = ''; 
             } catch (error) {
                 console.error('Error fetching campaign details for order:', error);
                 orderMessage.textContent = `Failed to load campaign details: ${error.message}`;
                 orderMessage.style.color = 'red';
             }
         });
-    });
-
-    // Event listener for size selection change
-    const shirtSizeSelect = document.getElementById('shirt_size'); // MODIFIED: Changed to 'shirt_size' to match HTML
+    });    
+    const shirtSizeSelect = document.getElementById('shirt_size'); 
     if (shirtSizeSelect) {
         shirtSizeSelect.addEventListener('change', function() {
             currentSelectedSize = this.value;
             updateTotalAmount();
         });
     }
-
     quantityInput.addEventListener('input', updateTotalAmount);
 
     function updateTotalAmount() {
         const quantity = parseInt(quantityInput.value);
-        const price = currentCampaignPricesBySize[currentSelectedSize]; // Get price for selected size
-
+        const price = currentCampaignPricesBySize[currentSelectedSize]; 
         if (isNaN(quantity) || quantity < 1 || !currentSelectedSize || isNaN(price)) {
             quantityInput.value = 1;
             displayTotalAmount.textContent = `₱0.00`;
@@ -146,13 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
             displayTotalAmount.textContent = `₱${total.toFixed(2)}`;
             modalOrderTotalAmount.value = total.toFixed(2);
         }
-    }
-
-    // --- Update Order Modal Price Calculation ---
+    }    
     function updateOrderDetailTotalAmount() {
         const quantity = parseInt(updateQuantityInput.value);
-        const price = currentUpdateCampaignPricesBySize[currentUpdateSelectedSize]; // Get price for selected size
-
+        const price = currentUpdateCampaignPricesBySize[currentUpdateSelectedSize]; 
         if (isNaN(quantity) || quantity < 1 || !currentUpdateSelectedSize || isNaN(price)) {
             updateQuantityInput.value = 1;
             updateDisplayTotalAmount.textContent = `₱0.00`;
@@ -164,29 +140,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    updateQuantityInput.addEventListener('input', updateOrderDetailTotalAmount);
-
-    // Event listener for update size selection change
-    if (updateShirtSizeInput) { // updateShirtSizeInput should now be a <select>
+    updateQuantityInput.addEventListener('input', updateOrderDetailTotalAmount);    
+    if (updateShirtSizeInput) { 
         updateShirtSizeInput.addEventListener('change', function() {
             currentUpdateSelectedSize = this.value;
             updateOrderDetailTotalAmount();
         });
     }
-
-    // --- Form Submissions ---
+    
     orderForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         orderMessage.textContent = 'Submitting order...';
-        orderMessage.style.color = 'blue';
+        orderMessage.style.color = 'blue';     
         
-        // MODIFIED: Ensure selected size and current price are used
         const campaignId = modalCampaignId.value;
         const shirtSize = currentSelectedSize;
         const quantity = parseInt(quantityInput.value);
-        const orderTotalAmount = parseFloat(modalOrderTotalAmount.value);
-
-        // --- Start Debugging Logs ---
+        const orderTotalAmount = parseFloat(modalOrderTotalAmount.value);        
         console.log('--- Order Submission Data (Before FormData) ---');
         console.log('campaignId:', campaignId);
         console.log('shirtSize:', shirtSize);
@@ -195,26 +165,21 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('student_name value:', document.getElementById('student_name').value);
         console.log('student_year_section value:', document.getElementById('student_year_section').value);
         console.log('student_email value:', document.getElementById('student_email').value);
-        console.log('student_phone value:', document.getElementById('student_phone').value);
-        // --- End Debugging Logs ---
+        console.log('student_phone value:', document.getElementById('student_phone').value);       
 
         if (!shirtSize || isNaN(quantity) || quantity < 1 || isNaN(orderTotalAmount) || orderTotalAmount <= 0) {
             orderMessage.textContent = 'Please select a size, enter a valid quantity, and ensure total amount is valid.';
             orderMessage.style.color = 'red';
             return;
-        }
-
-        // --- IMPORTANT CHANGE: Create FormData object ---
+        }        
         const formData = new FormData();
         formData.append('campaign_id', campaignId);
         formData.append('shirt_size', shirtSize);
-        formData.append('quantity', quantity);
-        // order_total_amount is removed from backend form parameters. If you still need it, add it here.
-        // formData.append('order_total_amount', orderTotalAmount); 
-        formData.append('student_name', document.getElementById('student_name').value);
-        formData.append('student_year_section', document.getElementById('student_year_section').value);
+        formData.append('quantity', quantity);      
         
-        // Optional fields, append only if they have values
+        formData.append('student_name', document.getElementById('student_name').value);
+        formData.append('student_year_section', document.getElementById('student_year_section').value);       
+        
         const studentEmail = document.getElementById('student_email').value;
         if (studentEmail) {
             formData.append('student_email', studentEmail);
@@ -223,17 +188,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (studentPhone) {
             formData.append('student_phone', studentPhone);
         }
-        // --- END IMPORTANT CHANGE ---
-
-        // Note: When sending FormData, browsers automatically set the 'Content-Type' header to 'multipart/form-data'
-        // Do NOT manually set 'Content-Type': 'application/json' or it will cause issues.
-        console.log('Payload sent to server (FormData):', formData); // Log the FormData object
-
+                
+        console.log('Payload sent to server (FormData):', formData); 
         try {
             const response = await fetch(CREATE_ORDER_URL, {
                 method: 'POST',
-                // Removed headers: { 'Content-Type': 'application/json' }
-                body: formData, // Send FormData directly
+                
+                body: formData, 
             });
             if (response.ok) {
                 const result = await response.json();
@@ -266,8 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const updatedQuantity = parseInt(updateQuantityInput.value);
         const updatedShirtSize = updateShirtSizeInput.value;
         const updatedTotalAmount = parseFloat(updateOrderTotalAmount.value);
-
-        // MODIFIED: Validate selected size and price data
+        
         if (!updatedShirtSize || isNaN(updatedQuantity) || updatedQuantity < 1 || isNaN(updatedTotalAmount) || updatedTotalAmount <= 0) {
             updateOrderMessage.textContent = 'Please select a size, enter a valid quantity, and ensure total amount is valid.';
             updateOrderMessage.style.color = 'red';
@@ -311,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- PayMaya Payment Integration ---
+    
     const paymayaPayButtons = document.querySelectorAll('.paymaya-pay-button');
 
     paymayaPayButtons.forEach(button => {
@@ -361,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Delete Order Functionality ---
+    
     async function handleDeleteOrder(orderId) {
         if (!confirm('Are you sure you want to remove this order? This action cannot be undone.')) {
             return;
@@ -389,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Utility Function (CSRF token, if needed for Flask) ---
+    
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -405,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
 
-    // --- View Details Button Logic (Dynamic Attachment) ---
+    
     function attachViewDetailsButtonListeners() {
         document.querySelectorAll('.view-details-button').forEach(button => {
             button.removeEventListener('click', handleViewDetailsClick); 
@@ -432,9 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    attachViewDetailsButtonListeners();
-
-    // --- Display Order Details in Modal ---
+    attachViewDetailsButtonListeners();    
     function displayOrderDetail(order) {
         const formatDate = (dateString) => {
             if (!dateString) return 'N/A';
@@ -465,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let campaignPriceDisplay = 'N/A';
             if (order.campaign.prices_by_size && order.shirt_size && order.campaign.prices_by_size[order.shirt_size]) {
                 campaignPriceDisplay = `&#8369;${order.campaign.prices_by_size[order.shirt_size].toFixed(2)} (${order.shirt_size})`;
-            } else if (order.campaign.price_per_shirt) { // Fallback for old campaigns
+            } else if (order.campaign.price_per_shirt) { 
                 campaignPriceDisplay = `&#8369;${order.campaign.price_per_shirt.toFixed(2)}`;
             }
 
@@ -558,11 +516,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const editOrderButton = orderDetailContent.querySelector('.edit-order-button');
         if (editOrderButton) {
-            editOrderButton.addEventListener('click', async function() { // Added async here
+            editOrderButton.addEventListener('click', async function() { 
                 updateOrderId.value = order.id;
-                updateQuantityInput.value = order.quantity;
+                updateQuantityInput.value = order.quantity;              
                 
-                // Fetch full campaign details for update modal to get prices_by_size
                 try {
                     const campaignResponse = await fetch(`/campaigns/${order.campaign.id}`);
                     if (!campaignResponse.ok) {
@@ -572,8 +529,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const campaign = await campaignResponse.json();
                     currentUpdateCampaignPricesBySize = campaign.prices_by_size || {};
 
-                    // Populate update shirt size select/dropdown
-                    updateShirtSizeInput.innerHTML = ''; // Clear previous options
+                    
+                    updateShirtSizeInput.innerHTML = ''; 
                     if (Object.keys(currentUpdateCampaignPricesBySize).length > 0) {
                         for (const size in currentUpdateCampaignPricesBySize) {
                             const option = document.createElement('option');
@@ -581,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             option.textContent = `${size} (₱${currentUpdateCampaignPricesBySize[size].toFixed(2)})`;
                             updateShirtSizeInput.appendChild(option);
                         }
-                        // Set the current order's shirt size as selected
+                        
                         updateShirtSizeInput.value = order.shirt_size;
                         currentUpdateSelectedSize = order.shirt_size;
                     } else {
@@ -592,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
 
-                    updateOrderDetailTotalAmount(); // Recalculate total based on loaded values
+                    updateOrderDetailTotalAmount(); 
 
                     orderDetailModal.style.display = 'none'; 
                     updateOrderModal.style.display = 'block'; 
@@ -603,9 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-    }
-
-    // --- Toggle Completed Orders Functionality ---
+    }    
     function toggleCompletedOrders() {
         allOrderDisplayElements.forEach(orderElement => {
             const paymentStatus = orderElement.dataset.paymentStatus;
@@ -620,27 +575,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-
         if (hidingCompletedOrders) {
             toggleCompletedOrdersButton.textContent = 'Show Completed Orders';
         } else {
             toggleCompletedOrdersButton.textContent = 'Hide Completed Orders';
         }
     }
-
     toggleCompletedOrdersButton.addEventListener('click', () => {
         hidingCompletedOrders = !hidingCompletedOrders;
         toggleCompletedOrders();
     });
 
-    toggleCompletedOrders();
-
-
-    // --- Section Display (if you have navigation to specific sections) ---
+    toggleCompletedOrders();    
     const hash = window.location.hash;
     const campaignsSection = document.getElementById('campaigns-section');
-    const myOrdersSection = document.getElementById('my-orders-section');
-    
+    const myOrdersSection = document.getElementById('my-orders-section');    
     campaignsSection.style.display = 'block';
     myOrdersSection.style.display = 'block';
 

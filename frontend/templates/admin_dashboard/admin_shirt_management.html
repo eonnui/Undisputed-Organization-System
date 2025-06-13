@@ -29,7 +29,7 @@
                         <tr>
                             <th>Title</th>
                             <th>Description</th>
-                            <th>Price</th> {# This column will display aggregated price info or "Multiple" #}
+                            <th>Price</th> 
                             <th>Pre-Order Deadline</th>
                             <th>Stock</th>
                             <th>Active</th>
@@ -50,14 +50,13 @@
         </div>
         <div class="card-body">
             <div class="row mb-3">
-                <div class="col-md-6"> {# Adjusted column width as one filter is removed #}
+                <div class="col-md-6"> 
                     <label for="orderCampaignFilter" class="form-label">Filter by Campaign:</label>
                     <select class="form-select" id="orderCampaignFilter">
                         <option value="">All Campaigns</option>
                     </select>
                 </div>
-                {# Removed the "Filter by Status" dropdown #}
-                <div class="col-md-6 d-flex align-items-end"> {# Adjusted column width #}
+                <div class="col-md-6 d-flex align-items-end"> 
                     <button class="btn btn-info w-100" id="applyOrderFilters">Apply Filters</button>
                 </div>
             </div>
@@ -71,8 +70,6 @@
                             <th>Size</th>
                             <th>Quantity</th>
                             <th>Total Price</th>
-                            {# Removed Payment Status, Order Status, and Screenshot columns #}
-                            {# Removed Actions column (which contained the update status button) #}
                         </tr>
                     </thead>
                     <tbody>
@@ -101,7 +98,6 @@
                         <textarea class="form-control" id="campaignDescription" name="description" rows="3"></textarea>
                     </div>
 
-                    {# MODIFIED: Replaced single price input with dynamic size-price inputs #}
                     <div class="mb-3">
                         <label class="form-label">Prices per Size</label>
                         <div id="createCampaignSizePricesContainer">
@@ -119,7 +115,6 @@
                         </div>
                         <button type="button" class="btn btn-secondary btn-sm mt-2" id="addCreateCampaignSizePrice">Add Another Size & Price</button>
                     </div>
-                    {# END MODIFIED SECTION #}
 
                     <div class="mb-3">
                         <label for="preOrderDeadline" class="form-label">Pre-Order Deadline</label>
@@ -165,16 +160,12 @@
                         <label for="editCampaignDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="editCampaignDescription" name="description" rows="3"></textarea>
                     </div>
-
-                    {# MODIFIED: Replaced single price input with dynamic size-price inputs #}
                     <div class="mb-3">
                         <label class="form-label">Prices per Size</label>
                         <div id="editCampaignSizePricesContainer">
                             </div>
                         <button type="button" class="btn btn-secondary btn-sm mt-2" id="addEditCampaignSizePrice">Add Another Size & Price</button>
                     </div>
-                    {# END MODIFIED SECTION #}
-
                     <div class="mb-3">
                         <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label>
                         <input type="datetime-local" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required>
@@ -201,9 +192,6 @@
         </div>
     </div>
 </div>
-
-{# The updateOrderStatusModal has been removed as its functionality was deprecated by backend schema changes #}
-
 {% endblock %}
 
 {% block scripts %}

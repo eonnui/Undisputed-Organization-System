@@ -249,7 +249,6 @@
 
 ---
 
-{# Order Modal (for placing new orders) #}
 <div id="orderModal" class="modal">
     <div class="modal-content">
         <span class="close-button">&times;</span>
@@ -303,22 +302,19 @@
 
 ---
 
-{# My Shirt Orders Section #}
 <div class="my-shirt-orders-page" id="my-orders-section">
     <h2 class="page-title">My Shirt Orders</h2>
-    {# NEW: Toggle button for hiding/showing completed orders #}
     <button id="toggleCompletedOrdersButton" class="toggle-orders-button">Hide Completed Orders</button>
 
     <div class="orders-list-container">
         {% if student_shirt_orders %}
             {% for order in student_shirt_orders %}
-                {# IMPORTANT: Added 'order-item' class and 'data-payment-status' attribute #}
                 <div class="order-card order-item"
                      data-order-id="{{ order.id }}"
                      data-payment-status="{{ order.payment.status if order.payment else 'pending' }}">
                     <div class="order-header">
                         <h3 class="order-campaign-title">{{ order.campaign.title if order.campaign else 'N/A' }}</h3>
-                        {# Ensure the status tag is always lowercase for consistency with JS #}
+                      
                         <span class="order-status-tag tag-{{ (order.payment.status if order.payment else 'pending') | lower }}">
                             {{ order.payment.status if order.payment else 'Pending Payment' }}
                         </span>
