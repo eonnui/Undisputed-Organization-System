@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 from datetime import datetime, date, timezone, timedelta
 import logging
 from sqlalchemy.sql import exists
+philippine_timezone = timezone(timedelta(hours=8))
 from sqlalchemy import and_, or_
 from typing import Optional, Tuple, List, Dict, Any
 import json
@@ -1069,22 +1070,27 @@ def get_admin_logs(
     
     return formatted_logs
 
-# Shirt Campaign CRUD Operations
-def create_shirt_campaign(db: Session, campaign: schemas.ShirtCampaignCreate, admin_id: int) -> models.ShirtCampaign:
+# --- Shirt Campaign CRUD Operations ---
+def create_shirt_campaign(db: Session, campaign: schemas.ShirtCampaignCreate, admin_id: int, organization_id: Optional[int]) -> models.ShirtCampaign: 
+    """
+    Creates a new shirt campaign.
+    Handles prices_by_size as a dictionary and sets price_per_shirt if prices_by_size is provided.
+    """
+    first_price_from_sizes = None
+    if campaign.prices_by_size:
+        first_price_from_sizes = next(iter(campaign.prices_by_size.values()), None)
+
     db_campaign = models.ShirtCampaign(
         admin_id=admin_id,
-        organization_id=campaign.organization_id,
+        organization_id=organization_id,
         title=campaign.title,
         description=campaign.description,
-        price_per_shirt=campaign.price_per_shirt,
-        pre_order_deadline=campaign.pre_order_deadline,
-        available_stock=campaign.available_stock, 
-        gcash_number=campaign.gcash_number,
-        gcash_name=campaign.gcash_name,
+        prices_by_size=campaign.prices_by_size,
+        price_per_shirt=first_price_from_sizes if first_price_from_sizes is not None else campaign.price_per_shirt,
+        pre_order_deadline=campaign.pre_order_deadline, 
+        available_stock=campaign.available_stock,
         is_active=campaign.is_active,
         size_chart_image_path=campaign.size_chart_image_path,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc), 
     )
     db.add(db_campaign)
     db.commit()
@@ -1106,42 +1112,73 @@ def get_all_shirt_campaigns(
     skip: int = 0,
     limit: int = 100,
     is_active: Optional[bool] = None,
-    search_query: Optional[str] = None, 
-    start_date: Optional[date] = None,  
-    end_date: Optional[date] = None     
+    search: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
 ) -> List[models.ShirtCampaign]:
+    """
+    Retrieves all shirt campaigns with filtering and pagination options.
+    Filters include organization, active status, search query (title/description),
+    and pre-order deadline range.
+    """
     query = db.query(models.ShirtCampaign)
 
     if organization_id:
         query = query.filter(models.ShirtCampaign.organization_id == organization_id)
-    
+
     if is_active is not None:
         query = query.filter(models.ShirtCampaign.is_active == is_active)
 
-    if search_query:
+    if search:
         query = query.filter(
             or_(
-                models.ShirtCampaign.name.ilike(f"%{search_query}%"),
-                models.ShirtCampaign.description.ilike(f"%{search_query}%")
+                models.ShirtCampaign.title.ilike(f"%{search}%"),
+                models.ShirtCampaign.description.ilike(f"%{search}%")
             )
         )
-    
     if start_date:
         query = query.filter(models.ShirtCampaign.pre_order_deadline >= start_date)
-    
+
     if end_date:
         query = query.filter(models.ShirtCampaign.pre_order_deadline < end_date + timedelta(days=1))
 
     campaigns = query.order_by(models.ShirtCampaign.pre_order_deadline.desc()).offset(skip).limit(limit).all()
+
     logging.info(f"Retrieved {len(campaigns)} shirt campaigns.")
     return campaigns
 
 def update_shirt_campaign(db: Session, campaign_id: int, campaign_update: schemas.ShirtCampaignUpdate) -> Optional[models.ShirtCampaign]:
+    """
+    Updates an existing shirt campaign.
+    Handles parsing prices_by_size if it comes as a JSON string from the form.
+    """
     db_campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == campaign_id).first()
     if db_campaign:
-        for field, value in campaign_update.model_dump(exclude_unset=True).items():
+        update_data = campaign_update.model_dump(exclude_unset=True)
+
+        if 'prices_by_size' in update_data:
+            new_prices_by_size = update_data['prices_by_size']
+            if isinstance(new_prices_by_size, str):
+                try:
+                    new_prices_by_size = json.loads(new_prices_by_size)
+                except json.JSONDecodeError:
+                    logging.error(f"Failed to decode prices_by_size JSON string for campaign {campaign_id}")
+                    del update_data['prices_by_size']
+                    new_prices_by_size = None
+
+            if new_prices_by_size is not None:
+                setattr(db_campaign, 'prices_by_size', new_prices_by_size)
+                first_price = next(iter(new_prices_by_size.values()), None)
+                setattr(db_campaign, 'price_per_shirt', first_price)
+            else:
+                setattr(db_campaign, 'prices_by_size', None)
+                setattr(db_campaign, 'price_per_shirt', None)
+            del update_data['prices_by_size']
+
+        for field, value in update_data.items():
             setattr(db_campaign, field, value)
-        db_campaign.updated_at = datetime.now(timezone.utc)
+
+        db_campaign.updated_at = datetime.now(philippine_timezone) 
         db.add(db_campaign)
         db.commit()
         db.refresh(db_campaign)
@@ -1162,8 +1199,52 @@ def delete_shirt_campaign(db: Session, campaign_id: int) -> bool:
         logging.warning(f"Shirt campaign with id: {campaign_id} not found for deletion.")
         return False
 
-# Student Shirt Order CRUD Operations
+
 def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCreate) -> models.StudentShirtOrder:
+    """
+    Creates a new student shirt order, ensuring proper linking between
+    StudentShirtOrder, PaymentItem, and Payment records.
+    Calculates total amount based on prices_by_size and DECREASES CAMPAIGN STOCK.
+    """   
+    campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == order.campaign_id).first()
+    if not campaign:
+        logging.error(f"Campaign with ID {order.campaign_id} not found when creating student order.")
+        raise ValueError(f"Campaign with ID {order.campaign_id} not found.")
+
+    if campaign.available_stock < order.quantity:
+        logging.warning(f"Insufficient stock for campaign ID {order.campaign_id}. Requested: {order.quantity}, Available: {campaign.available_stock}")
+        raise ValueError(f"Not enough stock available for '{campaign.title}'. Only {campaign.available_stock} left.")
+
+    shirt_price = None
+    if campaign.prices_by_size and order.shirt_size in campaign.prices_by_size:
+        shirt_price = campaign.prices_by_size[order.shirt_size]
+    elif campaign.price_per_shirt is not None:
+        shirt_price = campaign.price_per_shirt
+
+    if shirt_price is None:
+        logging.error(f"No valid price found for shirt size '{order.shirt_size}' in campaign ID {order.campaign_id}.")
+        raise ValueError(f"No valid price found for shirt size '{order.shirt_size}'.")
+
+    calculated_total_amount = order.quantity * shirt_price
+    logging.info(f"CRUD: Calculated total amount: {calculated_total_amount} (Quantity: {order.quantity}, Price: {shirt_price})")
+   
+    current_date = datetime.now(philippine_timezone).date()
+    current_year = current_date.year
+    current_month = current_date.month
+
+    academic_year = ""
+    semester = ""
+
+    if current_month >= 9: 
+        academic_year = f"{current_year}-{current_year + 1}"
+        semester = "1st"
+    elif current_month <= 6: 
+        academic_year = f"{current_year - 1}-{current_year}"
+        semester = "2nd"
+    else: 
+        academic_year = f"{current_year}-{current_year + 1}"
+        semester = "Vacation/Intersem"
+
     db_order = models.StudentShirtOrder(
         campaign_id=order.campaign_id,
         student_id=order.student_id,
@@ -1173,32 +1254,107 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
         student_phone=order.student_phone,
         shirt_size=order.shirt_size,
         quantity=order.quantity,
-        payment_amount=order.payment_amount,
-        payment_reference_number=order.payment_reference_number,
-        payment_date_time=order.payment_date_time,
-        payment_screenshot_path=order.payment_screenshot_path,
-        payment_status=order.payment_status,
-        ordered_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        order_total_amount=calculated_total_amount,
+        status="pending", 
+        ordered_at=datetime.now(philippine_timezone)
     )
     db.add(db_order)
+    db.flush()
+    logging.info(f"CRUD: Created StudentShirtOrder (ID: {db_order.id}) with order_total_amount: {db_order.order_total_amount}")
+
+    campaign.available_stock -= order.quantity
+    campaign.updated_at = datetime.now(philippine_timezone) 
+    db.add(campaign) 
+    logging.info(f"CRUD: Decreased stock for campaign '{campaign.title}' (ID: {campaign.id}). New stock: {campaign.available_stock}")
+   
+    db_payment_item = models.PaymentItem(
+        user_id=order.student_id,
+        fee=calculated_total_amount,
+        is_paid=False,
+        academic_year=academic_year,
+        semester=semester,
+        due_date=campaign.pre_order_deadline,
+        student_shirt_order_id=db_order.id,
+        created_at=datetime.now(philippine_timezone)
+    )
+    db.add(db_payment_item)
+    db.flush()
+    logging.info(f"CRUD: Created PaymentItem (ID: {db_payment_item.id}) with fee: {db_payment_item.fee}")
+
+    db_payment = models.Payment(
+        user_id=order.student_id,
+        amount=calculated_total_amount,
+        status="pending",
+        payment_item_id=db_payment_item.id,
+        created_at=datetime.now(philippine_timezone)
+    )
+    db.add(db_payment)
+    db.flush()
+    logging.info(f"CRUD: Created Payment (ID: {db_payment.id}) with amount: {db_payment.amount}")
+
+    db_order.payment_id = db_payment.id
+
     db.commit()
-    db.refresh(db_order)
-    logging.info(f"Created student shirt order for campaign {order.campaign_id} by student {order.student_id}")
+    db.refresh(db_order) 
+
+    logging.info(f"Created student shirt order ID: {db_order.id} for student {order.student_id} "
+                 f"with Payment ID: {db_order.payment_id} and Payment Item ID: {db_payment_item.id}. Order status: {db_order.status}. Semester: {semester}, Academic Year: {academic_year}")
     return db_order
 
+
 def get_student_shirt_order_by_id(db: Session, order_id: int) -> Optional[models.StudentShirtOrder]:
-    order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
+    """
+    Retrieves a single student shirt order by its ID,
+    eagerly loading its associated campaign, payment, and the payment_item linked to the payment.
+    """
+    order = db.query(models.StudentShirtOrder).options(
+        joinedload(models.StudentShirtOrder.campaign),
+        joinedload(models.StudentShirtOrder.payment).joinedload(models.Payment.payment_item)
+    ).filter(models.StudentShirtOrder.id == order_id).first()
+
     if order:
-        logging.info(f"Retrieved student shirt order with id: {order_id}")
+        logging.info(f"Retrieved student shirt order with id: {order_id} including campaign, payment, and payment_item details.")
+        if order.payment and order.payment.payment_item:
+            logging.info(f"   Payment Item ID: {order.payment.payment_item.id} loaded.")
+        else:
+            logging.info(f"   Payment Item not loaded for order {order_id} (might not exist or relationship issue).")
     else:
         logging.warning(f"Student shirt order with id: {order_id} not found.")
     return order
 
-def get_student_shirt_orders_for_campaign(db: Session, campaign_id: int) -> List[models.StudentShirtOrder]:
-    orders = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.campaign_id == campaign_id).all()
-    logging.info(f"Retrieved {len(orders)} student shirt orders for campaign {campaign_id}.")
+def get_student_shirt_orders_for_campaign(
+    db: Session,
+    campaign_id: int,
+    skip: int = 0,
+    limit: int = 100
+) -> List[models.StudentShirtOrder]:
+    """
+    Retrieves student shirt orders for a specific campaign with pagination.
+    """
+    query = db.query(models.StudentShirtOrder).filter(
+        models.StudentShirtOrder.campaign_id == campaign_id
+    )
+
+    query = query.options(
+        joinedload(models.StudentShirtOrder.campaign),
+        joinedload(models.StudentShirtOrder.payment)
+    )
+
+    if skip is not None:
+        query = query.offset(skip)
+    if limit is not None:
+        query = query.limit(limit)
+
+    orders = query.all()
+    logging.info(f"Retrieved {len(orders)} student shirt orders for campaign {campaign_id} (skip={skip}, limit={limit}).")
     return orders
+
+def get_all_student_shirt_orders_by_organization(
+    db: Session, organization_id: int, skip: int = 0, limit: int = 100
+):
+    return db.query(models.StudentShirtOrder).join(models.ShirtCampaign).filter(
+        models.ShirtCampaign.organization_id == organization_id
+    ).offset(skip).limit(limit).all()
 
 def get_student_shirt_orders_by_student_id(db: Session, student_id: int) -> List[models.StudentShirtOrder]:
     orders = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.student_id == student_id).all()
@@ -1206,16 +1362,105 @@ def get_student_shirt_orders_by_student_id(db: Session, student_id: int) -> List
     return orders
 
 def update_student_shirt_order(db: Session, order_id: int, order_update: schemas.StudentShirtOrderUpdate) -> Optional[models.StudentShirtOrder]:
+    """
+    Updates an existing student shirt order, recalculating total amount
+    if quantity changes and updating related payment records and campaign stock.
+    """
     db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
-    if db_order:
-        for field, value in order_update.model_dump(exclude_unset=True).items():
-            setattr(db_order, field, value)
-        db_order.updated_at = datetime.now(timezone.utc)
-        db.add(db_order)
-        db.commit()
-        db.refresh(db_order)
-        logging.info(f"Updated student shirt order with id: {order_id}")
-        return db_order
-    else:
+
+    if not db_order:
         logging.warning(f"Student shirt order with id: {order_id} not found for update.")
         return None
+
+    original_quantity = db_order.quantity 
+
+    update_fields = order_update.model_dump(exclude_unset=True)
+
+    for field, value in update_fields.items():
+        setattr(db_order, field, value)
+
+    stock_adjusted = False
+    
+    if ('quantity' in update_fields and db_order.quantity != original_quantity) or \
+       ('shirt_size' in update_fields): 
+        logging.info(f"Quantity or shirt size changed for order {order_id}. Recalculating total amount and adjusting stock.")
+
+        campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == db_order.campaign_id).first()
+        if not campaign:
+            logging.error(f"Campaign with ID {db_order.campaign_id} not found for order {order_id}. Cannot recalculate total amount or adjust stock.")
+            return None
+
+        shirt_price = None
+        if campaign.prices_by_size and db_order.shirt_size in campaign.prices_by_size:
+            shirt_price = campaign.prices_by_size[db_order.shirt_size]
+        elif campaign.price_per_shirt is not None:
+            shirt_price = campaign.price_per_shirt
+
+        if shirt_price is None:
+            logging.error(f"No valid price found for shirt size '{db_order.shirt_size}' in campaign ID {db_order.campaign_id} for order {order_id}.")
+            return None
+
+        quantity_change = db_order.quantity - original_quantity
+
+        if quantity_change != 0:
+            
+            if quantity_change > 0 and campaign.available_stock < quantity_change:
+                logging.warning(f"Insufficient stock for campaign ID {db_order.campaign_id} to increase order. Requested increase: {quantity_change}, Available: {campaign.available_stock}")
+                db_order.quantity = original_quantity 
+                raise ValueError(f"Cannot increase order quantity for '{campaign.title}'. Not enough stock available. Current order quantity: {original_quantity}, available for increase: {campaign.available_stock}.")
+            
+            campaign.available_stock -= quantity_change 
+            campaign.updated_at = datetime.now(philippine_timezone)
+            db.add(campaign) 
+            logging.info(f"CRUD: Adjusted stock for campaign '{campaign.title}' (ID: {campaign.id}) by {quantity_change}. New stock: {campaign.available_stock}")
+            stock_adjusted = True 
+
+        calculated_total_amount = db_order.quantity * shirt_price
+        logging.info(f"CRUD: Recalculated total amount for order {order_id}: {calculated_total_amount}")
+
+        db_order.order_total_amount = calculated_total_amount
+
+        if db_order.payment_id:
+            db_payment = db.query(models.Payment).filter(models.Payment.id == db_order.payment_id).first()
+            if db_payment:
+                db_payment.amount = calculated_total_amount
+                db_payment.updated_at = datetime.now(philippine_timezone)
+                db.add(db_payment)
+                logging.info(f"CRUD: Updated Payment (ID: {db_payment.id}) amount to: {calculated_total_amount}")
+
+                if db_payment.payment_item_id:
+                    db_payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == db_payment.payment_item_id).first()
+                    if db_payment_item:
+                        db_payment_item.fee = calculated_total_amount
+                        db_payment_item.updated_at = datetime.now(philippine_timezone)
+                        db.add(db_payment_item)
+                        logging.info(f"CRUD: Updated PaymentItem (ID: {db_payment_item.id}) fee to: {calculated_total_amount}")
+                    else:
+                        logging.warning(f"PaymentItem with ID {db_payment.payment_item_id} not found for payment {db_payment.id}.")
+                else:
+                    logging.warning(f"Payment with ID {db_order.payment_id} not found for order {order_id}. Cannot update related payment records.")
+            else:
+                logging.warning(f"Order {order_id} has no associated payment_id. Cannot update related payment records.")
+
+    db_order.updated_at = datetime.now(philippine_timezone)
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+
+    logging.info(f"Updated student shirt order with id: {order_id}. New quantity: {db_order.quantity}, New total amount: {db_order.order_total_amount}. Stock adjusted: {stock_adjusted}")
+    return db_order
+
+def delete_student_shirt_order(db: Session, order_id: int) -> bool:
+    """
+    Deletes a student shirt order by its ID.
+    Returns True if the order was found and deleted, False otherwise.
+    """
+    db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
+    if db_order:
+        db.delete(db_order)
+        db.commit()
+        logging.info(f"Deleted student shirt order with id: {order_id}")
+        return True
+    else:
+        logging.warning(f"Student shirt order with id: {order_id} not found for deletion.")
+        return False

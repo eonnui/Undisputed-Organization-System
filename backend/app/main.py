@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Form, APIRouter, Query
+from fastapi import FastAPI, Request, Depends, HTTPException, status, File, UploadFile, Form, APIRouter, Query, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
@@ -7,7 +7,7 @@ from sqlalchemy import func, and_, or_, extract, desc
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional, Dict, Any, Tuple
 from collections import defaultdict, OrderedDict
 import smtplib
@@ -24,6 +24,7 @@ import shutil
 import calendar
 from dateutil.relativedelta import relativedelta
 import logging
+import json
 
 # Configure logger
 logger = logging.getLogger("uvicorn.error")
@@ -59,11 +60,6 @@ EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY = "images/event_classifications"
 # Define subdirectory for shirt campaign images
 CAMPAIGN_IMAGES_SUBDIRECTORY = "images/campaigns"
 (STATIC_DIR / CAMPAIGN_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
-
-# Define subdirectory for payment screenshots
-PAYMENT_SCREENSHOTS_SUBDIRECTORY = "images/payment_screenshots"
-(STATIC_DIR / PAYMENT_SCREENSHOTS_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
-
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -436,9 +432,6 @@ async def admin_create_event(
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    # --- Server-side Validation ---
-
-    # Validate Date and Time
     try:
         event_date = datetime.strptime(date, "%Y-%m-%dT%H:%M")
     except ValueError:
@@ -447,25 +440,17 @@ async def admin_create_event(
             detail="Invalid date and time format. Please use YYYY-MM-DDTHH:MM (e.g., 2025-05-27T14:30)."
         )
 
-    # Ensure the event date is not in the past
     current_datetime = datetime.now()
-    # For accurate comparison, clear seconds and microseconds if the client-side also clears them.
-    # However, it's generally safer to compare with a slight buffer or compare to the minute.
-    # Here, we'll just compare directly, which is strict.
     if event_date < current_datetime:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Event date and time cannot be in the past. Please select a future date and time."
         )
-
-    # Validate Max Participants
     if max_participants < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Max participants cannot be less than 0. Please enter a valid non-negative number."
         )
-
-    # --- End Server-side Validation ---
 
     classification_image_url = None
     if classification_image and classification_image.filename:
@@ -587,24 +572,29 @@ async def admin_delete_bulletin_post(post_id: int, request: Request, db: Session
 
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
 
-# Shirt Campaign Endpoints
+# Shirt Campaigns
 @router.post("/campaigns/", response_model=schemas.ShirtCampaign)
 async def create_shirt_campaign_api(
     request: Request,
-    title: str = Form(...), 
+    title: str = Form(...),
     description: Optional[str] = Form(None),
-    price_per_shirt: float = Form(...),
-    pre_order_deadline: date = Form(...),
-    available_stock: int = Form(...), 
-    is_active: bool = Form(True), 
-    gcash_number: Optional[str] = Form(None),
-    gcash_name: Optional[str] = Form(None),
-    
+    prices_by_size: str = Form(..., description="JSON string of prices by size, e.g., '{\"S\": 15.0, \"M\": 16.0}'"), 
+    pre_order_deadline: datetime = Form(...),
+    available_stock: int = Form(...),
+    is_active: bool = Form(True),
     size_chart_image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
     organization_id = admin_org.id if admin_org else None
+
+    try:
+        parsed_prices_by_size = json.loads(prices_by_size)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid JSON format for 'prices_by_size'. It must be a dictionary like {'size': price}."
+        )
 
     size_chart_image_path = None
     if size_chart_image and size_chart_image.filename:
@@ -616,15 +606,12 @@ async def create_shirt_campaign_api(
         )
 
     campaign_data = schemas.ShirtCampaignCreate(
-        organization_id=organization_id,
-        title=title,                    
+        title=title,
         description=description,
-        price_per_shirt=price_per_shirt,
-        pre_order_deadline=pre_order_deadline, 
-        available_stock=available_stock, 
+        prices_by_size=parsed_prices_by_size,
+        pre_order_deadline=pre_order_deadline,
+        available_stock=available_stock,
         is_active=is_active,
-        gcash_number=gcash_number,
-        gcash_name=gcash_name,
         size_chart_image_path=size_chart_image_path
     )
 
@@ -632,9 +619,10 @@ async def create_shirt_campaign_api(
         db=db,
         campaign=campaign_data,
         admin_id=admin.admin_id,
+        organization_id=organization_id,
     )
 
-    description_log = f"Admin '{admin.first_name} {admin.last_name}' created shirt campaign: '{db_campaign.title}'." # Use db_campaign.title
+    description_log = f"Admin '{admin.first_name} {admin.last_name}' created shirt campaign: '{db_campaign.title}'."
     await crud.create_admin_log(
         db=db,
         admin_id=admin.admin_id,
@@ -654,7 +642,6 @@ async def get_shirt_campaign_api(
     request: Request,
     db: Session = Depends(get_db)
 ):
-   
     try:
         current_entity, organization = get_current_admin_with_org(request, db)
     except HTTPException:
@@ -685,16 +672,15 @@ async def get_all_shirt_campaigns_api(
     current_admin, current_organization = admin_info_tuple
     organization_id = current_organization.id if current_organization else None
 
-    
     campaigns = crud.get_all_shirt_campaigns(
         db=db,
         organization_id=organization_id,
-        skip=skip, 
-        limit=limit, 
+        skip=skip,
+        limit=limit,
         is_active=is_active,
-        search_query=search, 
-        start_date=start_date, 
-        end_date=end_date 
+        search=search,
+        start_date=start_date,
+        end_date=end_date
     )
 
     return campaigns
@@ -702,17 +688,17 @@ async def get_all_shirt_campaigns_api(
 @router.put("/campaigns/{campaign_id}", response_model=schemas.ShirtCampaign)
 async def update_shirt_campaign_api(
     campaign_id: int,
-    request: Request,    
-    title: str = Form(...), 
+    request: Request,
+    title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
-    price_per_shirt: float = Form(...),
-    pre_order_deadline: date = Form(...), 
-    available_stock: int = Form(...),
-    is_active: bool = Form(False),
-    size_chart_image: Optional[UploadFile] = File(None), 
+    prices_by_size: Optional[str] = Form(None, description="Optional JSON string of prices by size for update"),
+    pre_order_deadline: Optional[datetime] = Form(None),
+    available_stock: Optional[int] = Form(None),
+    is_active: Optional[bool] = Form(None),
+    size_chart_image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
-    admin, admin_org = get_current_admin_with_org(request, db) 
+    admin, admin_org = get_current_admin_with_org(request, db)
 
     campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
     if not campaign:
@@ -720,46 +706,61 @@ async def update_shirt_campaign_api(
     if campaign.organization_id != admin_org.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this campaign.")
 
-    final_size_chart_image_path = campaign.size_chart_image_path 
-    if size_chart_image is not None: 
-        if size_chart_image.filename:           
+    update_data = {}
+    if title is not None:
+        update_data["title"] = title
+    if description is not None:
+        update_data["description"] = description
+
+    if prices_by_size is not None:
+        try:
+            update_data["prices_by_size"] = json.loads(prices_by_size)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid JSON format for 'prices_by_size'. It must be a dictionary like {'size': price}."
+            )    
+
+    if pre_order_deadline is not None:
+        update_data["pre_order_deadline"] = pre_order_deadline
+    if available_stock is not None:
+        update_data["available_stock"] = available_stock
+    if is_active is not None:
+        update_data["is_active"] = is_active
+
+    final_size_chart_image_path = campaign.size_chart_image_path
+    if size_chart_image is not None:
+        if size_chart_image.filename:
             final_size_chart_image_path = await handle_file_upload(
                 size_chart_image,
                 CAMPAIGN_IMAGES_SUBDIRECTORY,
                 ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
                 max_size_bytes=5 * 1024 * 1024,
-                old_file_path=campaign.size_chart_image_path 
+                old_file_path=campaign.size_chart_image_path
             )
         else:
             delete_file_from_path(campaign.size_chart_image_path)
-            final_size_chart_image_path = None 
+            final_size_chart_image_path = None
+    update_data["size_chart_image_path"] = final_size_chart_image_path 
 
-    campaign_update = schemas.ShirtCampaignUpdate(
-        title=title, 
-        description=description,
-        price_per_shirt=price_per_shirt,
-        pre_order_deadline=pre_order_deadline, 
-        available_stock=available_stock,
-        is_active=is_active,
-        size_chart_image_path=final_size_chart_image_path 
-    )
+    campaign_update = schemas.ShirtCampaignUpdate(**update_data)
 
     updated_campaign = crud.update_shirt_campaign(
         db=db,
         campaign_id=campaign_id,
-        campaign_update=campaign_update 
+        campaign_update=campaign_update
     )
 
     if not updated_campaign:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found after update attempt.")
-    
-    description = f"Admin '{admin.first_name} {admin.last_name}' updated shirt campaign: '{updated_campaign.title}'." 
+
+    description_log = f"Admin '{admin.first_name} {admin.last_name}' updated shirt campaign: '{updated_campaign.title}'."
     await crud.create_admin_log(
         db=db,
         admin_id=admin.admin_id,
         organization_id=admin_org.id,
         action_type="Shirt Campaign Updated",
-        description=description,
+        description=description_log,
         request=request,
         target_entity_type="ShirtCampaign",
         target_entity_id=updated_campaign.id
@@ -786,63 +787,43 @@ async def delete_shirt_campaign_api(
 
     crud.delete_shirt_campaign(db, campaign_id=campaign_id)
 
-    description = f"Admin '{admin.first_name} {admin.last_name}' deleted shirt campaign: '{campaign.title}' (ID: {campaign.id})."
+    description_log = f"Admin '{admin.first_name} {admin.last_name}' deleted shirt campaign: '{campaign.title}' (ID: {campaign.id})."
     await crud.create_admin_log(
         db=db,
         admin_id=admin.admin_id,
         organization_id=admin_org.id,
         action_type="Shirt Campaign Deleted",
-        description=description,
+        description=description_log,
         request=request,
         target_entity_type="ShirtCampaign",
         target_entity_id=campaign.id
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# Student Shirt Order Endpoints
-@router.post("/orders/", response_model=schemas.StudentShirtOrder) 
+# Shirt Orders
+@router.post("/orders/", response_model=schemas.StudentShirtOrder)
 async def create_student_shirt_order_api(
     request: Request,
     campaign_id: int = Form(...),
     student_name: str = Form(...),
-    student_year_section: str = Form(...), 
-    shirt_size: str = Form(...), 
+    student_year_section: str = Form(...),
+    shirt_size: str = Form(...),
     quantity: int = Form(...),
-    payment_amount: float = Form(...),  
     student_email: Optional[str] = Form(None),
     student_phone: Optional[str] = Form(None),
-    payment_reference_number: Optional[str] = Form(None),
-    payment_date_time: Optional[datetime] = Form(None), 
-    payment_screenshot: Optional[UploadFile] = File(None), 
-
     db: Session = Depends(get_db)
 ):
     current_student, _ = get_current_user_with_org(request, db)
-    student_id = current_student.id 
-    
-    payment_screenshot_path = None
-    if payment_screenshot and payment_screenshot.filename:
-        payment_screenshot_path = await handle_file_upload(
-            payment_screenshot,
-            "order_payment_screenshots", 
-            ["image/jpeg", "image/png"],
-            max_size_bytes=5 * 1024 * 1024
-        )
-
+    student_id = current_student.id
     order_data = schemas.StudentShirtOrderCreate(
         campaign_id=campaign_id,
-        student_id=student_id, 
+        student_id=student_id,
         student_name=student_name,
         student_year_section=student_year_section,
         student_email=student_email,
         student_phone=student_phone,
         shirt_size=shirt_size,
         quantity=quantity,
-        payment_amount=payment_amount,
-        payment_reference_number=payment_reference_number,
-        payment_date_time=payment_date_time,
-        payment_screenshot_path=payment_screenshot_path,
-        payment_status="Pending" 
     )
 
     db_order = crud.create_student_shirt_order(
@@ -871,14 +852,15 @@ async def get_student_shirt_order_api(
         except HTTPException as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to view orders.")
 
-    order = crud.get_student_shirt_order(db, order_id=order_id)
+    order = crud.get_student_shirt_order_by_id(db, order_id=order_id)
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
 
-    if order.organization_id != (organization.id if organization else None):
+
+    if order.campaign and organization and order.campaign.organization_id != organization.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
 
-    if not is_admin and order.user_id != current_entity.id:
+    if not is_admin and order.student_id != current_entity.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
 
     return order
@@ -890,20 +872,19 @@ async def get_student_shirt_orders_by_campaign_api(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=200),
-    status: Optional[str] = Query(None, description="Filter by order status (e.g., 'pending', 'paid', 'fulfilled')")
+
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
-
     campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
     if not campaign:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found.")
     if campaign.organization_id != admin_org.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for this campaign.")
 
-    orders = crud.get_student_shirt_orders_by_campaign(
+    orders = crud.get_student_shirt_orders_for_campaign(
         db,
         campaign_id=campaign_id,
-        status=status,
+
         skip=skip,
         limit=limit
     )
@@ -916,7 +897,7 @@ async def get_student_shirt_orders_by_student_api(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=200),
-    status: Optional[str] = Query(None, description="Filter by order status (e.g., 'pending', 'paid', 'fulfilled')")
+
 ):
     current_entity = None
     organization = None
@@ -934,82 +915,41 @@ async def get_student_shirt_orders_by_student_api(
     if not is_admin and student_id != current_entity.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for another student.")
 
-    orders = crud.get_student_shirt_orders_by_student(
+    orders = crud.get_student_shirt_orders_by_student_id(
         db,
-        user_id=student_id,
-        status=status,
+        student_id=student_id,
         skip=skip,
         limit=limit
     )
     return orders
 
-@router.put("/orders/{order_id}", response_model=schemas.StudentShirtOrder) 
+@router.put("/orders/{order_id}", response_model=schemas.StudentShirtOrder)
 async def update_student_shirt_order_api(
     order_id: int,
     request: Request,
-    size: Optional[str] = Form(None),
-    quantity: Optional[int] = Form(None),
-    total_price: Optional[float] = Form(None),
-    payment_status: Optional[str] = Form(None),
-    order_status: Optional[str] = Form(None), 
-    payment_screenshot: Optional[UploadFile] = File(None), 
-
+    order_update_data: schemas.StudentShirtOrderUpdate = Body(...), 
     db: Session = Depends(get_db)
 ):
-    admin, admin_org = get_current_admin_with_org(request, db) 
+    current_user, user_org = get_current_user_with_org(request, db)
 
-    order = crud.get_student_shirt_order(db, order_id=order_id) 
+    order = crud.get_student_shirt_order_by_id(db, order_id=order_id)
     if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
-    
-    if order.campaign.organization_id != admin_org.id: 
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this order.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found.")
 
+    if order.student_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this order. You can only update your own orders.")
 
-    payment_screenshot_path = order.payment_screenshot_path 
-
-    if payment_screenshot is not None: 
-        if payment_screenshot.filename:
-            payment_screenshot_path = await handle_file_upload(
-                payment_screenshot,
-                "order_payment_screenshots", 
-                ["image/jpeg", "image/png"], 
-                max_size_bytes=5 * 1024 * 1024,
-                old_file_path=order.payment_screenshot_path 
-            )
-        else:
-            delete_file_from_path(order.payment_screenshot_path) 
-            payment_screenshot_path = None 
-
-    order_update_data = schemas.StudentShirtOrderUpdate(
-        size=size,
-        quantity=quantity,
-        total_price=total_price,
-        payment_status=payment_status,
-        order_status=order_status,
-        payment_screenshot_path=payment_screenshot_path 
-    )
+    if order.campaign and order.campaign.organization_id != user_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this order. Order belongs to a different organization.")
 
     updated_order = crud.update_student_shirt_order(
         db=db,
         order_id=order_id,
-        order_update=order_update_data,
+        order_update=order_update_data, 
     )
-    
+
     if not updated_order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found after update attempt.")
-
-    description = f"Admin '{admin.first_name} {admin.last_name}' updated order ID: '{updated_order.id}' status to '{updated_order.order_status}'."
-    await crud.create_admin_log(
-        db=db,
-        admin_id=admin.admin_id,
-        organization_id=admin_org.id,
-        action_type="Student Order Updated",
-        description=description,
-        request=request,
-        target_entity_type="StudentShirtOrder",
-        target_entity_id=updated_order.id
-    )
 
     return updated_order
 
@@ -1019,31 +959,161 @@ async def delete_student_shirt_order_api(
     request: Request,
     db: Session = Depends(get_db)
 ):
-    admin, admin_org = get_current_admin_with_org(request, db)
+    current_user, user_org = get_current_user_with_org(request, db)
 
-    order = crud.get_student_shirt_order(db, order_id=order_id)
+    order = crud.get_student_shirt_order_by_id(db, order_id=order_id)
     if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
-    if order.organization_id != admin_org.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this order.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found.")
 
-    if order.payment_screenshot_path:
-        delete_file_from_path(order.payment_screenshot_path)
+    if order.student_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this order. You can only delete your own orders.")
+
+    if order.campaign and order.campaign.organization_id != user_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this order. Order belongs to a different organization.")
 
     crud.delete_student_shirt_order(db, order_id=order_id)
 
-    description = f"Admin '{admin.first_name} {admin.last_name}' deleted shirt order (ID: {order.id}) for user '{order.user.first_name} {order.user.last_name}'."
-    await crud.create_admin_log(
-        db=db,
-        admin_id=admin.admin_id,
-        organization_id=admin_org.id,
-        action_type="Shirt Order Deleted",
-        description=description,
-        request=request,
-        target_entity_type="StudentShirtOrder",
-        target_entity_id=order.id
-    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get("/orders/", response_model=List[schemas.StudentShirtOrder]) 
+async def get_all_organization_orders_for_admin(
+    request: Request,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+):
+    admin, organization = get_current_admin_with_org(request, db)
+
+    orders = crud.get_all_student_shirt_orders_by_organization(
+        db,
+        organization_id=organization.id,
+        skip=skip,
+        limit=limit
+    )
+    return orders
+
+@router.get("/student/shirt-management", response_class=HTMLResponse, name="student_shirt_management")
+async def get_student_shirt_management_page(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user_and_org: tuple = Depends(get_current_user_with_org)
+):
+    logger.info("--- Entering /student/shirt-management route ---")
+
+    current_user = current_user_and_org[0]
+    logger.info(f"Current User ID: {current_user.id if current_user else 'None'}")
+    logger.info(f"Current User Name: {current_user.name if current_user else 'None'}")
+
+    organization_obj: Optional[models.Organization] = current_user_and_org[1]
+    logger.info(f"Organization Object: {organization_obj}")
+
+    organization_id: Optional[int] = organization_obj.id if organization_obj else None
+    logger.info(f"Organization ID (extracted): {organization_id}")
+
+    shirt_campaigns = crud.get_all_shirt_campaigns(
+        db,
+        organization_id=organization_id,
+        is_active=True,
+        start_date=date.today() 
+    )
+    logger.info(f"Fetched Shirt Campaigns: {len(shirt_campaigns)} campaigns.")
+    for campaign in shirt_campaigns:
+        logger.info(f"   - Campaign ID: {campaign.id}, Name: {campaign.title}, Org ID: {campaign.organization_id}, Deadline: {campaign.pre_order_deadline}")
+
+    student_shirt_orders = crud.get_student_shirt_orders_by_student_id(db, current_user.id)
+    logger.info(f"Fetched Student Shirt Orders: {len(student_shirt_orders)} orders for student {current_user.id}.")
+    for order in student_shirt_orders:
+        logger.info(f"   - Order ID: {order.id}, Campaign ID: {order.campaign_id}, Payment Status: {order.payment.status if order.payment else 'No Payment Record'}")
+       
+    env = templates.env
+    logger.info(f"Jinja2 Environment acquired: {env}")
+
+    if 'now' not in env.globals:
+        env.globals['now'] = datetime.now
+        logger.info("Added 'now' to Jinja2 globals.")
+    else:
+        logger.info("'now' already exists in Jinja2 globals.")
+
+
+    order_detail = None 
+    logger.info(f"Order Detail set to: {order_detail}")
+
+    context = await get_base_template_context(request, db)
+    logger.info(f"Base Template Context Keys: {list(context.keys())}")
+
+    context.update({
+        "shirt_campaigns": shirt_campaigns,
+        "student_shirt_orders": student_shirt_orders,
+        "current_user": current_user,
+        "order_detail": order_detail 
+    })
+    logger.info(f"Final Template Context Keys: {list(context.keys())}")
+
+
+    logger.info("--- Exiting /student/shirt-management route (rendering template) ---")
+    return templates.TemplateResponse(
+        "student_dashboard/student_shirt_management.html", 
+        context
+    )
+
+@router.get("/student/shirt-management/order/{order_id}", response_class=HTMLResponse)
+async def get_student_shirt_order_detail_page(
+    request: Request,
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user_and_org: tuple = Depends(get_current_user_with_org)
+):
+    logger.info(f"--- Entering /student/shirt-management/order/{order_id} route ---")
+
+    current_user = current_user_and_org[0]
+    logger.info(f"Current User ID: {current_user.id if current_user else 'None'}")
+
+    found_order = crud.get_student_shirt_order_by_id(db, order_id)
+    logger.info(f"Attempting to fetch order ID: {order_id}. Found: {found_order.id if found_order else 'None'}")
+
+    if not found_order or found_order.student_id != current_user.id:
+        logger.warning(f"Order {order_id} not found or user {current_user.id} does not own it.")
+        raise HTTPException(status_code=404, detail="Order not found or not accessible.")
+
+    organization_obj: Optional[models.Organization] = current_user_and_org[1]
+    logger.info(f"Organization Object: {organization_obj}")
+
+    organization_id: Optional[int] = organization_obj.id if organization_obj else None
+    logger.info(f"Organization ID (extracted): {organization_id}")
+    shirt_campaigns = crud.get_all_shirt_campaigns(
+        db,
+        organization_id=organization_id,
+        is_active=True,
+        start_date=date.today() 
+    )
+    logger.info(f"Fetched Shirt Campaigns: {len(shirt_campaigns)} campaigns for order detail page.")
+    for campaign in shirt_campaigns:
+        logger.info(f"   - Campaign ID: {campaign.id}, Name: {campaign.title}, Org ID: {campaign.organization_id}, Deadline: {campaign.pre_order_deadline}")
+
+    student_shirt_orders = crud.get_student_shirt_orders_by_student_id(db, current_user.id)
+    logger.info(f"Fetched Student Shirt Orders: {len(student_shirt_orders)} orders for student {current_user.id} on order detail page.")
+    env = templates.env
+    logger.info(f"Jinja2 Environment acquired: {env}")
+    if 'now' not in env.globals:
+        env.globals['now'] = datetime.now
+        logger.info("Added 'now' to Jinja2 globals.")
+    else:
+        logger.info("'now' already exists in Jinja2 globals.")
+
+    context = await get_base_template_context(request, db)
+    logger.info(f"Base Template Context Keys: {list(context.keys())}")
+    context.update({
+        "shirt_campaigns": shirt_campaigns,
+        "student_shirt_orders": student_shirt_orders,
+        "current_user": current_user,
+        "order_detail": found_order
+    })
+    logger.info(f"Final Template Context Keys: {list(context.keys())}")
+    logger.info(f"--- Exiting /student/shirt-management/order/{order_id} route (rendering template) ---")
+    return templates.TemplateResponse(
+        "student_dashboard/student_shirt_management.html",
+        context
+    )
 
 @router.get("/admin/shirt_management", response_class=HTMLResponse, name="admin_shirt_management")
 async def admin_shirt_management(request: Request, db: Session = Depends(get_db)):
@@ -1108,20 +1178,20 @@ async def admin_payments(
 async def admin_payment_history(
     request: Request,
     db: Session = Depends(get_db),
-    student_number: Optional[str] = None 
+    student_number: Optional[str] = None
 ):
     admin, organization = get_current_admin_with_org(request, db)
 
     query = db.query(models.Payment).options(
         joinedload(models.Payment.payment_item),
         joinedload(models.Payment.user)
-    ).join(models.User).filter( 
+    ).join(models.User).filter(
         models.User.organization_id == organization.id
     )
 
     if student_number:
         query = query.filter(models.User.student_number == student_number)
-   
+
     payments = query.order_by(
         models.Payment.created_at.desc(),
         models.Payment.id.desc()
@@ -1131,45 +1201,55 @@ async def admin_payment_history(
     for payment in payments:
         payment_item = payment.payment_item
         user = payment.user
+        if (
+            payment_item is not None and
+            user is not None and
+            payment_item.academic_year is not None and
+            payment_item.semester is not None and
+            payment_item.fee is not None and
+            payment_item.due_date is not None and
+            payment.amount is not None and
+            payment.status is not None and
+            payment.created_at is not None and
+            user.first_name is not None and
+            user.last_name is not None and
+            user.student_number is not None
+        ):
+            status_text = payment.status
+            if status_text == "pending": status_text = "Pending"
+            elif status_text == "success": status_text = "Paid"
+            elif status_text == "failed": status_text = "Failed"
+            elif status_text == "cancelled": status_text = "Cancelled"
+            elif status_text == "past_due": status_text = "Past Due"
+            elif status_text == "unpaid": status_text = "Unpaid"
 
-        if not all([
-            payment_item, user, payment_item.academic_year, payment_item.semester,
-            payment_item.fee, payment.amount, payment.status, payment_item.due_date,
-            payment.created_at, user.first_name, user.last_name, user.student_number
-        ]):
+            payment_item_data = {
+                "academic_year": payment_item.academic_year,
+                "semester": payment_item.semester,
+                "fee": float(payment_item.fee),
+                "due_date": payment_item.due_date.strftime('%Y-%m-%d'),
+                "is_not_responsible": payment_item.is_not_responsible
+            }
+
+            payment_history_data.append({
+                "item": {
+                    "id": payment.id,
+                    "amount": float(payment.amount),
+                    "paymaya_payment_id": payment.paymaya_payment_id,
+                    "status": payment.status,
+                    "created_at": payment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    "updated_at": payment.updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment.updated_at else None,
+                    "payment_item": payment_item_data 
+                },
+                "status": status_text,
+                "user_name": f"{user.first_name} {user.last_name}",
+                "student_number": user.student_number,
+                "payment_date": payment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        else:
             print(f"Skipping payment {payment.id} due to missing related data.")
             continue
 
-        status_text = payment.status
-        if status_text == "pending": status_text = "Pending"
-        elif status_text == "success": status_text = "Paid"
-        elif status_text == "failed": status_text = "Failed"
-        elif status_text == "cancelled": status_text = "Cancelled"
-        elif status_text == "past_due": status_text = "Past Due"
-        elif status_text == "unpaid": status_text = "Unpaid"
-
-
-        payment_history_data.append({
-            "item": {
-                "id": payment.id,
-                "amount": float(payment.amount), 
-                "paymaya_payment_id": payment.paymaya_payment_id,
-                "status": payment.status, 
-                "created_at": payment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                "updated_at": payment.updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment.updated_at else None,
-                "payment_item": {
-                    "academic_year": payment_item.academic_year,
-                    "semester": payment_item.semester,
-                    "fee": float(payment_item.fee), 
-                    "due_date": payment_item.due_date.strftime('%Y-%m-%d'),
-                    "is_not_responsible": payment_item.is_not_responsible
-                }
-            },
-            "status": status_text, 
-            "user_name": f"{user.first_name} {user.last_name}",
-            "student_number": user.student_number,
-            "payment_date": payment.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        })
     return JSONResponse(content={"payment_history": payment_history_data})
 
 # Update Payment Status
@@ -2135,66 +2215,322 @@ async def paymaya_create_payment(
 
     payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
     if not payment_item:
+        logging.error(f"Payment item not found for payment_item_id={payment_item_id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment item not found")
+    
+    if hasattr(payment_item, 'is_paid') and payment_item.is_paid: 
+        logging.warning(f"Attempted to create payment for already paid PaymentItem ID: {payment_item_id}. User ID: {user.id}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This item has already been paid for.")
+  
+    existing_reusable_payment = db.query(models.Payment).filter(
+        models.Payment.payment_item_id == payment_item_id,
+        models.Payment.user_id == user.id,
+        models.Payment.status.notin_(['success', 'failed']) 
+    ).order_by(
+        models.Payment.paymaya_payment_id.is_(None).desc()
+    ).first()
 
-    db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+    db_payment = None
+    if existing_reusable_payment:
+        db_payment = existing_reusable_payment
+        db.refresh(db_payment)
+        if db_payment.status != "pending":
+            db_payment.status = "pending"
+            db.add(db_payment)
+        logging.info(f"Reusing existing payment (ID: {db_payment.id}, Current Status: {db_payment.status}) for payment_item_id: {payment_item_id}. PayMaya ID: {db_payment.paymaya_payment_id}")
+    else:
+        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+        db.add(db_payment)
+        db.flush() 
+        db_payment.status = "pending" 
+        db.add(db_payment) 
         
-    db.commit()
-    db.refresh(db_payment)
+        logging.info(f"Created new payment (ID: {db_payment.id}) and set status to 'pending' for payment_item_id: {payment_item_id}.")
 
+    if payment_item.student_shirt_order_id:
+        shirt_order = db.query(models.StudentShirtOrder).filter(
+            models.StudentShirtOrder.id == payment_item.student_shirt_order_id
+        ).first()
+
+        if shirt_order:
+            if shirt_order.payment_id != db_payment.id: 
+                shirt_order.payment_id = db_payment.id
+                db.add(shirt_order) 
+                db.commit() 
+                db.refresh(shirt_order) 
+
+            logging.info(
+                f"Linked PayMaya payment to StudentShirtOrder: payment_id={db_payment.id}, "
+                f"shirt_order_id={shirt_order.id}"
+            )
+        else:
+            logging.warning(
+                f"PaymentItem {payment_item.id} has student_shirt_order_id "
+                f"{payment_item.student_shirt_order_id} but no matching StudentShirtOrder found."
+            )
+    
     payload = {
         "totalAmount": {"currency": "PHP", "value": payment_item.fee},
-        "requestReferenceNumber": f"your-unique-ref-{datetime.now().strftime('%Y%m%d%H%M%S')}-{db_payment.id}",
+        "requestReferenceNumber": f"shirt-order-{payment_item_id}-{db_payment.id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}", 
         "redirectUrl": {
             "success": f"http://127.0.0.1:8000/Success?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
             "failure": f"http://127.0.0.1:8000/Failure?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
-            "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}"
+            "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}" 
         },
         "metadata": {
             "pf": {"smi": "CVSU", "smn": "Undisputed", "mci": "Imus City", "mpc": "608", "mco": "PHL", "postalCode": "1554", "contactNo": "0211111111", "addressLine1": "Palico"}
-            , "subMerchantRequestReferenceNumber": "63d9934f9281"
+            , "subMerchantRequestReferenceNumber": f"shirt-order-subref-{payment_item_id}" 
         }
     }
+    
     try:
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         payment_data = response.json()
-        paymaya_payment_id = payment_data.get("checkoutId")
+        paymaya_payment_id = payment_data.get("checkoutId")        
         crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
-        db.commit() 
-        logging.info(f"PayMaya payment created: payment_id={db_payment.id}, paymaya_payment_id={paymaya_payment_id}")
+        db.commit()         
+        logging.info(f"PayMaya checkout session created successfully: payment_id={db_payment.id}, paymaya_payment_id={paymaya_payment_id}")
         return payment_data
     except requests.exceptions.RequestException as e:
-        db.rollback()
-        crud.update_payment(db, payment_id=db_payment.id, status="failed")
+        db.rollback() 
+        crud.update_payment(db, payment_id=db_payment.id, status="failed") 
         db.commit() 
+        logging.error(f"PayMaya API error during checkout creation for payment_id={db_payment.id}: {e.response.text if hasattr(e.response, 'text') else str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}")
 
-# Payment Success Callback
+@router.post("/payments/paymaya/create", response_class=JSONResponse, name="paymaya_create_payment")
+async def paymaya_create_payment(
+    request: Request,
+    payment_item_id: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    user, _ = get_current_user_with_org(request, db)    
+    public_api_key = "pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah"
+    encoded_key = base64.b64encode(f"{public_api_key}:".encode()).decode()
+    url = "https://pg-sandbox.paymaya.com/checkout/v1/checkouts"
+    headers = {"accept": "application/json", "content-type": "application/json", "authorization": f"Basic {encoded_key}"}
+
+    payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
+    if not payment_item:
+        logging.error(f"Payment item not found for payment_item_id={payment_item_id}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment item not found")
+ 
+    if payment_item.is_paid: 
+        logging.warning(f"Attempted to create payment for already paid PaymentItem ID: {payment_item_id}. User ID: {user.id}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This item has already been paid for.")
+    
+    existing_reusable_payment = db.query(models.Payment).filter(
+        models.Payment.payment_item_id == payment_item_id,
+        models.Payment.user_id == user.id,
+        models.Payment.status.notin_(['success', 'failed']) 
+    ).order_by(
+        models.Payment.paymaya_payment_id.is_(None).desc() 
+    ).first()
+
+    db_payment = None
+    if existing_reusable_payment:
+        db_payment = existing_reusable_payment
+        db.refresh(db_payment)
+        if db_payment.status != "pending":
+            db_payment.status = "pending"
+            db.add(db_payment)
+        logging.info(f"Reusing existing payment (ID: {db_payment.id}, Current Status: {db_payment.status}) for payment_item_id: {payment_item_id}. PayMaya ID: {db_payment.paymaya_payment_id}")
+    else:
+        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+        db.add(db_payment)
+        db.flush() 
+        db_payment.status = "pending" 
+        db.add(db_payment)         
+        logging.info(f"Created new payment (ID: {db_payment.id}) and set status to 'pending' for payment_item_id: {payment_item_id}.")
+
+    if payment_item.student_shirt_order_id:
+        shirt_order = db.query(models.StudentShirtOrder).filter(
+            models.StudentShirtOrder.id == payment_item.student_shirt_order_id
+        ).first()
+
+        if shirt_order:
+            if shirt_order.payment_id != db_payment.id: 
+                shirt_order.payment_id = db_payment.id
+                db.add(shirt_order) 
+                db.commit() 
+                db.refresh(shirt_order) 
+
+            logging.info(
+                f"Linked PayMaya payment to StudentShirtOrder: payment_id={db_payment.id}, "
+                f"shirt_order_id={shirt_order.id}"
+            )
+        else:
+            logging.warning(
+                f"PaymentItem {payment_item.id} has student_shirt_order_id "
+                f"{payment_item.student_shirt_order_id} but no matching StudentShirtOrder found."
+            )
+    
+    payload = {
+        "totalAmount": {"currency": "PHP", "value": payment_item.fee},
+        "requestReferenceNumber": f"shirt-order-{payment_item_id}-{db_payment.id}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "redirectUrl": {
+            "success": f"http://127.0.0.1:8000/Success?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
+            "failure": f"http://127.0.0.1:8000/Failure?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
+            "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}" 
+        },
+        "metadata": {
+            "pf": {"smi": "CVSU", "smn": "Undisputed", "mci": "Imus City", "mpc": "608", "mco": "PHL", "postalCode": "1554", "contactNo": "0211111111", "addressLine1": "Palico"}
+            , "subMerchantRequestReferenceNumber": f"shirt-order-subref-{payment_item_id}" 
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        payment_data = response.json()
+        paymaya_payment_id = payment_data.get("checkoutId")        
+        crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
+        db.commit() 
+        
+        logging.info(f"PayMaya checkout session created successfully: payment_id={db_payment.id}, paymaya_payment_id={paymaya_payment_id}")
+        return payment_data
+    except requests.exceptions.RequestException as e:
+        db.rollback() 
+        crud.update_payment(db, payment_id=db_payment.id, status="failed") 
+        db.commit() 
+        logging.error(f"PayMaya API error during checkout creation for payment_id={db_payment.id}: {e.response.text if hasattr(e.response, 'text') else str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}")
+
+# Success Callback
 @router.get("/Success", response_class=HTMLResponse, name="payment_success")
 async def payment_success(
-    request: Request, paymentId: int = Query(...), paymentItemId: int = Query(...), db: Session = Depends(get_db),
+    request: Request,
+    paymentId: int = Query(...),
+    paymentItemId: int = Query(...),
+    db: Session = Depends(get_db),
 ):
+    logging.info(f"Payment success callback received: paymentId={paymentId}, paymentItemId={paymentItemId}")
+
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
-    if not payment: raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+    if not payment:
+        logging.error(f"Payment record not found for paymentId={paymentId}. This might indicate an invalid callback or a race condition.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
+
     db.refresh(payment) 
+    logging.info(f"Retrieved payment (ID: {payment.id}, Current Status: {payment.status}, User ID: {payment.user_id}) for update.")
 
-    crud.update_payment(db, payment_id=payment.id, status="success", payment_item_id=paymentItemId)
-    payment_item = crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
+    if payment.status == "success":
+        logging.warning(f"Payment ID {paymentId} is already marked as success. Skipping further updates to prevent duplicate processing.")
 
-    user = db.query(models.User).filter(models.User.id == payment.user_id).first()
-    if user and user.organization:
-        for admin in user.organization.admins:
-            message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
-            crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success",
-                                     payment_id=payment.id, 
-                                     url=f"/admin/payments/total_members?student_number={user.student_number}",
-                                     event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
+        payment_item = crud.get_payment_item_by_id(db, payment_item_id=paymentItemId)
+        if payment_item:
+            logging.info(f"Associated Payment Item {payment_item.id} already processed or found.")
+        
+        context = await get_base_template_context(request, db)
+        context.update({
+            "payment_id": payment.paymaya_payment_id if payment.paymaya_payment_id else payment.id, 
+            "payment_item_id": paymentItemId, 
+            "payment": payment, 
+            "payment_item": payment_item
+        })
+        return templates.TemplateResponse("student_dashboard/payment_success.html", context)
+
+    try:
+        updated_payment = crud.update_payment(db, payment_id=payment.id, status="success")
+        if not updated_payment:
+            logging.error(f"Failed to update payment status for paymentId={paymentId} to 'success'. CRUD operation returned None.")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update payment status.")
+        logging.info(f"Payment ID {payment.id} status successfully updated to 'success'.")
+    except Exception as e:
+        logging.exception(f"Exception while updating payment status for paymentId={payment.id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error updating payment status.")
+
+    payment_item = crud.get_payment_item_by_id(db, payment_item_id=paymentItemId)
+    if not payment_item:
+        logging.error(f"Associated Payment Item not found for paymentItemId={paymentItemId}. This is critical for Payment ID {payment.id}.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Associated Payment Item not found.")
+
+    if not payment_item.is_paid: 
+        try:
+            crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
+            logging.info(f"Payment Item ID {paymentItemId} marked as paid successfully.")
+        except Exception as e:
+            logging.exception(f"Exception while marking Payment Item {paymentItemId} as paid: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error marking payment item as paid.")
+    else:
+        logging.info(f"Payment Item ID {paymentItemId} was already marked as paid. No action needed.")
+
+    if payment_item.student_shirt_order_id:
+        logging.info(f"Payment Item {paymentItemId} is linked to Student Shirt Order ID: {payment_item.student_shirt_order_id}.")
+        shirt_order = crud.get_student_shirt_order_by_id(db, order_id=payment_item.student_shirt_order_id)
+        if shirt_order:
+            if shirt_order.status != "paid": 
+                logging.info(f"Student Shirt Order {shirt_order.id} status is '{shirt_order.status}', attempting to set to 'paid'.")
+                order_update_data = schemas.StudentShirtOrderUpdate(status="paid") 
+                try:
+                    updated_shirt_order = crud.update_student_shirt_order(
+                        db=db,
+                        order_id=shirt_order.id,
+                        order_update=order_update_data 
+                    )
+                    if updated_shirt_order:
+                        logging.info(f"Student Shirt Order {updated_shirt_order.id} status successfully updated to 'paid' via PaymentItem {payment_item.id}.")
+                                              
+                        if updated_shirt_order.campaign and updated_shirt_order.campaign.organization_id:
+                            organization = db.query(models.Organization).filter(models.Organization.id == updated_shirt_order.campaign.organization_id).first()
+                            if organization:
+                                for admin in organization.admins:
+                                    message = f"Shirt Order Payment: Student {updated_shirt_order.student_name} has paid for Shirt Order ID: {updated_shirt_order.id} (Campaign: {updated_shirt_order.campaign.title})."
+                                    crud.create_notification(db, message, 
+                                                            admin_id=admin.admin_id,
+                                                            organization_id=organization.id, 
+                                                            notification_type="shirt_order_payment",
+                                                            payment_id=payment.id, 
+                                                            url=f"/admin/shirt_management", 
+                                                            event_identifier=f"shirt_order_payment_admin_{admin.admin_id}_order_{updated_shirt_order.id}") 
+                                    logging.info(f"Notification created for admin {admin.admin_id} for shirt order payment {updated_shirt_order.id}.")
+                            else:
+                                logging.warning(f"Organization not found for campaign {updated_shirt_order.campaign.id} linked to shirt order {updated_shirt_order.id}.")
+                        else:
+                            logging.info(f"No campaign or organization found for shirt order {updated_shirt_order.id} for notification.")
+                    else:
+                        logging.warning(f"Failed to update status for Student Shirt Order {shirt_order.id} linked to PaymentItem {payment_item.id}. CRUD operation returned None.")
+                except Exception as e:
+                    logging.exception(f"Exception while updating Student Shirt Order {shirt_order.id} status: {e}")
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error updating shirt order status.")
+            else:
+                logging.info(f"Student Shirt Order {shirt_order.id} was already marked as paid. No status update needed.")
+        else:
+            logging.warning(f"PaymentItem {payment_item.id} linked to non-existent shirt_order_id {payment_item.student_shirt_order_id}. Data inconsistency detected.")
+    else:
+        logging.info(f"Payment Item {paymentItemId} is for general fees.")
+        user = db.query(models.User).filter(models.User.id == payment.user_id).first()
+        if user and user.organization and payment_item.academic_year and payment_item.semester: 
+            logging.info(f"User {user.id} and organization {user.organization.id} found for general fee payment.")
+            for admin in user.organization.admins:
+                message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
+                crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success",
+                                         payment_id=payment.id, 
+                                         url=f"/admin/payments/total_members?student_number={user.student_number}",
+                                         event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
+                logging.info(f"Notification created for admin {admin.admin_id} for general fee payment {payment.id}.")
+        else:
+            logging.warning(f"Could not find user, organization, or academic year/semester for general fee payment {payment.id}. Notification skipped.")
     
-    db.commit() 
-    logging.info(f"PayMaya payment success: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
+    try:
+        db.commit() 
+        logging.info(f"Database transaction committed successfully for payment_id={payment.id}.")
+    except Exception as e:
+        db.rollback() 
+        logging.exception(f"Failed to commit transaction for payment_id={payment.id}. Rolling back changes: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database transaction failed during commit.")
+
+    logging.info(f"PayMaya payment success processing completed for payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}. Redirecting to success page.")
+    
     context = await get_base_template_context(request, db)
-    context.update({"payment_id": payment.paymaya_payment_id, "payment_item_id": paymentItemId, "payment": payment, "payment_item": payment_item})
+    context.update({
+        "payment_id": payment.paymaya_payment_id if payment.paymaya_payment_id else payment.id, 
+        "payment_item_id": paymentItemId, 
+        "payment": payment, 
+        "payment_item": payment_item
+    })
+    
     return templates.TemplateResponse("student_dashboard/payment_success.html", context)
 
 # Payment Failure Callback
@@ -2407,14 +2743,25 @@ async def payment_history(request: Request, db: Session = Depends(get_db)):
     payment_history_data = []
     for payment in payments:
         payment_item = payment.payment_item
-        if not all([payment_item, payment_item.academic_year, payment_item.semester, payment_item.fee, payment.amount, payment.status, payment_item.due_date, payment.created_at]):
+        if (
+            payment_item is not None and
+            payment_item.academic_year is not None and
+            payment_item.semester is not None and
+            payment_item.fee is not None and
+            payment_item.due_date is not None and
+            payment.amount is not None and
+            payment.status is not None and
+            payment.created_at is not None
+        ):
+            status_text = payment.status
+            if status_text == "pending": status_text = "Pending"
+            elif status_text == "success": status_text = "Paid"
+            elif status_text == "failed": status_text = "Failed"
+            elif status_text == "cancelled": status_text = "Cancelled"
+            payment_history_data.append({"item": payment, "status": status_text})
+        else:
+            logging.warning(f"Skipping payment ID {payment.id} due to missing PaymentItem or incomplete data.")
             continue
-        status_text = payment.status
-        if status_text == "pending": status_text = "Pending"
-        elif status_text == "success": status_text = "Paid"
-        elif status_text == "failed": status_text = "Failed"
-        elif status_text == "cancelled": status_text = "Cancelled"
-        payment_history_data.append({"item": payment, "status": status_text})
 
     context = await get_base_template_context(request, db)
     context.update({"payment_history": payment_history_data, "current_user": user})

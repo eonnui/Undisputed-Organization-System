@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {    
+document.addEventListener('DOMContentLoaded', function() {
     const style = document.createElement('style');
     style.textContent = `
         .btn-close {
@@ -21,6 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .modal-body {
             padding: 20px;
         }
+        .modal-body .mb-3 {
+           
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #e2e6ea;
+            border-radius: 5px;
+        }
 
         .modal-footer {
             padding: 15px;
@@ -30,13 +38,11 @@ document.addEventListener('DOMContentLoaded', function() {
             gap: 10px;
         }
 
-       
         @keyframes slideInBottom {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
 
-       
         .custom-alert {
             padding: 15px;
             margin-bottom: 1rem;
@@ -78,42 +84,34 @@ document.addEventListener('DOMContentLoaded', function() {
             opacity: 1;
         }
 
-       
         body.modal-open {
             overflow: hidden;
         }
     `;
     document.head.appendChild(style);
-
     const adminDataElement = document.getElementById('adminData');
-    const adminId = adminDataElement.dataset.adminId ? parseInt(adminDataElement.dataset.adminId) : null;
-    const organizationId = adminDataElement.dataset.organizationId ? parseInt(adminDataElement.dataset.organizationId) : null;
+    const adminId = adminDataElement ? (adminDataElement.dataset.adminId ? parseInt(adminDataElement.dataset.adminId) : null) : null;
+    const organizationId = adminDataElement ? (adminDataElement.dataset.organizationId ? parseInt(adminDataElement.dataset.organizationId) : null) : null;
 
-    
     function showCustomModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
             console.log(`Showing modal: ${modalId}`);
-            modal.style.display = 'flex'; 
+            modal.style.display = 'flex';
             modal.style.opacity = '1';
             modal.setAttribute('aria-hidden', 'false');
-            modal.classList.add('show-modal'); 
-            document.body.classList.add('modal-open'); 
-
-            
+            modal.classList.add('show-modal');
+            document.body.classList.add('modal-open');
             const handleModalClick = function(event) {
-                
                 if (event.target === modal) {
                     console.log(`Clicked outside modal content for ${modalId}. Hiding.`);
                     hideCustomModal(modalId);
                 }
             };
-            
             modal.removeEventListener('click', handleModalClick);
             modal.addEventListener('click', handleModalClick);
         }
     }
-
     function hideCustomModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -125,27 +123,20 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.remove('modal-open');
         }
     }
-
-    
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             console.log('Escape key pressed.');
             const openModals = document.querySelectorAll('.modal[aria-hidden="false"]');
             if (openModals.length > 0) {
-                
                 hideCustomModal(openModals[openModals.length - 1].id);
             }
         }
     });
-    
-
-
     function formatDateForInput(dateString, includeTime = true) {
         const date = new Date(dateString);
         const year = date.getFullYear();
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const day = date.getDate().toString().padStart(2, '0');
-
         if (includeTime) {
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -154,33 +145,70 @@ document.addEventListener('DOMContentLoaded', function() {
             return `${year}-${month}-${day}`;
         }
     }
-
-    
     function showAlert(message, type = 'success') {
         const alertDiv = document.createElement('div');
-        
         alertDiv.className = `custom-alert custom-alert-${type} custom-alert-dismissible`;
         alertDiv.innerHTML = `
             ${message}
             <button type="button" class="custom-close-btn" aria-label="Close">&times;</button>
         `;
         document.querySelector('.container-fluid').prepend(alertDiv);
-
-        
         alertDiv.querySelector('.custom-close-btn').addEventListener('click', function() {
             console.log('Alert close button clicked.');
             alertDiv.remove();
         });
-
-        
         setTimeout(() => alertDiv.remove(), 5000);
+    }    
+    function createSizePriceRow(size = '', price = '') {
+        const row = document.createElement('div');
+        row.classList.add('row', 'g-2', 'mb-2', 'align-items-center', 'size-price-row');
+        row.innerHTML = `
+            <div class="col-5">
+                <input type="text" class="form-control form-control-sm campaign-size" placeholder="Size (e.g., S, M, XL)" value="${size}" required>
+            </div>
+            <div class="col-5">
+                <input type="number" step="0.01" class="form-control form-control-sm campaign-price" placeholder="Price" value="${price}" required>
+            </div>
+            <div class="col-2">
+                <button type="button" class="btn btn-danger btn-sm remove-size-price-row">X</button>
+            </div>
+        `;
+        return row;
     }
     
+    document.getElementById('addCreateCampaignSizePrice').addEventListener('click', function() {
+        document.getElementById('createCampaignSizePricesContainer').appendChild(createSizePriceRow());
+    });
+
+    document.getElementById('addEditCampaignSizePrice').addEventListener('click', function() {
+        document.getElementById('editCampaignSizePricesContainer').appendChild(createSizePriceRow());
+    });
+    
+    document.querySelectorAll('#createCampaignSizePricesContainer, #editCampaignSizePricesContainer').forEach(container => {
+        container.addEventListener('click', function(event) {
+            if (event.target.classList.contains('remove-size-price-row')) {
+                event.target.closest('.size-price-row').remove();
+            }
+        });
+    });
+    
+    function collectSizePriceData(containerId) {
+        const pricesBySize = {};
+        const container = document.getElementById(containerId);
+        container.querySelectorAll('.size-price-row').forEach(row => {
+            const sizeInput = row.querySelector('.campaign-size');
+            const priceInput = row.querySelector('.campaign-price');
+            if (sizeInput && priceInput && sizeInput.value && priceInput.value) {
+                pricesBySize[sizeInput.value.trim()] = parseFloat(priceInput.value);
+            }
+        });
+        return pricesBySize;
+    }
 
     async function fetchCampaigns() {
         try {
-            const orgFilter = (organizationId !== null) ? `?organization_id=${organizationId}` : '';
-            const response = await fetch(`/campaigns/${orgFilter}`);
+            
+            const response = await fetch(`/campaigns/`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const campaigns = await response.json();
             populateCampaignsTable(campaigns);
@@ -196,12 +224,27 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.innerHTML = '';
         campaigns.forEach(campaign => {
             const descriptionSnippet = campaign.description ? campaign.description.substring(0, Math.min(campaign.description.length, 50)) + '...' : 'No description';
+            let priceDisplay = '';
+            if (campaign.prices_by_size) {
+                const sizes = Object.keys(campaign.prices_by_size);
+                if (sizes.length > 0) { 
+                    const firstSize = sizes[0];
+                    const firstPrice = campaign.prices_by_size[firstSize];
+                    priceDisplay = `₱${firstPrice.toFixed(2)} (${firstSize})`; 
+                } else {
+                    priceDisplay = 'N/A'; 
+                }
+            } else if (campaign.price_per_shirt) { 
+                priceDisplay = `₱${campaign.price_per_shirt.toFixed(2)}`;
+            } else {
+                priceDisplay = 'N/A';
+            }
 
             const row = tbody.insertRow();
             row.innerHTML = `
                 <td>${campaign.title}</td>
                 <td>${descriptionSnippet}</td>
-                <td>₱${campaign.price_per_shirt.toFixed(2)}</td>
+                <td>${priceDisplay}</td>
                 <td>${new Date(campaign.pre_order_deadline).toLocaleDateString()}</td>
                 <td>${campaign.available_stock}</td>
                 <td>${campaign.is_active ? 'Yes' : 'No'}</td>
@@ -223,7 +266,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         formData.set('is_active', form.querySelector('#campaignIsActive').checked ? 'true' : 'false');
 
+        
+        const pricesBySize = collectSizePriceData('createCampaignSizePricesContainer');
+        if (Object.keys(pricesBySize).length === 0) {
+            showAlert('Please add at least one size and price.', 'danger');
+            return;
+        }
+        formData.append('prices_by_size', JSON.stringify(pricesBySize));
+        
+        formData.delete('price_per_shirt');
+
         try {
+            
             const response = await fetch('/campaigns/', {
                 method: 'POST',
                 body: formData
@@ -235,10 +289,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const newCampaign = await response.json();
             showAlert('Campaign created successfully!');
             fetchCampaigns();
-
-            hideCustomModal('createCampaignModal'); 
-
+            hideCustomModal('createCampaignModal');
             form.reset();
+            
+            document.getElementById('createCampaignSizePricesContainer').innerHTML = '';
+            document.getElementById('createCampaignSizePricesContainer').appendChild(createSizePriceRow()); 
         } catch (error) {
             console.error('Error creating campaign:', error);
             showAlert(`Failed to create campaign: ${error.message}`, 'danger');
@@ -253,7 +308,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         formData.set('is_active', form.querySelector('#editCampaignIsActive').checked ? 'true' : 'false');
 
+        
+        const pricesBySize = collectSizePriceData('editCampaignSizePricesContainer');
+        if (Object.keys(pricesBySize).length === 0) {
+            showAlert('Please add at least one size and price.', 'danger');
+            return;
+        }
+        formData.append('prices_by_size', JSON.stringify(pricesBySize));
+        
+        formData.delete('price_per_shirt');
+
         try {
+            
             const response = await fetch(`/campaigns/${campaignId}`, {
                 method: 'PUT',
                 body: formData
@@ -265,9 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const updatedCampaign = await response.json();
             showAlert('Campaign updated successfully!');
             fetchCampaigns();
-
-            hideCustomModal('editCampaignModal'); 
-
+            hideCustomModal('editCampaignModal');
         } catch (error) {
             console.error('Error updating campaign:', error);
             showAlert(`Failed to update campaign: ${error.message}`, 'danger');
@@ -279,15 +343,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         try {
+            
             const response = await fetch(`/campaigns/${campaignId}`, {
                 method: 'DELETE'
             });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+            }
             showAlert('Campaign deleted successfully!');
             fetchCampaigns();
         } catch (error) {
             console.error('Error deleting campaign:', error);
-            showAlert('Failed to delete campaign.', 'danger');
+            showAlert(`Failed to delete campaign: ${error.message}`, 'danger');
         }
     }
 
@@ -295,60 +363,82 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target.classList.contains('edit-campaign-btn')) {
             const campaignId = event.target.dataset.campaignId;
             try {
+                
                 const response = await fetch(`/campaigns/${campaignId}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
                 const campaign = await response.json();
-
                 document.getElementById('editCampaignId').value = campaign.id;
                 document.getElementById('editCampaignTitle').value = campaign.title;
-                document.getElementById('editCampaignDescription').value = campaign.description || '';
-                document.getElementById('editCampaignPrice').value = campaign.price_per_shirt;
-                document.getElementById('editCampaignPreOrderDeadline').value = formatDateForInput(campaign.pre_order_deadline, false);
+                document.getElementById('editCampaignDescription').value = campaign.description || '';                
+                document.getElementById('editCampaignPreOrderDeadline').value = formatDateForInput(campaign.pre_order_deadline); 
                 document.getElementById('editCampaignStock').value = campaign.available_stock;
                 document.getElementById('editCampaignIsActive').checked = campaign.is_active;
-
                 const currentImageDiv = document.getElementById('currentSizeChartImage');
                 if (campaign.size_chart_image_path) {
                     currentImageDiv.innerHTML = `<img src="${campaign.size_chart_image_path}" style="max-width: 150px; height: auto;"><p>Current Image</p>`;
                 } else {
                     currentImageDiv.innerHTML = `<p>No current image.</p>`;
                 }
-                document.getElementById('editCampaignSizeChart').value = '';
+                document.getElementById('editCampaignSizeChart').value = ''; 
+                
+                const editSizePricesContainer = document.getElementById('editCampaignSizePricesContainer');
+                editSizePricesContainer.innerHTML = ''; 
+                if (campaign.prices_by_size && Object.keys(campaign.prices_by_size).length > 0) {
+                    for (const size in campaign.prices_by_size) {
+                        editSizePricesContainer.appendChild(createSizePriceRow(size, campaign.prices_by_size[size]));
+                    }
+                } else {
+                    
+                    editSizePricesContainer.appendChild(createSizePriceRow());
+                }
 
-                showCustomModal('editCampaignModal'); 
-
+                showCustomModal('editCampaignModal');
             } catch (error) {
                 console.error('Error fetching campaign for edit:', error);
-                showAlert('Failed to load campaign details for editing.', 'danger');
+                showAlert(`Failed to load campaign details for editing: ${error.message}`, 'danger');
             }
         } else if (event.target.classList.contains('delete-campaign-btn')) {
             const campaignId = event.target.dataset.campaignId;
             handleDeleteCampaign(campaignId);
         }
     });
-
-    async function fetchOrders(campaignId = null, statusFilter = null) {
+    
+    async function fetchOrders(campaignId = null) {
         let url;
-        if (campaignId) {
+
+        
+        if (campaignId && campaignId !== '') {
             url = `/orders/campaign/${campaignId}`;
         } else {
-            document.querySelector('#ordersTable tbody').innerHTML = '<tr><td colspan="10" class="text-center">Select a campaign to view orders.</td></tr>';
-            return;
+            url = `/orders/`; 
         }
 
-        url += `?skip=0&limit=200`;
-        if (statusFilter) {
-            url += `&status=${statusFilter}`;
-        }
+        url += `?skip=0&limit=200`; 
 
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                
+                throw new Error(`HTTP error! Status: ${response.status}, Detail: ${errorData.detail || response.statusText}`);
+            }
             const orders = await response.json();
             populateOrdersTable(orders);
         } catch (error) {
             console.error('Error fetching orders:', error);
-            showAlert('Failed to load orders.', 'danger');
+            
+            showAlert(`Failed to load orders: ${error.message}`, 'danger');
+            document.querySelector('#ordersTable tbody').innerHTML = `<tr><td colspan="6" class="text-center">Error loading orders: ${error.message}</td></tr>`;
         }
     }
 
@@ -356,30 +446,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.querySelector('#ordersTable tbody');
         tbody.innerHTML = '';
         if (orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center">No orders found for this selection.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No orders found for this selection.</td></tr>';
             return;
         }
         orders.forEach(order => {
             const row = tbody.insertRow();
             row.innerHTML = `
                 <td>${order.id}</td>
-                <td>${order.user.first_name} ${order.user.last_name} (${order.user.student_number})</td>
-                <td>${order.campaign.name}</td>
-                <td>${order.size}</td>
+                <td>${order.student_name}</td>
+                <td>${order.campaign.title}</td>
+                <td>${order.shirt_size}</td>
                 <td>${order.quantity}</td>
-                <td>₱${order.total_price.toFixed(2)}</td>
-                <td>${order.payment_status}</td>
-                <td>${order.order_status}</td>
-                <td>
-                    ${order.payment_screenshot_path ? `<a href="${order.payment_screenshot_path}" target="_blank">View</a>` : 'N/A'}
-                </td>
-                <td>
-                    <button class="custom-button custom-button-warning update-order-status-btn"
-                            data-order-id="${order.id}"
-                            data-current-status="${order.order_status}">
-                        Update Status
-                    </button>
-                </td>
+                <td>₱${order.order_total_amount.toFixed(2)}</td>
             `;
         });
     }
@@ -390,64 +468,24 @@ document.addEventListener('DOMContentLoaded', function() {
         campaigns.forEach(campaign => {
             const option = document.createElement('option');
             option.value = campaign.id;
-            option.textContent = campaign.name;
+            option.textContent = campaign.title;
             select.appendChild(option);
         });
     }
 
-    async function handleUpdateOrderStatus(event) {
-        event.preventDefault();
-        const form = event.target;
-        const orderId = document.getElementById('updateOrderId').value;
-        const newStatus = document.getElementById('newOrderStatus').value;
-        const formData = new FormData();
-        formData.append('order_status', newStatus);
-
-        try {
-            const response = await fetch(`/orders/${orderId}`, {
-                method: 'PUT',
-                body: formData
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-            }
-            const updatedOrder = await response.json();
-            showAlert('Order status updated successfully!');
-            const selectedCampaignId = document.getElementById('orderCampaignFilter').value;
-            const selectedStatus = document.getElementById('orderStatusFilter').value;
-            fetchOrders(selectedCampaignId, selectedStatus);
-
-            hideCustomModal('updateOrderStatusModal'); 
-
-        } catch (error) {
-            console.error('Error updating order status:', error);
-            showAlert(`Failed to update order status: ${error.message}`, 'danger');
-        }
-    }
-
-    document.querySelector('#ordersTable tbody').addEventListener('click', function(event) {
-        if (event.target.classList.contains('update-order-status-btn')) {
-            const orderId = event.target.dataset.orderId;
-            const currentStatus = event.target.dataset.currentStatus;
-            document.getElementById('updateOrderId').value = orderId;
-            document.getElementById('orderCurrentStatus').value = currentStatus;
-            document.getElementById('newOrderStatus').value = currentStatus;
-
-            showCustomModal('updateOrderStatusModal'); 
-        }
-    });
-
-    
     const createCampaignButton = document.querySelector('button[data-bs-target="#createCampaignModal"]');
     if (createCampaignButton) {
         createCampaignButton.addEventListener('click', function() {
             console.log('Add New Campaign button clicked.');
             showCustomModal('createCampaignModal');
+            
+            const createCampaignSizePricesContainer = document.getElementById('createCampaignSizePricesContainer');
+            if (createCampaignSizePricesContainer.children.length === 0) {
+                createCampaignSizePricesContainer.appendChild(createSizePriceRow());
+            }
         });
     }
 
-    
     document.querySelectorAll('.modal .btn-close').forEach(button => {
         button.addEventListener('click', function() {
             console.log('Modal close button clicked.');
@@ -458,13 +496,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('createCampaignForm').addEventListener('submit', handleCreateCampaign);
     document.getElementById('editCampaignForm').addEventListener('submit', handleEditCampaign);
-    document.getElementById('updateOrderStatusForm').addEventListener('submit', handleUpdateOrderStatus);
 
     document.getElementById('applyOrderFilters').addEventListener('click', () => {
         const campaignId = document.getElementById('orderCampaignFilter').value;
-        const status = document.getElementById('orderStatusFilter').value;
-        fetchOrders(campaignId || null, status || null);
+        fetchOrders(campaignId);
     });
 
+    
     fetchCampaigns();
+    fetchOrders(''); 
 });
