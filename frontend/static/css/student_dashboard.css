@@ -507,14 +507,6 @@ body {margin: 0; padding: 0;}
     color: var(--org-dashboard-accent-primary);
 }
 
-.event-meta {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: var(--org-event-meta-color);
-    font-size: 0.95em;
-    margin-bottom: 10px;
-}
 
 .event-meta span {
     display: flex;
@@ -531,8 +523,6 @@ body {margin: 0; padding: 0;}
     font-size: 1em;
     line-height: 1.7;
     margin-bottom: 15px;
-    border-left: 3px solid var(--org-event-item-border);
-    padding-left: 10px;
     border-radius: 5px;
     animation: fadeIn 0.3s ease-out;
 }
