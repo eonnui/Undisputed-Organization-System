@@ -1596,7 +1596,7 @@ tfoot td {
 }
 
 .change-profile-pic {
-    background-color: var(--org-change-profile-pic-bg);
+    background-color: var(--org-button-group-button-update-bg);
     color: var(--org-button-text);
 }
 
