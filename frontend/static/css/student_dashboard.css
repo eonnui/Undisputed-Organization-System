@@ -2119,3 +2119,9 @@ h1 {
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
 }
+
+
+
+.settings-section input {
+    background-color: var(--org-read-only-input-bg);
+}
