@@ -211,3 +211,74 @@ class AdminLog(AdminLogBase):
 
     class Config:
         from_attributes = True
+
+
+class ShirtCampaignBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    price_per_shirt: float
+    pre_order_deadline: date
+    available_stock: int 
+    gcash_number: Optional[str] = None
+    gcash_name: Optional[str] = None
+    is_active: bool = True
+    size_chart_image_path: Optional[str] = None
+
+class ShirtCampaignCreate(ShirtCampaignBase):
+    organization_id: int 
+
+class ShirtCampaignUpdate(ShirtCampaignBase):
+    
+    title: Optional[str] = None
+    description: Optional[str] = None
+    price_per_shirt: Optional[float] = None
+    pre_order_deadline: Optional[date] = None
+    gcash_number: Optional[str] = None
+    gcash_name: Optional[str] = None
+    is_active: Optional[bool] = None
+    size_chart_image_path: Optional[str] = None
+
+
+class ShirtCampaign(ShirtCampaignBase):
+    id: int
+    admin_id: int
+    organization_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class StudentShirtOrderBase(BaseModel):
+    student_name: str
+    student_year_section: str
+    student_email: Optional[str] = None
+    student_phone: Optional[str] = None
+    shirt_size: str
+    quantity: int = 1
+    payment_amount: float
+    payment_reference_number: Optional[str] = None
+    payment_date_time: Optional[datetime] = None
+    payment_screenshot_path: Optional[str] = None
+    payment_status: str = "Pending"
+
+class StudentShirtOrderCreate(StudentShirtOrderBase):
+    campaign_id: int
+    student_id: int 
+
+class StudentShirtOrderUpdate(BaseModel):
+    
+    payment_status: Optional[str] = None
+    payment_reference_number: Optional[str] = None
+    payment_date_time: Optional[datetime] = None
+    payment_screenshot_path: Optional[str] = None 
+
+class StudentShirtOrder(StudentShirtOrderBase):
+    id: int
+    campaign_id: int
+    student_id: int
+    ordered_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

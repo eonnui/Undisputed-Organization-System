@@ -56,6 +56,14 @@ EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY = "images/event_classifications"
 # Ensure the directory exists for event classification images
 (STATIC_DIR / EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
 
+# Define subdirectory for shirt campaign images
+CAMPAIGN_IMAGES_SUBDIRECTORY = "images/campaigns"
+(STATIC_DIR / CAMPAIGN_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
+
+# Define subdirectory for payment screenshots
+PAYMENT_SCREENSHOTS_SUBDIRECTORY = "images/payment_screenshots"
+(STATIC_DIR / PAYMENT_SCREENSHOTS_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
+
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -578,6 +586,474 @@ async def admin_delete_bulletin_post(post_id: int, request: Request, db: Session
     )
 
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
+
+# Shirt Campaign Endpoints
+@router.post("/campaigns/", response_model=schemas.ShirtCampaign)
+async def create_shirt_campaign_api(
+    request: Request,
+    title: str = Form(...), 
+    description: Optional[str] = Form(None),
+    price_per_shirt: float = Form(...),
+    pre_order_deadline: date = Form(...),
+    available_stock: int = Form(...), 
+    is_active: bool = Form(True), 
+    gcash_number: Optional[str] = Form(None),
+    gcash_name: Optional[str] = Form(None),
+    
+    size_chart_image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+    organization_id = admin_org.id if admin_org else None
+
+    size_chart_image_path = None
+    if size_chart_image and size_chart_image.filename:
+        size_chart_image_path = await handle_file_upload(
+            size_chart_image,
+            CAMPAIGN_IMAGES_SUBDIRECTORY,
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+            max_size_bytes=5 * 1024 * 1024
+        )
+
+    campaign_data = schemas.ShirtCampaignCreate(
+        organization_id=organization_id,
+        title=title,                    
+        description=description,
+        price_per_shirt=price_per_shirt,
+        pre_order_deadline=pre_order_deadline, 
+        available_stock=available_stock, 
+        is_active=is_active,
+        gcash_number=gcash_number,
+        gcash_name=gcash_name,
+        size_chart_image_path=size_chart_image_path
+    )
+
+    db_campaign = crud.create_shirt_campaign(
+        db=db,
+        campaign=campaign_data,
+        admin_id=admin.admin_id,
+    )
+
+    description_log = f"Admin '{admin.first_name} {admin.last_name}' created shirt campaign: '{db_campaign.title}'." # Use db_campaign.title
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Campaign Created",
+        description=description_log,
+        request=request,
+        target_entity_type="ShirtCampaign",
+        target_entity_id=db_campaign.id
+    )
+
+    return db_campaign
+
+@router.get("/campaigns/{campaign_id}", response_model=schemas.ShirtCampaign)
+async def get_shirt_campaign_api(
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+   
+    try:
+        current_entity, organization = get_current_admin_with_org(request, db)
+    except HTTPException:
+        try:
+            current_entity, organization = get_current_user_with_org(request, db)
+        except HTTPException as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to view campaigns.")
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found")
+    if organization and campaign.organization_id != organization.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Campaign not accessible to this organization.")
+    return campaign
+
+@router.get("/campaigns/", response_model=List[schemas.ShirtCampaign])
+async def get_all_shirt_campaigns_api(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin_info_tuple: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+    is_active: Optional[bool] = Query(None, description="Filter by campaign active status"),
+    search: Optional[str] = Query(None, description="Search keyword in campaign name or description"),
+    start_date: Optional[date] = Query(None, description="Filter campaigns starting from this date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="Filter campaigns ending by this date (YYYY-MM-DD)")
+):
+    current_admin, current_organization = admin_info_tuple
+    organization_id = current_organization.id if current_organization else None
+
+    
+    campaigns = crud.get_all_shirt_campaigns(
+        db=db,
+        organization_id=organization_id,
+        skip=skip, 
+        limit=limit, 
+        is_active=is_active,
+        search_query=search, 
+        start_date=start_date, 
+        end_date=end_date 
+    )
+
+    return campaigns
+
+@router.put("/campaigns/{campaign_id}", response_model=schemas.ShirtCampaign)
+async def update_shirt_campaign_api(
+    campaign_id: int,
+    request: Request,    
+    title: str = Form(...), 
+    description: Optional[str] = Form(None),
+    price_per_shirt: float = Form(...),
+    pre_order_deadline: date = Form(...), 
+    available_stock: int = Form(...),
+    is_active: bool = Form(False),
+    size_chart_image: Optional[UploadFile] = File(None), 
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db) 
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found")
+    if campaign.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this campaign.")
+
+    final_size_chart_image_path = campaign.size_chart_image_path 
+    if size_chart_image is not None: 
+        if size_chart_image.filename:           
+            final_size_chart_image_path = await handle_file_upload(
+                size_chart_image,
+                CAMPAIGN_IMAGES_SUBDIRECTORY,
+                ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+                max_size_bytes=5 * 1024 * 1024,
+                old_file_path=campaign.size_chart_image_path 
+            )
+        else:
+            delete_file_from_path(campaign.size_chart_image_path)
+            final_size_chart_image_path = None 
+
+    campaign_update = schemas.ShirtCampaignUpdate(
+        title=title, 
+        description=description,
+        price_per_shirt=price_per_shirt,
+        pre_order_deadline=pre_order_deadline, 
+        available_stock=available_stock,
+        is_active=is_active,
+        size_chart_image_path=final_size_chart_image_path 
+    )
+
+    updated_campaign = crud.update_shirt_campaign(
+        db=db,
+        campaign_id=campaign_id,
+        campaign_update=campaign_update 
+    )
+
+    if not updated_campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found after update attempt.")
+    
+    description = f"Admin '{admin.first_name} {admin.last_name}' updated shirt campaign: '{updated_campaign.title}'." 
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Campaign Updated",
+        description=description,
+        request=request,
+        target_entity_type="ShirtCampaign",
+        target_entity_id=updated_campaign.id
+    )
+
+    return updated_campaign
+
+@router.delete("/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_shirt_campaign_api(
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found")
+    if campaign.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this campaign.")
+
+    if campaign.size_chart_image_path:
+        delete_file_from_path(campaign.size_chart_image_path)
+
+    crud.delete_shirt_campaign(db, campaign_id=campaign_id)
+
+    description = f"Admin '{admin.first_name} {admin.last_name}' deleted shirt campaign: '{campaign.title}' (ID: {campaign.id})."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Campaign Deleted",
+        description=description,
+        request=request,
+        target_entity_type="ShirtCampaign",
+        target_entity_id=campaign.id
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# Student Shirt Order Endpoints
+@router.post("/orders/", response_model=schemas.StudentShirtOrder) 
+async def create_student_shirt_order_api(
+    request: Request,
+    campaign_id: int = Form(...),
+    student_name: str = Form(...),
+    student_year_section: str = Form(...), 
+    shirt_size: str = Form(...), 
+    quantity: int = Form(...),
+    payment_amount: float = Form(...),  
+    student_email: Optional[str] = Form(None),
+    student_phone: Optional[str] = Form(None),
+    payment_reference_number: Optional[str] = Form(None),
+    payment_date_time: Optional[datetime] = Form(None), 
+    payment_screenshot: Optional[UploadFile] = File(None), 
+
+    db: Session = Depends(get_db)
+):
+    current_student, _ = get_current_user_with_org(request, db)
+    student_id = current_student.id 
+    
+    payment_screenshot_path = None
+    if payment_screenshot and payment_screenshot.filename:
+        payment_screenshot_path = await handle_file_upload(
+            payment_screenshot,
+            "order_payment_screenshots", 
+            ["image/jpeg", "image/png"],
+            max_size_bytes=5 * 1024 * 1024
+        )
+
+    order_data = schemas.StudentShirtOrderCreate(
+        campaign_id=campaign_id,
+        student_id=student_id, 
+        student_name=student_name,
+        student_year_section=student_year_section,
+        student_email=student_email,
+        student_phone=student_phone,
+        shirt_size=shirt_size,
+        quantity=quantity,
+        payment_amount=payment_amount,
+        payment_reference_number=payment_reference_number,
+        payment_date_time=payment_date_time,
+        payment_screenshot_path=payment_screenshot_path,
+        payment_status="Pending" 
+    )
+
+    db_order = crud.create_student_shirt_order(
+        db=db,
+        order=order_data,
+    )
+
+    return db_order
+
+@router.get("/orders/{order_id}", response_model=schemas.StudentShirtOrder)
+async def get_student_shirt_order_api(
+    order_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    current_entity = None
+    organization = None
+    is_admin = False
+
+    try:
+        current_entity, organization = get_current_admin_with_org(request, db)
+        is_admin = True
+    except HTTPException:
+        try:
+            current_entity, organization = get_current_user_with_org(request, db)
+        except HTTPException as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to view orders.")
+
+    order = crud.get_student_shirt_order(db, order_id=order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
+
+    if order.organization_id != (organization.id if organization else None):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
+
+    if not is_admin and order.user_id != current_entity.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
+
+    return order
+
+@router.get("/orders/campaign/{campaign_id}", response_model=List[schemas.StudentShirtOrder])
+async def get_student_shirt_orders_by_campaign_api(
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+    status: Optional[str] = Query(None, description="Filter by order status (e.g., 'pending', 'paid', 'fulfilled')")
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found.")
+    if campaign.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for this campaign.")
+
+    orders = crud.get_student_shirt_orders_by_campaign(
+        db,
+        campaign_id=campaign_id,
+        status=status,
+        skip=skip,
+        limit=limit
+    )
+    return orders
+
+@router.get("/orders/student/{student_id}", response_model=List[schemas.StudentShirtOrder])
+async def get_student_shirt_orders_by_student_api(
+    student_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+    status: Optional[str] = Query(None, description="Filter by order status (e.g., 'pending', 'paid', 'fulfilled')")
+):
+    current_entity = None
+    organization = None
+    is_admin = False
+
+    try:
+        current_entity, organization = get_current_admin_with_org(request, db)
+        is_admin = True
+    except HTTPException:
+        try:
+            current_entity, organization = get_current_user_with_org(request, db)
+        except HTTPException as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to view orders.")
+
+    if not is_admin and student_id != current_entity.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for another student.")
+
+    orders = crud.get_student_shirt_orders_by_student(
+        db,
+        user_id=student_id,
+        status=status,
+        skip=skip,
+        limit=limit
+    )
+    return orders
+
+@router.put("/orders/{order_id}", response_model=schemas.StudentShirtOrder) 
+async def update_student_shirt_order_api(
+    order_id: int,
+    request: Request,
+    size: Optional[str] = Form(None),
+    quantity: Optional[int] = Form(None),
+    total_price: Optional[float] = Form(None),
+    payment_status: Optional[str] = Form(None),
+    order_status: Optional[str] = Form(None), 
+    payment_screenshot: Optional[UploadFile] = File(None), 
+
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db) 
+
+    order = crud.get_student_shirt_order(db, order_id=order_id) 
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
+    
+    if order.campaign.organization_id != admin_org.id: 
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this order.")
+
+
+    payment_screenshot_path = order.payment_screenshot_path 
+
+    if payment_screenshot is not None: 
+        if payment_screenshot.filename:
+            payment_screenshot_path = await handle_file_upload(
+                payment_screenshot,
+                "order_payment_screenshots", 
+                ["image/jpeg", "image/png"], 
+                max_size_bytes=5 * 1024 * 1024,
+                old_file_path=order.payment_screenshot_path 
+            )
+        else:
+            delete_file_from_path(order.payment_screenshot_path) 
+            payment_screenshot_path = None 
+
+    order_update_data = schemas.StudentShirtOrderUpdate(
+        size=size,
+        quantity=quantity,
+        total_price=total_price,
+        payment_status=payment_status,
+        order_status=order_status,
+        payment_screenshot_path=payment_screenshot_path 
+    )
+
+    updated_order = crud.update_student_shirt_order(
+        db=db,
+        order_id=order_id,
+        order_update=order_update_data,
+    )
+    
+    if not updated_order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found after update attempt.")
+
+    description = f"Admin '{admin.first_name} {admin.last_name}' updated order ID: '{updated_order.id}' status to '{updated_order.order_status}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Student Order Updated",
+        description=description,
+        request=request,
+        target_entity_type="StudentShirtOrder",
+        target_entity_id=updated_order.id
+    )
+
+    return updated_order
+
+@router.delete("/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_student_shirt_order_api(
+    order_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    order = crud.get_student_shirt_order(db, order_id=order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
+    if order.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this order.")
+
+    if order.payment_screenshot_path:
+        delete_file_from_path(order.payment_screenshot_path)
+
+    crud.delete_student_shirt_order(db, order_id=order_id)
+
+    description = f"Admin '{admin.first_name} {admin.last_name}' deleted shirt order (ID: {order.id}) for user '{order.user.first_name} {order.user.last_name}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Order Deleted",
+        description=description,
+        request=request,
+        target_entity_type="StudentShirtOrder",
+        target_entity_id=order.id
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get("/admin/shirt_management", response_class=HTMLResponse, name="admin_shirt_management")
+async def admin_shirt_management(request: Request, db: Session = Depends(get_db)):
+    admin, organization = get_current_admin_with_org(request, db)
+    context = await get_base_template_context(request, db)
+    context.update({
+        "admin_id": admin.admin_id,
+        "organization_id": organization.id,
+    })
+    return templates.TemplateResponse("admin_dashboard/admin_shirt_management.html", context)
 
 # Admin Payments Page
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
