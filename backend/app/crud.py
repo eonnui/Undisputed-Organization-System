@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 from datetime import datetime, date, timezone, timedelta
 import logging
 from sqlalchemy.sql import exists
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from typing import Optional, Tuple, List, Dict, Any
 import json
 from collections import defaultdict
@@ -1079,12 +1079,13 @@ def create_shirt_campaign(db: Session, campaign: schemas.ShirtCampaignCreate, ad
         description=campaign.description,
         price_per_shirt=campaign.price_per_shirt,
         pre_order_deadline=campaign.pre_order_deadline,
+        available_stock=campaign.available_stock, # <--- ADD THIS LINE!
         gcash_number=campaign.gcash_number,
         gcash_name=campaign.gcash_name,
         is_active=campaign.is_active,
         size_chart_image_path=campaign.size_chart_image_path,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
+        created_at=datetime.now(timezone.utc), # Ensure timezone is imported: from datetime import datetime, timezone
+        updated_at=datetime.now(timezone.utc), # Ensure timezone is imported
     )
     db.add(db_campaign)
     db.commit()
@@ -1100,13 +1101,43 @@ def get_shirt_campaign_by_id(db: Session, campaign_id: int) -> Optional[models.S
         logging.warning(f"Shirt campaign with id: {campaign_id} not found.")
     return campaign
 
-def get_all_shirt_campaigns(db: Session, organization_id: Optional[int] = None, is_active: Optional[bool] = None) -> List[models.ShirtCampaign]:
+def get_all_shirt_campaigns(
+    db: Session,
+    organization_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    search_query: Optional[str] = None, # Added search_query parameter
+    start_date: Optional[date] = None,  # Added start_date parameter
+    end_date: Optional[date] = None     # Added end_date parameter
+) -> List[models.ShirtCampaign]:
     query = db.query(models.ShirtCampaign)
+
     if organization_id:
         query = query.filter(models.ShirtCampaign.organization_id == organization_id)
+    
     if is_active is not None:
         query = query.filter(models.ShirtCampaign.is_active == is_active)
-    campaigns = query.order_by(models.ShirtCampaign.pre_order_deadline.desc()).all()
+
+    if search_query:
+        # Apply search filter to name or description
+        query = query.filter(
+            or_(
+                models.ShirtCampaign.name.ilike(f"%{search_query}%"),
+                models.ShirtCampaign.description.ilike(f"%{search_query}%")
+            )
+        )
+    
+    if start_date:
+        # Filter campaigns where pre_order_deadline is on or after start_date
+        query = query.filter(models.ShirtCampaign.pre_order_deadline >= start_date)
+    
+    if end_date:
+        # Filter campaigns where pre_order_deadline is on or before end_date
+        # We add 1 day to end_date to include the entire end_date
+        query = query.filter(models.ShirtCampaign.pre_order_deadline < end_date + timedelta(days=1))
+
+    campaigns = query.order_by(models.ShirtCampaign.pre_order_deadline.desc()).offset(skip).limit(limit).all()
     logging.info(f"Retrieved {len(campaigns)} shirt campaigns.")
     return campaigns
 

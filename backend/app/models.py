@@ -293,6 +293,7 @@ class ShirtCampaign(Base):
     description = Column(Text, nullable=False)
     price_per_shirt = Column(Float, nullable=False)
     pre_order_deadline = Column(Date, nullable=False)
+    available_stock = Column(Integer, nullable=False) #
     gcash_number = Column(String, nullable=True)
     gcash_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)

@@ -211,9 +211,10 @@ class AdminLog(AdminLogBase):
 
 class ShirtCampaignBase(BaseModel):
     title: str
-    description: str
+    description: Optional[str] = None
     price_per_shirt: float
     pre_order_deadline: date
+    available_stock: int # <--- ADD THIS LINE
     gcash_number: Optional[str] = None
     gcash_name: Optional[str] = None
     is_active: bool = True

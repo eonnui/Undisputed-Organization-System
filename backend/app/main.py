@@ -56,6 +56,14 @@ EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY = "images/event_classifications"
 # Ensure the directory exists for event classification images
 (STATIC_DIR / EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
 
+# Define subdirectory for shirt campaign images
+CAMPAIGN_IMAGES_SUBDIRECTORY = "images/campaigns"
+(STATIC_DIR / CAMPAIGN_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
+
+# Define subdirectory for payment screenshots
+PAYMENT_SCREENSHOTS_SUBDIRECTORY = "images/payment_screenshots"
+(STATIC_DIR / PAYMENT_SCREENSHOTS_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
+
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -552,6 +560,535 @@ async def admin_delete_bulletin_post(post_id: int, request: Request, db: Session
     )
 
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
+
+# Shirt Campaign Endpoints
+
+@router.post("/campaigns/", response_model=schemas.ShirtCampaign)
+async def create_shirt_campaign_api(
+    request: Request,
+    # Match schema fields and types carefully
+    title: str = Form(...), # Directly use 'title' from form to match schema
+    description: Optional[str] = Form(None),
+    price_per_shirt: float = Form(...),
+    pre_order_deadline: date = Form(...), # Directly expect 'date' type from form
+    # Removed 'start_date' as it's not in schemas.ShirtCampaignCreate
+    available_stock: int = Form(...), # Expect this from form, add to schema if not present
+    is_active: bool = Form(True), # Default to True as per Base, adjust if form has checkbox
+    gcash_number: Optional[str] = Form(None),
+    gcash_name: Optional[str] = Form(None),
+    
+    size_chart_image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+    organization_id = admin_org.id if admin_org else None
+
+    # Handle file upload for size_chart_image
+    size_chart_image_path = None
+    if size_chart_image and size_chart_image.filename:
+        size_chart_image_path = await handle_file_upload(
+            size_chart_image,
+            CAMPAIGN_IMAGES_SUBDIRECTORY,
+            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+            max_size_bytes=5 * 1024 * 1024
+        )
+
+    # Construct the schemas.ShirtCampaignCreate object with all required fields
+    campaign_data = schemas.ShirtCampaignCreate(
+        organization_id=organization_id, # Required by schema
+        title=title,                     # Directly from form
+        description=description,
+        price_per_shirt=price_per_shirt,
+        pre_order_deadline=pre_order_deadline, # Directly from form (already date type)
+        available_stock=available_stock, # Pass this, ensure it's in your schema
+        is_active=is_active,
+        gcash_number=gcash_number,
+        gcash_name=gcash_name,
+        size_chart_image_path=size_chart_image_path
+    )
+
+    db_campaign = crud.create_shirt_campaign(
+        db=db,
+        campaign=campaign_data,
+        admin_id=admin.admin_id,
+    )
+
+    description_log = f"Admin '{admin.first_name} {admin.last_name}' created shirt campaign: '{db_campaign.title}'." # Use db_campaign.title
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Campaign Created",
+        description=description_log,
+        request=request,
+        target_entity_type="ShirtCampaign",
+        target_entity_id=db_campaign.id
+    )
+
+    return db_campaign
+
+@router.get("/campaigns/{campaign_id}", response_model=schemas.ShirtCampaign)
+async def get_shirt_campaign_api(
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    # Allow both admin and user to view campaigns
+    try:
+        current_entity, organization = get_current_admin_with_org(request, db)
+    except HTTPException:
+        try:
+            current_entity, organization = get_current_user_with_org(request, db)
+        except HTTPException as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to view campaigns.")
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found")
+    if organization and campaign.organization_id != organization.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Campaign not accessible to this organization.")
+    return campaign
+
+@router.get("/campaigns/", response_model=List[schemas.ShirtCampaign])
+async def get_all_shirt_campaigns_api(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin_info_tuple: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+    is_active: Optional[bool] = Query(None, description="Filter by campaign active status"),
+    search: Optional[str] = Query(None, description="Search keyword in campaign name or description"),
+    start_date: Optional[date] = Query(None, description="Filter campaigns starting from this date (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="Filter campaigns ending by this date (YYYY-MM-DD)")
+):
+    current_admin, current_organization = admin_info_tuple
+    organization_id = current_organization.id if current_organization else None
+
+    # Re-added 'skip', 'limit', 'search_query', 'start_date', 'end_date' to the crud function call
+    campaigns = crud.get_all_shirt_campaigns(
+        db=db,
+        organization_id=organization_id,
+        skip=skip, # Re-add this
+        limit=limit, # Re-add this
+        is_active=is_active,
+        search_query=search, # Re-add this
+        start_date=start_date, # Re-add this
+        end_date=end_date # Re-add this
+    )
+
+    # Log the action
+    description = f"Admin '{current_admin.first_name} {current_admin.last_name}' fetched shirt campaigns."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=current_admin.admin_id,
+        organization_id=current_organization.id,
+        action_type="Shirt Campaigns Fetched",
+        description=description,
+        request=request,
+        target_entity_type="ShirtCampaigns",
+        target_entity_id=None
+    )
+
+    return campaigns
+
+@router.put("/campaigns/{campaign_id}", response_model=schemas.ShirtCampaign)
+async def update_shirt_campaign_api(
+    campaign_id: int,
+    request: Request,
+    # Use 'title' to match your schema and model
+    title: str = Form(...), 
+    description: Optional[str] = Form(None),
+    price_per_shirt: float = Form(...),
+    pre_order_deadline: date = Form(...), # Changed to date to match schema and model
+    available_stock: int = Form(...),
+    is_active: bool = Form(False),
+    size_chart_image: Optional[UploadFile] = File(None), # Still handles the file upload
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db) # Assuming get_current_admin_with_org correctly yields admin and organization
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found")
+    if campaign.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this campaign.")
+
+    final_size_chart_image_path = campaign.size_chart_image_path # Initialize with current path
+    if size_chart_image is not None: # Check if file field was provided
+        if size_chart_image.filename:
+            # If a new file is uploaded, handle it and update path
+            final_size_chart_image_path = await handle_file_upload(
+                size_chart_image,
+                CAMPAIGN_IMAGES_SUBDIRECTORY,
+                ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
+                max_size_bytes=5 * 1024 * 1024,
+                old_file_path=campaign.size_chart_image_path # Pass existing path to delete old image
+            )
+        else: # Filename is empty, meaning client wants to remove existing image
+            delete_file_from_path(campaign.size_chart_image_path)
+            final_size_chart_image_path = None # Set path to None if image is removed
+
+    # Reconstruct the schema object for update from the individual form parameters
+    campaign_update = schemas.ShirtCampaignUpdate(
+        title=title, # Use 'title' here
+        description=description,
+        price_per_shirt=price_per_shirt,
+        pre_order_deadline=pre_order_deadline, # Pass pre_order_deadline
+        available_stock=available_stock,
+        is_active=is_active,
+        size_chart_image_path=final_size_chart_image_path # <--- Pass the path here
+    )
+
+    updated_campaign = crud.update_shirt_campaign(
+        db=db,
+        campaign_id=campaign_id,
+        campaign_update=campaign_update # Pass the Pydantic object directly
+        # DO NOT pass size_chart_image_path here as a separate argument
+    )
+
+    if not updated_campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found after update attempt.")
+    
+    description = f"Admin '{admin.first_name} {admin.last_name}' updated shirt campaign: '{updated_campaign.title}'." # Use .title here
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Campaign Updated",
+        description=description,
+        request=request,
+        target_entity_type="ShirtCampaign",
+        target_entity_id=updated_campaign.id
+    )
+
+    return updated_campaign
+
+@router.delete("/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_shirt_campaign_api(
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found")
+    if campaign.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this campaign.")
+
+    if campaign.size_chart_image_path:
+        delete_file_from_path(campaign.size_chart_image_path)
+
+    crud.delete_shirt_campaign(db, campaign_id=campaign_id)
+
+    description = f"Admin '{admin.first_name} {admin.last_name}' deleted shirt campaign: '{campaign.title}' (ID: {campaign.id})."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Campaign Deleted",
+        description=description,
+        request=request,
+        target_entity_type="ShirtCampaign",
+        target_entity_id=campaign.id
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# Student Shirt Order Endpoints
+@router.post("/orders/", response_model=schemas.StudentShirtOrder) # Assuming this route
+async def create_student_shirt_order_api(
+    request: Request,
+    # Required fields from StudentShirtOrderBase / StudentShirtOrderCreate
+    campaign_id: int = Form(...),
+    student_name: str = Form(...), # Add this
+    student_year_section: str = Form(...), # Add this
+    shirt_size: str = Form(...), # Renamed from 'size' to match schema
+    quantity: int = Form(...),
+    payment_amount: float = Form(...), # Replaced 'total_price' with 'payment_amount'
+    
+    # Optional fields
+    student_email: Optional[str] = Form(None),
+    student_phone: Optional[str] = Form(None),
+    payment_reference_number: Optional[str] = Form(None),
+    payment_date_time: Optional[datetime] = Form(None), # If frontend sends this
+    payment_screenshot: Optional[UploadFile] = File(None), # Handles image upload
+
+    db: Session = Depends(get_db)
+    # You will need to get the student_id from an authentication dependency
+    # Example: student_info_tuple: Tuple[models.Student] = Depends(get_current_student)
+):
+    # Retrieve the current user (student) from the session
+    current_student, _ = get_current_user_with_org(request, db)
+    student_id = current_student.id # Get student_id from the authenticated student object
+    
+    payment_screenshot_path = None
+    if payment_screenshot and payment_screenshot.filename:
+        payment_screenshot_path = await handle_file_upload(
+            payment_screenshot,
+            "order_payment_screenshots", # Define your subdirectory for order payment screenshots
+            ["image/jpeg", "image/png"],
+            max_size_bytes=5 * 1024 * 1024
+        )
+
+    # Construct the schemas.StudentShirtOrderCreate object
+    order_data = schemas.StudentShirtOrderCreate(
+        campaign_id=campaign_id,
+        student_id=student_id, # From authentication
+        student_name=student_name,
+        student_year_section=student_year_section,
+        student_email=student_email,
+        student_phone=student_phone,
+        shirt_size=shirt_size,
+        quantity=quantity,
+        payment_amount=payment_amount,
+        payment_reference_number=payment_reference_number,
+        payment_date_time=payment_date_time,
+        payment_screenshot_path=payment_screenshot_path,
+        payment_status="Pending" # Default as per schema, or from form if specified
+    )
+
+    db_order = crud.create_student_shirt_order(
+        db=db,
+        order=order_data,
+    )
+
+    # You might want to add student logging or admin logging depending on who triggers this
+    # For a student:
+    # description = f"Student '{current_student.first_name} {current_student.last_name}' created order ID: '{db_order.id}' for campaign '{db_order.campaign_id}'."
+    # await crud.create_student_log(...) # Assuming a student log function
+
+    return db_order
+
+@router.get("/orders/{order_id}", response_model=schemas.StudentShirtOrder)
+async def get_student_shirt_order_api(
+    order_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    current_entity = None
+    organization = None
+    is_admin = False
+
+    try:
+        current_entity, organization = get_current_admin_with_org(request, db)
+        is_admin = True
+    except HTTPException:
+        try:
+            current_entity, organization = get_current_user_with_org(request, db)
+        except HTTPException as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to view orders.")
+
+    order = crud.get_student_shirt_order(db, order_id=order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
+
+    if order.organization_id != (organization.id if organization else None):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
+
+    # Non-admin users can only view their own orders
+    if not is_admin and order.user_id != current_entity.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
+
+    return order
+
+@router.get("/orders/campaign/{campaign_id}", response_model=List[schemas.StudentShirtOrder])
+async def get_student_shirt_orders_by_campaign_api(
+    campaign_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+    status: Optional[str] = Query(None, description="Filter by order status (e.g., 'pending', 'paid', 'fulfilled')")
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
+    if not campaign:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Campaign not found.")
+    if campaign.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for this campaign.")
+
+    orders = crud.get_student_shirt_orders_by_campaign(
+        db,
+        campaign_id=campaign_id,
+        status=status,
+        skip=skip,
+        limit=limit
+    )
+    return orders
+
+@router.get("/orders/student/{student_id}", response_model=List[schemas.StudentShirtOrder])
+async def get_student_shirt_orders_by_student_api(
+    student_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+    status: Optional[str] = Query(None, description="Filter by order status (e.g., 'pending', 'paid', 'fulfilled')")
+):
+    current_entity = None
+    organization = None
+    is_admin = False
+
+    try:
+        current_entity, organization = get_current_admin_with_org(request, db)
+        is_admin = True
+    except HTTPException:
+        try:
+            current_entity, organization = get_current_user_with_org(request, db)
+        except HTTPException as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated to view orders.")
+
+    if not is_admin and student_id != current_entity.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for another student.")
+
+    orders = crud.get_student_shirt_orders_by_student(
+        db,
+        user_id=student_id,
+        status=status,
+        skip=skip,
+        limit=limit
+    )
+    return orders
+
+@router.put("/orders/{order_id}", response_model=schemas.StudentShirtOrder) # Assuming the route is /orders/{order_id}
+async def update_student_shirt_order_api(
+    order_id: int,
+    request: Request,
+    # Replace the problematic line with individual Form parameters
+    # The fields here should match your schemas.StudentShirtOrderUpdate
+    # Based on previous context, 'order_status' is definitely one.
+    # Other fields like size, quantity, total_price, payment_status might also be updatable.
+    # If a field is not present in the form, you might need a default or Optional.
+    # For a PUT, usually all fields are expected, even if they haven't changed.
+    # For PATCH, Optional might be more common.
+    # Let's use Optional for fields that might not always be sent in an update,
+    # especially if it's for partial updates (like just status).
+    
+    # Assuming update fields might include:
+    size: Optional[str] = Form(None),
+    quantity: Optional[int] = Form(None),
+    total_price: Optional[float] = Form(None),
+    payment_status: Optional[str] = Form(None),
+    order_status: Optional[str] = Form(None), # This was specifically handled in JS for update
+    payment_screenshot: Optional[UploadFile] = File(None), # Handles image update/removal
+
+    db: Session = Depends(get_db)
+    # If this endpoint is for students updating their own orders,
+    # you'd need get_current_student dependency here.
+    # If it's for admins updating orders, you'd need get_current_admin_with_org.
+    # Based on the admin_shirt_management.html, this is likely an admin-facing update.
+    # admin, admin_org = get_current_admin_with_org(request, db) # Add this if not already in local scope
+):
+    # Retrieve current admin/user if necessary for authorization
+    admin, admin_org = get_current_admin_with_org(request, db) # Ensure this is called if needed for auth
+
+    order = crud.get_student_shirt_order(db, order_id=order_id) # Assuming you have this CRUD function
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
+    
+    # Add authorization check if the order belongs to the admin's organization
+    # Assuming `order` has an `organization_id` attribute
+    if order.campaign.organization_id != admin_org.id: # Check against campaign's organization
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this order.")
+
+
+    payment_screenshot_path = order.payment_screenshot_path # Start with existing path
+
+    # Logic to handle payment_screenshot update or removal
+    if payment_screenshot is not None: # Check if the file field was included in the form submission
+        if payment_screenshot.filename:
+            # New file uploaded, handle it
+            payment_screenshot_path = await handle_file_upload(
+                payment_screenshot,
+                "order_payment_screenshots", # Your defined subdirectory for screenshots
+                ["image/jpeg", "image/png"], # Allowed image types
+                max_size_bytes=5 * 1024 * 1024,
+                old_file_path=order.payment_screenshot_path # Pass existing path to delete old image
+            )
+        else:
+            # Filename is empty, implying a request to remove the existing image
+            delete_file_from_path(order.payment_screenshot_path) # Delete old file
+            payment_screenshot_path = None # Set path to None
+
+    # Reconstruct the schemas.StudentShirtOrderUpdate object from the individual form parameters
+    # Only include fields that were provided by the form, or provide explicit defaults if necessary
+    order_update_data = schemas.StudentShirtOrderUpdate(
+        size=size,
+        quantity=quantity,
+        total_price=total_price,
+        payment_status=payment_status,
+        order_status=order_status,
+        payment_screenshot_path=payment_screenshot_path # Pass the updated/removed path
+    )
+
+    updated_order = crud.update_student_shirt_order(
+        db=db,
+        order_id=order_id,
+        order_update=order_update_data,
+        # Pass other necessary arguments to your crud function
+    )
+    
+    if not updated_order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found after update attempt.")
+
+    # Add admin log entry for the update
+    description = f"Admin '{admin.first_name} {admin.last_name}' updated order ID: '{updated_order.id}' status to '{updated_order.order_status}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Student Order Updated",
+        description=description,
+        request=request,
+        target_entity_type="StudentShirtOrder",
+        target_entity_id=updated_order.id
+    )
+
+    return updated_order
+
+@router.delete("/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_student_shirt_order_api(
+    order_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    admin, admin_org = get_current_admin_with_org(request, db)
+
+    order = crud.get_student_shirt_order(db, order_id=order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
+    if order.organization_id != admin_org.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this order.")
+
+    if order.payment_screenshot_path:
+        delete_file_from_path(order.payment_screenshot_path)
+
+    crud.delete_student_shirt_order(db, order_id=order_id)
+
+    description = f"Admin '{admin.first_name} {admin.last_name}' deleted shirt order (ID: {order.id}) for user '{order.user.first_name} {order.user.last_name}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Shirt Order Deleted",
+        description=description,
+        request=request,
+        target_entity_type="StudentShirtOrder",
+        target_entity_id=order.id
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.get("/admin/shirt_management", response_class=HTMLResponse, name="admin_shirt_management")
+async def admin_shirt_management(request: Request, db: Session = Depends(get_db)):
+    admin, organization = get_current_admin_with_org(request, db)
+    context = await get_base_template_context(request, db)
+    context.update({
+        "admin_id": admin.admin_id,
+        "organization_id": organization.id,
+    })
+    return templates.TemplateResponse("admin_dashboard/admin_shirt_management.html", context)
 
 # Admin Payments Page
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
