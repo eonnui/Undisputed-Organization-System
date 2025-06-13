@@ -1658,7 +1658,7 @@ tfoot td {
     box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
 }
 
-.verified { background-color: var(--org-verified-bg); color: var(--org-verified-text); }
+.verified { background-color: var(--org-verified-bg); color: var(--org-verified-text); padding: 5px; border-radius: 10px; font-size: 0.5em; vertical-align: center;}
 .unverified { background-color: var(--org-unverified-bg); color: var(--org-unverified-text); }
 
 #registrationFormUpload {
