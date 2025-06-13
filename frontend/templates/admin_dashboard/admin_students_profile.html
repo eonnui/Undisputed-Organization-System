@@ -1,227 +1,82 @@
-{% extends "admin_base.html" %} 
+{% extends "admin_base.html" %}
 
-{% block title %}Shirt & Order Management{% endblock %}
+{% block title %}Student Profiles{% endblock %}
 
 {% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/static/css/admin_dashboard.css">
+<link rel="stylesheet" href="/static/css/admin_students_profile.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <h2 class="mb-4">Shirt Campaign and Order Management</h2>
-
-    <div id="adminData"
-         data-admin-id="{{ admin_id if admin_id is not none else '' }}"
-         data-organization-id="{{ organization_id if organization_id is not none else '' }}"
-         style="display: none;">
-    </div>
-
-    <div class="card mb-5">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Shirt Campaigns</h4>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createCampaignModal">Add New Campaign</button>
+<div class="students-page-container">
+    <h2 class="page-header">Student Profiles</h2>
+    <div class="header-actions">
+        <div class="filter-container">
+            <label for="student-search-filter" class="sr-only">Search Student</label>
+            <input type="text" id="student-search-filter" placeholder="Search by Name or Student ID" class="search-input">
+            <button onclick="updateStudentsTable()" class="search-button">Search</button>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover" id="campaignsTable">
-                    <thead>
-                        <tr>
-                            <th>Title</th> 
-                            <th>Description</th>
-                            <th>Price</th>
-                            <th>Pre-Order Deadline</th> 
-                            <th>Stock</th>
-                            <th>Active</th>
-                            <th>Image</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+
+        <div class="custom-select-wrapper" id="year-level-filter-wrapper">
+            <div class="custom-select-trigger" id="year-level-filter-trigger">
+                <span>Year Level</span>
+                <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+            </div>
+            <div class="custom-options" id="year-level-filter-options">
+                <ul role="listbox" id="year-level-dropdown">
+                    <li data-value="">All</li>
+                    <li data-value="1">1st Year</li>
+                    <li data-value="2">2nd Year</li>
+                    <li data-value="3">3rd Year</li>
+                    <li data-value="4">4th Year</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="custom-select-wrapper" id="section-filter-wrapper">
+            <div class="custom-select-trigger" id="section-filter-trigger">
+                <span>Section</span>
+                <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+            </div>
+            <div class="custom-options" id="section-filter-options">
+                <ul role="listbox" id="section-dropdown">
+                    <li data-value="">All</li>
+                    <li data-value="A">A</li>
+                    <li data-value="B">B</li>
+                    <li data-value="C">C</li>
+                    <li data-value="D">D</li>
+                    <li data-value="E">E</li>
+                </ul>
             </div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h4>Student Shirt Orders</h4>
-        </div>
-        <div class="card-body">
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="orderCampaignFilter" class="form-label">Filter by Campaign:</label>
-                    <select class="form-select" id="orderCampaignFilter">
-                        <option value="">All Campaigns</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="orderStatusFilter" class="form-label">Filter by Status:</label>
-                    <select class="form-select" id="orderStatusFilter">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="paid">Paid</option>
-                        <option value="fulfilled">Fulfilled</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button class="btn btn-info w-100" id="applyOrderFilters">Apply Filters</button>
-                </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover" id="ordersTable">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Student</th>
-                            <th>Campaign</th>
-                            <th>Size</th>
-                            <th>Quantity</th>
-                            <th>Total Price</th>
-                            <th>Payment Status</th>
-                            <th>Order Status</th>
-                            <th>Screenshot</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="students-table-container">
+        <table class="students-table" id="students-table">
+            <thead>
+                <tr>
+                    <th class="sortable" data-column="student_number">Student ID</th>
+                    <th class="sortable" data-column="first_name">First Name</th>
+                    <th class="sortable" data-column="last_name">Last Name</th>
+                    <th class="sortable" data-column="year_level">Year Level</th>
+                    <th class="sortable" data-column="section">Section</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
     </div>
 </div>
-
-<div class="modal fade" id="createCampaignModal" tabindex="-1" aria-labelledby="createCampaignModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createCampaignModalLabel">Create New Shirt Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="createCampaignForm" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="campaignTitle" class="form-label">Campaign Title</label>
-                        <input type="text" class="form-control" id="campaignTitle" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="campaignDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="campaignDescription" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="campaignPrice" class="form-label">Price per Shirt</label>
-                        <input type="number" step="0.01" class="form-control" id="campaignPrice" name="price_per_shirt" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="preOrderDeadline" class="form-label">Pre-Order Deadline</label>
-                        <input type="date" class="form-control" id="preOrderDeadline" name="pre_order_deadline" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="campaignStock" class="form-label">Available Stock</label>
-                        <input type="number" class="form-control" id="campaignStock" name="available_stock" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="campaignSizeChart" class="form-label">Size Chart Image</label>
-                        <input class="form-control" type="file" id="campaignSizeChart" name="size_chart_image" accept="image/*">
-                        <small class="form-text text-muted">Upload a new image for the size chart.</small>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="campaignIsActive" name="is_active">
-                        <label class="form-check-label" for="campaignIsActive">
-                            Is Active
-                        </label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create Campaign</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editCampaignModal" tabindex="-1" aria-labelledby="editCampaignModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editCampaignModalLabel">Edit Shirt Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editCampaignForm" enctype="multipart/form-data">
-                    <input type="hidden" id="editCampaignId" name="campaign_id">
-                    <div class="mb-3">
-                        <label for="editCampaignTitle" class="form-label">Campaign Title</label> 
-                        <input type="text" class="form-control" id="editCampaignTitle" name="title" required> 
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editCampaignDescription" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignPrice" class="form-label">Price per Shirt</label>
-                        <input type="number" step="0.01" class="form-control" id="editCampaignPrice" name="price_per_shirt" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label> 
-                        <input type="date" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignStock" class="form-label">Available Stock</label>
-                        <input type="number" class="form-control" id="editCampaignStock" name="available_stock" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignSizeChart" class="form-label">Size Chart Image</label>
-                        <input class="form-control" type="file" id="editCampaignSizeChart" name="size_chart_image" accept="image/*">
-                        <small class="form-text text-muted">Upload a new image or leave blank to keep current. Select nothing and submit to remove.</small>
-                        <div id="currentSizeChartImage" class="mt-2"></div>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="editCampaignIsActive" name="is_active">
-                        <label class="form-check-label" for="editCampaignIsActive">
-                            Is Active
-                        </label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update Campaign</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="updateOrderStatusModal" tabindex="-1" aria-labelledby="updateOrderStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="updateOrderStatusModalLabel">Update Order Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="updateOrderStatusForm">
-                    <input type="hidden" id="updateOrderId">
-                    <div class="mb-3">
-                        <label for="orderCurrentStatus" class="form-label">Current Status</label>
-                        <input type="text" class="form-control" id="orderCurrentStatus" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="newOrderStatus" class="form-label">New Status</label>
-                        <select class="form-select" id="newOrderStatus" name="status">
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="fulfilled">Fulfilled</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update Status</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/admin_dashboard/admin_shirt_management.js"></script>
+<script src="/static/js/admin_dashboard/admin_students_profile.js"></script>
 {% endblock %}
