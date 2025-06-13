@@ -48,7 +48,7 @@ body {margin: 0; padding: 0;}
 .section-title {
     font-size: 1.8em;
     font-weight: bold;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 20px;
     text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
     animation: fadeIn 0.5s ease-out;
@@ -107,7 +107,7 @@ body {margin: 0; padding: 0;}
 }
 
 .view-details {
-    color: var(--org-dashboard-accent-primary);
+    color: var(--org-text-primary);
     text-decoration: none;
     font-weight: bold;
     transition: color 0.2s ease, transform 0.2s ease;
@@ -156,7 +156,7 @@ body {margin: 0; padding: 0;}
 
 .faq-title {
     font-size: 1.8em;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 20px;
     border-bottom: 2px solid var(--org-faq-border-color);
     padding-bottom: 15px;
@@ -188,7 +188,7 @@ body {margin: 0; padding: 0;}
 
 .faq-question {
     font-weight: bold;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 5px;
     cursor: pointer;
     padding: 15px;
@@ -274,18 +274,18 @@ body {margin: 0; padding: 0;}
     gap: 20px;
     width: 100%;
     max-width: none;
-    margin: 0;
-    padding: 20px;
+    margin: 0;   
     box-sizing: border-box;
     height: 100%;
 }
 
 .bulletin-board-container {
-    flex: 2.5;
+    flex: 2.4;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: flex-start;  
+    justify-content: flex-start;
+    padding: 20px;  
     width: 100%;
 }
 
@@ -394,7 +394,7 @@ body {margin: 0; padding: 0;}
 
 .post-title {
     font-weight: bold;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 5px;
     font-size: 1.3em;
     transition: color 0.2s ease;
@@ -417,7 +417,6 @@ body {margin: 0; padding: 0;}
     color: var(--org-post-content-color);
     line-height: 1.7;
     white-space: pre-line;
-    border-left: 3px solid var(--org-post-card-border);
     padding-left: 10px;
     border-radius: 5px;
     animation: fadeIn 0.3s ease-out;
@@ -556,9 +555,9 @@ body {margin: 0; padding: 0;}
     transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     font-family: "DM Sans", sans-serif;
     box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
-    width: auto; /* Allow button to size based on content */
-    display: inline-block; /* Ensures it respects margin/padding correctly */
-    margin-top: 1rem; /* Add some space above the button */
+    width: auto; 
+    display: inline-block; 
+    margin-top: 1rem; 
 }
 
 .view-org-chart-button:hover {
@@ -611,13 +610,14 @@ body {margin: 0; padding: 0;}
 }
 
 /* EVENTS */
-.events-page {  
+.events-page {
     flex-grow: 1;
     padding: 20px; 
     animation: fadeIn 0.5s ease-out;
     display: flex;
-    flex-direction: column; 
-    align-items: flex-start; 
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box; 
 }
 
 .events-title {
@@ -629,17 +629,17 @@ body {margin: 0; padding: 0;}
     animation: fadeIn 0.5s ease-out;
     text-align: left;
     width: 100%; 
-    max-width: 800px; 
+    box-sizing: border-box;     
 }
 
 .events-container {
     display: flex;
     flex-direction: column;
-    gap: 25px; 
-    align-self: center;
-    width: 100%;
-    max-width: 1020px; 
-    padding: 0 10px; 
+    gap: 25px;
+    width: 100%; 
+    padding: 0 20px; 
+    box-sizing: border-box; 
+    margin: 0 auto; 
 }
 
 .event-card {
@@ -650,8 +650,9 @@ body {margin: 0; padding: 0;}
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    animation: fadeInUp 0.4s ease-out;  
+    animation: fadeInUp 0.4s ease-out;
     width: 100%; 
+    box-sizing: border-box; 
 }
 
 .event-card:hover {
@@ -659,7 +660,7 @@ body {margin: 0; padding: 0;}
     box-shadow: 0 6px 15px rgba(var(--org-shadow-base-rgb), 0.1);
 }
 
-.event-title {
+.event-title { 
     font-size: 1.4em;
     font-weight: bold;
     margin-bottom: 12px;
@@ -703,27 +704,22 @@ body {margin: 0; padding: 0;}
 
 .event-item {
     padding: 15px;
-    margin-bottom: 15px; 
+    margin-bottom: 15px;
     border-radius: 12px;
     background-color: var(--org-announcement-card-bg);
     border-left: 4px solid var(--org-accent-light);
     transition: all 0.3s ease;
-    position: relative; 
+    position: relative;
     animation: slideInLeft 0.4s ease-out;
     box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 .event-item:hover {
     transform: translateX(5px) translateY(-5px);
     background-color: var(--org-event-item-hover-bg);
     box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.08);
-}
-
-.event-title {
-    font-weight: bold;
-    color: var(--org-dashboard-title-color);
-    margin-bottom: 8px;
-    font-size: 1.2em;
 }
 
 .event-date,
@@ -754,7 +750,7 @@ body {margin: 0; padding: 0;}
     border-radius: 15px;
     font-size: 0.9em;
     font-weight: bold;
-    align-self: flex-start; 
+    align-self: flex-start;
     margin-bottom: 15px;
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
@@ -847,7 +843,7 @@ body {margin: 0; padding: 0;}
 .leave-button:hover,
 .full-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 3px 7px rgba(var(--org-shadow-base-rgb), 0.15);
+    box-shadow: 0 3px 7px rgba(var(--org-shadow-base), 0.15);
 }
 
 .join-button {
@@ -884,41 +880,39 @@ body {margin: 0; padding: 0;}
     color: var(--org-participants-count-color);
     margin-top: 8px;
 }
-
 /* MEMBERSHIP AND PAYMENTS */
-.payments-page {   
+.payments-page {
     flex-grow: 1;
-    padding: 20px; 
+    padding: 20px;
     display: flex;
-    flex-direction: column; 
-    align-items: flex-start;    
+    flex-direction: column;
+    width: 100%; 
+    box-sizing: border-box; 
 }
 
 .payments-container {
     padding: 30px;
-    background-color: var(--org-text-inverse);
+    background-color: var(--org-card-bg);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(var(--org-shadow-base-rgb), 0.12);
-    animation: slideInUp 0.6s ease-out; 
-    align-self: center; 
-    width: 100%;
-    max-width: 980px; 
+    animation: slideInUp 0.6s ease-out;
+    width: 100%; 
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
+    box-sizing: border-box; 
 }
 
 .header-container {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
     width: 100%; 
-    max-width: 1000px; 
-    align-self: left; 
+    box-sizing: border-box; 
 }
 
-.page-title { 
-    margin: 0; 
+.page-title {
+    margin: 0;
     font-size: 2.8em;
     font-weight: 700;
     color: var(--org-text-primary-darker);
@@ -935,6 +929,7 @@ body {margin: 0; padding: 0;}
     padding-bottom: 15px;
     border-bottom: 2px dashed var(--org-border-light-darker);
     width: 100%; 
+    box-sizing: border-box; 
 }
 
 .payments-header h1 {
@@ -944,32 +939,37 @@ body {margin: 0; padding: 0;}
     color: var(--org-text-primary-darker);
     text-shadow: 1px 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
     letter-spacing: -0.5px;
-    text-align: left; 
+    text-align: left;
+    flex-grow: 1; 
 }
 
 .payments-table-container {
     margin-bottom: 35px;
     width: 100%; 
+    box-sizing: border-box;
 }
 
 h2 {
     font-size: 2em;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 18px;
     border-bottom: 3px solid var(--org-border-light-darker);
     padding-bottom: 10px;
     letter-spacing: -0.3px;
-    text-align: left; 
+    text-align: left;
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .payment-table {
     border: none;
-    width: 100%;
+    width: 100%; 
     border-collapse: collapse;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: hidden; 
     box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.08);
     animation: fadeInUp 0.5s ease-out;
+    box-sizing: border-box;
 }
 
 .payment-table th,
@@ -978,6 +978,7 @@ h2 {
     padding: 18px 15px;
     text-align: left;
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    box-sizing: border-box; 
 }
 
 .payment-table th {
@@ -1068,10 +1069,10 @@ h2 {
     font-weight: bold;
     transition: background-color 0.3s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    line-height: 20px;
+    box-sizing: border-box;
     float: right;
-    width: 53px;   
-    height: 51px;       
-    line-height: 20px;       
+    margin-left: auto; 
 }
 
 .view-history-button:hover {
@@ -1285,7 +1286,7 @@ h2 {
 }
 
 .stat-card {
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border-radius: var(--org-radius-lg);
     box-shadow: var(--org-shadow-md);
     padding: 20px;
@@ -1335,7 +1336,7 @@ h2 {
     flex-wrap: wrap;
     gap: 25px;
     margin-bottom: 30px;
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     padding: 25px;
     border-radius: var(--org-radius-lg);
     box-shadow: var(--org-shadow-md);
@@ -1368,7 +1369,7 @@ h2 {
 
 .toggle-buttons {
     display: flex;
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border-radius: var(--org-radius-lg);
     padding: 6px;
     width: fit-content;
@@ -1399,7 +1400,7 @@ h2 {
 }
 
 .report-card {
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border-radius: var(--org-radius-lg);
     box-shadow: var(--org-shadow-md);
     margin-bottom: 24px;
@@ -1513,7 +1514,7 @@ tfoot td {
 }
 
 .monthly-toggles button {
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
     border: 1px solid var(--org-border-light);
     color: var(--org-text-secondary);
     padding: 10px 20px;
@@ -1551,7 +1552,7 @@ tfoot td {
 }
 
 .settings-section {
-    background-color: var(--org-settings-section-bg);
+    background-color: var(--org-registration-form-section-bg);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.1);
@@ -1565,7 +1566,7 @@ tfoot td {
 }
 
 .settings-section h2 {
-    color: var(--org-settings-title-color);
+    color: var(--org-text-primary   );
     margin-bottom: 25px;
     font-size: 1.8em;
     font-weight: bold;
@@ -1622,7 +1623,7 @@ tfoot td {
 }
 
 .profile-picture-section {
-    display: flex;
+    display: flex;    
     flex-direction: column;
     align-items: center;
 }
@@ -1666,7 +1667,7 @@ tfoot td {
 }
 
 .student-info-section h2 {
-    color: var(--org-settings-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 25px;
     font-size: 1.8em;
     font-weight: bold;
@@ -1812,7 +1813,7 @@ tfoot td {
   max-width: 800px;
   margin: 30px auto;
   padding: 30px;
-  background-color: var(--org-surface);
+  background-color: var(--org-card-bg);
   border-radius: 8px;
   box-shadow: 0 0 20px rgba(var(--org-shadow-base-rgb), 0.1);
   text-align: center;
@@ -1950,7 +1951,7 @@ tfoot td {
 
 .monthly-cashflow-detailed h2 {
     font-size: 1.8em;
-    color: var(--org-dashboard-title-color);
+    color: var(--org-text-primary);
     margin-bottom: 8px;
     border-bottom: 2px solid var(--org-border-medium);
     padding-bottom: 10px;
@@ -1974,7 +1975,7 @@ tfoot td {
     padding: 12px 15px;
     text-align: left;
     color: var(--org-table-data-text);
-    background-color: var(--org-surface);
+    background-color: var(--org-card-bg);
 }
 
 .monthly-cashflow-detailed tbody tr {
@@ -2019,6 +2020,13 @@ tfoot td {
     font-weight: 700;
     color: var(--org-table-header-text-payments);
     font-size: 1.1em;
+}
+
+.report-type-label {
+    font-weight: bold; 
+    color: var(--org-text-primary); 
+    margin-right: 10px; 
+    font-size: 1.1em; 
 }
 
 /* Common Styles */

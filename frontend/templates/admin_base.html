@@ -75,12 +75,19 @@
                 </ul>
             </div>
         </nav>
+        <div class="sidebar-footer">
+            <button id="theme-toggle" class="sidebar-toggle-button">
+                <i class="ph ph-moon regular-icon"></i>
+            </button>
+        </div>
     </div>
     <div class="main-content">
         <div class="top-bar">
             <div class="menu-icon" id="menu-toggle">
                 <i class="ph ph-list"></i>
                 <span class="menu-text">Menu</span>
+            </div>
+            <div class="today-date" id="today-date">
             </div>
             <div class="user-actions">
                 <div class="notification-container">
@@ -104,8 +111,12 @@
                         <span id="profile-name">Loading...</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
-                        <a href="{{ url_for('admin_settings')}}">Settings</a>
-                        <a href="{{ url_for('logout')}}">Log Out</a>
+                        <a href="{{ url_for('admin_settings')}}">
+                            <i class="ph ph-gear"></i> Settings
+                        </a>
+                        <a href="{{ url_for('logout')}}">
+                            <i class="ph ph-sign-out"></i> Log Out
+                        </a>
                     </div>
                 </div>
             </div>

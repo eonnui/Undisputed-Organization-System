@@ -3,7 +3,7 @@
 {% block head %}
     <link rel="stylesheet" href="/static/css/admin_dashboard.css">
     <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>       
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
@@ -39,6 +39,7 @@
                                     <li data-value="2023-2024">2023-2024</li>
                                     <li data-value="2022-2023">2022-2023</li>
                                 </ul>
+                            </div>
                         </div>
                         </div>
                         </div>
@@ -68,12 +69,12 @@
                     <tbody>
                     </tbody>
                     <tfoot> <tr>
-                            <td colspan="2">Totals:</td>
-                            <td id="total-paid-sum">0</td>
-                            <td id="total-amount-sum">0</td>
-                            <td id="total-status-summary"></td>
-                            <td></td>
-                        </tr>
+                        <td colspan="2">Totals:</td>
+                        <td id="total-paid-sum">0</td>
+                        <td id="total-amount-sum">0</td>
+                        <td id="total-status-summary"></td>
+                        <td></td>
+                    </tr>
                     </tfoot>
                 </table>
             </div>
@@ -83,12 +84,12 @@
     <div id="payments" class="tab-content">
         <div class="payments-page-container">
             <h2 class="payments-header">Payments</h2>
-             <div class="header-actions">
+            <div class="header-actions">
                     <button id="view-all-payments-button" class="action-button">View Payment History</button>
                     <div class="filter-container">
                         <label for="student-id-filter">Filter by Student ID:</label>
                         <input type="text" id="student-id-filter" placeholder="Enter Student ID">
-                        <button onclick="filterPaymentsByStudentId()">Filter</button>
+                        <button onclick="filterPaymentsByStudentIdAndHistory()">Filter</button>
                     </div>
                 </div>
 
@@ -134,7 +135,7 @@
                                         <td>
                                             {% if item_with_status.status == "Past Due" %}
                                                 <div class="action-button-container">
-                                                    <form method="post"  action="/admin/payment/{{ item_with_status.item.id }}/update_status">
+                                                    <form method="post" action="/admin/payment/{{ item_with_status.item.id }}/update_status">
                                                         <select name="status" id="status-select-{{ item_with_status.item.id }}">
                                                             <option value="Unpaid" {% if item_with_status.status == "Unpaid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
                                                                 Unpaid
@@ -176,7 +177,7 @@
                 </div>
                 <div>
                     <label for="expense-amount">Amount:</label>
-                    <input type="number" id="expense-amount" name="amount" step="0.01" required>
+                    <input type="number" id="expense-amount" name="amount" required>
                 </div>
                 <div>
                     <label for="expense-category">Category:</label> <input type="text" id="expense-category" name="category" required>

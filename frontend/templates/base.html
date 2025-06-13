@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/static/css/base.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Poppins:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" /> 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     {% block head %}
     {% endblock %}
@@ -32,8 +32,8 @@
 
                     <li class="{% if current_request_path_str == home_url_path_str %}selected{% endif %}">
                         <a href="{{ url_for('home') }}">
-                            <i class="ph ph-house regular-icon"></i> 
-                            <i class="ph-fill ph-house filled-icon"></i> 
+                            <i class="ph ph-house regular-icon"></i>
+                            <i class="ph-fill ph-house filled-icon"></i>
                             <span class="nav-text">Home</span>
                         </a>
                     </li>
@@ -68,12 +68,19 @@
                 </ul>
             </div>
         </nav>
+        <div class="sidebar-footer">
+            <button id="theme-toggle" class="sidebar-toggle-button">
+                <i class="ph ph-moon regular-icon"></i>
+            </button>
+        </div>
     </div>
     <div class="main-content">
         <div class="top-bar">
             <div class="menu-icon" id="menu-toggle">
                 <i class="ph ph-list"></i>
                 <span class="menu-text">Menu</span>
+            </div>
+            <div class="today-date" id="today-date">
             </div>
             <div class="user-actions">
                 <div class="notification-container">
@@ -97,8 +104,12 @@
                         <span id="profile-name">Profile</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-content">
-                        <a href="{{ url_for('settings')}}">Settings</a>
-                        <a href="{{ url_for('logout')}}">Log Out</a>
+                        <a href="{{ url_for('settings')}}">
+                            <i class="ph ph-gear"></i> Settings
+                        </a>
+                        <a href="{{ url_for('logout')}}">
+                            <i class="ph ph-sign-out"></i> Log Out
+                        </a>
                     </div>
                 </div>
             </div>

@@ -283,43 +283,33 @@ async def clear_single_notification_route(
       
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+# Fetching Organization Admin Postition
 @router.get("/api/admin/org_chart_data", response_model=List[Dict[str, str]])
 async def get_organizational_chart_data(
     request: Request,
     db: Session = Depends(get_db)
-):
-    # This variable will hold the authenticated entity (Admin or User) and their organization
+):  
     authenticated_entity = None
     organization = None
 
-    # --- Attempt Admin Authentication First ---
     try:
         authenticated_entity, organization = get_current_admin_with_org(request, db)
     except HTTPException as e:
-        # If Admin authentication fails with 401 (Unauthorized) or 403 (Forbidden),
-        # then try to authenticate as a regular User.
+
         if e.status_code == status.HTTP_401_UNAUTHORIZED or e.status_code == status.HTTP_403_FORBIDDEN:
             try:
                 authenticated_entity, organization = get_current_user_with_org(request, db)
             except HTTPException:
-                # If regular user authentication also fails, re-raise the original
-                # admin authentication error. This keeps the error message consistent
-                # with the primary access attempt.
+                
                 raise e
         else:
-            # Re-raise any other type of HTTP exception (e.g., database connection issues)
+
             raise
 
-    # If no organization was found after attempting both types of authentication,
-    # it means the user isn't associated with any organization or isn't authenticated.
     if not organization:
-        # You might want to raise a 404 or 403 here if an organization is strictly required
-        # For now, returning an empty list based on your original logic for no organization.
+
         return []
 
-    # --- Fetch Admin Data for the Organization ---
-    # This part remains focused on fetching 'models.Admin' objects.
-    # The 'position' attribute is expected to exist on 'models.Admin'.
     admins = db.query(models.Admin).join(models.organization_admins).filter(
         models.organization_admins.c.organization_id == organization.id
     ).all()
@@ -330,7 +320,7 @@ async def get_organizational_chart_data(
             "first_name": admin.first_name if admin.first_name else "",
             "last_name": admin.last_name if admin.last_name else "",
             "email": admin.email if admin.email else "",
-            "position": admin.position if admin.position else "", # This expects 'position' on 'admin' (models.Admin)
+            "position": admin.position if admin.position else "", 
             "organization_name": organization.name if organization and organization.name else "N/A",
         }
         org_chart_data.append(admin_data)
@@ -394,6 +384,20 @@ async def admin_post_bulletin(
             url=f"/BulletinBoard#{db_post.post_id}",
             event_identifier=f"bulletin_post_user_{user.id}_post_{db_post.post_id}"
             )
+
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' created bulletin board post: '{db_post.title}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Bulletin Post Created",
+        description=description,
+        request=request,
+        target_entity_type="BulletinBoard",
+        target_entity_id=db_post.post_id
+    )
+
     db.commit() 
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -464,12 +468,27 @@ async def admin_create_event(
             url=f"/Events#{db_event.event_id}",
             event_identifier=f"new_event_user_{user.id}_event_{db_event.event_id}"
         )
+
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' created event: '{db_event.title}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Event Created",
+        description=description,
+        request=request,
+        target_entity_type="Event",
+        target_entity_id=db_event.event_id
+    )
+
     db.commit() 
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
 
 # Admin Event Deletion 
 @router.post("/admin/events/delete/{event_id}", response_class=HTMLResponse, name="admin_delete_event")
-async def admin_delete_event(event_id: int, db: Session = Depends(get_db)):
+async def admin_delete_event(event_id: int, request: Request, db: Session = Depends(get_db)):
+    admin, admin_org = get_current_admin_with_org(request, db)
     event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")    
@@ -483,11 +502,26 @@ async def admin_delete_event(event_id: int, db: Session = Depends(get_db)):
 
     db.delete(event)
     db.commit()
+
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' deleted event: '{event.title}' (ID: {event.event_id})."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Event Deleted",
+        description=description,
+        request=request,
+        target_entity_type="Event",
+        target_entity_id=event.event_id
+    )
+
     return RedirectResponse(url="/admin/events", status_code=status.HTTP_303_SEE_OTHER)
 
 # Admin Bulletin Post Deletion
 @router.post("/admin/bulletin_board/delete/{post_id}", response_class=HTMLResponse, name="admin_delete_bulletin_post")
-async def admin_delete_bulletin_post(post_id: int, db: Session = Depends(get_db)):
+async def admin_delete_bulletin_post(post_id: int, request: Request, db: Session = Depends(get_db)):
+    admin, admin_org = get_current_admin_with_org(request, db)
     post = db.query(models.BulletinBoard).filter(models.BulletinBoard.post_id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
@@ -503,6 +537,20 @@ async def admin_delete_bulletin_post(post_id: int, db: Session = Depends(get_db)
 
     db.delete(post)
     db.commit()
+
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' deleted bulletin board post: '{post.title}' (ID: {post.post_id})."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Bulletin Post Deleted",
+        description=description,
+        request=request,
+        target_entity_type="BulletinBoard",
+        target_entity_id=post.post_id
+    )
+
     return RedirectResponse(url="/admin/bulletin_board", status_code=status.HTTP_303_SEE_OTHER)
 
 # Admin Payments Page
@@ -544,45 +592,67 @@ async def admin_payments(
 
 # Admin Payment History
 @router.get("/admin/Payments/History", response_class=JSONResponse, name="admin_payment_history")
-async def admin_payment_history(request: Request, db: Session = Depends(get_db)):
+async def admin_payment_history(
+    request: Request,
+    db: Session = Depends(get_db),
+    student_number: Optional[str] = None 
+):
     admin, organization = get_current_admin_with_org(request, db)
 
-    member_ids = [member.id for member in db.query(models.User).filter(models.User.organization_id == organization.id).all()]
-    payments = db.query(models.Payment).options(joinedload(models.Payment.payment_item), joinedload(models.Payment.user)).filter(
-        models.Payment.user_id.in_(member_ids)
-    ).order_by(models.Payment.created_at.desc(), models.Payment.id.desc()).all()
+    query = db.query(models.Payment).options(
+        joinedload(models.Payment.payment_item),
+        joinedload(models.Payment.user)
+    ).join(models.User).filter( 
+        models.User.organization_id == organization.id
+    )
+
+    if student_number:
+        query = query.filter(models.User.student_number == student_number)
+   
+    payments = query.order_by(
+        models.Payment.created_at.desc(),
+        models.Payment.id.desc()
+    ).all()
 
     payment_history_data = []
     for payment in payments:
         payment_item = payment.payment_item
         user = payment.user
 
-        if not all([payment_item, user, payment_item.academic_year, payment_item.semester, payment_item.fee, payment.amount, payment.status, payment_item.due_date, payment.created_at, user.first_name, user.last_name, user.student_number]):
+        if not all([
+            payment_item, user, payment_item.academic_year, payment_item.semester,
+            payment_item.fee, payment.amount, payment.status, payment_item.due_date,
+            payment.created_at, user.first_name, user.last_name, user.student_number
+        ]):
+            print(f"Skipping payment {payment.id} due to missing related data.")
             continue
 
         status_text = payment.status
         if status_text == "pending": status_text = "Pending"
-        elif status_text == "success": status_text = "Paid"                
+        elif status_text == "success": status_text = "Paid"
         elif status_text == "failed": status_text = "Failed"
         elif status_text == "cancelled": status_text = "Cancelled"
+        elif status_text == "past_due": status_text = "Past Due"
+        elif status_text == "unpaid": status_text = "Unpaid"
+
 
         payment_history_data.append({
             "item": {
                 "id": payment.id,
-                "amount": payment.amount,
+                "amount": float(payment.amount), 
                 "paymaya_payment_id": payment.paymaya_payment_id,
-                "status": payment.status,
+                "status": payment.status, 
                 "created_at": payment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 "updated_at": payment.updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment.updated_at else None,
                 "payment_item": {
                     "academic_year": payment_item.academic_year,
                     "semester": payment_item.semester,
-                    "fee": payment_item.fee,
+                    "fee": float(payment_item.fee), 
                     "due_date": payment_item.due_date.strftime('%Y-%m-%d'),
                     "is_not_responsible": payment_item.is_not_responsible
                 }
             },
-            "status": status_text,
+            "status": status_text, 
             "user_name": f"{user.first_name} {user.last_name}",
             "student_number": user.student_number,
             "payment_date": payment.created_at.strftime('%Y-%m-%d %H:%M:%S')
@@ -597,7 +667,7 @@ async def update_payment_status(
     status: str = Form(...),
     db: Session = Depends(get_db),
 ):
-    admin, _ = get_current_admin_with_org(request, db) 
+    admin, admin_org = get_current_admin_with_org(request, db) 
 
     allowed_statuses = ["Unpaid", "Paid", "NOT RESPONSIBLE"]
     if status not in allowed_statuses:
@@ -606,6 +676,17 @@ async def update_payment_status(
     payment_item = db.query(models.PaymentItem).get(payment_item_id)
     if not payment_item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Payment item {payment_item_id} not found")
+
+    old_status_text = "Unpaid" 
+    if payment_item.is_not_responsible:
+        old_status_text = "NOT RESPONSIBLE"
+    elif payment_item.is_paid:
+        old_status_text = "Paid"
+    elif payment_item.is_past_due:
+        old_status_text = "Past Due"
+
+    user_affected = db.query(models.User).filter(models.User.id == payment_item.user_id).first()
+    user_name_affected = f"{user_affected.first_name} {user_affected.last_name}" if user_affected else "Unknown User"
 
     if status == "Unpaid":
         payment_item.is_past_due = False
@@ -633,6 +714,20 @@ async def update_payment_status(
             
     db.commit()
     db.refresh(payment_item)
+
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' updated payment status for '{user_name_affected}' (Item ID: {payment_item_id}) from '{old_status_text}' to '{status}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Payment Status Update",
+        description=description,
+        request=request,
+        target_entity_type="PaymentItem",
+        target_entity_id=payment_item_id
+    )
+
     return {"message": f"Payment item {payment_item_id} status updated to {status}"}
 
 # Admin Membership Data (Sections)
@@ -917,9 +1012,6 @@ async def admin_post_rule_wiki(
     image: Optional[UploadFile] = File(None), 
     db: Session = Depends(get_db)
 ):
-    """
-    Handles the creation of a new Rule/Wiki entry, including optional image upload.
-    """
     admin, admin_org = get_current_admin_with_org(request, db)
 
     image_path = None
@@ -943,6 +1035,19 @@ async def admin_post_rule_wiki(
     db.commit()
     db.refresh(db_rule_wiki)
 
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' created Rule/Wiki entry: '{db_rule_wiki.title}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Rule/Wiki Entry Created",
+        description=description,
+        request=request,
+        target_entity_type="RuleWikiEntry",
+        target_entity_id=db_rule_wiki.id
+    )
+
     return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -953,10 +1058,6 @@ async def admin_edit_rule_wiki(
     post_id: int,
     db: Session = Depends(get_db)
 ):
-    """
-    Redirects to the main bulletin board page with a flag to activate
-    the edit form for a specific Rule/Wiki entry.
-    """
     admin, admin_org = get_current_admin_with_org(request, db)
 
     rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
@@ -1012,9 +1113,6 @@ async def admin_update_rule_wiki(
     image: Optional[UploadFile] = File(None), 
     db: Session = Depends(get_db)
 ):
-    """
-    Handles the submission of the edited Rule/Wiki entry form, including optional image upload.
-    """
     admin, admin_org = get_current_admin_with_org(request, db)
 
     rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
@@ -1024,6 +1122,10 @@ async def admin_update_rule_wiki(
 
     if not rule_wiki_entry:
         raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
+
+    old_title = rule_wiki_entry.title
+    old_category = rule_wiki_entry.category
+    old_content_snippet = rule_wiki_entry.content[:50]
 
     if image and image.filename:
         new_image_path = await handle_file_upload(
@@ -1044,6 +1146,24 @@ async def admin_update_rule_wiki(
     db.commit()
     db.refresh(rule_wiki_entry)
 
+    # Log the action
+    description = (
+        f"Admin '{admin.first_name} {admin.last_name}' updated Rule/Wiki entry '{old_title}' (ID: {post_id}). "
+        f"Title changed from '{old_title}' to '{title}'. "
+        f"Category changed from '{old_category}' to '{category}'. "
+        f"Content updated (snippet: '{old_content_snippet}...' to '{content[:50]}...')."
+    )
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Rule/Wiki Entry Updated",
+        description=description,
+        request=request,
+        target_entity_type="RuleWikiEntry",
+        target_entity_id=post_id
+    )
+
     return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -1054,9 +1174,6 @@ async def admin_delete_rule_wiki(
     post_id: int,
     db: Session = Depends(get_db)
 ):
-    """
-    Handles the deletion of a Rule/Wiki entry and its associated image file.
-    """
     admin, admin_org = get_current_admin_with_org(request, db)
 
     rule_wiki_entry = db.query(models.RuleWikiEntry).filter(
@@ -1067,11 +1184,27 @@ async def admin_delete_rule_wiki(
     if not rule_wiki_entry:
         raise HTTPException(status_code=404, detail="Rule/Wiki entry not found or you don't have permission.")
 
+    title_deleted = rule_wiki_entry.title
+    
     if rule_wiki_entry.image_path:
         delete_file_from_path(rule_wiki_entry.image_path)
 
     db.delete(rule_wiki_entry)
     db.commit()
+
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' deleted Rule/Wiki entry: '{title_deleted}' (ID: {post_id})."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=admin_org.id,
+        action_type="Rule/Wiki Entry Deleted",
+        description=description,
+        request=request,
+        target_entity_type="RuleWikiEntry",
+        target_entity_id=post_id
+    )
+
     return RedirectResponse(url=request.url_for('admin_bulletin_board'), status_code=status.HTTP_303_SEE_OTHER)
 
 # Admin Events Page 
@@ -1132,6 +1265,20 @@ async def create_expense(request: Request, expense: schemas.ExpenseCreate, db: S
     db.refresh(db_expense, attribute_names=["admin"])     
     if db_expense.admin and db_expense.admin.position is None:
         db_expense.admin.position = ""
+
+    # Log the action
+    description = f"Admin '{admin.first_name} {admin.last_name}' created expense: '{db_expense.description}' for {db_expense.amount:.2f} in category '{db_expense.category or 'Uncategorized'}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=organization.id,
+        action_type="Expense Created",
+        description=description,
+        request=request,
+        target_entity_type="Expense",
+        target_entity_id=db_expense.id
+    )
+
     return db_expense
 
 # Admin Financial Data API
@@ -1259,27 +1406,43 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
 @router.post("/admin/organizations/", response_model=schemas.Organization, status_code=status.HTTP_201_CREATED)
 async def create_organization_route(
     request: Request,
-    organization: schemas.OrganizationCreate,
+    organization_data: schemas.OrganizationCreate,
     db: Session = Depends(get_db)
 ):
-    if db.query(models.Organization).filter(models.Organization.name == organization.name).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Organization with name '{organization.name}' already exists.")
-    if db.query(models.Organization).filter(models.Organization.primary_course_code == organization.primary_course_code).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Organization with primary course code '{organization.primary_course_code}' already exists.")
+    
+    if db.query(models.Organization).filter(models.Organization.name == organization_data.name).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Organization with name '{organization_data.name}' already exists.")
+    if db.query(models.Organization).filter(models.Organization.primary_course_code == organization_data.primary_course_code).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Organization with primary course code '{organization_data.primary_course_code}' already exists.")
 
-    custom_palette = crud.generate_custom_palette(organization.theme_color)
-    suggested_filename = f"{organization.name.lower().replace(' ', '_')}_logo.png"
+    custom_palette = crud.generate_custom_palette(organization_data.theme_color)
+    suggested_filename = f"{organization_data.name.lower().replace(' ', '_')}_logo.png"
     logo_upload_path = f"/static/images/{suggested_filename}"
 
     new_org = models.Organization(
-        name=organization.name, theme_color=organization.theme_color,
-        primary_course_code=organization.primary_course_code,
+        name=organization_data.name, theme_color=organization_data.theme_color,
+        primary_course_code=organization_data.primary_course_code,
         custom_palette=custom_palette, logo_url=logo_upload_path
     )
     db.add(new_org)
     db.commit()
     db.refresh(new_org)
     logging.info(f"Action Required: Please upload the organization logo to your web server at the path: {new_org.logo_url}. Suggested filename: {suggested_filename}")
+    
+    # Log the action
+    admin_id_for_log = request.session.get("admin_id") or 0 
+    description = f"Organization '{new_org.name}' created with primary course code '{new_org.primary_course_code}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin_id_for_log, 
+        organization_id=new_org.id,
+        action_type="Organization Created",
+        description=description,
+        request=request,
+        target_entity_type="Organization",
+        target_entity_id=new_org.id
+    )
+
     return new_org
     
 # Create Admin User
@@ -1304,6 +1467,23 @@ async def create_admin_user_route(
     
     db.commit()
     db.refresh(new_admin)
+
+    # Log the action
+    admin_performing_action = request.session.get("admin_id") 
+    admin_org_id = admin_data.organization_id 
+
+    description = f"Admin '{admin_performing_action or 'System'}' created new admin user: '{new_admin.first_name} {new_admin.last_name}' with email '{new_admin.email}' and role '{new_admin.role}'."
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin_performing_action or 0, 
+        organization_id=admin_org_id,
+        action_type="Admin User Created",
+        description=description,
+        request=request,
+        target_entity_type="Admin",
+        target_entity_id=new_admin.admin_id
+    )
+
     return new_admin
 
 # Update Organization Theme Color
@@ -1319,11 +1499,31 @@ async def update_organization_theme_color_route(
     if not organization:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Organization with ID {org_id} not found.")
     
+    old_theme_color = organization.theme_color 
+    old_custom_palette = organization.custom_palette 
+
     organization.theme_color = theme_update.new_theme_color
     organization.custom_palette = crud.generate_custom_palette(theme_update.new_theme_color)
     db.add(organization)
     db.commit()
     db.refresh(organization)
+
+    # Log the action
+    description = (
+        f"Admin '{admin.first_name} {admin.last_name}' updated organization '{organization.name}' (ID: {org_id}) "
+        f"theme color from '{old_theme_color}' to '{organization.theme_color}' and regenerated palette."
+    )
+    await crud.create_admin_log(
+        db=db,
+        admin_id=admin.admin_id,
+        organization_id=organization.id,
+        action_type="Organization Theme Updated",
+        description=description,
+        request=request,
+        target_entity_type="Organization",
+        target_entity_id=organization.id
+    )
+
     return {"message": f"Organization '{organization.name}' (ID: {org_id}) theme color updated to {theme_update.new_theme_color} and palette regenerated successfully."}
 
 # Update Organization Logo
@@ -1347,6 +1547,7 @@ async def update_organization_logo_route(
     organization_name_slug = ''.join(e for e in organization.name.lower().replace(' ', '_') if e.isalnum() or e == '_')
     suggested_filename = f"{organization_name_slug}_logo{file_extension}"
     
+    old_logo_url = organization.logo_url 
     
     if organization.logo_url and organization.logo_url != request.url_for('static', path='images/patrick_logo.jpg'):
         delete_file_from_path(organization.logo_url)
@@ -1362,6 +1563,23 @@ async def update_organization_logo_route(
         db.add(organization)
         db.commit()
         db.refresh(organization)
+
+        # Log the action
+        description = (
+            f"Admin '{admin.first_name} {admin.last_name}' updated organization '{organization.name}' (ID: {org_id}) "
+            f"logo from '{old_logo_url or 'None'}' to '{logo_url}'."
+        )
+        await crud.create_admin_log(
+            db=db,
+            admin_id=admin.admin_id,
+            organization_id=organization.id,
+            action_type="Organization Logo Updated",
+            description=description,
+            request=request,
+            target_entity_type="Organization",
+            target_entity_id=organization.id
+        )
+
         return {"message": f"Organization '{organization.name}' (ID: {org_id}) logo updated successfully to {logo_url}."}
     except Exception as e:
         db.rollback()
@@ -1400,8 +1618,8 @@ async def paymaya_create_payment(
             "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}"
         },
         "metadata": {
-            "pf": {"smi": "CVSU", "smn": "Undisputed", "mci": "Imus City", "mpc": "608", "mco": "PHL", "postalCode": "1554", "contactNo": "0211111111", "addressLine1": "Palico"},
-            "subMerchantRequestReferenceNumber": "63d9934f9281"
+            "pf": {"smi": "CVSU", "smn": "Undisputed", "mci": "Imus City", "mpc": "608", "mco": "PHL", "postalCode": "1554", "contactNo": "0211111111", "addressLine1": "Palico"}
+            , "subMerchantRequestReferenceNumber": "63d9934f9281"
         }
     }
     try:
@@ -1478,13 +1696,44 @@ async def payment_cancel(request: Request, paymentId: int = Query(...), db: Sess
     context.update({"payment_id": payment.paymaya_payment_id, "payment_item": payment_item})
     return templates.TemplateResponse("student_dashboard/payment_cancel.html", context)
 
+# Add the new admin_logs router here
 app.include_router(router)
 
 # User Logout
 @app.get("/logout", response_class=RedirectResponse, name="logout")
-async def logout(request: Request):
+async def logout(request: Request, db: Session = Depends(get_db)):
+    admin_id = request.session.get("admin_id")
+    
+    if admin_id:
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id).first()
+        
+        if admin:
+            organization_id_to_log = None
+            
+            admin_organizations = db.query(models.Organization)\
+                .join(models.organization_admins)\
+                .filter(models.organization_admins.c.admin_id == admin.admin_id)\
+                .limit(1).first()
+
+            if admin_organizations: 
+                organization_id_to_log = admin_organizations.id
+
+            description = f"Admin '{admin.first_name} {admin.last_name}' successfully logged out."
+            await crud.create_admin_log(
+                db=db,
+                admin_id=admin.admin_id,
+                organization_id=organization_id_to_log, 
+                action_type="Admin Logout",
+                description=description,
+                request=request
+            )
+            db.commit() 
+        else:
+            print(f"Warning: Admin with ID {admin_id} not found during logout process.")
+
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)
+
 
 # Root Index Page
 @app.get("/", response_class=HTMLResponse)
@@ -1916,7 +2165,11 @@ async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
 
 # Get User Data (for Navbar/Header)
 @app.get("/get_user_data", response_model=schemas.UserDataResponse)
-async def get_user_data(request: Request, db: Session = Depends(get_db)):
+async def get_user_data(
+    request: Request,
+    db: Session = Depends(get_db),
+    dark_mode: bool = Query(False, description="Request dark mode custom palette") 
+):
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
 
@@ -1925,6 +2178,7 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
     first_name = None
     profile_picture = None
     is_verified_status = None
+    organization_theme_color = None
 
     if user_id:
         current_entity = db.query(models.User).filter(models.User.id == user_id).first()
@@ -1934,17 +2188,29 @@ async def get_user_data(request: Request, db: Session = Depends(get_db)):
             is_verified_status = current_entity.is_verified
             if current_entity.organization:
                 organization_data = schemas.Organization.model_validate(current_entity.organization)
+                organization_theme_color = current_entity.organization.theme_color 
     elif admin_id:
         current_entity = db.query(models.Admin).options(joinedload(models.Admin.organizations)).filter(models.Admin.admin_id == admin_id).first()
         if current_entity:
             first_name = current_entity.first_name 
             if current_entity.organizations:
                 organization_data = schemas.Organization.model_validate(current_entity.organizations[0])
+                organization_theme_color = current_entity.organizations[0].theme_color 
 
     if not current_entity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Authenticated user/admin not found in database for provided session ID.")
     if not user_id and not admin_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No authenticated user or admin ID found in session.")
+
+    if organization_data and organization_theme_color:
+        generated_palette_json = crud.generate_custom_palette(organization_theme_color, dark_mode)
+        
+        organization_data.custom_palette = generated_palette_json
+    else:
+       
+        if organization_data:
+            organization_data.custom_palette = None
+
 
     return schemas.UserDataResponse(first_name=first_name, profile_picture=profile_picture, organization=organization_data, is_verified=is_verified_status)
 
@@ -1961,6 +2227,28 @@ async def login(request: Request, form_data: schemas.UserLogin, db: Session = De
         if admin:
             request.session["admin_id"] = admin.admin_id
             request.session["user_role"] = admin.role
+
+            organization_id_to_log = None
+            
+            admin_organizations = db.query(models.Organization)\
+                .join(models.organization_admins)\
+                .filter(models.organization_admins.c.admin_id == admin.admin_id)\
+                .limit(1).first()
+
+            if admin_organizations: 
+                organization_id_to_log = admin_organizations.id
+            
+            description = f"Admin '{admin.first_name} {admin.last_name}' successfully logged in."
+            await crud.create_admin_log(
+                db=db,
+                admin_id=admin.admin_id,
+                organization_id=organization_id_to_log, 
+                action_type="Admin Login",
+                description=description,
+                request=request
+            )
+            db.commit()
+
             return {"message": "Admin login successful", "admin_id": admin.admin_id, "user_role": admin.role}
         else:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials", headers={"WWW-Authenticate": "Bearer"})
@@ -2186,6 +2474,11 @@ async def update_profile(
         db.add(item)
     db.flush()
 
+    # Capture changes for logging
+    changes = []
+    if is_verified is not None and is_verified != original_is_verified_status:
+        changes.append(f"Verification status changed from '{original_is_verified_status}' to '{is_verified}'.")
+
     if not original_is_verified_status and user.is_verified and user.organization_id:
         for admin in db.query(models.Admin).join(models.organization_admins).filter(models.organization_admins.c.organization_id == user.organization_id).all():
             crud.create_notification(db=db, message=f"Member {user.first_name} {user.last_name} has been verified.",
@@ -2193,10 +2486,44 @@ async def update_profile(
                                      verified_user_id=user.id, 
                                      url=f"/admin/payments/total_members?student_number={user.student_number}",
                                      event_identifier=f"member_verified_admin_{admin.admin_id}_user_{user.id}")
+            # Log the admin action of verifying a user (if an admin is logged in)
+            admin_id_for_log = request.session.get("admin_id")
+            if admin_id_for_log:
+                admin_performing_action = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_log).first()
+                if admin_performing_action:
+                    description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' verified user: '{user.first_name} {user.last_name}' (ID: {user.id})."
+                    await crud.create_admin_log(
+                        db=db,
+                        admin_id=admin_performing_action.admin_id,
+                        organization_id=user.organization_id,
+                        action_type="User Verified",
+                        description=description,
+                        request=request,
+                        target_entity_type="User",
+                        target_entity_id=user.id
+                    )
 
     db.commit()
     db.refresh(user)
     user.verification_status = "Verified" if user.is_verified else "Not Verified"
+    
+    # Log general user profile update (if an admin is performing it)
+    admin_id_for_log = request.session.get("admin_id")
+    if admin_id_for_log and changes: 
+        admin_performing_action = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_log).first()
+        if admin_performing_action:
+            description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' updated profile for user: '{user.first_name} {user.last_name}' (ID: {user.id}). Changes: {'; '.join(changes)}"
+            await crud.create_admin_log(
+                db=db,
+                admin_id=admin_performing_action.admin_id,
+                organization_id=user.organization_id,
+                action_type="User Profile Updated (Admin)",
+                description=description,
+                request=request,
+                target_entity_type="User",
+                target_entity_id=user.id
+            )
+
     return {"message": "Profile updated successfully", "user": user}
 
 @app.post("/api/auth/change-password")
@@ -2233,17 +2560,33 @@ async def change_password(
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    # Log the action (if an admin is changing their own password)
+    admin_id_for_log = request.session.get("admin_id")
+    if admin_id_for_log == user.id: 
+        admin_performing_action = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_log).first()
+        if admin_performing_action:
+            description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' changed their own password."
+            await crud.create_admin_log(
+                db=db,
+                admin_id=admin_performing_action.admin_id,
+                action_type="Admin Password Change",
+                description=description,
+                request=request,
+                target_entity_type="Admin",
+                target_entity_id=admin_performing_action.admin_id
+            )
+
     return {"message": "Password updated successfully!"}
 
 @app.post("/api/forgot-password/")
 async def forgot_password_endpoint(
-    request_data: schemas.ForgotPasswordRequest, # Use the Pydantic schema
+    request_data: schemas.ForgotPasswordRequest, 
+    request: Request,
     db: Session = Depends(get_db)
 ):
     identifier = request_data.identifier
 
-    # 1. Look up user by identifier (student number or email)
-    # Assuming crud.get_user can find a user by student_number or email
     user = crud.get_user(db, identifier=identifier)
     if not user:
         raise HTTPException(
@@ -2251,22 +2594,19 @@ async def forgot_password_endpoint(
             detail="User not found with the provided identifier."
         )
 
-    # 2. Generate a random 6-character alphanumeric reset code
     alphabet = string.ascii_uppercase + string.digits
     reset_code = ''.join(secrets.choice(alphabet) for i in range(6))
 
-    # 3. Store reset_code and its expiration in your database
-    # Delete any existing tokens for this user to ensure only one is active at a time
     db.query(models.PasswordResetToken).filter(models.PasswordResetToken.user_id == user.id).delete()
     db.commit()
 
-    expiration_time = datetime.now() + timedelta(minutes=10) # Code valid for 10 minutes
+    expiration_time = datetime.now() + timedelta(minutes=10) 
     crud.create_password_reset_token(db, user_id=user.id, token=reset_code, expiration=expiration_time)
 
-    sender_email = "ic.markaaron.mayor@cvsu.edu.ph" # <--- IMPORTANT: Replace with your actual sender email
-    receiver_email = user.email # Use the user's email from the database
-    mailtrap_username = "e09c5a4e999a44" # Your Mailtrap username 
-    mailtrap_password = "a4c986c82c92fd" # Your Mailtrap password 
+    sender_email = "ic.markaaron.mayor@cvsu.edu.ph"
+    receiver_email = user.email 
+    mailtrap_username = "e09c5a4e999a44" 
+    mailtrap_password = "a4c986c82c92fd" 
 
     message = MIMEMultipart("alternative")
     message["Subject"] = "Your Password Reset Code"
@@ -2310,9 +2650,28 @@ async def forgot_password_endpoint(
             server.login(mailtrap_username, mailtrap_password)
             server.sendmail(sender_email, receiver_email, message.as_string())
         
+        # Log the action
+        admin_id_for_log = request.session.get("admin_id")
+        if admin_id_for_log: 
+            admin_performing_action = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_log).first()
+            if admin_performing_action:
+                description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' requested a password reset code."
+                await crud.create_admin_log(
+                    db=db,
+                    admin_id=admin_performing_action.admin_id,
+                    action_type="Admin Password Reset Request",
+                    description=description,
+                    request=request,
+                    target_entity_type="Admin",
+                    target_entity_id=admin_performing_action.admin_id
+                )
+        else: 
+            description = f"User '{user.first_name} {user.last_name}' requested a password reset code."
+            pass
+
         return {"message": "Password reset code sent to your email."}, status.HTTP_200_OK
     except Exception as e:
-        print(f"Error sending email: {e}") # Log the error for debugging
+        print(f"Error sending email: {e}") 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to send reset code. Please try again later."
@@ -2320,14 +2679,14 @@ async def forgot_password_endpoint(
 
 @app.post("/api/reset-password/")
 async def reset_password_endpoint(
-    request_data: schemas.ResetPasswordRequest, # Use the Pydantic schema
+    request_data: schemas.ResetPasswordRequest, 
+    request: Request,
     db: Session = Depends(get_db)
 ):
     identifier = request_data.identifier
     code = request_data.code
     new_password = request_data.new_password
 
-    # 1. Find the user by identifier
     user = crud.get_user(db, identifier=identifier)
     if not user:
         raise HTTPException(
@@ -2335,7 +2694,6 @@ async def reset_password_endpoint(
             detail="User not found."
         )
 
-    # 2. Verify the reset code and its expiration
     db_token = crud.get_password_reset_token_by_token(db, code)
     if not db_token or db_token.user_id != user.id:
         raise HTTPException(
@@ -2344,17 +2702,73 @@ async def reset_password_endpoint(
         )
     
     if db_token.expiration_time < datetime.now():
-        # Optionally, delete the expired token immediately to prevent reuse
         crud.delete_password_reset_token(db, db_token.id)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Reset code has expired. Please request a new one."
         )
 
-    # 3. Update the user's password
     crud.update_user_password(db, user.id, new_password)
 
-    # 4. Invalidate/delete the used token to prevent replay attacks
     crud.delete_password_reset_token(db, db_token.id)
 
+    # Log the action
+    admin_performing_action = db.query(models.Admin).filter(models.Admin.email == identifier).first()
+    if admin_performing_action and admin_performing_action.admin_id == user.id: 
+        description = f"Admin '{admin_performing_action.first_name} {admin_performing_action.last_name}' successfully reset their password via reset code."
+        await crud.create_admin_log(
+            db=db,
+            admin_id=admin_performing_action.admin_id,
+            action_type="Admin Password Reset (Code)",
+            description=description,
+            request=request,
+            target_entity_type="Admin",
+            target_entity_id=admin_performing_action.admin_id
+        )
+
     return {"message": "Password has been reset successfully."}, status.HTTP_200_OK
+
+@app.get("/api/admin_users", response_model=List[Dict[str, Any]])
+async def get_all_admin_users(db: Session = Depends(get_db)):
+    """
+    Retrieves a list of all administrators with their basic information.
+    This is used to populate the admin filter dropdown in the activity log.
+    """
+    admins = db.query(models.Admin).all()
+    return [
+        {
+            "admin_id": admin.admin_id,
+            "first_name": admin.first_name,
+            "last_name": admin.last_name,
+            "email": admin.email
+        } for admin in admins
+    ]
+
+@app.get("/admin-logs", response_model=List[schemas.AdminLog])
+async def get_all_admin_logs_api(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin_info_tuple: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=200),
+    admin_id: Optional[int] = Query(None, description="Filter by specific admin ID within the organization"),
+    organization_id: Optional[int] = Query(None, include_in_schema=False), 
+    action_type: Optional[str] = Query(None, description="Filter by type of action (e.g., 'Theme Change')"),
+    start_date: Optional[date] = Query(None, description="Start date for logs (YYYY-MM-DD)"),
+    end_date: Optional[date] = Query(None, description="End date for logs (YYYY-MM-DD)"),
+    search: Optional[str] = Query(None, description="Search keyword in log description")
+):
+    current_admin, current_organization = admin_info_tuple
+
+    logs = crud.get_admin_logs(
+        db=db,
+        skip=skip,
+        limit=limit,
+        admin_id=admin_id,
+        organization_id=current_organization.id, 
+        action_type=action_type,
+        start_date=start_date,
+        end_date=end_date,
+        search_query=search
+    )
+    return logs
