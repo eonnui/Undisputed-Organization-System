@@ -360,15 +360,24 @@ tr:hover td {
     box-shadow: 0 1px 1px rgba(var(--org-shadow-base-rgb), 0.02);
 }
 
-/* Bulletin */
+/* Bulletin-Board */
+.main-content-flex-container {
+    display: flex;
+    justify-content: center; 
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 20px;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
 .bulletin-board-container {
-    max-width: 100%;
-    margin: 20px 0;
-    background-color: var(--org-bg-color);
+    flex: 2.5;
+    min-width: 400px;
     font-family: "DM Sans", sans-serif;
     text-align: center;
-    flex: 2.5;
-    padding: 0 1rem;
+    padding: 0; 
+    box-sizing: border-box;
 }
 
 .bulletin-header {
@@ -385,19 +394,23 @@ tr:hover td {
     background-color: var(--org-card-bg);
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
-    margin-bottom: 1.5rem;
-    padding: 1rem;
     border: 1px solid var(--org-border-medium);
     display: flex;
     flex-direction: column;
+    text-align: left;
+    width: auto;
+    padding: 1.5rem; 
+    border-bottom: 1px solid var(--org-border-medium); 
+    padding-bottom: 2.5rem; 
+    margin-bottom: 2rem; 
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     opacity: 0;
     transform: translateY(10px);
     animation: slideUp 0.5s ease-out 0.2s forwards;
-    text-align: left;
-    margin-left: 0;
-    margin-right: 0;
-    width: auto;
 }
 
 .create-post-container:hover {
@@ -405,676 +418,152 @@ tr:hover td {
     box-shadow: 0 5px 15px rgba(var(--org-shadow-base-rgb), 0.15);
 }
 
-.create-post-header {
-    margin-bottom: 1rem;
-    text-align: left;
-}
-
+.create-post-header { margin-bottom: 1rem; text-align: left; }
 .create-post-input {
-    width: 100%;
-    background-color: var(--org-card-bg);
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--org-border-medium);
-    border-radius: 20px;
-    font-size: 1rem;
-    color: var(--org-text-primary);
-    box-sizing: border-box;
-    font-family: "DM Sans", sans-serif;
-    cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: slideUp 0.5s ease-out 0.3s forwards;
-    margin-left: 0;
-    margin-right: 0;
-    display: block;
+    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--org-border-medium); border-radius: 20px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; opacity: 0;
+    transform: translateY(10px); animation: slideUp 0.5s ease-out 0.3s forwards; display: block;
 }
-
-.create-post-input:focus {
-    outline: none;
-    border-color: var(--org-primary);
-    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
+.create-post-input:focus { outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3); }
+.create-post-form-fields { margin-top: 1rem; display: none; animation: slideIn 0.5s ease-in-out; text-align: left; }
+.create-post-form-fields label { display: block; margin-bottom: 0.4rem; color: var(--org-text-secondary); font-weight: 500; font-size: 0.95rem; }
+.create-post-form-fields input[type="text"], .create-post-form-fields textarea, .create-post-form-fields select, .create-post-form-fields input[type="file"] {
+    width: 100%; padding: 0.6rem; margin-bottom: 0.9rem; border: 1px solid var(--org-border-medium); border-radius: 6px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease; display: block;
 }
-
-.create-post-form-fields {
-    margin-top: 1rem;
-    display: none;
-    animation: slideIn 0.5s ease-in-out;
-    text-align: left;
+.create-post-form-fields textarea { min-height: 4rem; resize: vertical; }
+.create-post-form-fields input[type="text"]:focus, .create-post-form-fields textarea:focus, .create-post-form-fields select:focus, .create-post-form-fields input[type="file"]:focus {
+    outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
 }
-
-.create-post-form-fields label {
-    display: block;
-    margin-bottom: 0.4rem;
-    color: var(--org-text-secondary);
-    font-weight: 500;
-    font-size: 0.95rem;
-}
-
-.create-post-form-fields input[type="text"],
-.create-post-form-fields textarea,
-.create-post-form-fields select,
-.create-post-form-fields input[type="file"] {
-    width: 100%;
-    background-color: var(--org-card-bg);
-    padding: 0.6rem;
-    margin-bottom: 0.9rem;
-    border: 1px solid var(--org-border-medium);
-    border-radius: 6px;
-    font-size: 1rem;
-    color: var(--org-text-primary);
-    box-sizing: border-box;
-    font-family: "DM Sans", sans-serif;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    margin-left: 0;
-    margin-right: 0;
-    display: block;
-}
-
-.create-post-form-fields textarea {
-    min-height: 4rem;
-    resize: vertical;
-}
-
-.create-post-form-fields input[type="text"]:focus,
-.create-post-form-fields textarea:focus,
-.create-post-form-fields select:focus,
-.create-post-form-fields input[type="file"]:focus {
-    outline: none;
-    border-color: var(--org-primary);
-    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
-}
-
-.create-post-form-fields input[type="checkbox"] {
-    width: auto;
-    margin-right: 0.5rem;
-    vertical-align: middle;
-}
-
-.create-post-form-fields .checkbox-label {
-    display: inline-block;
-    font-weight: 400;
-}
-
+.create-post-form-fields input[type="checkbox"] { width: auto; margin-right: 0.5rem; vertical-align: middle; }
+.create-post-form-fields .checkbox-label { display: inline-block; font-weight: 400; }
 .create-post-submit-button {
-    padding: 0.75rem 1.25rem;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--org-button-bg);
-    color: var(--org-button-text);
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
+    padding: 0.75rem 1.25rem; border: none; border-radius: 8px; background-color: var(--org-button-bg);
+    color: var(--org-button-text); font-size: 1rem; font-weight: 500; cursor: pointer;
     transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-    font-family: "DM Sans", sans-serif;
-    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
-    margin-top: 1rem;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: slideUp 0.5s ease-out 0.4s forwards;
-    margin-left: 0;
-    margin-right: 0;
+    font-family: "DM Sans", sans-serif; box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    margin-top: 1rem; opacity: 0; transform: translateY(10px); animation: slideUp 0.5s ease-out 0.4s forwards;
     display: block;
 }
-
-.create-post-submit-button:hover {
-    background-color: var(--org-hover-effect);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12);
-}
-
-.back-to-bulletin {
-    display: none;
-    margin-top: 1rem;
-    color: var(--org-primary);
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: color 0.15s ease;
-    text-align: center;
-}
-
-.back-to-bulletin:hover {
-    color: var(--org-info);
-}
+.create-post-submit-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12); }
+.back-to-bulletin { display: none; margin-top: 1rem; color: var(--org-primary); text-decoration: none; font-size: 0.95rem; transition: color 0.15s ease; text-align: center; }
+.back-to-bulletin:hover { color: var(--org-info); }
 
 .existing-posts-title {
     font-size: 1.5rem;
-    margin-top: 2rem;
-    margin-bottom: 1.25rem;
+    margin-top: 0; 
+    margin-bottom: 1.25rem; 
     color: var(--org-text-primary);
     font-weight: 700;
-    border-bottom: 2px solid var(--org-border-medium);
-    padding-bottom: 0.5rem;
-    animation: slideIn 0.5s ease-in-out;
+    padding-bottom: 0.5rem; 
     text-align: left;
+    padding-left: 1.5rem; 
+    padding-right: 1.5rem;    
+    border-top-left-radius: 8px; 
+    border-top-right-radius: 8px;
+    border: 1px solid var(--org-border-medium);
+    border-bottom: none; 
+    animation: slideIn 0.5s ease-in-out;
 }
 
 .post-card {
-    background-color: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 15px 0;
-    border: 1px solid var(--org-text-inverse);
-    transition: none;
-    animation: none;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    width: 100%;
-}
-
-.post-card:last-child {
-    border-bottom: none;
-}
-
-.post-card:hover {
-    background-color: var(--org-hover-bg);
-    transform: none;
-    box-shadow: none;
-}
-
-.post-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-    justify-content: space-between;
-    text-align: left;
-}
-
-.profile-info {
-    display: flex;
-    align-items: center;
-}
-
-.profile-image {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
-    margin-right: 1rem;
-    background-color: var(--org-profile-image-bg);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.2rem;
-    color: var(--org-text-light);
-    overflow: hidden;
-    border: 1px solid var(--org-profile-picture-border);
-}
-
-.post-meta {
-    flex: 1;
-    text-align: left;
-}
-
-.post-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--org-post-info-color);
-    margin-bottom: 0.3rem;
-}
-
-.post-title span.pinned {
-    background-color: var(--org-pinned-bg);
-    color: var(--org-text-primary);
-    padding: 0.3rem 0.6rem;
-    border-radius: 0.375rem;
-    font-size: 0.8rem;
-    margin-left: 0.6rem;
-    vertical-align: middle;
-    animation: pulse 1.5s infinite;
-    box-shadow: 0 0 0.25rem rgba(var(--org-shadow-base-rgb), 0.5);
-}
-
-.post-details {
-    font-size: 0.9rem;
-    color: var(--org-post-date-color);
-}
-
-.post-content {
-    color: var(--org-post-content-color);
-    line-height: 1.7;
-    margin-bottom: 1.25rem;
-    font-size: 1rem;
-    white-space: pre-line;
-    text-align: left;
-}
-
-.post-actions {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    color: var(--org-post-actions-color);
-    font-size: 1.1rem;
-    width: fit-content;
-}
-
-.heart-count {
-    color: var(--org-heart-button-color);
-    font-size: 1.1rem;
-    animation: heartbeat 1s infinite;
-}
-
-.delete-button {
-    padding: 0.6rem 1.1rem;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    background-color: var(--org-leave-button-bg);
-    color: var(--org-button-text);
-    transition: background-color 0.15s ease;
-    border: none;
-}
-
-.delete-button:hover {
-    background-color: var(--org-leave-button-hover-bg);
-}
-
-.main-content-flex-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.rules-wiki-container {
-    flex: 1;
-    min-width: 250px;
-}
-
-.create-wiki-input-wrapper {
-    margin-bottom: 1rem;
-    text-align: left;
-}
-
-.create-wiki-input {
-    width: calc(100% - 0.5rem);
     background-color: var(--org-card-bg);
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--org-border-medium);
-    border-radius: 20px;
-    font-size: 1rem;
-    color: var(--org-text-primary);
-    box-sizing: border-box;
-    font-family: "DM Sans", sans-serif;
-    cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-}
-
-.create-wiki-input:focus {
-    outline: none;
-    border-color: var(--org-primary);
-    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
-}
-
-.create-wiki-post-container {
-    background-color: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 1rem;
-    border: 1px solid var(--org-text-inverse);
-    margin-bottom: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    transition: none;
-    animation: none;
-    opacity: 1;
-    transform: translateY(0);
-    text-align: left;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 800px;
-    width: 100%;
-    flex-shrink: 0;
-}
-
-.create-wiki-post-title {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-    color: var(--org-text-primary);
-    font-weight: 600;
-}
-
-.create-wiki-post-form {
-    display: none;
-    flex-direction: column;
-    resize: vertical;
-    min-height: 120px;
-    max-height: 200px;
-    overflow: auto;
-}
-
-.create-wiki-post-form label {
-    display: block;
-    margin-bottom: 0.4rem;
-    color: var(--org-text-secondary);
-    font-weight: 500;
-    font-size: 0.95rem;
-}
-
-.create-wiki-post-form input[type="text"],
-.create-wiki-post-form textarea,
-.create-wiki-post-form select,
-.create-wiki-post-form input[type="file"] {
-    width: calc(100% - 0.75rem);
-    background-color: var(--org-card-bg);
-    padding: 0.6rem;
-    margin-bottom: 0.9rem;
-    border: 1px solid var(--org-border-medium);
-    border-radius: 6px;
-    font-size: 1rem;
-    color: var(--org-text-primary);
-    box-sizing: border-box;
-    font-family: "DM Sans", sans-serif;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-}
-
-.create-wiki-post-form textarea {
-    min-height: 4rem;
-    resize: vertical;
-}
-
-.create-wiki-post-form input[type="text"]:focus,
-.create-wiki-post-form textarea:focus,
-.create-wiki-post-form select:focus,
-.create-wiki-post-form input[type="file"]:focus {
-    outline: none;
-    border-color: var(--org-primary);
-    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
-}
-
-.create-wiki-submit-button {
-    padding: 0.75rem 1.25rem;
-    border: none;
     border-radius: 8px;
-    background-color: var(--org-button-bg);
-    color: var(--org-button-text);
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-    font-family: "DM Sans", sans-serif;
-    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
-    margin-top: 1rem;
-    opacity: 0;
-    transform: translateY(10px);
-    animation: slideUp 0.5s ease-out 0.4s forwards;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-}
-
-.create-wiki-submit-button:hover {
-    background-color: var(--org-hover-effect);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12);
-}
-
-.section-divider {
-    margin: 20px 0;
-    border: none;
-    border-top: 1px solid var(--org-border-medium);
-}
-
-.existing-wiki-post-container{
-    background-color: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 1rem;
-    border: 1px solid var(--org-text-inverse);
-    margin-bottom: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    transition: none;
-    animation: none;
-    opacity: 1;
-    transform: translateY(0);
-    text-align: left;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 800px;
-    width: 100%;
-    flex-shrink: 0;
-}
-
-.existing-wiki-posts-title {
-    font-size: 1.5rem;
-    margin-top: 2rem;
-    margin-bottom: 1.25rem;
-    color: var(--org-text-primary);
-    font-weight: 700;
-    border-bottom: 2px solid var(--org-border-medium);
-    padding-bottom: 0.5rem;
-    animation: slideIn 0.5s ease-in-out;
-    text-align: left;
-}
-
-.wiki-posts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.wiki-post-card {
-    background-color: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 25px;
-    border: 1px solid var(--org-text-inverse);
-    transition: none;
-    animation: none;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    width: 100%;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
-.wiki-post-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.wiki-post-title {
-    margin: 0;
-    font-size: 1.1em;
-    color: var(--org-post-info-color);
-}
-
-.wiki-post-actions {
-    display: flex;
-    gap: 5px;
-}
-
-.wiki-edit-button {
-    background-color: var(--org-primary);
-    color: var(--org-button-text);
-    padding: 5px 10px;
-    border-radius: 5px;
-    text-decoration: none;
-    transition: background-color 0.15s ease;
-    border: none;
-    outline: none;
-}
-
-.wiki-edit-button:hover {
-    background-color: var(--org-hover-accent);
-}
-
-.wiki-delete-button {
-    background-color: var(--org-leave-button-bg);
-    color: white;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-.wiki-delete-button:hover {
-    background-color: var(--org-leave-button-hover-bg);
-}
-
-.wiki-post-image {
-    max-width: 100%;
-    height: auto;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.wiki-post-content {
-    font-size: 0.9em;
-    color: var(--org-text-secondary);
-    line-height: 1.6;
-    white-space: pre-line;
-}
-
-.inline-form {
-    display: inline;
-}
-
-.wiki-post-edit-mode {
-    display: none;
-    padding-top: 15px;
-    border-top: 1px dashed #e0e0e0;
-    margin-top: 15px;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.edit-wiki-post-form {
-    background-color: var(--org-card-bg);
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    padding: 1.5rem;
     border: 1px solid var(--org-border-medium);
-    padding: 0.75rem;
-    box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
-    border-radius: 8px;
+    margin-bottom: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     width: 100%;
-    margin: 0 auto;
-    min-height: 40px;
-    max-height: 400px;
-    height: auto;
-    resize: vertical;
-    overflow: auto;
-}
-
-.edit-wiki-post-form label {
-    font-size: 0.95rem;
-    color: var(--org-text-secondary);
-    font-weight: 500;
-}
-
-.edit-wiki-post-form input[type="text"],
-.edit-wiki-post-form textarea,
-.edit-wiki-post-form select {
-    background-color: var(--org-input-bg);
-    border: 1px solid var(--org-border-medium);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-size: 1rem;
-    color: var(--org-text-primary);
     box-sizing: border-box;
-    font-family: "DM Sans", sans-serif;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    width: 100%;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: none; 
 }
 
-.edit-wiki-post-form textarea {
-    min-height: 80px;
-    resize: vertical;
+.post-card:first-of-type {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: 1px solid var(--org-border-medium); 
 }
 
-.edit-wiki-post-form input[type="text"]:focus,
-.edit-wiki-post-form textarea:focus,
-.edit-wiki-post-form select:focus {
-    outline: none;
-    border-color: var(--org-primary);
-    box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
+.post-card:last-child {
+    margin-bottom: 0; 
+    border-bottom-left-radius: 8px; 
+    border-bottom-right-radius: 8px;
 }
 
-.save-edit-button {
-    background-color: var(--org-button-bg);
-    color: var(--org-button-text);
-    padding: 0.75rem 1.25rem;
-    border: none;
+.post-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(var(--org-shadow-base-rgb), 0.15); }
+
+.post-header { display: flex; align-items: center; justify-content: space-between; text-align: left; }
+.profile-info { display: flex; align-items: center; }
+.profile-image {
+    width: 3.5rem; height: 3.5rem; border-radius: 50%; margin-right: 1rem; background-color: var(--org-profile-image-bg);
+    display: flex; justify-content: center; align-items: center; font-size: 1.4rem; color: var(--org-text-light);
+    overflow: hidden; border: 2px solid var(--org-profile-picture-border);
+}
+.post-meta { flex: 1; text-align: left; }
+.post-title { font-size: 1.3rem; font-weight: 600; color: var(--org-post-info-color); margin-bottom: 0.4rem; }
+.post-title span.pinned {
+    background-color: var(--org-pinned-bg); color: var(--org-text-primary); padding: 0.3rem 0.7rem; border-radius: 0.375rem;
+    font-size: 0.85rem; margin-left: 0.8rem; vertical-align: middle; animation: pulse 1.5s infinite;
+    box-shadow: 0 0 0.25rem rgba(var(--org-shadow-base-rgb), 0.5);
+}
+.post-details { font-size: 0.95rem; color: var(--org-post-date-color); }
+.post-content { color: var(--org-post-content-color); line-height: 1.7; font-size: 1.05rem; white-space: pre-line; text-align: left; }
+.wiki-post-image {
+    max-width: 100%; height: auto; margin-bottom: 0.75rem; border-radius: 5px; display: block;
+    margin-left: auto; margin-right: auto; box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+.post-actions {
+    display: flex; align-items: center; gap: 1.5rem; color: var(--org-post-actions-color); font-size: 1.2rem;
+    width: fit-content;
+}
+.heart-count { color: var(--org-heart-button-color); font-size: 1.2rem; animation: heartbeat 1s infinite; }
+.delete-button {
+    padding: 0.7rem 1.2rem; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer;
+    background-color: var(--org-leave-button-bg); color: var(--org-button-text); transition: background-color 0.15s ease; border: none;
+}
+.delete-button:hover { background-color: var(--org-leave-button-hover-bg); }
+
+.rules-wiki-container {
+    flex: 1;
+    min-width: 300px;
+    background-color: var(--org-card-bg);
     border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.15s ease;
-    margin-right: 10px;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    border: 1px solid var(--org-border-medium);
+    padding: 0; 
+    box-sizing: border-box;
+    display: flex; 
+    flex-direction: column; 
+    gap: 0; 
 }
 
-.save-edit-button:hover {
-    background-color: var(--org-hover-effect);
-    transform: translateY(-1px);
-}
-
-.cancel-edit-button {
-    background-color: var(--org-secondary-button-bg);
-    color: var(--org-secondary-button-text);
-    padding: 0.75rem 1.25rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.15s ease;
-}
-
-.cancel-edit-button:hover {
-    background-color: var(--org-secondary-button-hover-bg);
-    transform: translateY(-1px);
-}
-
-.cancel-create-wiki-button {
-    background-color: var(--org-secondary-button-bg);
-    color: var(--org-secondary-button-text);
-    padding: 0.75rem 1.25rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.15s ease;
-    margin-top: 1rem;
-    display: none;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.cancel-create-wiki-button:hover {
-    background-color: var(--org-secondary-button-hover-bg);
-    transform: translateY(-1px);
-}
-
-.cancel-create-wiki-button:hover {
-    background-color: var(--org-secondary-button-hover-bg);
-    transform: translateY(-1px);
-}
-
+/* Organizational Chart Section */
 .org-chart-section {
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--org-text-inverse);
-    padding: 1rem;  
+    padding: 1.5rem; 
     text-align: left;
+    border-bottom: 1px solid var(--org-border-medium); 
+    padding-bottom: 2rem; 
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-radius: 0; 
+    margin-bottom: 0;
+    border: none;
+    background-color: transparent; 
+    box-shadow: none;
+    transition: none; 
+}
+
+.org-chart-section:hover {
+    transform: none; 
+    box-shadow: none;
 }
 
 .org-chart-header {
@@ -1082,9 +571,214 @@ tr:hover td {
     margin-top: 0;
     margin-bottom: 1rem;
     color: var(--org-text-primary);
-    font-weight: 600;
-    border-bottom: 2px solid var(--org-border-medium);
+    border-bottom: 2px solid var(--org-border-medium); 
     padding-bottom: 0.5rem;
+}
+
+.create-wiki-post-container {
+    padding: 1.5rem; 
+    border-bottom: 1px solid var(--org-border-medium); 
+    padding-bottom: 2rem; 
+    border-radius: 0;
+    margin-bottom: 0;
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+    transition: none;
+}
+.create-wiki-post-container:hover { transform: none; box-shadow: none; } 
+
+.create-wiki-input-wrapper {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+.create-wiki-post-container p { 
+    margin-top: 0.5rem; 
+    margin-bottom: 1rem; 
+    font-size: 0.95rem; 
+    line-height: 1.5; 
+    color: var(--org-text-secondary); 
+}
+
+.existing-wiki-post-container {
+    padding: 1.5rem; 
+    border-radius: 0;
+    margin-bottom: 0;
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+    transition: none;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+.existing-wiki-post-container:hover { transform: none; box-shadow: none; } 
+
+.create-wiki-post-title {
+    margin-top: 0; margin-bottom: 1rem; font-size: 1.5rem; color: var(--org-text-primary);
+    font-weight: 600; text-align: left;
+}
+.existing-wiki-posts-title {
+    font-size: 1.5rem; margin-top: 0; margin-bottom: 1.25rem; color: var(--org-text-primary);
+    font-weight: 700; border-bottom: 2px solid var(--org-border-medium); padding-bottom: 0.5rem;
+    animation: slideIn 0.5s ease-in-out; text-align: left;
+}
+
+.create-wiki-input-wrapper { margin-bottom: 1rem; text-align: left; }
+.create-wiki-input {
+    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--org-border-medium); border-radius: 20px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; display: block;
+}
+.create-wiki-input:focus { outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3); }
+.create-wiki-post-form { display: none; flex-direction: column; resize: vertical; min-height: 120px; max-height: 200px; overflow: auto; }
+.create-wiki-post-form label { display: block; margin-bottom: 0.4rem; color: var(--org-text-secondary); font-weight: 500; font-size: 0.95rem; }
+.create-wiki-post-form input[type="text"], .create-wiki-post-form textarea, .create-wiki-post-form select, .create-wiki-post-form input[type="file"] {
+    width: 100%; padding: 0.6rem; margin-bottom: 0.9rem; border: 1px solid var(--org-border-medium); border-radius: 6px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease; display: block;
+}
+.create-wiki-post-form textarea { min-height: 4rem; resize: vertical; }
+.create-wiki-post-form input[type="text"]:focus, .create-wiki-post-form textarea:focus, .create-wiki-post-form select:focus, .create-wiki-post-form input[type="file"]:focus {
+    outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
+}
+.create-wiki-submit-button {
+    padding: 0.75rem 1.25rem; border: none; border-radius: 8px; background-color: var(--org-button-bg);
+    color: var(--org-button-text); font-size: 1rem; font-weight: 500; cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: "DM Sans", sans-serif; box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    margin-top: 1rem; opacity: 0; transform: translateY(10px); animation: slideUp 0.5s ease-out 0.4s forwards;
+    display: block;
+}
+.create-wiki-submit-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12); }
+.cancel-create-wiki-button {
+    background-color: var(--org-secondary-button-bg); color: var(--org-secondary-button-text);
+    padding: 0.75rem 1.25rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500;
+    cursor: pointer; transition: background-color 0.15s ease, transform 0.15s ease; margin-top: 1rem; display: none;
+}
+.cancel-create-wiki-button:hover { background-color: var(--org-secondary-button-hover-bg); transform: translateY(-1px); }
+
+.wiki-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; 
+}
+.wiki-post-card {
+    background-color: var(--org-card-bg);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
+    padding: 1.5rem;
+    border: 1px solid var(--org-border-medium);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 1rem; 
+}
+.wiki-post-card:last-child {
+    margin-bottom: 0; 
+}
+
+.wiki-post-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(var(--org-shadow-base-rgb), 0.15); }
+.wiki-post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; }
+.wiki-post-title { margin: 0; font-size: 1.2em; color: var(--org-post-info-color); }
+.wiki-post-actions { display: flex; gap: 0.5rem; }
+.wiki-edit-button, .save-edit-button, .cancel-edit-button {
+    padding: 0.6rem 1.1rem; border-radius: 6px; font-size: 0.95rem; font-weight: 500; cursor: pointer; border: none; outline: none; transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.wiki-edit-button { background-color: var(--org-primary); color: var(--org-button-text); }
+.wiki-edit-button:hover { background-color: var(--org-hover-accent); }
+.wiki-delete-button {
+    background-color: var(--org-leave-button-bg); color: white; padding: 0.6rem 1.1rem; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.15s ease; font-size: 0.95rem; font-weight: 500;
+}
+.wiki-delete-button:hover { background-color: var(--org-danger-hover); }
+.wiki-post-content { font-size: 1em; color: var(--org-text-secondary); line-height: 1.6; white-space: pre-line; }
+.inline-form { display: inline; }
+.wiki-post-edit-mode {
+    display: none; padding-top: 1.5rem; border-top: 1px dashed var(--org-border-medium); margin-top: 1.5rem; width: 100%; box-sizing: border-box;
+}
+.edit-wiki-post-form {
+    background-color: var(--org-card-bg); border: 1px solid var(--org-border-medium); padding: 1rem; box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.1);
+    border-radius: 8px; display: flex; flex-direction: column; gap: 1rem; width: 100%; margin: 0 auto; min-height: 40px; max-height: 400px; height: auto; resize: vertical; overflow: auto;
+}
+.edit-wiki-post-form label { font-size: 0.95rem; color: var(--org-text-secondary); font-weight: 500; }
+.edit-wiki-post-form input[type="text"], .edit-wiki-post-form textarea, .edit-wiki-post-form select {
+    background-color: var(--org-input-bg); border: 1px solid var(--org-border-medium); padding: 0.75rem 1rem; border-radius: 6px;
+    font-size: 1rem; color: var(--org-text-primary); box-sizing: border-box; font-family: "DM Sans", sans-serif;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease; width: 100%;
+}
+.edit-wiki-post-form textarea { min-height: 80px; resize: vertical; }
+.edit-wiki-post-form input[type="text"]:focus, .edit-wiki-post-form textarea:focus, .edit-wiki-post-form select:focus {
+    outline: none; border-color: var(--org-primary); box-shadow: 0 0 0 0.1rem rgba(var(--org-shadow-base-rgb), 0.3);
+}
+.save-edit-button { background-color: var(--org-button-bg); color: var(--org-button-text); margin-right: 10px; }
+.save-edit-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); }
+.cancel-edit-button { background-color: var(--org-secondary-button-bg); color: var(--org-secondary-button-text); }
+.cancel-edit-button:hover { background-color: var(--org-secondary-button-hover-bg); transform: translateY(-1px); }
+
+.view-org-chart-button {
+    padding: .6rem 1rem; border: none; border-radius: 8px; background-color: var(--org-button-bg);
+    color: var(--org-button-text); font-size: 1rem; font-weight: 500; cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: "DM Sans", sans-serif; box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    width: auto; display: inline-block; margin-top: 1rem;
+}
+.view-org-chart-button:hover { background-color: var(--org-hover-effect); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12); }
+.view-org-chart-button:active { transform: translateY(0); box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1); }
+
+/* MODAL STYLES */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+    justify-content: center; 
+    align-items: center; 
+}
+
+.modal-content {
+    background-color: var(--org-card-bg);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(var(--org-shadow-base-rgb), 0.3);
+    width: 90%;
+    max-width: 900px;
+    position: relative;
+    box-sizing: border-box;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    color: var(--org-text-primary);
+    border-bottom: 2px solid var(--org-border-medium);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.close-button {
+    color: #aaaaaa;
+    font-size: 32px;
+    font-weight: bold;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--org-text-primary);
+    text-decoration: none;
 }
 
 .organization-chart-display {
@@ -1098,136 +792,157 @@ tr:hover td {
     background-color: var(--org-input-bg);
     border: 1px dashed var(--org-border-medium);
     border-radius: 6px;
-    padding: 1rem 3rem 1rem 1rem; 
+    padding: 1.5rem;
     overflow: auto;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    max-height: calc(90vh - 150px);
 }
 
-.loading-message {
-    color: var(--org-text-secondary);
-    font-size: 0.9rem;
-}
-
+.loading-message { color: var(--org-text-secondary); font-size: 0.9rem; }
 .org-node {
-    background-color: var(--org-card-bg);
-    border: 1px solid var(--org-border-medium);
-    border-radius: 20px;
-    padding: 0.75rem 1.5rem;
-    margin: 0.25rem 0;
-    font-size: .95rem;
-    font-weight: 600;
-    color: var(--org-text-primary);
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
-    transition: transform 0.2s ease-in-out;
-    white-space: nowrap;
-    min-width: 150px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background-color: var(--org-card-bg); border: 1px solid var(--org-border-medium); border-radius: 25px;
+    padding: 0.8rem 1.6rem; margin: 0.25rem 0; font-size: 1rem; font-weight: 600; color: var(--org-text-primary);
+    text-align: center; box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1); transition: transform 0.2s ease-in-out;
+    white-space: nowrap; min-width: 160px; display: flex; justify-content: center; align-items: center;
 }
-
-.org-node:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.15);
-}
-
-.org-node.org-root {
-    border-radius: 10px;
-    font-size: 1.1rem;
-    padding: 0.8rem 2rem;
-    margin-bottom: 1rem;
-    min-width: 200px;
-}
-
-.org-line {
-    background-color: var(--org-border-medium);
-    width: 2px;
-    height: 1.5rem;
-    margin: -0.25rem 0;
-    position: relative;
-}
-
-.org-line.org-line-horizontal {
-    height: 2px;
-    width: 4rem;
-    margin: 0 0.5rem;
-    align-self: flex-start;
-    transform: translateX(-50%);
-}
-
+.org-node:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.15); }
+.org-node.org-root { border-radius: 12px; font-size: 1.2rem; padding: 1rem 2.2rem; margin-bottom: 1.2rem; min-width: 220px; }
+.org-line { background-color: var(--org-primary); width: 2px; height: 1.5rem; margin: -0.25rem 0; position: relative; }
+.org-line.org-line-horizontal { height: 2px; width: 4rem; margin: 0 0.5rem; align-self: center; transform: none; }
 .org-branch-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    margin-top: 1rem;
-    gap: 2rem;
+    display: flex; justify-content: center; align-items: flex-start; width: 100%; margin-top: 1.2rem; gap: 2.5rem;
+}
+.org-branch-container .org-node { margin: 0; }
+.org-line.org-vertical-to-branch { height: 2.5rem; margin-bottom: 0.5rem; }
+.org-line.org-vertical-from-branch-top { height: 1.5rem; position: absolute; top: -1.5rem; left: 50%; transform: translateX(-50%); }
+.org-line.org-vertical-to-branch-bottom { height: 1.5rem; position: absolute; bottom: -1.5rem; left: 50%; transform: translateX(-50%); }
+
+
+@media (max-width: 992px) { 
+    .main-content-flex-container {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .bulletin-board-container,
+    .rules-wiki-container {
+        min-width: unset;
+        width: 100%;
+        padding: 0; 
+    }
+
+    .create-post-container,
+    .post-card,
+    .org-chart-section,
+    .create-wiki-post-container,
+    .existing-wiki-post-container {
+        padding: 1.2rem;
+    }
+
+    .rules-wiki-container {
+        border-radius: 8px; 
+    }
+    .org-chart-section { 
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+    .existing-wiki-post-container { 
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .modal-content {
+        width: 90%;
+        max-width: 700px;
+    }
 }
 
-.org-branch-container .org-node {
-    margin: 0;
+@media (max-width: 768px) {
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .post-header form {
+        width: 100%;
+        text-align: right;
+    }
+
+    .delete-button {
+        width: auto;
+    }
+
+    .wiki-post-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .wiki-edit-button, .wiki-delete-button {
+        width: 100%;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-width: 500px;
+        padding: 1rem;
+    }
+
+    .organization-chart-display {
+        padding: 1rem;
+    }
 }
 
-.org-line.org-vertical-to-branch {
-    height: 2.5rem;
-    margin-bottom: 0.5rem;
+@media (max-width: 480px) {
+    .bulletin-header,
+    .existing-posts-title,
+    .create-wiki-post-title,
+    .existing-wiki-posts-title,
+    .org-chart-header {
+        font-size: 1.8em;
+    }
+
+    .post-title {
+        font-size: 1.1rem;
+    }
+
+    .profile-image {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
+    }
+
+    .create-post-form-fields input[type="text"],
+    .create-post-form-fields textarea,
+    .create-post-form-fields select,
+    .create-post-form-fields input[type="file"],
+    .create-wiki-post-form input[type="text"],
+    .create-wiki-post-form textarea,
+    .create-wiki-post-form select,
+    .create-wiki-post-form input[type="file"],
+    .edit-wiki-post-form input[type="text"],
+    .edit-wiki-post-form textarea,
+    .edit-wiki-post-form select {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+
+    .create-post-submit-button,
+    .create-wiki-submit-button,
+    .save-edit-button,
+    .cancel-edit-button,
+    .view-org-chart-button {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
 }
 
-.org-line.org-vertical-from-branch-top {
-    height: 1.5rem;
-    position: absolute;
-    top: -1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.org-line.org-vertical-to-branch-bottom {
-    height: 1.5rem;
-    position: absolute;
-    bottom: -1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-/* Organizational Chart Button */
-.view-org-chart-button {
-    padding: .5rem .5rem;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--org-button-bg);
-    color: var(--org-button-text);
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-    font-family: "DM Sans", sans-serif;
-    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
-    width: auto; 
-    display: inline-block; 
-    margin-top: 1rem; 
-}
-
-.view-org-chart-button:hover {
-    background-color: var(--org-hover-effect);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12);
-}
-
-.view-org-chart-button:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
-}
-
-/* Events */
+/* Events Page Container */
 .events-page-container {
-    width: 100%; 
-    margin: 20px auto; 
+    max-width: 1070px;
+    margin: 20px auto;
     background-color: var(--org-bg-color);
     font-family: "DM Sans", sans-serif;
-    text-align: center; 
-    padding: 0 20px; 
-    box-sizing: border-box; 
 }
 
 .events-header {
@@ -1238,10 +953,9 @@ tr:hover td {
     text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
     animation: fadeIn 0.5s ease-out;
     text-align: left;
-    width: 100%; 
-    box-sizing: border-box; 
 }
 
+/* Create Event Form */
 .create-event-container {
     background-color: var(--org-card-bg);
     border-radius: 8px;
@@ -1253,13 +967,13 @@ tr:hover td {
     flex-direction: column;
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease;
     transform: translateY(0);
-    width: 100%; 
-    box-sizing: border-box; 
+    margin-left: auto;
+    margin-right: auto;
     text-align: left;
 }
 
 .create-event-input {
-    width: 100%; 
+    width: 100%;
     padding: 0.75rem;
     margin-bottom: 1rem;
     border: 1px solid var(--org-border-light);
@@ -1268,16 +982,13 @@ tr:hover td {
     color: var(--org-text-primary);
     font-size: 0.95rem;
     cursor: pointer;
-    text-align: left;
-    box-sizing: border-box; 
+    text-align: left; 
 }
 
 .create-event-form-fields {
     display: none;
     padding-top: 1rem;
-    text-align: left;
-    width: 100%; 
-    box-sizing: border-box;
+    text-align: left; 
 }
 
 .create-event-form-fields label {
@@ -1292,10 +1003,10 @@ tr:hover td {
 .create-event-form-fields input[type="number"],
 .create-event-form-fields input[type="date"],
 .create-event-form-fields input[type="datetime-local"],
-.create-event-form-fields input[type="file"],
+.create-event-form-fields input[type="file"], 
 .create-event-form-fields textarea,
 .create-event-form-fields select {
-    width: 100%; 
+    width: 100%;
     padding: 0.75rem;
     margin-bottom: 1rem;
     border: 1px solid var(--org-border-light);
@@ -1304,7 +1015,6 @@ tr:hover td {
     color: var(--org-text-primary);
     font-size: 0.95rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    box-sizing: border-box; 
 }
 
 .create-event-form-fields input:focus,
@@ -1320,14 +1030,11 @@ tr:hover td {
     flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1rem;
-    width: 100%; 
-    box-sizing: border-box;
 }
 
 .form-row > div {
-    flex: 1; 
+    flex: 1;
     min-width: 150px;
-    box-sizing: border-box; 
 }
 
 .create-event-submit-button {
@@ -1340,9 +1047,8 @@ tr:hover td {
     font-size: 1rem;
     font-weight: 600;
     transition: background-color 0.2s ease;
+    align-self: center; 
     margin-top: 1rem;
-    width: 100%;   
-    box-sizing: border-box;
 }
 
 .create-event-submit-button:hover {
@@ -1355,9 +1061,7 @@ tr:hover td {
     color: var(--org-primary);
     text-decoration: none;
     font-size: 0.9rem;
-    text-align: center;
-    width: 100%; 
-    box-sizing: border-box;
+    text-align: center; 
 }
 
 .back-to-events:hover {
@@ -1372,50 +1076,106 @@ tr:hover td {
     margin-bottom: 1.5rem;
     text-shadow: 1px 1px 3px rgba(var(--org-shadow-base-rgb), 0.05);
     text-align: left;
-    width: 100%;
-    box-sizing: border-box;
 }
 
+/* Event Cards Grid */
+.event-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    padding-bottom: 20px;
+    justify-content: center;
+}
+
+/* Event Card - Updated Styling */
 .event-card {
     background-color: var(--org-card-bg);
     border-radius: 8px;
     box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08);
-    margin-bottom: 1rem;
-    padding: 1rem;
     border: 1px solid var(--org-border-medium);
     display: flex;
     flex-direction: column;
-    width: 100%; 
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
     text-align: left;
-    box-sizing: border-box; 
+    max-width: 250px;
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+}
+
+.event-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.15);
+}
+
+/* Clickable Card Specific Styles */
+.event-card.clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.event-card.clickable-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Event Card Image */
+.event-card-image-container {
+    width: 100%;
+    height: 110px;
+    overflow: hidden;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    background-color: var(--org-border-light);
+}
+
+.event-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Event Card Content */
+.event-card-content {
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .event-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
-    text-align: left;
-    width: 100%; 
-    box-sizing: border-box;
+    margin-bottom: 0.4rem;
+    text-align: left; 
 }
 
 .event-title {
-    font-size: 1.3em;
+    font-size: 1.2em;
     font-weight: 600;
     color: var(--org-text-primary);
     margin: 0;
+    flex-grow: 1;
+    flex-shrink: 1; 
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .event-tag {
-    padding: 0.3em 0.8em;
+    padding: 0.25em 0.7em;
     border-radius: 4px;
-    font-size: 0.75em;
+    font-size: 0.7em;
     font-weight: bold;
     text-transform: uppercase;
     color: var(--org-event-tag-text);
     background-color: var(--org-event-tag-bg);
-    position: relative;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
 }
 
 .event-tag:hover {
@@ -1425,6 +1185,7 @@ tr:hover td {
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Image on Hover within Tag (if used) */
 .event-tag .image-on-hover {
     display: none;
     position: absolute;
@@ -1440,6 +1201,7 @@ tr:hover td {
     background-color: var(--org-card-bg);
 }
 
+/* Event Tag Colors */
 .tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
 .tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
 .tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); }
@@ -1447,40 +1209,277 @@ tr:hover td {
 .tag-esports { background-color: var(--org-esports-tag-bg); color: var(--org-esports-tag-text); }
 .tag-cultural { background-color: var(--org-cultural-tag-bg); color: var(--org-cultural-tag-text); }
 
+/* Event Meta (Date, Time, Location) */
 .event-meta {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--org-text-secondary);
-    margin-bottom: 0.8rem;
-    text-align: left;
-    width: 100%;
-    box-sizing: border-box;
+    text-align: left; 
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.6rem;
 }
 
-.event-meta span {
-    margin-right: 1rem;
+.event-meta div {
+    margin-bottom: 0.2rem;
 }
 
+.event-meta div:last-child {
+    margin-bottom: 0;
+}
+
+/* Event Description */
 .event-description {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--org-event-description-color);
-    line-height: 1.7;
-    white-space: pre-line;
-    text-align: left;
-    width: 100%;
-    box-sizing: border-box;
+    line-height: 1.6;
+    text-align: left; 
+    flex-grow: 1;
+    margin-bottom: 0.8rem;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }
 
+/* Event Actions (Participants Count, Delete Button) */
 .event-actions {
     display: flex;
-    justify-content: space-between;
-    width: 100%; 
-    box-sizing: border-box;
+    justify-content: space-between; 
+    align-items: center;
+    margin-top: auto;
 }
 
 .participants-count {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--org-participants-count-color);
 }
+
+.delete-button {
+    background-color: #e74c3c;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.2s ease;
+}
+
+.delete-button:hover {
+    background-color: #c0392b;
+}
+
+/* Ensure delete form doesn't interfere with card click */
+.event-card .delete-form {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- Responsive Adjustments for Cards --- */
+@media (max-width: 768px) {
+    .event-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 10px;
+    }
+    .events-page-container {
+        margin: 10px auto;
+        padding: 0 10px;
+    }
+    .event-card {
+        max-width: 280px;
+    }
+    .event-card-image-container {
+        height: 90px;
+    }
+    .event-title {
+        font-size: 1.1em;
+    }
+    .event-description {
+        font-size: 0.8rem;
+    }
+    .event-meta div {
+        margin-bottom: 0.15rem;
+    }
+    .delete-button {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+    }
+    .event-tag {
+        margin-left: 0.3rem;
+    }
+}
+
+/* --- Modal Styles --- */
+.modal-overlay {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.7); 
+    justify-content: center; 
+    align-items: center; 
+    padding: 20px; 
+    box-sizing: border-box; 
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    max-width: 900px;
+    width: 95%;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+    display: block; 
+    padding-bottom: 30px; 
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-close-button {
+    color: #aaa;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.modal-close-button:hover,
+.modal-close-button:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+.modal-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-bottom: 15px; 
+}
+
+.modal-content h3 {
+    color: #333;
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.modal-content p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.modal-content strong {
+    color: #333;
+}
+
+.modal-classification {
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.modal-classification #modalEventClassification {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+.modal-two-columns {
+    display: flex;
+    flex-direction: row; 
+    gap: 30px; 
+    width: 100%;
+    margin-top: 15px; 
+}
+
+.modal-left-column {
+    flex: 2; 
+    min-width: 0; 
+    display: flex; 
+    flex-direction: column;
+    gap: 10px; 
+}
+
+.modal-right-column {
+    flex: 1; 
+    min-width: 250px; 
+    border-left: 1px solid #eee; 
+    padding-left: 20px;
+    overflow-y: auto; 
+    max-height: 400px; 
+}
+
+.participants-header {
+    font-size: 1.2em;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline; 
+}
+
+.participants-header-count { 
+    font-size: 0.8em; 
+    color: var(--org-text-secondary); 
+    font-weight: normal; 
+    margin-left: 10px; 
+}
+
+.participants-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.participants-list li {
+    padding: 5px 0;
+    border-bottom: 1px dotted #eee;
+    color: #555;
+    font-size: 0.95em;
+}
+
+.participants-list li:last-child {
+    border-bottom: none;
+}
+
+@media (max-width: 768px) {
+    .modal-two-columns {
+        flex-direction: column; 
+        gap: 20px;
+    }
+
+    .modal-right-column {
+        border-left: none; 
+        border-top: 1px solid #eee; 
+        padding-left: 0;
+        padding-top: 20px;
+    }
+}
+
+.modal-classification #modalEventClassification.tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
+.modal-classification #modalEventClassification.tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
+.modal-classification #modalEventClassification.tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); }
+.modal-classification #modalEventClassification.tag-music { background-color: var(--org-music-tag-bg); color: var(--org-music-tag-text); }
+.modal-classification #modalEventClassification.tag-esports { background-color: var(--org-esports-tag-bg); color: var(--org-esports-tag-text); }
+.modal-classification #modalEventClassification.tag-cultural { background-color: var(--org-cultural-tag-bg); color: var(--org-cultural-tag-text); }
 
 /* Membership and Payments */
 .tabs {
@@ -3192,7 +3191,7 @@ th.sortable.desc::after {
     overflow-x: auto;
 }
 
-.order-table { /* Reusing and adapting existing table styles */
+.order-table { 
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
@@ -3233,17 +3232,17 @@ th.sortable.desc::after {
 }
 
 .order-status-pending {
-    color: var(--org-info); /* Blue for pending */
+    color: var(--org-info);
     font-weight: 600;
 }
 
 .order-status-shipped {
-    color: var(--org-success); /* Green for shipped */
+    color: var(--org-success); 
     font-weight: 600;
 }
 
 .order-status-cancelled {
-    color: var(--org-danger); /* Red for cancelled */
+    color: var(--org-danger); 
     font-weight: 600;
 }
 
@@ -3252,7 +3251,7 @@ th.sortable.desc::after {
     gap: 5px;
 }
 
-.order-actions .header-button { /* Reusing general button style */
+.order-actions .header-button { 
     padding: 6px 12px;
     font-size: 0.85em;
 }
