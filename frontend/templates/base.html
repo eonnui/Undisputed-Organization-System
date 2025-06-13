@@ -29,6 +29,7 @@
                 <ul>
                     {% set current_request_path_str = request.path | string | trim %}
                     {% set home_url_path_str = get_path_from_url_object(url_for('home')) | string | trim %}
+                    {% set student_shirt_management_url_path_str = get_path_from_url_object(url_for('student_shirt_management')) | string | trim %}
 
                     <li class="{% if current_request_path_str == home_url_path_str %}selected{% endif %}">
                         <a href="{{ url_for('home') }}">
@@ -63,6 +64,14 @@
                             <i class="ph ph-receipt regular-icon"></i>
                             <i class="ph-fill ph-receipt filled-icon"></i>
                             <span class="nav-text">Financial Statement</span>
+                        </a>
+                    </li>
+                    {# NEW: Shirt Management Link #}
+                    <li class="{% if current_request_path_str == student_shirt_management_url_path_str %}selected{% endif %}">
+                        <a href="{{ url_for('student_shirt_management') }}">
+                            <i class="ph ph-t-shirt regular-icon"></i> {# Regular icon for shirt #}
+                            <i class="ph-fill ph-t-shirt filled-icon"></i> {# Filled icon for shirt #}
+                            <span class="nav-text">Shirt Orders</span>
                         </a>
                     </li>
                 </ul>

@@ -53,14 +53,15 @@ class Event(Base):
     notifications = relationship("Notification", back_populates="event")
 
     def joined_count(self):
-        return len(self.participants) # This is correct because joinedload makes it a list
+        return len(self.participants) 
 
-    # Ensure this is exactly as shown, with @property decorator
+    
     @property
     def participants_list_json(self):
         """Returns a list of participant names and sections for JSON serialization."""
-        # Include 'section' if it exists on the User model
+        
         return [{'name': p.name, 'section': p.section if hasattr(p, 'section') else None} for p in self.participants]
+
 class User(Base):
     __tablename__ = "users"
 
@@ -154,6 +155,8 @@ class Payment(Base):
     payment_item = relationship("PaymentItem", back_populates="payments")
     user = relationship("User", back_populates="payments")
     notifications = relationship("Notification", back_populates="payment")
+    
+    shirt_orders = relationship("StudentShirtOrder", back_populates="payment") 
 
 class PaymentItem(Base):
     __tablename__ = "payment_items"
@@ -169,7 +172,8 @@ class PaymentItem(Base):
     year_level_applicable = Column(Integer, nullable=True)
     is_past_due = Column(Boolean, default=False)
     is_not_responsible = Column(Boolean, default=False)
-
+    student_shirt_order_id = Column(Integer, ForeignKey("student_shirt_orders.id"), unique=True, nullable=True)
+    student_shirt_order = relationship("StudentShirtOrder", back_populates="payment_item")
     user = relationship("User", back_populates="payment_items")
     payments = relationship("Payment", back_populates="payment_item")
     notifications = relationship("Notification", back_populates="payment_item")
@@ -300,8 +304,8 @@ class ShirtCampaign(Base):
     price_per_shirt = Column(Float, nullable=False)
     pre_order_deadline = Column(Date, nullable=False)
     available_stock = Column(Integer, nullable=False) 
-    gcash_number = Column(String, nullable=True)
-    gcash_name = Column(String, nullable=True)
+    
+    
     is_active = Column(Boolean, default=True)
     size_chart_image_path = Column(String, nullable=True) 
     
@@ -319,24 +323,19 @@ class StudentShirtOrder(Base):
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey("shirt_campaigns.id"), nullable=False)
     student_id = Column(Integer, ForeignKey("users.id"), nullable=False) 
-    
     student_name = Column(String, nullable=False)
     student_year_section = Column(String, nullable=False)
     student_email = Column(String, nullable=True) 
     student_phone = Column(String, nullable=True) 
-    
     shirt_size = Column(String, nullable=False)
     quantity = Column(Integer, default=1, nullable=False)
-    
-    payment_amount = Column(Float, nullable=False) 
-    payment_reference_number = Column(String, nullable=True)
-    payment_date_time = Column(DateTime, nullable=True)
-    payment_screenshot_path = Column(String, nullable=True)
-    payment_status = Column(String, default="Pending") 
-
+    order_total_amount = Column(Float, nullable=False) 
+    payment_id = Column(Integer, ForeignKey("payments.id"), nullable=True)
     ordered_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-
     campaign = relationship("ShirtCampaign", back_populates="student_orders")
     student = relationship("User", back_populates="student_shirt_orders")
     notifications = relationship("Notification", back_populates="shirt_order")
+    payment = relationship("Payment", back_populates="shirt_orders")
+    status = Column(String, default="pending", nullable=False)
+    payment_item = relationship("PaymentItem", back_populates="student_shirt_order", uselist=False)

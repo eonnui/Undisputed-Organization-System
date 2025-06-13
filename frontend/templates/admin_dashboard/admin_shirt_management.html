@@ -50,23 +50,14 @@
         </div>
         <div class="card-body">
             <div class="row mb-3">
-                <div class="col-md-4">
+                <div class="col-md-6"> {# Adjusted column width as one filter is removed #}
                     <label for="orderCampaignFilter" class="form-label">Filter by Campaign:</label>
                     <select class="form-select" id="orderCampaignFilter">
                         <option value="">All Campaigns</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label for="orderStatusFilter" class="form-label">Filter by Status:</label>
-                    <select class="form-select" id="orderStatusFilter">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="paid">Paid</option>
-                        <option value="fulfilled">Fulfilled</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
+                {# Removed the "Filter by Status" dropdown #}
+                <div class="col-md-6 d-flex align-items-end"> {# Adjusted column width #}
                     <button class="btn btn-info w-100" id="applyOrderFilters">Apply Filters</button>
                 </div>
             </div>
@@ -80,10 +71,8 @@
                             <th>Size</th>
                             <th>Quantity</th>
                             <th>Total Price</th>
-                            <th>Payment Status</th>
-                            <th>Order Status</th>
-                            <th>Screenshot</th>
-                            <th>Actions</th>
+                            {# Removed Payment Status, Order Status, and Screenshot columns #}
+                            {# Removed Actions column (which contained the update status button) #}
                         </tr>
                     </thead>
                     <tbody>
@@ -117,7 +106,8 @@
                     </div>
                     <div class="mb-3">
                         <label for="preOrderDeadline" class="form-label">Pre-Order Deadline</label>
-                        <input type="date" class="form-control" id="preOrderDeadline" name="pre_order_deadline" required>
+                        {# MODIFIED: Changed type to "datetime-local" #}
+                        <input type="datetime-local" class="form-control" id="preOrderDeadline" name="pre_order_deadline" required>
                     </div>
                     <div class="mb-3">
                         <label for="campaignStock" class="form-label">Available Stock</label>
@@ -165,7 +155,8 @@
                     </div>
                     <div class="mb-3">
                         <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label> 
-                        <input type="date" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required>
+                        {# MODIFIED: Changed type to "datetime-local" #}
+                        <input type="datetime-local" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required>
                     </div>
                     <div class="mb-3">
                         <label for="editCampaignStock" class="form-label">Available Stock</label>
@@ -190,35 +181,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="updateOrderStatusModal" tabindex="-1" aria-labelledby="updateOrderStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="updateOrderStatusModalLabel">Update Order Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="updateOrderStatusForm">
-                    <input type="hidden" id="updateOrderId">
-                    <div class="mb-3">
-                        <label for="orderCurrentStatus" class="form-label">Current Status</label>
-                        <input type="text" class="form-control" id="orderCurrentStatus" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="newOrderStatus" class="form-label">New Status</label>
-                        <select class="form-select" id="newOrderStatus" name="status">
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="fulfilled">Fulfilled</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update Status</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{# The updateOrderStatusModal has been removed as its functionality was deprecated by backend schema changes #}
 
 {% endblock %}
 

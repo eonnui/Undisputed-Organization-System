@@ -9,7 +9,7 @@ class OrganizationBase(BaseModel):
 
 class ParticipantResponse(BaseModel):
     name: str
-    section: Optional[str] = None 
+    section: Optional[str] = None
 
 class OrganizationCreate(OrganizationBase):
     pass
@@ -87,10 +87,10 @@ class User(UserBase):
         from_attributes = True
 
 class ForgotPasswordRequest(BaseModel):
-    identifier: str 
+    identifier: str
 
 class ResetPasswordRequest(BaseModel):
-    identifier: str 
+    identifier: str
     code: str
     new_password: str
 
@@ -157,28 +157,28 @@ class Expense(ExpenseBase):
 class NotificationBase(BaseModel):
     message: str
     url: Optional[str] = None
-    is_read: bool = False 
-class NotificationCreate(NotificationBase): 
+    is_read: bool = False
+class NotificationCreate(NotificationBase):
     pass
 
 class Notification(NotificationBase):
     id: int
-    created_at: datetime 
+    created_at: datetime
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
 
 class RuleWikiEntryBase(BaseModel):
     title: str
     category: str
     content: str
-    image_path: Optional[str] = None 
+    image_path: Optional[str] = None
 
 class RuleWikiEntryCreate(RuleWikiEntryBase):
-    pass 
+    pass
 
 class RuleWikiEntryUpdate(RuleWikiEntryBase):
-    pass 
+    pass
 
 class RuleWikiEntry(RuleWikiEntryBase):
     id: int
@@ -217,27 +217,21 @@ class ShirtCampaignBase(BaseModel):
     title: str
     description: Optional[str] = None
     price_per_shirt: float
-    pre_order_deadline: date
-    available_stock: int 
-    gcash_number: Optional[str] = None
-    gcash_name: Optional[str] = None
+    pre_order_deadline: datetime
+    available_stock: int
     is_active: bool = True
     size_chart_image_path: Optional[str] = None
 
 class ShirtCampaignCreate(ShirtCampaignBase):
-    organization_id: int 
+    organization_id: int
 
-class ShirtCampaignUpdate(ShirtCampaignBase):
-    
+class ShirtCampaignUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     price_per_shirt: Optional[float] = None
-    pre_order_deadline: Optional[date] = None
-    gcash_number: Optional[str] = None
-    gcash_name: Optional[str] = None
+    pre_order_deadline: Optional[datetime] = None
     is_active: Optional[bool] = None
     size_chart_image_path: Optional[str] = None
-
 
 class ShirtCampaign(ShirtCampaignBase):
     id: int
@@ -245,7 +239,46 @@ class ShirtCampaign(ShirtCampaignBase):
     organization_id: int
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# --- START MODIFICATIONS FOR SHIRT ORDER PROBLEM ---
+
+# NEW: Define PaymentItemBase
+class PaymentItemBase(BaseModel):
+    id: int
+    user_id: int
+    fee: float
+    is_paid: bool
+    # Add other fields from your PaymentItem model that you want to expose
+    academic_year: Optional[str] = None
+    semester: Optional[str] = None
+    due_date: Optional[date] = None
+    year_level_applicable: Optional[str] = None
+    is_past_due: Optional[bool] = None
+    is_not_responsible: Optional[bool] = None
+    created_at: datetime
+    updated_at: datetime
+    student_shirt_order_id: Optional[int] = None # Added for completeness
+
+    class Config:
+        from_attributes = True
+
+# MODIFIED: PaymentSchema to include payment_item_id and nested payment_item
+class PaymentSchema(BaseModel):
+    id: int
+    paymaya_payment_id: Optional[str] = None
+    amount: float
+    status: str # e.g., 'pending', 'paid', 'failed', 'cancelled'
+    created_at: datetime
+    updated_at: datetime
+    user_id: Optional[int] = None # Assuming Payment model has a user_id
+    payment_item_id: Optional[int] = None # <--- ADDED: To expose the FK directly
     
+    # <--- ADDED: To expose the nested PaymentItem object within Payment
+    payment_item: Optional[PaymentItemBase] = None
+
     class Config:
         from_attributes = True
 
@@ -256,29 +289,41 @@ class StudentShirtOrderBase(BaseModel):
     student_phone: Optional[str] = None
     shirt_size: str
     quantity: int = 1
-    payment_amount: float
-    payment_reference_number: Optional[str] = None
-    payment_date_time: Optional[datetime] = None
-    payment_screenshot_path: Optional[str] = None
-    payment_status: str = "Pending"
+    order_total_amount: float
+
 
 class StudentShirtOrderCreate(StudentShirtOrderBase):
     campaign_id: int
-    student_id: int 
+    student_id: int
 
 class StudentShirtOrderUpdate(BaseModel):
-    
-    payment_status: Optional[str] = None
-    payment_reference_number: Optional[str] = None
-    payment_date_time: Optional[datetime] = None
-    payment_screenshot_path: Optional[str] = None 
+    # Add fields that can be updated for a StudentShirtOrder
+    # Keep the existing ones you might have (even if currently empty)
+    # and add the 'status' field.
+    student_name: Optional[str] = None
+    student_year_section: Optional[str] = None
+    student_email: Optional[str] = None
+    student_phone: Optional[str] = None
+    shirt_size: Optional[str] = None
+    quantity: Optional[int] = None
+    order_total_amount: Optional[float] = None
+    status: Optional[str] = None # <--- ADD THIS LINE!
 
+# MODIFIED: StudentShirtOrder to ensure nested campaign and payment are present.
+# The payment_item should now come via the 'payment' object.
 class StudentShirtOrder(StudentShirtOrderBase):
     id: int
     campaign_id: int
     student_id: int
     ordered_at: datetime
     updated_at: datetime
+    payment_id: Optional[int] = None # This is the foreign key
+
+    # CRUCIAL ADDITIONS (confirming they are there): Nested Pydantic models for relationships
+    campaign: Optional[ShirtCampaign] = None # Link to the ShirtCampaign schema
+    payment: Optional[PaymentSchema] = None 
 
     class Config:
         from_attributes = True
+
+# --- END MODIFICATIONS FOR SHIRT ORDER PROBLEM ---
