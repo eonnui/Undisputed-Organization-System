@@ -3318,3 +3318,37 @@ th.sortable.desc::after {
     font-weight: bold;
     color: var(--org-text-primary);
 }
+
+/* ========================================= */
+/* --- Modern Scrollbar Styling --- */
+/* ========================================= */
+
+/* For WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background-color: var(--org-bg-color); /* Match body background */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--org-border-medium); /* Medium border color for the thumb */
+    border-radius: var(--org-radius-sm); /* Small radius for rounded corners */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--org-text-secondary); /* Slightly darker on hover */
+}
+
+/* For Firefox */
+/* Note: Firefox has limited support for scrollbar styling compared to WebKit */
+/* This will change the color of the scrollbar track and thumb */
+/* You might need to enable layout.css.scrollbar-color.enabled in about:config for it to work in older versions */
+* { /* Applying to all elements that can scroll */
+    scrollbar-width: thin;
+    scrollbar-color: var(--org-border-medium) var(--org-bg-color);
+}
+
+/* Optional: Style the corners */
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+}

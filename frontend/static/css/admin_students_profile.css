@@ -1,0 +1,409 @@
+/* General Styling & Layout for Light Theme with Custom Palette */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--org-bg-color); /* Light background from palette */
+    color: var(--org-text-primary); /* Primary text color from palette */
+    line-height: 1.6;
+}
+
+.students-page-container {
+    padding: 25px;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: var(--org-bg-secondary); /* White or light background for container from palette */
+    border-radius: var(--org-radius-md); /* Use palette variable for radius */
+    box-shadow: var(--org-shadow-md); /* Use palette variable for shadow */
+}
+
+.page-header {
+    font-size: 2.2em;
+    color: var(--org-dashboard-title-color); /* Darker primary text for header from palette */
+    margin-bottom: 30px;
+    text-align: left;
+    font-weight: 500;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.page-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    height: 3px;
+    background-color: var(--org-primary); /* Primary theme color for accent from palette */
+    border-radius: 1.5px;
+}
+
+/* Header Actions & Filters */
+.header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 30px;
+    align-items: flex-end;
+    justify-content: flex-start;
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-container label {
+    font-weight: 400;
+    color: var(--org-text-primary); /* Primary text color from palette */
+    white-space: nowrap;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.search-input {
+    padding: 10px 15px;
+    border: 1px solid var(--org-form-group-input-border); /* Input border from palette */
+    background-color: var(--org-read-only-input-bg); /* Input background from palette */
+    color: var(--org-text-primary); /* Input text color from palette */
+    border-radius: 5px;
+    font-size: 1em;
+    width: 250px;
+    transition: var(--org-transition);
+}
+
+.search-input::placeholder {
+    color: var(--org-text-secondary); /* Secondary text for placeholder from palette */
+}
+
+.search-input:focus {
+    border-color: var(--org-form-group-input-focus-border); /* Focus border color from palette */
+    /* Using a generic shadow for focus. The specific `rgba` for shadow_base_rgb needs to be injected/derived */
+    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
+    outline: none;
+    background-color: var(--org-bg-secondary); /* White or light background on focus from palette */
+}
+
+.search-button {
+    padding: 10px 20px;
+    background-color: var(--org-button-bg); /* Primary button background from palette */
+    color: var(--org-button-text); /* Button text color from palette */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+    transition: var(--org-transition);
+}
+
+.search-button:hover {
+    background-color: var(--org-primary-hover); /* Darker primary on hover from palette */
+    transform: translateY(-1px);
+}
+
+.search-button:active {
+    transform: translateY(0);
+}
+
+/* Custom Select Dropdowns */
+.custom-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 150px;
+    margin-left: 10px;
+    user-select: none;
+}
+
+.custom-select-trigger {
+    background-color: var(--org-read-only-input-bg); /* Input background from palette */
+    border: 1px solid var(--org-form-group-input-border); /* Input border from palette */
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1em;
+    color: var(--org-text-primary); /* Primary text color from palette */
+    transition: var(--org-transition);
+}
+
+.custom-select-trigger:hover {
+    border-color: var(--org-border-medium); /* Medium border on hover from palette */
+}
+
+.custom-select-wrapper.open .custom-select-trigger {
+    border-color: var(--org-form-group-input-focus-border); /* Focus border color from palette */
+    /* Using a generic shadow for focus. The specific `rgba` for shadow_base_rgb needs to be injected/derived */
+    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    fill: var(--org-text-secondary); /* Secondary text color for icon from palette */
+    transition: var(--org-transition);
+}
+
+.custom-select-wrapper.open .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.custom-options {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background-color: var(--org-dropdown-bg); /* Dropdown background from palette */
+    border: 1px solid var(--org-dropdown-border); /* Dropdown border from palette */
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.custom-select-wrapper.open .custom-options {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.custom-options ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-options li {
+    padding: 12px 15px;
+    cursor: pointer;
+    font-size: 0.95em;
+    color: var(--org-text-primary); /* Primary text for list items from palette */
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.custom-options li:hover {
+    background-color: var(--org-dropdown-item-hover-bg); /* Hover background for list items from palette */
+    color: var(--org-primary-hover); /* Darker primary on hover from palette */
+}
+
+.custom-options li[data-value=""] {
+    font-weight: 500;
+    color: var(--org-text-primary-darker); /* Darker primary text for "All" from palette */
+    border-bottom: 1px solid var(--org-border-light); /* Light border from palette */
+}
+
+/* Table Styling */
+.students-table-container {
+    overflow-x: auto;
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
+    background-color: var(--org-bg-secondary); /* Match container background from palette */
+}
+
+.students-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px;
+}
+
+.students-table th,
+.students-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--org-border-medium); /* Medium border for rows from palette */
+    white-space: nowrap;
+}
+
+.students-table thead th {
+    background-color: var(--org-sidebar-bg-color); /* Table header background from palette */
+    color: var(--org-table-header-text-payments); /* Table header text color from palette */
+    font-weight: 500;
+    font-size: 0.95em;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    cursor: pointer;
+    transition: var(--org-transition);
+}
+
+.students-table thead th:hover {
+    background-color: var(--org-primary-light); /* Lighter primary on hover from palette */
+}
+
+/* Remove default first/last child borders if using border-radius on container */
+.students-table thead tr:first-child th:first-child {
+    border-top-left-radius: var(--org-radius-md);
+}
+.students-table thead tr:first-child th:last-child {
+    border-top-right-radius: var(--org-radius-md);
+}
+
+.students-table tbody tr:nth-child(even) {
+    background-color: var(--org-highlight); /* Highlight for zebra striping from palette */
+}
+
+.students-table tbody tr:hover {
+    background-color: var(--org-dropdown-item-hover-bg); /* Lighter hover background from palette */
+    transition: background-color 0.2s ease;
+}
+
+.students-table th.sortable {
+    position: relative;
+    padding-right: 30px;
+}
+
+.students-table th.sortable::after {
+    content: '';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    transition: var(--org-transition);
+    opacity: 0.5;
+}
+
+.students-table th.sortable.asc::after {
+    border-bottom-color: var(--org-table-header-text-payments); /* Text color for arrow from palette */
+    opacity: 1;
+}
+
+.students-table th.sortable.desc::after {
+    border-top-color: var(--org-table-header-text-payments); /* Text color for arrow from palette */
+    opacity: 1;
+}
+
+/* Action Link */
+.view-history-link {
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: var(--org-join-btn-bg); /* Join button background (green) from palette */
+    color: var(--org-button-text); /* Button text color (white) from palette */
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    transition: var(--org-transition);
+    white-space: nowrap;
+}
+
+.view-history-link:hover {
+    background-color: var(--org-join-btn-hover-bg); /* Join button hover background from palette */
+    transform: translateY(-1px);
+}
+
+/* No data message */
+.students-table tbody tr td[colspan="7"] {
+    text-align: center !important;
+    padding: 30px;
+    color: var(--org-error); /* Error color for no data from palette */
+    font-style: italic;
+    font-weight: 500;
+}
+
+/* Message Box */
+#message-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 30px;
+    background-color: var(--org-info); /* Info color for default from palette */
+    color: var(--org-text-inverse); /* Inverse text color (white) from palette */
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
+    z-index: 1001;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1em;
+    text-align: center;
+    opacity: 0;
+    animation: fadeInOut 3.5s forwards;
+    pointer-events: none;
+}
+
+#message-box.error {
+    background-color: var(--org-error); /* Error color from palette */
+    color: var(--org-text-inverse); /* Inverse text color (white) from palette */
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -40%); }
+    10% { opacity: 1; transform: translate(-50%, -50%); }
+    90% { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, -60%); }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .students-page-container {
+        padding: 15px;
+        margin: 15px auto;
+    }
+
+    .page-header {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+
+    .search-input,
+    .search-button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .custom-select-wrapper {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .students-table th,
+    .students-table td {
+        padding: 12px 15px;
+    }
+
+    .students-table thead th {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        font-size: 1.5em;
+    }
+
+    .students-table th,
+    .students-table td {
+        font-size: 0.85em;
+    }
+
+    .view-history-link {
+        padding: 6px 12px;
+        font-size: 0.8em;
+    }
+}

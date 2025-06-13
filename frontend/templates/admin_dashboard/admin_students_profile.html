@@ -1,0 +1,82 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Student Profiles{% endblock %}
+
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/admin_dashboard.css">
+<link rel="stylesheet" href="/static/css/admin_students_profile.css">
+{% endblock %}
+
+{% block content %}
+<div class="students-page-container">
+    <h2 class="page-header">Student Profiles</h2>
+    <div class="header-actions">
+        <div class="filter-container">
+            <label for="student-search-filter" class="sr-only">Search Student</label>
+            <input type="text" id="student-search-filter" placeholder="Search by Name or Student ID" class="search-input">
+            <button onclick="updateStudentsTable()" class="search-button">Search</button>
+        </div>
+
+        <div class="custom-select-wrapper" id="year-level-filter-wrapper">
+            <div class="custom-select-trigger" id="year-level-filter-trigger">
+                <span>Year Level</span>
+                <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+            </div>
+            <div class="custom-options" id="year-level-filter-options">
+                <ul role="listbox" id="year-level-dropdown">
+                    <li data-value="">All</li>
+                    <li data-value="1">1st Year</li>
+                    <li data-value="2">2nd Year</li>
+                    <li data-value="3">3rd Year</li>
+                    <li data-value="4">4th Year</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="custom-select-wrapper" id="section-filter-wrapper">
+            <div class="custom-select-trigger" id="section-filter-trigger">
+                <span>Section</span>
+                <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+            </div>
+            <div class="custom-options" id="section-filter-options">
+                <ul role="listbox" id="section-dropdown">
+                    <li data-value="">All</li>
+                    <li data-value="A">A</li>
+                    <li data-value="B">B</li>
+                    <li data-value="C">C</li>
+                    <li data-value="D">D</li>
+                    <li data-value="E">E</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="students-table-container">
+        <table class="students-table" id="students-table">
+            <thead>
+                <tr>
+                    <th class="sortable" data-column="student_number">Student ID</th>
+                    <th class="sortable" data-column="first_name">First Name</th>
+                    <th class="sortable" data-column="last_name">Last Name</th>
+                    <th class="sortable" data-column="year_level">Year Level</th>
+                    <th class="sortable" data-column="section">Section</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/admin_dashboard/admin_students_profile.js"></script>
+{% endblock %}

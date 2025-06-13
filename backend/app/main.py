@@ -1055,6 +1055,17 @@ async def admin_shirt_management(request: Request, db: Session = Depends(get_db)
     })
     return templates.TemplateResponse("admin_dashboard/admin_shirt_management.html", context)
 
+#STUDENTS PROFILE
+@router.get("/admin/students_profile", response_class=HTMLResponse, name="admin_students_profile")
+async def admin_shirt_management(request: Request, db: Session = Depends(get_db)):
+    admin, organization = get_current_admin_with_org(request, db)
+    context = await get_base_template_context(request, db)
+    context.update({
+        "admin_id": admin.admin_id,
+        "organization_id": organization.id,
+    })
+    return templates.TemplateResponse("admin_dashboard/admin_students_profile.html", context)
+
 # Admin Payments Page
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
 async def admin_payments(

@@ -1,0 +1,1046 @@
+/* ========================================= */
+/* --- Unified Root Variables for Theming --- */
+/* LIGHT Theme by Default */
+/* ========================================= */
+:root {
+    /* Primary / Accent Colors */
+    --org-primary: #007bff; /* A vibrant blue for main actions/branding */
+    --org-primary-hover: #0056b3; /* Darker blue on hover */
+    --org-primary-light: #e0f2ff; /* Lighter primary for subtle backgrounds/hovers */
+    --org-success: #28a745; /* Green for success */
+    --org-error: #dc3545; /* Red for errors */
+    --org-info: #17a2b8; /* Cyan for info messages */
+    --org-warning: #ffc107; /* Yellow for warnings */
+    --org-join-btn-bg: #28aa46; /* Specific green for 'join'/'view history' buttons */
+    --org-join-btn-hover-bg: #218838;
+
+    /* Backgrounds */
+    --org-bg-color: #f4f6f9; /* Light grey for the overall body background (sidebar area too) */
+    --org-bg-secondary: #ffffff; /* Pure white for main content containers/cards */
+    --org-read-only-input-bg: #f8f9fa; /* Very light grey for non-editable/search inputs */
+    --org-settings-section-bg: var(--org-bg-secondary); /* Cards are white */
+    --org-dropdown-bg: var(--org-bg-secondary); /* Dropdowns are white */
+    --org-highlight: #f8f9fa; /* Light grey for table zebra striping */
+    --org-sidebar-bg-color: #28a745; /* Green sidebar background as seen in image_e34e77.png */
+
+    /* Text Colors */
+    --org-text-primary: #343a40; /* Dark charcoal for general text */
+    --org-text-primary-darker: #212529; /* Even darker for strong headings/important text */
+    --org-text-secondary: #6c757d; /* Medium grey for secondary text/placeholders */
+    --org-text-light: #adb5bd; /* Lighter grey for subtle text */
+    --org-text-inverse: #ffffff; /* White text for dark backgrounds (buttons, info messages) */
+    --org-dashboard-title-color: var(--org-text-primary-darker); /* Darker primary for page headers */
+    --org-table-header-text-payments: #ffffff; /* White text for table headers (given green background) */
+
+
+    /* Borders */
+    --org-border-light: #e9ecef; /* Very light grey for subtle borders */
+    --org-border-medium: #ced4da; /* Medium grey for stronger borders */
+    --org-form-group-input-border: #ced4da; /* Input border color */
+    --org-form-group-input-focus-border: #80bdff; /* Blue for input focus */
+    --org-dropdown-border: var(--org-border-medium); /* Dropdown border */
+
+    /* Shadows (base RGB for configurable opacity) */
+    --org-shadow-base-rgb: 0, 0, 0; /* Black base for shadows */
+    --org-shadow-sm: rgba(var(--org-shadow-base-rgb), 0.08) 0px 2px 4px;
+    --org-shadow-md: rgba(var(--org-shadow-base-rgb), 0.12) 0px 4px 8px;
+    --org-shadow-lg: rgba(var(--org-shadow-base-rgb), 0.15) 0px 8px 16px;
+
+    /* Radius */
+    --org-radius-sm: 4px;
+    --org-radius-md: 8px;
+    --org-radius-lg: 12px;
+
+    /* Transitions */
+    --org-transition: all 0.2s ease-in-out;
+
+    /* Button Specifics (using general variables from above) */
+    --org-button-bg: var(--org-primary);
+    --org-button-text: var(--org-text-inverse); /* White text for primary buttons */
+    --org-button-group-button-update-bg: var(--org-primary);
+    --org-button-group-button-update-hover-bg: var(--org-primary-hover);
+    --org-button-group-button-clear-bg: var(--org-read-only-input-bg); /* Use light grey for clear button */
+    --org-button-group-button-clear-hover-bg: var(--org-border-light); /* Slightly darker for hover */
+    --org-file-input-button-bg: var(--org-primary);
+    --org-file-input-button-text: var(--org-text-inverse);
+
+    /* Specific element adjustments */
+    --org-logo-preview-border: var(--org-border-medium);
+    --org-profile-picture-border: var(--org-border-medium);
+    --org-current-logo-paragraph-color: var(--org-text-secondary);
+    --org-table-odd-row-bg: var(--org-bg-secondary); /* Explicitly white for odd rows */
+    --org-table-even-row-bg: var(--org-highlight); /* Light grey for even rows */
+    --org-table-row-hover-bg: var(--org-primary-light); /* Lighter primary for table row hover */
+}
+
+/* ========================================= */
+/* --- Dark Theme Overrides --- */
+/* Apply this block when dark mode is active, e.g., by adding data-theme="dark" to body/html */
+/* ========================================= */
+body[data-theme="dark"], html[data-theme="dark"] {
+    /* Primary / Accent Colors (Dark Theme) */
+    --org-primary: #5DADE2; /* Lighter blue for dark theme */
+    --org-primary-hover: #3498DB;
+    --org-primary-light: #2a4157; /* Darker blue for subtle backgrounds/hovers */
+    --org-success: #58D68D;
+    --org-error: #E74C3C;
+    --org-info: #5DADE2;
+    --org-warning: #F4D03F;
+    --org-join-btn-bg: #2ECC71; /* Lighter green for dark theme */
+    --org-join-btn-hover-bg: #27AE60;
+
+    /* Backgrounds (Dark Theme) */
+    --org-bg-color: #212529; /* Dark charcoal for body background */
+    --org-bg-secondary: #2c3034; /* Slightly lighter charcoal for containers/cards */
+    --org-read-only-input-bg: #343a40; /* Darker grey for inputs */
+    --org-settings-section-bg: var(--org-bg-secondary);
+    --org-dropdown-bg: var(--org-bg-secondary);
+    --org-highlight: #343a40; /* Darker grey for table zebra striping */
+    --org-sidebar-bg-color: #1a1e22; /* Even darker sidebar background */
+
+    /* Text Colors (Dark Theme) */
+    --org-text-primary: #e9ecef; /* Light grey for general text */
+    --org-text-primary-darker: #f8f9fa; /* White for strong headings */
+    --org-text-secondary: #adb5bd; /* Medium light grey for secondary text */
+    --org-text-light: #ced4da; /* Lighter grey for subtle text */
+    --org-text-inverse: #212529; /* Dark text for light backgrounds (rare, but defined) */
+    --org-dashboard-title-color: var(--org-text-primary-darker);
+    --org-table-header-text-payments: #e9ecef; /* Light text for table headers */
+
+    /* Borders (Dark Theme) */
+    --org-border-light: #3b4045;
+    --org-border-medium: #495057;
+    --org-form-group-input-border: #495057;
+    --org-form-group-input-focus-border: #85c1e9; /* Lighter blue for focus */
+    --org-dropdown-border: var(--org-border-medium);
+
+    /* Shadows (Dark Theme - more subtle, less opaque) */
+    --org-shadow-base-rgb: 0, 0, 0;
+    --org-shadow-sm: rgba(var(--org-shadow-base-rgb), 0.2) 0px 2px 4px;
+    --org-shadow-md: rgba(var(--org-shadow-base-rgb), 0.25) 0px 4px 8px;
+    --org-shadow-lg: rgba(var(--org-shadow-base-rgb), 0.3) 0px 8px 16px;
+
+    /* Specific element adjustments (Dark Theme) */
+    --org-button-group-button-clear-bg: var(--org-read-only-input-bg); /* Use dark input bg for clear button */
+    --org-button-group-button-clear-hover-bg: var(--org-border-medium);
+    --org-current-logo-paragraph-color: var(--org-text-light);
+    --org-table-odd-row-bg: var(--org-bg-secondary);
+    --org-table-even-row-bg: var(--org-highlight);
+    --org-table-row-hover-bg: var(--org-primary-light);
+}
+
+
+/* ========================================= */
+/* --- General Styling & Layout --- */
+/* Applies to overall page and containers */
+/* ========================================= */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--org-bg-color); /* Uses body background */
+    color: var(--org-text-primary); /* Uses primary text color */
+    line-height: 1.6;
+    transition: background-color 0.4s ease, color 0.4s ease; /* Smooth theme transition */
+}
+
+.content {
+    padding: 30px;
+    flex-grow: 1;
+    background-color: var(--org-bg-color); /* Changed to body-bg for consistency with sidebar if it's there */
+    transition: background-color 0.4s ease;
+    animation: fadeInBackground 1s ease-out;
+}
+
+.students-page-container, /* Apply common container styles */
+.settings-section { /* Admin settings cards */
+    background-color: var(--org-bg-secondary); /* Cards/containers are secondary background */
+    padding: 35px; /* Unified padding */
+    border-radius: var(--org-radius-md); /* Unified radius */
+    box-shadow: var(--org-shadow-md); /* Unified shadow */
+    border: 1px solid var(--org-border-light); /* Unified light border */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+    animation: scaleIn 0.5s ease-out forwards;
+}
+
+.students-page-container:hover,
+.settings-section:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: var(--org-shadow-md); /* Slightly more prominent on hover */
+}
+
+/* Page Headers (Admin Settings, Student Profiles) */
+h1 { /* Changed to h1 to apply to both Admin Settings and Student Profiles header */
+    font-size: 2.2em;
+    color: var(--org-dashboard-title-color); /* Dashboard title color */
+    margin-bottom: 30px; /* Adjusted margin */
+    text-align: left;
+    font-weight: 500;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    height: 3px;
+    background-color: var(--org-primary); /* Primary theme color for accent */
+    border-radius: 1.5px;
+}
+
+/* ========================================= */
+/* --- Admin Settings Specific Styling --- */
+/* ========================================= */
+.content h1 { /* Override specific content h1 if needed, otherwise general h1 will apply */
+    margin-bottom: 20px; /* Slightly less margin for admin settings h1 */
+    text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
+    animation: fadeIn 0.5s ease-out;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+}
+
+@media (min-width: 768px) {
+    .settings-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+.settings-section h2 { /* Section titles within settings cards */
+    color: var(--org-text-primary-darker); /* Darker primary text for section titles */
+    margin-bottom: 25px;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    border-bottom: 2px solid var(--org-border-medium);
+    padding-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+    animation: fadeIn 0.6s ease-out forwards;
+    opacity: 0;
+}
+.settings-section .form-group:nth-child(1) { animation-delay: 0.1s; }
+.settings-section .form-group:nth-child(2) { animation-delay: 0.2s; }
+.settings-section .form-group:nth-child(3) { animation-delay: 0.3s; }
+.settings-section .form-group:nth-child(4) { animation-delay: 0.4s; }
+
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--org-text-primary); /* Primary text for labels */
+    font-weight: 600;
+    font-size: 1.05em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="color"], /* Keep color input here */
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--org-form-group-input-border);
+    border-radius: var(--org-radius-md); /* Consistent radius */
+    font-size: 16px;
+    color: var(--org-text-primary);
+    background-color: var(--org-bg-secondary); /* Use secondary background for inputs */
+    transition: var(--org-transition);
+}
+.form-group input[type="text"]::placeholder,
+.form-group textarea::placeholder {
+    color: var(--org-text-secondary);
+}
+
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--org-form-group-input-focus-border);
+    box-shadow: 0 0 0 4px rgba(var(--org-shadow-base-rgb), 0.2); /* Unified shadow for focus */
+    background-color: var(--org-bg-secondary); /* Keep background consistent on focus */
+}
+
+.form-group small {
+    display: block;
+    margin-top: 8px;
+    color: var(--org-text-secondary);
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+.error-message {
+    color: var(--org-error);
+    margin-top: 8px;
+    font-size: 0.95em;
+    animation: slideDown 0.3s ease-out;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: flex-end;
+    animation: fadeIn 0.7s ease-out forwards;
+    opacity: 0;
+    animation-delay: 0.5s;
+}
+
+.button-group button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: var(--org-radius-md);
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 600;
+    transition: var(--org-transition);
+    box-shadow: var(--org-shadow-sm);
+}
+
+.button-group button.update {
+    background-color: var(--org-button-group-button-update-bg);
+    color: var(--org-button-text);
+}
+
+.button-group button.update:hover {
+    background-color: var(--org-button-group-button-update-hover-bg);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: var(--org-shadow-md);
+}
+
+.button-group button.clear {
+    background-color: var(--org-button-group-button-clear-bg);
+    color: var(--org-text-primary);
+    border: 1px solid var(--org-border-medium);
+}
+
+.button-group button.clear:hover {
+    background-color: var(--org-button-group-button-clear-hover-bg);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: var(--org-shadow-md);
+}
+
+.hidden { display: none; }
+.visible { display: flex; flex-direction: column; }
+
+.theme-color-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+    animation: fadeIn 0.6s ease-out forwards;
+    opacity: 0;
+    animation-delay: 0.6s;
+}
+
+.theme-color-controls input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid var(--org-form-group-input-border);
+    border-radius: var(--org-radius-md);
+    min-width: 120px;
+}
+
+.theme-color-controls input[type="color"] {
+    width: 60px;
+    height: 44px;
+    border: 2px solid var(--org-form-group-input-border);
+    padding: 0;
+    cursor: pointer;
+    border-radius: var(--org-radius-md);
+    overflow: hidden;
+    transition: var(--org-transition);
+}
+
+.theme-color-controls input[type="color"]:hover {
+    transform: scale(1.1);
+}
+
+.theme-color-controls button {
+    padding: 10px 20px;
+    background-color: var(--org-primary);
+    color: var(--org-button-text);
+    border: none;
+    border-radius: var(--org-radius-md);
+    cursor: pointer;
+    transition: var(--org-transition);
+    font-weight: 500;
+}
+
+.theme-color-controls button:hover {
+    background-color: var(--org-primary-hover);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: var(--org-shadow-sm);
+}
+
+.notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: var(--org-success);
+    color: var(--org-text-inverse);
+    padding: 18px 25px;
+    border-radius: var(--org-radius-lg);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+    box-shadow: var(--org-shadow-md);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    animation: bounceIn 0.5s ease-out;
+}
+
+.notification.error {
+    background-color: var(--org-error);
+    color: var(--org-text-inverse);
+}
+
+.logo-upload-section {
+    margin-top: 40px;
+    border-top: 1px solid var(--org-border-light);
+    padding-top: 30px;
+    animation: fadeIn 0.7s ease-out forwards;
+    opacity: 0;
+    animation-delay: 0.8s;
+}
+
+.logo-upload-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.logo-upload-controls input[type="file"] {
+    padding: 12px;
+    border: 1px solid var(--org-form-group-input-border);
+    border-radius: var(--org-radius-md);
+    background-color: var(--org-bg-secondary);
+    color: var(--org-text-primary);
+    cursor: pointer;
+}
+
+.logo-upload-controls input[type="file"]::file-selector-button {
+    background-color: var(--org-file-input-button-bg);
+    color: var(--org-file-input-button-text);
+    padding: 10px 15px;
+    border: none;
+    border-radius: var(--org-radius-md);
+    cursor: pointer;
+    transition: var(--org-transition);
+    margin-right: 15px;
+}
+
+.logo-upload-controls input[type="file"]::file-selector-button:hover {
+    background-color: var(--org-primary-hover);
+    transform: translateY(-1px);
+}
+
+.logo-upload-controls button {
+    padding: 12px 25px;
+    background-color: var(--org-primary);
+    color: var(--org-button-text);
+    border: none;
+    border-radius: var(--org-radius-md);
+    cursor: pointer;
+    transition: var(--org-transition);
+    font-weight: 600;
+    box-shadow: var(--org-shadow-sm);
+}
+
+.logo-upload-controls button:hover {
+    background-color: var(--org-primary-hover);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--org-shadow-md);
+}
+
+.current-logo-preview {
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: var(--org-radius-md);
+    border: 1px solid var(--org-logo-preview-border);
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+    animation-delay: 1s;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 250px;
+}
+
+.current-logo-preview p {
+    color: var(--org-current-logo-paragraph-color);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.current-logo-preview img {
+    max-width: 180px;
+    max-height: 180px;
+    border: 2px solid var(--org-profile-picture-border);
+    padding: 8px;
+    border-radius: var(--org-radius-md);
+    background-color: var(--org-bg-secondary);
+    object-fit: contain;
+    box-shadow: var(--org-shadow-sm);
+    transition: var(--org-transition);
+}
+
+.current-logo-preview img:hover {
+    transform: scale(1.05);
+    box-shadow: var(--org-shadow-md);
+}
+
+/* ========================================= */
+/* --- Activity Log Table Styling (Unified with Students Table) --- */
+/* ========================================= */
+.log-table-section .log-table-container, /* Use general table container styles */
+.students-table-container {
+    overflow-x: auto;
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
+    background-color: var(--org-bg-secondary); /* Match container background */
+}
+
+.log-table-section table,
+.students-table {
+    width: 100%;
+    border-collapse: separate; /* For rounded corners */
+    border-spacing: 0;
+    min-width: 800px; /* Ensure minimum width for scroll */
+}
+
+.log-table-section th,
+.log-table-section td,
+.students-table th,
+.students-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--org-border-medium);
+    white-space: nowrap;
+    color: var(--org-text-primary);
+}
+
+.log-table-section thead th,
+.students-table thead th {
+    background-color: var(--org-sidebar-bg-color); /* Use the green sidebar color for header background */
+    color: var(--org-table-header-text-payments); /* White text for header */
+    font-weight: 500;
+    font-size: 0.95em;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    cursor: pointer;
+    transition: var(--org-transition);
+}
+
+.log-table-section thead th:hover,
+.students-table thead th:hover {
+    background-color: var(--org-join-btn-hover-bg); /* Use a darker green on hover for headers */
+}
+
+/* Remove default first/last child borders if using border-radius on container */
+.log-table-section thead tr:first-child th:first-child,
+.students-table thead tr:first-child th:first-child {
+    border-top-left-radius: var(--org-radius-md);
+}
+.log-table-section thead tr:first-child th:last-child,
+.students-table thead tr:first-child th:last-child {
+    border-top-right-radius: var(--org-radius-md);
+}
+
+.log-table-section tbody tr:nth-child(odd), /* Changed to odd/even for consistency */
+.students-table tbody tr:nth-child(odd) {
+    background-color: var(--org-table-odd-row-bg); /* White for odd rows */
+}
+
+.log-table-section tbody tr:nth-child(even),
+.students-table tbody tr:nth-child(even) {
+    background-color: var(--org-table-even-row-bg); /* Light grey for even rows */
+}
+
+.log-table-section tbody tr:hover,
+.students-table tbody tr:hover {
+    background-color: var(--org-table-row-hover-bg);
+    transition: var(--org-transition);
+}
+
+/* Specific elements for sorting/actions */
+.log-table-section th.sortable,
+.students-table th.sortable {
+    position: relative;
+    padding-right: 30px;
+}
+
+.log-table-section th.sortable::after,
+.students-table th.sortable::after {
+    content: '';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    transition: var(--org-transition);
+    opacity: 0.5;
+}
+
+.log-table-section th.sortable.asc::after,
+.students-table th.sortable.asc::after {
+    border-bottom-color: var(--org-table-header-text-payments);
+    opacity: 1;
+}
+
+.log-table-section th.sortable.desc::after,
+.students-table th.sortable.desc::after {
+    border-top-color: var(--org-table-header-text-payments);
+    opacity: 1;
+}
+
+.view-history-link { /* Assuming this class is used for action links in tables */
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: var(--org-join-btn-bg);
+    color: var(--org-button-text);
+    text-decoration: none;
+    border-radius: var(--org-radius-sm); /* Using small radius */
+    font-size: 0.9em;
+    transition: var(--org-transition);
+    white-space: nowrap;
+}
+
+.view-history-link:hover {
+    background-color: var(--org-join-btn-hover-bg);
+    transform: translateY(-1px);
+}
+
+.log-table-section tbody tr td[colspan="7"], /* For no data message in activity log */
+.students-table tbody tr td[colspan="7"] {
+    text-align: center !important;
+    padding: 30px;
+    color: var(--org-error);
+    font-style: italic;
+    font-weight: 500;
+}
+
+
+/* ========================================= */
+/* --- Header Actions & Filters (Student Profile & potentially other dashboards) --- */
+/* ========================================= */
+.header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 30px;
+    align-items: flex-end;
+    justify-content: flex-start;
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-container label {
+    font-weight: 400;
+    color: var(--org-text-primary);
+    white-space: nowrap;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.search-input {
+    padding: 10px 15px;
+    border: 1px solid var(--org-form-group-input-border);
+    background-color: var(--org-read-only-input-bg);
+    color: var(--org-text-primary);
+    border-radius: var(--org-radius-sm); /* Using small radius */
+    font-size: 1em;
+    width: 250px;
+    transition: var(--org-transition);
+}
+
+.search-input::placeholder {
+    color: var(--org-text-secondary);
+}
+
+.search-input:focus {
+    border-color: var(--org-form-group-input-focus-border);
+    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
+    outline: none;
+    background-color: var(--org-bg-secondary); /* Background becomes pure white/dark-card on focus */
+}
+
+.search-button {
+    padding: 10px 20px;
+    background-color: var(--org-button-bg);
+    color: var(--org-button-text);
+    border: none;
+    border-radius: var(--org-radius-sm); /* Using small radius */
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 500;
+    transition: var(--org-transition);
+}
+
+.search-button:hover {
+    background-color: var(--org-primary-hover);
+    transform: translateY(-1px);
+}
+
+.search-button:active {
+    transform: translateY(0);
+}
+
+/* Custom Select Dropdowns */
+.custom-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 150px;
+    margin-left: 10px;
+    user-select: none;
+}
+
+.custom-select-trigger {
+    background-color: var(--org-read-only-input-bg);
+    border: 1px solid var(--org-form-group-input-border);
+    border-radius: var(--org-radius-sm); /* Using small radius */
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1em;
+    color: var(--org-text-primary);
+    transition: var(--org-transition);
+}
+
+.custom-select-trigger:hover {
+    border-color: var(--org-border-medium);
+}
+
+.custom-select-wrapper.open .custom-select-trigger {
+    border-color: var(--org-form-group-input-focus-border);
+    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    fill: var(--org-text-secondary);
+    transition: var(--org-transition);
+}
+
+.custom-select-wrapper.open .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.custom-options {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background-color: var(--org-dropdown-bg);
+    border: 1px solid var(--org-dropdown-border);
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.custom-select-wrapper.open .custom-options {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.custom-options ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-options li {
+    padding: 12px 15px;
+    cursor: pointer;
+    font-size: 0.95em;
+    color: var(--org-text-primary);
+    transition: var(--org-transition);
+}
+
+.custom-options li:hover {
+    background-color: var(--org-dropdown-item-hover-bg); /* This variable is missing, using org-primary-light */
+    color: var(--org-primary); /* Primary color on hover */
+}
+/* Adding missing variable for dropdown item hover background */
+:root { --org-dropdown-item-hover-bg: var(--org-primary-light); }
+body[data-theme="dark"], html[data-theme="dark"] { --org-dropdown-item-hover-bg: var(--org-primary-light); }
+
+
+.custom-options li[data-value=""] {
+    font-weight: 500;
+    color: var(--org-text-primary-darker);
+    border-bottom: 1px solid var(--org-border-light);
+}
+
+
+/* Message Box */
+#message-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 30px;
+    background-color: var(--org-info);
+    color: var(--org-text-inverse);
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
+    z-index: 1001;
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1em;
+    text-align: center;
+    opacity: 0;
+    animation: fadeInOut 3.5s forwards;
+    pointer-events: none;
+}
+
+#message-box.error {
+    background-color: var(--org-error);
+    color: var(--org-text-inverse);
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -40%); }
+    10% { opacity: 1; transform: translate(-50%, -50%); }
+    90% { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, -60%); }
+}
+
+/* ========================================= */
+/* --- Responsive Adjustments --- */
+/* ========================================= */
+@media (max-width: 768px) {
+    .students-page-container {
+        padding: 15px;
+        margin: 15px auto;
+    }
+
+    .page-header {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+    }
+
+    .search-input,
+    .search-button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .custom-select-wrapper {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .students-table th,
+    .students-table td,
+    .log-table-section th,
+    .log-table-section td {
+        padding: 12px 15px;
+    }
+
+    .students-table thead th,
+    .log-table-section thead th {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        font-size: 1.5em;
+    }
+
+    .students-table th,
+    .students-table td,
+    .log-table-section th,
+    .log-table-section td {
+        font-size: 0.85em;
+    }
+
+    .view-history-link {
+        padding: 6px 12px;
+        font-size: 0.8em;
+    }
+}
+
+
+/* Keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInBackground {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInText {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.1); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInTitle {
+    to { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+    to { transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInBottom {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: translateX(-50%) translateY(100px) scale(0.8);
+        opacity: 0;
+    }
+    60% {
+        transform: translateX(-50%) translateY(-10px) scale(1.05);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
