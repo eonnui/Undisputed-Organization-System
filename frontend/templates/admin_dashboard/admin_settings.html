@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/admin_dashboard.css">
+<link rel="stylesheet" href="/static/css/admin_settings.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
@@ -11,58 +12,60 @@
 <div class="content">
     <h1>Admin Settings</h1>
 
-    <div class="organization-settings-section">
-        <h2>Organization Theme Settings</h2>
-        <input type="hidden" id="organizationId" value="{{ organization_id }}">
+    <div class="settings-grid">
+        <div class="settings-section organization-settings-section">
+            <h2>Organization Theme Settings</h2>
+            <input type="hidden" id="organizationId" value="{{ organization_id }}">
 
-        <div class="input-group">
-            <label for="themeColorInput">Theme Color</label>
-            <div class="theme-color-controls">
-                <input type="text" id="themeColorInput" value="{{ current_theme_color }}" placeholder="#RRGGBB" />
-                <input type="color" id="themeColorPicker" value="{{ current_theme_color }}" />
-                <button id="saveThemeColorButton">Save Theme</button>
+            <div class="form-group">
+                <label for="themeColorInput">Theme Color</label>
+                <div class="theme-color-controls">
+                    <input type="text" id="themeColorInput" value="{{ current_theme_color }}" placeholder="#RRGGBB" />
+                    <input type="color" id="themeColorPicker" value="{{ current_theme_color }}" />
+                    <button id="saveThemeColorButton">Save Theme</button>
+                </div>
+                <div class="error-message" id="themeColorError"></div>
             </div>
-            <div class="error-message" id="themeColorError"></div>
+
+            <div class="logo-upload-section">
+                <h2>Organization Logo</h2>
+                <div class="current-logo-preview">
+                    {% if logo_url %}
+                    <p>Current Logo:</p>
+                    <img id="currentLogoPreview" src="{{ logo_url }}" alt="Organization Logo">
+                    {% else %}
+                    <p>No logo uploaded yet.</p>
+                    <img id="currentLogoPreview" src="" alt="Organization Logo" style="display:none;">
+                    {% endif %}
+                </div>
+                <div class="logo-upload-controls">
+                    <input type="file" id="logoFileInput" accept="image/png, image/jpeg, image/gif, image/svg+xml">
+                    <button id="uploadLogoButton">Upload New Logo</button>
+                </div>
+                <div class="error-message" id="logoUploadError"></div>
+            </div>
         </div>
 
-        <div class="logo-upload-section">
-            <h2>Organization Logo</h2>
-            <div class="current-logo-preview">
-                {% if logo_url %}
-                <p>Current Logo:</p>
-                <img id="currentLogoPreview" src="{{ logo_url }}" alt="Organization Logo">
-                {% else %}
-                <p>No logo uploaded yet.</p>
-                <img id="currentLogoPreview" src="" alt="Organization Logo" style="display:none;">
-                {% endif %}
-            </div>
-            <div class="logo-upload-controls">
-                <input type="file" id="logoFileInput" accept="image/png, image/jpeg, image/gif, image/svg+xml">
-                <button id="uploadLogoButton">Upload New Logo</button>
-            </div>
-            <div class="error-message" id="logoUploadError"></div>
-        </div>
-    </div>
+        <div class="settings-section admin-activity-log-section">
+            <h2>Admin Activity Log</h2>
 
-    <div class="admin-activity-log-section">
-        <h1>Admin Activity Log</h1>
-
-        <div class="log-table-section">
-            <h2>Recent Activities</h2>
-            <div class="log-table-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Timestamp</th>
-                            <th>Admin</th>
-                            <th>Action Type</th>
-                            <th>Description</th>
-                            <th>IP Address</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logTableBody">
-                        </tbody>
-                </table>
+            <div class="log-table-section">
+                <h3>Recent Activities</h3>
+                <div class="log-table-container" style="max-height: 400px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Admin</th>
+                                <th>Action Type</th>
+                                <th>Description</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
