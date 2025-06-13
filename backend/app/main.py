@@ -7,7 +7,7 @@ from sqlalchemy import func, and_, or_, extract, desc
 from . import models, schemas, crud
 from .database import SessionLocal, engine
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional, Dict, Any, Tuple
 from collections import defaultdict, OrderedDict
 import smtplib
@@ -2252,56 +2252,89 @@ async def paymaya_create_payment(
     url = "https://pg-sandbox.paymaya.com/checkout/v1/checkouts"
     headers = {"accept": "application/json", "content-type": "application/json", "authorization": f"Basic {encoded_key}"}
 
-    # --- Retrieve PaymentItem (no change) ---
+    # --- Retrieve PaymentItem ---
     payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
     if not payment_item:
+        logging.error(f"Payment item not found for payment_item_id={payment_item_id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment item not found")
+    
+    # --- CRITICAL NEW CHECK: Prevent payment if item is already paid ---
+    # This check needs your PaymentItem model to have an 'is_paid' boolean attribute.
+    # If not, you might need to check if there's an associated successful payment instead.
+    if hasattr(payment_item, 'is_paid') and payment_item.is_paid: 
+        logging.warning(f"Attempted to create payment for already paid PaymentItem ID: {payment_item_id}. User ID: {user.id}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This item has already been paid for.")
 
-    # --- Create initial Payment record (no change) ---
-    db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
-    db.commit()
-    db.refresh(db_payment)
+    # --- REVISED LOGIC: Check for existing reusable payment (to prevent duplicates) ---
+    # We are looking for any payment record linked to this payment_item and user
+    # that is NOT yet 'success' and NOT explicitly 'failed'.
+    # We prioritize those that haven't yet received a paymaya_payment_id.
+    
+    existing_reusable_payment = db.query(models.Payment).filter(
+        models.Payment.payment_item_id == payment_item_id,
+        models.Payment.user_id == user.id,
+        models.Payment.status.notin_(['success', 'failed']) # This captures 'pending', 'null', etc.
+    ).order_by(
+        models.Payment.paymaya_payment_id.is_(None).desc() # Prefer payments that haven't initiated PayMaya yet
+    ).first()
 
-    # --- NEW LOGIC: Link payment to StudentShirtOrder if applicable ---
-    # Check if this payment_item is linked to a student_shirt_order
+    db_payment = None
+    if existing_reusable_payment:
+        db_payment = existing_reusable_payment
+        db.refresh(db_payment)
+        # Ensure its status is 'pending' if it wasn't already (e.g., if it was NULL)
+        if db_payment.status != "pending":
+            db_payment.status = "pending"
+            db.add(db_payment)
+            # No db.flush() needed here, the final db.commit() in the try block handles it for this update
+        logging.info(f"Reusing existing payment (ID: {db_payment.id}, Current Status: {db_payment.status}) for payment_item_id: {payment_item_id}. PayMaya ID: {db_payment.paymaya_payment_id}")
+    else:
+        # --- Create a NEW initial Payment record ONLY if no reusable one exists ---
+        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+        db.add(db_payment)
+        db.flush() # Essential to get the ID for db_payment immediately and make it visible
+
+        # Explicitly set status to 'pending' for a brand new payment
+        db_payment.status = "pending" 
+        db.add(db_payment) # Mark as dirty for update
+        
+        logging.info(f"Created new payment (ID: {db_payment.id}) and set status to 'pending' for payment_item_id: {payment_item_id}.")
+
+    # --- Link payment to StudentShirtOrder if applicable (no change) ---
     if payment_item.student_shirt_order_id:
-        # Fetch the related StudentShirtOrder
         shirt_order = db.query(models.StudentShirtOrder).filter(
             models.StudentShirtOrder.id == payment_item.student_shirt_order_id
         ).first()
 
         if shirt_order:
-            # Link the newly created db_payment to this shirt_order
-            shirt_order.payment_id = db_payment.id
-            db.add(shirt_order) # Mark the shirt_order for update
-            db.commit() # Commit the update to the shirt_order
-            db.refresh(shirt_order) # Refresh to reflect changes
+            if shirt_order.payment_id != db_payment.id: 
+                shirt_order.payment_id = db_payment.id
+                db.add(shirt_order) 
+                db.commit() # Commit the update to the shirt_order now to ensure link is saved
+                db.refresh(shirt_order) 
 
             logging.info(
                 f"Linked PayMaya payment to StudentShirtOrder: payment_id={db_payment.id}, "
                 f"shirt_order_id={shirt_order.id}"
             )
         else:
-            # This case should ideally not happen if foreign key integrity is maintained,
-            # but it's good for robust error handling during development.
             logging.warning(
                 f"PaymentItem {payment_item.id} has student_shirt_order_id "
                 f"{payment_item.student_shirt_order_id} but no matching StudentShirtOrder found."
             )
-    # --- END NEW LOGIC ---
-
-    # --- PayMaya Payload (no change) ---
+    
+    # --- PayMaya Payload (fixed typo and added UTC for request reference) ---
     payload = {
         "totalAmount": {"currency": "PHP", "value": payment_item.fee},
-        "requestReferenceNumber": f"your-unique-ref-{datetime.now().strftime('%Y%m%d%H%M%S')}-{db_payment.id}",
+        "requestReferenceNumber": f"shirt-order-{payment_item_id}-{db_payment.id}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}", # <-- Using UTC now
         "redirectUrl": {
             "success": f"http://127.0.0.1:8000/Success?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
             "failure": f"http://127.0.0.1:8000/Failure?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
-            "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}"
+            "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}" 
         },
         "metadata": {
             "pf": {"smi": "CVSU", "smn": "Undisputed", "mci": "Imus City", "mpc": "608", "mco": "PHL", "postalCode": "1554", "contactNo": "0211111111", "addressLine1": "Palico"}
-            , "subMerchantRequestReferenceNumber": "63d9934f9281"
+            , "subMerchantRequestReferenceNumber": f"shirt-order-subref-{payment_item_id}" 
         }
     }
     
@@ -2310,14 +2343,135 @@ async def paymaya_create_payment(
         response.raise_for_status()
         payment_data = response.json()
         paymaya_payment_id = payment_data.get("checkoutId")
+        
+        # Update the PayMaya specific ID on the (newly created or reused) db_payment
         crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
-        db.commit() 
-        logging.info(f"PayMaya payment created: payment_id={db_payment.id}, paymaya_payment_id={paymaya_payment_id}")
+        db.commit() # Commit all changes
+        
+        logging.info(f"PayMaya checkout session created successfully: payment_id={db_payment.id}, paymaya_payment_id={paymaya_payment_id}")
         return payment_data
     except requests.exceptions.RequestException as e:
-        db.rollback()
-        crud.update_payment(db, payment_id=db_payment.id, status="failed")
+        db.rollback() 
+        crud.update_payment(db, payment_id=db_payment.id, status="failed") 
         db.commit() 
+        logging.error(f"PayMaya API error during checkout creation for payment_id={db_payment.id}: {e.response.text if hasattr(e.response, 'text') else str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}")
+
+@router.post("/payments/paymaya/create", response_class=JSONResponse, name="paymaya_create_payment")
+async def paymaya_create_payment(
+    request: Request,
+    payment_item_id: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    user, _ = get_current_user_with_org(request, db)
+
+    # --- PayMaya API setup (no change) ---
+    public_api_key = "pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah"
+    encoded_key = base64.b64encode(f"{public_api_key}:".encode()).decode()
+    url = "https://pg-sandbox.paymaya.com/checkout/v1/checkouts"
+    headers = {"accept": "application/json", "content-type": "application/json", "authorization": f"Basic {encoded_key}"}
+
+    # --- Retrieve PaymentItem ---
+    payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == payment_item_id).first()
+    if not payment_item:
+        logging.error(f"Payment item not found for payment_item_id={payment_item_id}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment item not found")
+    
+    # --- CRITICAL NEW CHECK: Prevent payment if item is already paid ---
+    if payment_item.is_paid: # Assuming PaymentItem has an 'is_paid' boolean flag
+        logging.warning(f"Attempted to create payment for already paid PaymentItem ID: {payment_item_id}. User ID: {user.id}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This item has already been paid for.")
+
+    # --- Re-confirm reusable payment logic ---
+    # We are looking for any payment record linked to this payment_item and user
+    # that is NOT yet 'success' and NOT explicitly 'failed'.
+    # We prioritize those that haven't yet received a paymaya_payment_id.
+    
+    existing_reusable_payment = db.query(models.Payment).filter(
+        models.Payment.payment_item_id == payment_item_id,
+        models.Payment.user_id == user.id,
+        models.Payment.status.notin_(['success', 'failed']) # This captures 'pending', 'null', etc.
+    ).order_by(
+        models.Payment.paymaya_payment_id.is_(None).desc() # Prefer payments that haven't initiated PayMaya yet
+    ).first()
+
+    db_payment = None
+    if existing_reusable_payment:
+        db_payment = existing_reusable_payment
+        db.refresh(db_payment)
+        # Ensure its status is 'pending' if it wasn't already (e.g., if it was NULL)
+        if db_payment.status != "pending":
+            db_payment.status = "pending"
+            db.add(db_payment)
+            # No db.flush() needed here, the final db.commit() in the try block handles it for this update
+        logging.info(f"Reusing existing payment (ID: {db_payment.id}, Current Status: {db_payment.status}) for payment_item_id: {payment_item_id}. PayMaya ID: {db_payment.paymaya_payment_id}")
+    else:
+        # --- Create a NEW initial Payment record ONLY if no reusable one exists ---
+        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+        db.add(db_payment)
+        db.flush() # Essential to get the ID for db_payment immediately and make it visible
+
+        # Explicitly set status to 'pending' for a brand new payment
+        db_payment.status = "pending" 
+        db.add(db_payment) # Mark as dirty for update
+        
+        logging.info(f"Created new payment (ID: {db_payment.id}) and set status to 'pending' for payment_item_id: {payment_item_id}.")
+
+    # --- Link payment to StudentShirtOrder if applicable (no change) ---
+    if payment_item.student_shirt_order_id:
+        shirt_order = db.query(models.StudentShirtOrder).filter(
+            models.StudentShirtOrder.id == payment_item.student_shirt_order_id
+        ).first()
+
+        if shirt_order:
+            if shirt_order.payment_id != db_payment.id: 
+                shirt_order.payment_id = db_payment.id
+                db.add(shirt_order) 
+                db.commit() # Commit the update to the shirt_order now to ensure link is saved
+                db.refresh(shirt_order) 
+
+            logging.info(
+                f"Linked PayMaya payment to StudentShirtOrder: payment_id={db_payment.id}, "
+                f"shirt_order_id={shirt_order.id}"
+            )
+        else:
+            logging.warning(
+                f"PaymentItem {payment_item.id} has student_shirt_order_id "
+                f"{payment_item.student_shirt_order_id} but no matching StudentShirtOrder found."
+            )
+    
+    # --- PayMaya Payload (fixed typo) ---
+    payload = {
+        "totalAmount": {"currency": "PHP", "value": payment_item.fee},
+        "requestReferenceNumber": f"shirt-order-{payment_item_id}-{db_payment.id}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "redirectUrl": {
+            "success": f"http://127.0.0.1:8000/Success?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
+            "failure": f"http://127.0.0.1:8000/Failure?paymentId={db_payment.id}&paymentItemId={payment_item_id}",
+            "cancel": f"http://127.0.0.1:8000/Cancel?paymentId={db_payment.id}&paymentItemId={payment_item_id}" 
+        },
+        "metadata": {
+            "pf": {"smi": "CVSU", "smn": "Undisputed", "mci": "Imus City", "mpc": "608", "mco": "PHL", "postalCode": "1554", "contactNo": "0211111111", "addressLine1": "Palico"}
+            , "subMerchantRequestReferenceNumber": f"shirt-order-subref-{payment_item_id}" 
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        payment_data = response.json()
+        paymaya_payment_id = payment_data.get("checkoutId")
+        
+        # Update the PayMaya specific ID on the (newly created or reused) db_payment
+        crud.update_payment(db, payment_id=db_payment.id, paymaya_payment_id=paymaya_payment_id)
+        db.commit() # Commit all changes
+        
+        logging.info(f"PayMaya checkout session created successfully: payment_id={db_payment.id}, paymaya_payment_id={paymaya_payment_id}")
+        return payment_data
+    except requests.exceptions.RequestException as e:
+        db.rollback() 
+        crud.update_payment(db, payment_id=db_payment.id, status="failed") 
+        db.commit() 
+        logging.error(f"PayMaya API error during checkout creation for payment_id={db_payment.id}: {e.response.text if hasattr(e.response, 'text') else str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"PayMaya API error: {e.response.text if hasattr(e.response, 'text') else str(e)}")
 
 # Success Callback
@@ -2325,80 +2479,148 @@ async def paymaya_create_payment(
 async def payment_success(
     request: Request,
     paymentId: int = Query(...),
-    # Keep paymentItemId as required if it's always passed for both fee and shirt order payments
     paymentItemId: int = Query(...),
     db: Session = Depends(get_db),
 ):
+    # Log incoming request details
+    logging.info(f"Payment success callback received: paymentId={paymentId}, paymentItemId={paymentItemId}")
+
+    # 1. Retrieve the existing Payment record that needs to be updated
     payment = crud.get_payment_by_id(db, payment_id=paymentId)
     if not payment:
+        logging.error(f"Payment record not found for paymentId={paymentId}. This might indicate an invalid callback or a race condition.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment record not found")
 
+    # Refresh the payment object to ensure it has the latest state from the DB
     db.refresh(payment) 
+    logging.info(f"Retrieved payment (ID: {payment.id}, Current Status: {payment.status}, User ID: {payment.user_id}) for update.")
 
-    # 1. Update the general payment status
-    crud.update_payment(db, payment_id=payment.id, status="success", payment_item_id=paymentItemId)
+    # Prevent re-processing already successful payments for the same paymentId
+    if payment.status == "success":
+        logging.warning(f"Payment ID {paymentId} is already marked as success. Skipping further updates to prevent duplicate processing.")
+        # Although it's already successful, we still want to show the success page.
+        payment_item = crud.get_payment_item_by_id(db, payment_item_id=paymentItemId)
+        if payment_item:
+            logging.info(f"Associated Payment Item {payment_item.id} already processed or found.")
+        
+        context = await get_base_template_context(request, db)
+        context.update({
+            "payment_id": payment.paymaya_payment_id if payment.paymaya_payment_id else payment.id, 
+            "payment_item_id": paymentItemId, 
+            "payment": payment, 
+            "payment_item": payment_item
+        })
+        return templates.TemplateResponse("student_dashboard/payment_success.html", context)
 
-    # 2. Retrieve the PaymentItem linked to this successful payment
+
+    # 2. Update the general payment status to "success"
+    try:
+        updated_payment = crud.update_payment(db, payment_id=payment.id, status="success")
+        if not updated_payment:
+            logging.error(f"Failed to update payment status for paymentId={paymentId} to 'success'. CRUD operation returned None.")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update payment status.")
+        logging.info(f"Payment ID {payment.id} status successfully updated to 'success'.")
+    except Exception as e:
+        logging.exception(f"Exception while updating payment status for paymentId={payment.id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error updating payment status.")
+
+
+    # 3. Retrieve and mark the PaymentItem linked to this successful payment
     payment_item = crud.get_payment_item_by_id(db, payment_item_id=paymentItemId)
     if not payment_item:
+        logging.error(f"Associated Payment Item not found for paymentItemId={paymentItemId}. This is critical for Payment ID {payment.id}.")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Associated Payment Item not found.")
 
-    # 3. Mark the PaymentItem as paid
-    crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
+    if not payment_item.is_paid: # Only mark as paid if not already
+        try:
+            crud.mark_payment_item_as_paid(db, payment_item_id=paymentItemId)
+            logging.info(f"Payment Item ID {paymentItemId} marked as paid successfully.")
+        except Exception as e:
+            logging.exception(f"Exception while marking Payment Item {paymentItemId} as paid: {e}")
+            # Decide if this should halt the process or just log and continue
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error marking payment item as paid.")
+    else:
+        logging.info(f"Payment Item ID {paymentItemId} was already marked as paid. No action needed.")
 
     # 4. Check if this PaymentItem is for a StudentShirtOrder
     if payment_item.student_shirt_order_id:
+        logging.info(f"Payment Item {paymentItemId} is linked to Student Shirt Order ID: {payment_item.student_shirt_order_id}.")
         shirt_order = crud.get_student_shirt_order_by_id(db, order_id=payment_item.student_shirt_order_id)
         if shirt_order:
             if shirt_order.status != "paid": # Only update if not already paid
-                # Create an update schema for the status
+                logging.info(f"Student Shirt Order {shirt_order.id} status is '{shirt_order.status}', attempting to set to 'paid'.")
                 order_update_data = schemas.StudentShirtOrderUpdate(status="paid") 
-                
-                updated_shirt_order = crud.update_student_shirt_order(
-                    db=db,
-                    order_id=shirt_order.id,
-                    order_update=order_update_data # Pass the Pydantic model
-                )
-                if updated_shirt_order:
-                    logging.info(f"Student Shirt Order {updated_shirt_order.id} status updated to 'paid' via PaymentItem {payment_item.id}.")
-                    
-                    # Optional: Create a notification for admins/organization about the shirt order payment
-                    if updated_shirt_order.campaign and updated_shirt_order.campaign.organization_id:
-                        organization = db.query(models.Organization).filter(models.Organization.id == updated_shirt_order.campaign.organization_id).first()
-                        if organization:
-                            for admin in organization.admins:
-                                message = f"Shirt Order Payment: Student {updated_shirt_order.student_name} has paid for Shirt Order ID: {updated_shirt_order.id} (Campaign: {updated_shirt_order.campaign.title})."
-                                crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=organization.id, notification_type="shirt_order_payment",
-                                                         payment_id=payment.id, 
-                                                         url=f"/admin/orders/{updated_shirt_order.id}", # Link to order details page
-                                                         event_identifier=f"shirt_order_payment_admin_{admin.admin_id}_order_{updated_shirt_order.id}")
-                else:
-                    logging.warning(f"Failed to update status for Student Shirt Order {shirt_order.id} linked to PaymentItem {payment_item.id}.")
+                try:
+                    updated_shirt_order = crud.update_student_shirt_order(
+                        db=db,
+                        order_id=shirt_order.id,
+                        order_update=order_update_data 
+                    )
+                    if updated_shirt_order:
+                        logging.info(f"Student Shirt Order {updated_shirt_order.id} status successfully updated to 'paid' via PaymentItem {payment_item.id}.")
+                        
+                        # Optional: Create a notification for admins/organization about the shirt order payment
+                        if updated_shirt_order.campaign and updated_shirt_order.campaign.organization_id:
+                            organization = db.query(models.Organization).filter(models.Organization.id == updated_shirt_order.campaign.organization_id).first()
+                            if organization:
+                                for admin in organization.admins:
+                                    message = f"Shirt Order Payment: Student {updated_shirt_order.student_name} has paid for Shirt Order ID: {updated_shirt_order.id} (Campaign: {updated_shirt_order.campaign.title})."
+                                    crud.create_notification(db, message, 
+                                                            admin_id=admin.admin_id, # <--- FIXED: use admin.admin_id
+                                                            organization_id=organization.id, 
+                                                            notification_type="shirt_order_payment",
+                                                            payment_id=payment.id, 
+                                                            url=f"/admin/orders/{updated_shirt_order.id}", 
+                                                            event_identifier=f"shirt_order_payment_admin_{admin.admin_id}_order_{updated_shirt_order.id}") # <--- FIXED: use admin.admin_id
+                                    logging.info(f"Notification created for admin {admin.admin_id} for shirt order payment {updated_shirt_order.id}.")
+                            else:
+                                logging.warning(f"Organization not found for campaign {updated_shirt_order.campaign.id} linked to shirt order {updated_shirt_order.id}.")
+                        else:
+                            logging.info(f"No campaign or organization found for shirt order {updated_shirt_order.id} for notification.")
+                    else:
+                        logging.warning(f"Failed to update status for Student Shirt Order {shirt_order.id} linked to PaymentItem {payment_item.id}. CRUD operation returned None.")
+                except Exception as e:
+                    logging.exception(f"Exception while updating Student Shirt Order {shirt_order.id} status: {e}")
+                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error updating shirt order status.")
+            else:
+                logging.info(f"Student Shirt Order {shirt_order.id} was already marked as paid. No status update needed.")
         else:
-            logging.warning(f"PaymentItem {payment_item.id} linked to non-existent shirt_order_id {payment_item.student_shirt_order_id}.")
+            logging.warning(f"PaymentItem {payment_item.id} linked to non-existent shirt_order_id {payment_item.student_shirt_order_id}. Data inconsistency detected.")
     else:
         # This block contains your existing logic for general fees payment items
+        logging.info(f"Payment Item {paymentItemId} is for general fees.")
         user = db.query(models.User).filter(models.User.id == payment.user_id).first()
-        # Ensure that payment_item has academic_year and semester to qualify as a general fee
         if user and user.organization and payment_item.academic_year and payment_item.semester: 
+            logging.info(f"User {user.id} and organization {user.organization.id} found for general fee payment.")
             for admin in user.organization.admins:
                 message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
-                crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success",
+                crud.create_notification(db, message, admin_id=admin.admin.id, organization_id=user.organization.id, notification_type="payment_success",
                                          payment_id=payment.id, 
                                          url=f"/admin/payments/total_members?student_number={user.student_number}",
-                                         event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
+                                         event_identifier=f"payment_success_admin_{admin.admin.id}_payment_{payment.id}")
+                logging.info(f"Notification created for admin {admin.admin.id} for general fee payment {payment.id}.")
+        else:
+            logging.warning(f"Could not find user, organization, or academic year/semester for general fee payment {payment.id}. Notification skipped.")
     
-    db.commit() # Commit all changes at once (payment, payment_item, and potentially shirt_order)
+    # Commit all changes at once (payment, payment_item, and potentially shirt_order)
+    try:
+        db.commit() 
+        logging.info(f"Database transaction committed successfully for payment_id={payment.id}.")
+    except Exception as e:
+        db.rollback() # Rollback on error to prevent partial updates
+        logging.exception(f"Failed to commit transaction for payment_id={payment.id}. Rolling back changes: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Database transaction failed during commit.")
 
-    logging.info(f"PayMaya payment success: payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}")
+    logging.info(f"PayMaya payment success processing completed for payment_id={payment.id}, paymaya_payment_id={payment.paymaya_payment_id}. Redirecting to success page.")
     
     context = await get_base_template_context(request, db)
-    context.update({"payment_id": payment.paymaya_payment_id, "payment_item_id": paymentItemId, "payment": payment, "payment_item": payment_item})
+    context.update({
+        "payment_id": payment.paymaya_payment_id if payment.paymaya_payment_id else payment.id, 
+        "payment_item_id": paymentItemId, 
+        "payment": payment, 
+        "payment_item": payment_item
+    })
     
-    # You could also add updated_shirt_order to context if your template needs it
-    # if 'updated_shirt_order' in locals():
-    #     context["shirt_order"] = updated_shirt_order
-
     return templates.TemplateResponse("student_dashboard/payment_success.html", context)
 
 # Payment Failure Callback

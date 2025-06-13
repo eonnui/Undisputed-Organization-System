@@ -1212,13 +1212,18 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
     """
     Creates a new student shirt order, ensuring proper linking between
     StudentShirtOrder, PaymentItem, and Payment records.
-    Calculates total amount based on prices_by_size.
+    Calculates total amount based on prices_by_size and DECREASES CAMPAIGN STOCK.
     """
-    # 1. Fetch the campaign to calculate the total amount
+    # 1. Fetch the campaign to calculate the total amount and check stock
     campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == order.campaign_id).first()
     if not campaign:
         logging.error(f"Campaign with ID {order.campaign_id} not found when creating student order.")
         raise ValueError(f"Campaign with ID {order.campaign_id} not found.")
+
+    # === NEW: Check and decrease available stock ===
+    if campaign.available_stock < order.quantity:
+        logging.warning(f"Insufficient stock for campaign ID {order.campaign_id}. Requested: {order.quantity}, Available: {campaign.available_stock}")
+        raise ValueError(f"Not enough stock available for '{campaign.title}'. Only {campaign.available_stock} left.")
 
     # === MODIFIED: Use prices_by_size for calculation, with fallback ===
     shirt_price = None
@@ -1236,8 +1241,7 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
     # ====================================================================
 
     # --- Dynamic Semester and Academic Year Determination ---
-    # Use Philippine time for current_date
-    current_date = datetime.now(philippine_timezone).date() # MODIFIED: Use PHT
+    current_date = datetime.now(philippine_timezone).date()
     current_year = current_date.year
     current_month = current_date.month
 
@@ -1270,13 +1274,18 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
         quantity=order.quantity,
         order_total_amount=calculated_total_amount,
         status="pending", # Initial status
-        ordered_at=datetime.now(philippine_timezone) # MODIFIED: Explicitly set to PHT
-        # updated_at will use models.py default, if present, or can be set explicitly here too
+        ordered_at=datetime.now(philippine_timezone)
     )
     db.add(db_order)
     db.flush()
     logging.info(f"CRUD: Created StudentShirtOrder (ID: {db_order.id}) with order_total_amount: {db_order.order_total_amount}")
 
+    # === NEW: Decrement campaign stock after successful order creation ===
+    campaign.available_stock -= order.quantity
+    campaign.updated_at = datetime.now(philippine_timezone) # Update campaign's timestamp too
+    db.add(campaign) # Mark campaign object as modified for commit
+    logging.info(f"CRUD: Decreased stock for campaign '{campaign.title}' (ID: {campaign.id}). New stock: {campaign.available_stock}")
+    # ====================================================================
 
     # 2. Create a PaymentItem record, linking it to the newly created StudentShirtOrder
     db_payment_item = models.PaymentItem(
@@ -1285,10 +1294,9 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
         is_paid=False,
         academic_year=academic_year,
         semester=semester,
-        due_date=campaign.pre_order_deadline, # Use campaign deadline for the due date
+        due_date=campaign.pre_order_deadline,
         student_shirt_order_id=db_order.id,
-        created_at=datetime.now(philippine_timezone) # MODIFIED: Explicitly set to PHT
-        # updated_at will use models.py default, if present, or can be set explicitly here too
+        created_at=datetime.now(philippine_timezone)
     )
     db.add(db_payment_item)
     db.flush()
@@ -1300,8 +1308,7 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
         amount=calculated_total_amount,
         status="pending",
         payment_item_id=db_payment_item.id,
-        created_at=datetime.now(philippine_timezone) # MODIFIED: Explicitly set to PHT
-        # updated_at will use models.py default, if present, or can be set explicitly here too
+        created_at=datetime.now(philippine_timezone)
     )
     db.add(db_payment)
     db.flush()
@@ -1381,7 +1388,7 @@ def get_student_shirt_orders_by_student_id(db: Session, student_id: int) -> List
 def update_student_shirt_order(db: Session, order_id: int, order_update: schemas.StudentShirtOrderUpdate) -> Optional[models.StudentShirtOrder]:
     """
     Updates an existing student shirt order, recalculating total amount
-    if quantity changes and updating related payment records.
+    if quantity changes and updating related payment records and campaign stock.
     """
     db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
 
@@ -1389,7 +1396,7 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
         logging.warning(f"Student shirt order with id: {order_id} not found for update.")
         return None
 
-    original_quantity = db_order.quantity # Store original quantity for comparison
+    original_quantity = db_order.quantity # Store original quantity for stock adjustment later
 
     # Apply updates from the schema
     update_fields = order_update.model_dump(exclude_unset=True)
@@ -1397,17 +1404,20 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
     for field, value in update_fields.items():
         setattr(db_order, field, value)
 
-    # 1. Recalculate total amount if quantity or shirt_size has changed
+    # Flag to check if stock needs adjustment
+    stock_adjusted = False
+    
+    # Recalculate total amount and adjust stock if quantity or shirt_size has changed
     if ('quantity' in update_fields and db_order.quantity != original_quantity) or \
-       ('shirt_size' in update_fields):
-        logging.info(f"Quantity or shirt size changed for order {order_id}. Recalculating total amount.")
+       ('shirt_size' in update_fields): # If shirt_size changes, price might change too
+        logging.info(f"Quantity or shirt size changed for order {order_id}. Recalculating total amount and adjusting stock.")
 
         campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == db_order.campaign_id).first()
         if not campaign:
-            logging.error(f"Campaign with ID {db_order.campaign_id} not found for order {order_id}. Cannot recalculate total amount.")
+            logging.error(f"Campaign with ID {db_order.campaign_id} not found for order {order_id}. Cannot recalculate total amount or adjust stock.")
             return None
 
-        # === MODIFIED: Use prices_by_size for recalculation, with fallback ===
+        # --- Calculate new shirt price ---
         shirt_price = None
         if campaign.prices_by_size and db_order.shirt_size in campaign.prices_by_size:
             shirt_price = campaign.prices_by_size[db_order.shirt_size]
@@ -1418,18 +1428,37 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
             logging.error(f"No valid price found for shirt size '{db_order.shirt_size}' in campaign ID {db_order.campaign_id} for order {order_id}.")
             return None
 
+        # --- Adjust Campaign Stock ---
+        # Calculate the net change in quantity
+        quantity_change = db_order.quantity - original_quantity
+
+        if quantity_change != 0:
+            # If quantity increased, check if enough stock is available
+            if quantity_change > 0 and campaign.available_stock < quantity_change:
+                logging.warning(f"Insufficient stock for campaign ID {db_order.campaign_id} to increase order. Requested increase: {quantity_change}, Available: {campaign.available_stock}")
+                # Revert quantity change in db_order to original to avoid inconsistent state
+                db_order.quantity = original_quantity 
+                raise ValueError(f"Cannot increase order quantity for '{campaign.title}'. Not enough stock available. Current order quantity: {original_quantity}, available for increase: {campaign.available_stock}.")
+            
+            campaign.available_stock -= quantity_change # Decrease if quantity increased, increase if quantity decreased
+            campaign.updated_at = datetime.now(philippine_timezone) # Update campaign's timestamp
+            db.add(campaign) # Mark campaign object as modified for commit
+            logging.info(f"CRUD: Adjusted stock for campaign '{campaign.title}' (ID: {campaign.id}) by {quantity_change}. New stock: {campaign.available_stock}")
+            stock_adjusted = True # Set flag
+
+        # --- Recalculate total amount ---
         calculated_total_amount = db_order.quantity * shirt_price
         logging.info(f"CRUD: Recalculated total amount for order {order_id}: {calculated_total_amount}")
 
         # Update the order's total amount
         db_order.order_total_amount = calculated_total_amount
 
-        # 2. Also update the related PaymentItem and Payment records
+        # Update related PaymentItem and Payment records
         if db_order.payment_id:
             db_payment = db.query(models.Payment).filter(models.Payment.id == db_order.payment_id).first()
             if db_payment:
                 db_payment.amount = calculated_total_amount
-                db_payment.updated_at = datetime.now(philippine_timezone) # MODIFIED: Set to PHT
+                db_payment.updated_at = datetime.now(philippine_timezone)
                 db.add(db_payment)
                 logging.info(f"CRUD: Updated Payment (ID: {db_payment.id}) amount to: {calculated_total_amount}")
 
@@ -1437,7 +1466,7 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
                     db_payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == db_payment.payment_item_id).first()
                     if db_payment_item:
                         db_payment_item.fee = calculated_total_amount
-                        db_payment_item.updated_at = datetime.now(philippine_timezone) # MODIFIED: Set to PHT
+                        db_payment_item.updated_at = datetime.now(philippine_timezone)
                         db.add(db_payment_item)
                         logging.info(f"CRUD: Updated PaymentItem (ID: {db_payment_item.id}) fee to: {calculated_total_amount}")
                     else:
@@ -1448,12 +1477,13 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
                 logging.warning(f"Order {order_id} has no associated payment_id. Cannot update related payment records.")
 
     # Explicitly set db_order.updated_at to Philippine time
-    db_order.updated_at = datetime.now(philippine_timezone) # MODIFIED: Set to PHT
+    # This ensures it's updated even if only non-quantity/size fields changed
+    db_order.updated_at = datetime.now(philippine_timezone)
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
 
-    logging.info(f"Updated student shirt order with id: {order_id}. New quantity: {db_order.quantity}, New total amount: {db_order.order_total_amount}")
+    logging.info(f"Updated student shirt order with id: {order_id}. New quantity: {db_order.quantity}, New total amount: {db_order.order_total_amount}. Stock adjusted: {stock_adjusted}")
     return db_order
 
 def delete_student_shirt_order(db: Session, order_id: int) -> bool:
