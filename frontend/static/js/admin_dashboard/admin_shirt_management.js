@@ -1,9 +1,145 @@
-document.addEventListener('DOMContentLoaded', function() {
-    
+document.addEventListener('DOMContentLoaded', function() {    
+    const style = document.createElement('style');
+    style.textContent = `
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #aaa;
+            line-height: 1;
+            padding: 5px;
+            transition: color 0.2s ease;
+        }
+
+        .btn-close:hover,
+        .btn-close:focus {
+            color: #000;
+            outline: none;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px;
+            border-top: 1px solid #e9e9e9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+       
+        @keyframes slideInBottom {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+       
+        .custom-alert {
+            padding: 15px;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .custom-alert-success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border-color: #badbcc;
+        }
+
+        .custom-alert-danger {
+            color: #842029;
+            background-color: #f8d7da;
+            border-color: #f5c2c7;
+        }
+
+        .custom-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            line-height: 1;
+            color: inherit;
+            cursor: pointer;
+            padding: 0 5px;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        .custom-close-btn:hover {
+            opacity: 1;
+        }
+
+       
+        body.modal-open {
+            overflow: hidden;
+        }
+    `;
+    document.head.appendChild(style);
+
     const adminDataElement = document.getElementById('adminData');
     const adminId = adminDataElement.dataset.adminId ? parseInt(adminDataElement.dataset.adminId) : null;
     const organizationId = adminDataElement.dataset.organizationId ? parseInt(adminDataElement.dataset.organizationId) : null;
-        
+
+    
+    function showCustomModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            console.log(`Showing modal: ${modalId}`);
+            modal.style.display = 'flex'; 
+            modal.style.opacity = '1';
+            modal.setAttribute('aria-hidden', 'false');
+            modal.classList.add('show-modal'); 
+            document.body.classList.add('modal-open'); 
+
+            
+            const handleModalClick = function(event) {
+                
+                if (event.target === modal) {
+                    console.log(`Clicked outside modal content for ${modalId}. Hiding.`);
+                    hideCustomModal(modalId);
+                }
+            };
+            
+            modal.removeEventListener('click', handleModalClick);
+            modal.addEventListener('click', handleModalClick);
+        }
+    }
+
+    function hideCustomModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            console.log(`Hiding modal: ${modalId}`);
+            modal.style.display = 'none';
+            modal.style.opacity = '0';
+            modal.setAttribute('aria-hidden', 'true');
+            modal.classList.remove('show-modal');
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            console.log('Escape key pressed.');
+            const openModals = document.querySelectorAll('.modal[aria-hidden="false"]');
+            if (openModals.length > 0) {
+                
+                hideCustomModal(openModals[openModals.length - 1].id);
+            }
+        }
+    });
+    
+
+
     function formatDateForInput(dateString, includeTime = true) {
         const date = new Date(dateString);
         const year = date.getFullYear();
@@ -19,16 +155,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    
     function showAlert(message, type = 'success') {
         const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+        
+        alertDiv.className = `custom-alert custom-alert-${type} custom-alert-dismissible`;
         alertDiv.innerHTML = `
             ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="custom-close-btn" aria-label="Close">&times;</button>
         `;
         document.querySelector('.container-fluid').prepend(alertDiv);
+
+        
+        alertDiv.querySelector('.custom-close-btn').addEventListener('click', function() {
+            console.log('Alert close button clicked.');
+            alertDiv.remove();
+        });
+
+        
         setTimeout(() => alertDiv.remove(), 5000);
     }
+    
 
     async function fetchCampaigns() {
         try {
@@ -62,8 +209,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${campaign.size_chart_image_path ? `<img src="${campaign.size_chart_image_path}" alt="Size Chart" style="max-width: 80px; height: auto;">` : 'No Image'}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-info edit-campaign-btn" data-campaign-id="${campaign.id}" data-bs-toggle="modal" data-bs-target="#editCampaignModal">Edit</button>
-                    <button class="btn btn-sm btn-danger delete-campaign-btn" data-campaign-id="${campaign.id}">Delete</button>
+                    <button class="custom-button custom-button-info edit-campaign-btn" data-campaign-id="${campaign.id}">Edit</button>
+                    <button class="custom-button custom-button-danger delete-campaign-btn" data-campaign-id="${campaign.id}">Delete</button>
                 </td>
             `;
         });
@@ -87,16 +234,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const newCampaign = await response.json();
             showAlert('Campaign created successfully!');
-            fetchCampaigns(); 
-            
-            const createCampaignModalElement = document.getElementById('createCampaignModal');
-            let createCampaignModalInstance = bootstrap.Modal.getInstance(createCampaignModalElement);
-            if (!createCampaignModalInstance) {
-                
-                createCampaignModalInstance = new bootstrap.Modal(createCampaignModalElement);
-            }
-            createCampaignModalInstance.hide();
-            
+            fetchCampaigns();
+
+            hideCustomModal('createCampaignModal'); 
 
             form.reset();
         } catch (error) {
@@ -124,16 +264,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const updatedCampaign = await response.json();
             showAlert('Campaign updated successfully!');
-            fetchCampaigns(); 
-            
-            const editCampaignModalElement = document.getElementById('editCampaignModal');
-            let editCampaignModalInstance = bootstrap.Modal.getInstance(editCampaignModalElement);
-            if (!editCampaignModalInstance) {
-                
-                editCampaignModalInstance = new bootstrap.Modal(editCampaignModalElement);
-            }
-            editCampaignModalInstance.hide();
-            
+            fetchCampaigns();
+
+            hideCustomModal('editCampaignModal'); 
+
         } catch (error) {
             console.error('Error updating campaign:', error);
             showAlert(`Failed to update campaign: ${error.message}`, 'danger');
@@ -150,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             showAlert('Campaign deleted successfully!');
-            fetchCampaigns(); 
+            fetchCampaigns();
         } catch (error) {
             console.error('Error deleting campaign:', error);
             showAlert('Failed to delete campaign.', 'danger');
@@ -181,6 +315,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 document.getElementById('editCampaignSizeChart').value = '';
 
+                showCustomModal('editCampaignModal'); 
+
             } catch (error) {
                 console.error('Error fetching campaign for edit:', error);
                 showAlert('Failed to load campaign details for editing.', 'danger');
@@ -189,12 +325,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const campaignId = event.target.dataset.campaignId;
             handleDeleteCampaign(campaignId);
         }
-    });  
+    });
 
     async function fetchOrders(campaignId = null, statusFilter = null) {
         let url;
         if (campaignId) {
-             url = `/orders/campaign/${campaignId}`;
+            url = `/orders/campaign/${campaignId}`;
         } else {
             document.querySelector('#ordersTable tbody').innerHTML = '<tr><td colspan="10" class="text-center">Select a campaign to view orders.</td></tr>';
             return;
@@ -238,10 +374,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${order.payment_screenshot_path ? `<a href="${order.payment_screenshot_path}" target="_blank">View</a>` : 'N/A'}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-warning update-order-status-btn"
+                    <button class="custom-button custom-button-warning update-order-status-btn"
                             data-order-id="${order.id}"
-                            data-current-status="${order.order_status}"
-                            data-bs-toggle="modal" data-bs-target="#updateOrderStatusModal">
+                            data-current-status="${order.order_status}">
                         Update Status
                     </button>
                 </td>
@@ -281,16 +416,10 @@ document.addEventListener('DOMContentLoaded', function() {
             showAlert('Order status updated successfully!');
             const selectedCampaignId = document.getElementById('orderCampaignFilter').value;
             const selectedStatus = document.getElementById('orderStatusFilter').value;
-            fetchOrders(selectedCampaignId, selectedStatus);            
-            
-            const updateOrderStatusModalElement = document.getElementById('updateOrderStatusModal');
-            let updateOrderStatusModalInstance = bootstrap.Modal.getInstance(updateOrderStatusModalElement);
-            if (!updateOrderStatusModalInstance) {
-                
-                updateOrderStatusModalInstance = new bootstrap.Modal(updateOrderStatusModalElement);
-            }
-            updateOrderStatusModalInstance.hide();
-            
+            fetchOrders(selectedCampaignId, selectedStatus);
+
+            hideCustomModal('updateOrderStatusModal'); 
+
         } catch (error) {
             console.error('Error updating order status:', error);
             showAlert(`Failed to update order status: ${error.message}`, 'danger');
@@ -304,7 +433,27 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('updateOrderId').value = orderId;
             document.getElementById('orderCurrentStatus').value = currentStatus;
             document.getElementById('newOrderStatus').value = currentStatus;
+
+            showCustomModal('updateOrderStatusModal'); 
         }
+    });
+
+    
+    const createCampaignButton = document.querySelector('button[data-bs-target="#createCampaignModal"]');
+    if (createCampaignButton) {
+        createCampaignButton.addEventListener('click', function() {
+            console.log('Add New Campaign button clicked.');
+            showCustomModal('createCampaignModal');
+        });
+    }
+
+    
+    document.querySelectorAll('.modal .btn-close').forEach(button => {
+        button.addEventListener('click', function() {
+            console.log('Modal close button clicked.');
+            const modalId = button.closest('.modal').id;
+            hideCustomModal(modalId);
+        });
     });
 
     document.getElementById('createCampaignForm').addEventListener('submit', handleCreateCampaign);

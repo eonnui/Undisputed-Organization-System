@@ -72,6 +72,13 @@
                             <span class="nav-text">Financial Statement</span>
                         </a>
                     </li>
+                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_shirt_management')) %}selected{% endif %}">
+                        <a href="{{ url_for('admin_shirt_management') }}">
+                            <i class="ph ph-t-shirt regular-icon"></i> 
+                            <i class="ph-fill ph-t-shirt filled-icon"></i> 
+                            <span class="nav-text">Shirt Campaigns</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
