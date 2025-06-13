@@ -1069,3 +1069,127 @@ def get_admin_logs(
         formatted_logs.append(schemas.AdminLog(**log_dict))
     
     return formatted_logs
+
+# Shirt Campaign CRUD Operations
+def create_shirt_campaign(db: Session, campaign: schemas.ShirtCampaignCreate, admin_id: int) -> models.ShirtCampaign:
+    db_campaign = models.ShirtCampaign(
+        admin_id=admin_id,
+        organization_id=campaign.organization_id,
+        title=campaign.title,
+        description=campaign.description,
+        price_per_shirt=campaign.price_per_shirt,
+        pre_order_deadline=campaign.pre_order_deadline,
+        gcash_number=campaign.gcash_number,
+        gcash_name=campaign.gcash_name,
+        is_active=campaign.is_active,
+        size_chart_image_path=campaign.size_chart_image_path,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db.add(db_campaign)
+    db.commit()
+    db.refresh(db_campaign)
+    logging.info(f"Created shirt campaign: '{campaign.title}' by admin_id: {admin_id}")
+    return db_campaign
+
+def get_shirt_campaign_by_id(db: Session, campaign_id: int) -> Optional[models.ShirtCampaign]:
+    campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == campaign_id).first()
+    if campaign:
+        logging.info(f"Retrieved shirt campaign with id: {campaign_id}")
+    else:
+        logging.warning(f"Shirt campaign with id: {campaign_id} not found.")
+    return campaign
+
+def get_all_shirt_campaigns(db: Session, organization_id: Optional[int] = None, is_active: Optional[bool] = None) -> List[models.ShirtCampaign]:
+    query = db.query(models.ShirtCampaign)
+    if organization_id:
+        query = query.filter(models.ShirtCampaign.organization_id == organization_id)
+    if is_active is not None:
+        query = query.filter(models.ShirtCampaign.is_active == is_active)
+    campaigns = query.order_by(models.ShirtCampaign.pre_order_deadline.desc()).all()
+    logging.info(f"Retrieved {len(campaigns)} shirt campaigns.")
+    return campaigns
+
+def update_shirt_campaign(db: Session, campaign_id: int, campaign_update: schemas.ShirtCampaignUpdate) -> Optional[models.ShirtCampaign]:
+    db_campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == campaign_id).first()
+    if db_campaign:
+        for field, value in campaign_update.model_dump(exclude_unset=True).items():
+            setattr(db_campaign, field, value)
+        db_campaign.updated_at = datetime.now(timezone.utc)
+        db.add(db_campaign)
+        db.commit()
+        db.refresh(db_campaign)
+        logging.info(f"Updated shirt campaign with id: {campaign_id}")
+        return db_campaign
+    else:
+        logging.warning(f"Shirt campaign with id: {campaign_id} not found for update.")
+        return None
+
+def delete_shirt_campaign(db: Session, campaign_id: int) -> bool:
+    db_campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == campaign_id).first()
+    if db_campaign:
+        db.delete(db_campaign)
+        db.commit()
+        logging.info(f"Deleted shirt campaign with id: {campaign_id}")
+        return True
+    else:
+        logging.warning(f"Shirt campaign with id: {campaign_id} not found for deletion.")
+        return False
+
+# Student Shirt Order CRUD Operations
+def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCreate) -> models.StudentShirtOrder:
+    db_order = models.StudentShirtOrder(
+        campaign_id=order.campaign_id,
+        student_id=order.student_id,
+        student_name=order.student_name,
+        student_year_section=order.student_year_section,
+        student_email=order.student_email,
+        student_phone=order.student_phone,
+        shirt_size=order.shirt_size,
+        quantity=order.quantity,
+        payment_amount=order.payment_amount,
+        payment_reference_number=order.payment_reference_number,
+        payment_date_time=order.payment_date_time,
+        payment_screenshot_path=order.payment_screenshot_path,
+        payment_status=order.payment_status,
+        ordered_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+    logging.info(f"Created student shirt order for campaign {order.campaign_id} by student {order.student_id}")
+    return db_order
+
+def get_student_shirt_order_by_id(db: Session, order_id: int) -> Optional[models.StudentShirtOrder]:
+    order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
+    if order:
+        logging.info(f"Retrieved student shirt order with id: {order_id}")
+    else:
+        logging.warning(f"Student shirt order with id: {order_id} not found.")
+    return order
+
+def get_student_shirt_orders_for_campaign(db: Session, campaign_id: int) -> List[models.StudentShirtOrder]:
+    orders = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.campaign_id == campaign_id).all()
+    logging.info(f"Retrieved {len(orders)} student shirt orders for campaign {campaign_id}.")
+    return orders
+
+def get_student_shirt_orders_by_student_id(db: Session, student_id: int) -> List[models.StudentShirtOrder]:
+    orders = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.student_id == student_id).all()
+    logging.info(f"Retrieved {len(orders)} student shirt orders for student {student_id}.")
+    return orders
+
+def update_student_shirt_order(db: Session, order_id: int, order_update: schemas.StudentShirtOrderUpdate) -> Optional[models.StudentShirtOrder]:
+    db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
+    if db_order:
+        for field, value in order_update.model_dump(exclude_unset=True).items():
+            setattr(db_order, field, value)
+        db_order.updated_at = datetime.now(timezone.utc)
+        db.add(db_order)
+        db.commit()
+        db.refresh(db_order)
+        logging.info(f"Updated student shirt order with id: {order_id}")
+        return db_order
+    else:
+        logging.warning(f"Student shirt order with id: {order_id} not found for update.")
+        return None

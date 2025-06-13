@@ -26,7 +26,7 @@ class Organization(Base):
     
     rule_wiki_entries_org = relationship("RuleWikiEntry", back_populates="organization")
     admin_logs = relationship("AdminLog", back_populates="organization")
-
+    shirt_campaigns = relationship("ShirtCampaign", back_populates="organization") 
 
 organization_admins = Table(
     'organization_admins',
@@ -90,6 +90,7 @@ class User(Base):
     payment_items = relationship("PaymentItem", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", foreign_keys="[Notification.user_id]")
     liked_posts = relationship("UserLike", back_populates="user")
+    student_shirt_orders = relationship("StudentShirtOrder", back_populates="student") 
 
 class Admin(Base):
     __tablename__ = "admins"
@@ -107,7 +108,7 @@ class Admin(Base):
     
     rule_wiki_entries = relationship("RuleWikiEntry", back_populates="admin")
     admin_logs = relationship("AdminLog", back_populates="admin")
-
+    shirt_campaigns = relationship("ShirtCampaign", back_populates="admin") 
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
@@ -199,7 +200,8 @@ class Notification(Base):
     verified_user_id = Column(Integer, ForeignKey("users.id", ondelete='CASCADE'), nullable=True)
     
     rule_wiki_entry_id = Column(Integer, ForeignKey("rule_wiki_entries.id", ondelete='CASCADE'), nullable=True)
-
+    shirt_campaign_id = Column(Integer, ForeignKey("shirt_campaigns.id", ondelete='CASCADE'), nullable=True) 
+    shirt_order_id = Column(Integer, ForeignKey("student_shirt_orders.id", ondelete='CASCADE'), nullable=True) 
 
     is_read = Column(Boolean, default=False)
     is_dismissed = Column(Boolean, default=False)
@@ -218,6 +220,8 @@ class Notification(Base):
     verified_user = relationship("User", foreign_keys=[verified_user_id])
     
     rule_wiki_entry = relationship("RuleWikiEntry", back_populates="notifications")
+    shirt_campaign = relationship("ShirtCampaign", back_populates="notifications") 
+    shirt_order = relationship("StudentShirtOrder", back_populates="notifications") 
 
 
 class NotificationTypeConfig(Base):
@@ -277,3 +281,55 @@ class AdminLog(Base):
 
     admin = relationship("Admin", back_populates="admin_logs")
     organization = relationship("Organization", back_populates="admin_logs")
+
+
+class ShirtCampaign(Base):
+    __tablename__ = "shirt_campaigns"
+
+    id = Column(Integer, primary_key=True, index=True)
+    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=False)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    price_per_shirt = Column(Float, nullable=False)
+    pre_order_deadline = Column(Date, nullable=False)
+    gcash_number = Column(String, nullable=True)
+    gcash_name = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    size_chart_image_path = Column(String, nullable=True) 
+    
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    admin = relationship("Admin", back_populates="shirt_campaigns")
+    organization = relationship("Organization", back_populates="shirt_campaigns")
+    student_orders = relationship("StudentShirtOrder", back_populates="campaign", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="shirt_campaign")
+
+class StudentShirtOrder(Base):
+    __tablename__ = "student_shirt_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey("shirt_campaigns.id"), nullable=False)
+    student_id = Column(Integer, ForeignKey("users.id"), nullable=False) 
+    
+    student_name = Column(String, nullable=False)
+    student_year_section = Column(String, nullable=False)
+    student_email = Column(String, nullable=True) 
+    student_phone = Column(String, nullable=True) 
+    
+    shirt_size = Column(String, nullable=False)
+    quantity = Column(Integer, default=1, nullable=False)
+    
+    payment_amount = Column(Float, nullable=False) 
+    payment_reference_number = Column(String, nullable=True)
+    payment_date_time = Column(DateTime, nullable=True)
+    payment_screenshot_path = Column(String, nullable=True)
+    payment_status = Column(String, default="Pending") 
+
+    ordered_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    campaign = relationship("ShirtCampaign", back_populates="student_orders")
+    student = relationship("User", back_populates="student_shirt_orders")
+    notifications = relationship("Notification", back_populates="shirt_order")
