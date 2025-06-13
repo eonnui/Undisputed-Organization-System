@@ -4,6 +4,8 @@
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/student_dashboard.css">
+<!-- Assuming admin_bulletin.css styles are incorporated into student_dashboard.css or loaded -->
+<link rel="stylesheet" href="/static/css/admin_bulletin.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
@@ -11,29 +13,39 @@
 <div class="main-content-flex-container">
     <div class="bulletin-board-container">
         <h2 class="bulletin-header">Bulletin Board</h2>
+
+        {# This section replaces the 'create-post-container' from the admin side to keep appearance consistent, but without functionality #}
+        {# No create post form for students #}
+
+        <h2 class="existing-posts-title">Recent Posts</h2>
         <div class="bulletin-container">
             {% if posts %}
             {% for post in posts %}
             <div class="post-card">
                 <div class="post-header">
-                    <div class="profile-image">
-                        {% if post.admin and post.admin.first_name %}
-                        <div class="initial-circle">
-                            {{ post.admin.first_name[0]|upper }}
+                    <div class="profile-info"> {# Using profile-info for consistent alignment from admin side #}
+                        <div class="profile-image">
+                            {% if post.admin and post.admin.first_name %}
+                            <div class="initial-circle">
+                                {{ post.admin.first_name[0]|upper }}
+                            </div>
+                            {% else %}
+                            <div class="initial-circle">
+                                ?
+                            </div>
+                            {% endif %}
                         </div>
-                        {% else %}
-                        <div class="initial-circle">
-                            ?
+                        <div class="post-meta"> {# Using post-meta for consistent alignment from admin side #}
+                            <div class="post-title">{{ post.title }} {% if post.is_pinned %} <span
+                                    class="pinned">Pinned</span> {% endif %}</div>
+                            <div class="post-details"> {# Using post-details for consistent alignment from admin side #}
+                                <div>by {% if post.admin and post.admin.first_name %} {{ post.admin.first_name }} {% else %}
+                                    Unknown Admin {% endif %}</div>
+                                <div class="post-date">date posted: {{ post.created_at.strftime('%m/%d/%Y') }}</div>
+                            </div>
                         </div>
-                        {% endif %}
                     </div>
-                    <div class="post-info">
-                        <div class="post-title">{{ post.title }} {% if post.is_pinned %} <span
-                                class="pinned">Pinned</span> {% endif %}</div>
-                        <div>by {% if post.admin and post.admin.first_name %} {{ post.admin.first_name }} {% else %}
-                            Unknown Admin {% endif %}</div>
-                        <div class="post-date">date posted: {{ post.created_at.strftime('%m/%d/%Y') }}</div>
-                    </div>
+                    {# No delete button for students #}
                 </div>
                 {% if post.image_path %}
                 <img src="{{ post.image_path }}" alt="{{ post.title }}" class="bulletin-post-image">
@@ -59,7 +71,7 @@
     </div>
 
     <div class="rules-wiki-container">
-        {# NEW: Organizational Chart Section #}
+        {# Organizational Chart Section - Structure copied from admin side for appearance #}
         <div class="org-chart-section">
             <h2 class="org-chart-header">Organizational Chart</h2>
             <button id="viewOrgChartButton" class="view-org-chart-button">View Chart</button>
@@ -77,22 +89,26 @@
 
         <hr class="section-divider"> {# Add a divider for separation #}
 
-        <div class="existing-wiki-section">
-            <h2 class="existing-wiki-posts-title">Rules & Wiki</h2>
+        {# Existing Wiki Posts Container - Structure copied from admin side for appearance #}
+        <div class="existing-wiki-post-container"> {# Using existing-wiki-post-container from admin for styling #}
+            <h3 class="existing-wiki-posts-title">Rules & Wiki Entries</h3> {# Using existing-wiki-posts-title from admin for styling #}
             <div class="wiki-posts-list">
                 {% if wiki_posts %}
                 {% for post in wiki_posts %}
                 <div class="wiki-post-card">
-                    <div class="wiki-post-header">
-                        <h3 class="wiki-post-title">{{ post.title }}</h3>
-                        <span class="wiki-post-category">{{ post.category }}</span>
+                    <div class="wiki-post-display-mode"> {# This wrapper ensures consistent display mode styling #}
+                        <div class="wiki-post-header">
+                            <h3 class="wiki-post-title">{{ post.title }} <span class="wiki-post-category">{{ post.category }}</span></h3>
+                            {# No edit/delete buttons for students #}
+                        </div>
+                        {% if post.image_path %}
+                        <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
+                        {% endif %}
+                        <div class="wiki-post-content">
+                            {{ post.content | safe }}
+                        </div>
                     </div>
-                    {% if post.image_path %}
-                    <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
-                    {% endif %}
-                    <div class="wiki-post-content">
-                        {{ post.content | safe }}
-                    </div>
+                    {# No edit mode for students #}
                 </div>
                 {% endfor %}
                 {% else %}
@@ -105,5 +121,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/student_dashboard/bulletin_board.js"></script>
+<script src="/static/js/student_dashboard/bulletin_board.js"></script>
 {% endblock %}
