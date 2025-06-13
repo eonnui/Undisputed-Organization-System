@@ -1,5 +1,5 @@
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from typing import Optional, List, Dict
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, date
 
 class OrganizationBase(BaseModel):
@@ -75,8 +75,8 @@ class User(UserBase):
     birthdate: Optional[str]
     sex: Optional[str]
     contact: Optional[str]
-    guardian_name: Optional[str]
-    guardian_contact: Optional[str]
+    guardian_name: Optional[str] = None # Ensure default to None if nullable
+    guardian_contact: Optional[str] = None # Ensure default to None if nullable
     registration_form: Optional[str]
     profile_picture: Optional[str]
     is_verified: bool
@@ -95,21 +95,24 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 class UserUpdate(BaseModel):
-    name: Optional[str]
-    campus: Optional[str]
-    semester: Optional[str]
-    course: Optional[str]
-    school_year: Optional[str]
-    year_level: Optional[str]
-    section: Optional[str]
-    address: Optional[str]
-    birthdate: Optional[str]
-    sex: Optional[str]
-    contact: Optional[str]
-    guardian_name: Optional[str]
-    guardian_contact: Optional[str]
-    registration_form: Optional[str]
-    profile_picture: Optional[str]
+    first_name: Optional[str] = None # Added first_name for consistency
+    last_name: Optional[str] = None # Added last_name for consistency
+    name: Optional[str] = None # Kept for potential name updates
+    campus: Optional[str] = None
+    semester: Optional[str] = None
+    course: Optional[str] = None
+    school_year: Optional[str] = None
+    year_level: Optional[str] = None
+    section: Optional[str] = None
+    address: Optional[str] = None
+    birthdate: Optional[str] = None
+    sex: Optional[str] = None
+    contact: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_contact: Optional[str] = None
+    registration_form: Optional[str] = None
+    profile_picture: Optional[str] = None
+
 
 class AdminCreate(BaseModel):
     first_name: Optional[str] = None
@@ -216,26 +219,35 @@ class AdminLog(AdminLogBase):
 class ShirtCampaignBase(BaseModel):
     title: str
     description: Optional[str] = None
-    price_per_shirt: float
+    # MODIFIED: price_per_shirt is now optional as prices_by_size takes precedence
+    price_per_shirt: Optional[float] = None
+    # NEW: Add prices_by_size as a dictionary
+    prices_by_size: Optional[Dict[str, float]] = None
     pre_order_deadline: datetime
     available_stock: int
     is_active: bool = True
     size_chart_image_path: Optional[str] = None
 
 class ShirtCampaignCreate(ShirtCampaignBase):
-    organization_id: int
+    # REMOVED: organization_id from schema, to be derived from authenticated admin
+    # NEW: prices_by_size is required for creation
+    prices_by_size: Dict[str, float] = Field(..., description="Dictionary of sizes to prices")
 
 class ShirtCampaignUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    # MODIFIED: price_per_shirt is now optional
     price_per_shirt: Optional[float] = None
+    # NEW: prices_by_size is optional for update
+    prices_by_size: Optional[Dict[str, float]] = None
     pre_order_deadline: Optional[datetime] = None
+    available_stock: Optional[int] = None # Added available_stock for update
     is_active: Optional[bool] = None
     size_chart_image_path: Optional[str] = None
 
 class ShirtCampaign(ShirtCampaignBase):
     id: int
-    admin_id: int
+    admin_id: Optional[int] = None # Made optional for more flexible display if admin isn't always fetched
     organization_id: int
     created_at: datetime
     updated_at: datetime
@@ -259,7 +271,7 @@ class PaymentItemBase(BaseModel):
     is_past_due: Optional[bool] = None
     is_not_responsible: Optional[bool] = None
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None # MODIFIED: Made updated_at Optional
     student_shirt_order_id: Optional[int] = None # Added for completeness
 
     class Config:
@@ -272,10 +284,10 @@ class PaymentSchema(BaseModel):
     amount: float
     status: str # e.g., 'pending', 'paid', 'failed', 'cancelled'
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None # MODIFIED: Made updated_at Optional
     user_id: Optional[int] = None # Assuming Payment model has a user_id
     payment_item_id: Optional[int] = None # <--- ADDED: To expose the FK directly
-    
+
     # <--- ADDED: To expose the nested PaymentItem object within Payment
     payment_item: Optional[PaymentItemBase] = None
 
@@ -289,17 +301,13 @@ class StudentShirtOrderBase(BaseModel):
     student_phone: Optional[str] = None
     shirt_size: str
     quantity: int = 1
-    order_total_amount: float
-
+    order_total_amount: Optional[float] = None # This was previously changed
 
 class StudentShirtOrderCreate(StudentShirtOrderBase):
     campaign_id: int
     student_id: int
 
 class StudentShirtOrderUpdate(BaseModel):
-    # Add fields that can be updated for a StudentShirtOrder
-    # Keep the existing ones you might have (even if currently empty)
-    # and add the 'status' field.
     student_name: Optional[str] = None
     student_year_section: Optional[str] = None
     student_email: Optional[str] = None
@@ -307,10 +315,8 @@ class StudentShirtOrderUpdate(BaseModel):
     shirt_size: Optional[str] = None
     quantity: Optional[int] = None
     order_total_amount: Optional[float] = None
-    status: Optional[str] = None # <--- ADD THIS LINE!
+    status: Optional[str] = None
 
-# MODIFIED: StudentShirtOrder to ensure nested campaign and payment are present.
-# The payment_item should now come via the 'payment' object.
 class StudentShirtOrder(StudentShirtOrderBase):
     id: int
     campaign_id: int
@@ -319,9 +325,8 @@ class StudentShirtOrder(StudentShirtOrderBase):
     updated_at: datetime
     payment_id: Optional[int] = None # This is the foreign key
 
-    # CRUCIAL ADDITIONS (confirming they are there): Nested Pydantic models for relationships
-    campaign: Optional[ShirtCampaign] = None # Link to the ShirtCampaign schema
-    payment: Optional[PaymentSchema] = None 
+    campaign: Optional[ShirtCampaign] = None
+    payment: Optional[PaymentSchema] = None
 
     class Config:
         from_attributes = True

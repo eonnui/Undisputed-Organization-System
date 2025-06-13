@@ -1,4 +1,4 @@
-{% extends "admin_base.html" %} 
+{% extends "admin_base.html" %}
 
 {% block title %}Shirt & Order Management{% endblock %}
 
@@ -27,10 +27,10 @@
                 <table class="table table-striped table-hover" id="campaignsTable">
                     <thead>
                         <tr>
-                            <th>Title</th> 
+                            <th>Title</th>
                             <th>Description</th>
-                            <th>Price</th>
-                            <th>Pre-Order Deadline</th> 
+                            <th>Price</th> {# This column will display aggregated price info or "Multiple" #}
+                            <th>Pre-Order Deadline</th>
                             <th>Stock</th>
                             <th>Active</th>
                             <th>Image</th>
@@ -100,13 +100,29 @@
                         <label for="campaignDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="campaignDescription" name="description" rows="3"></textarea>
                     </div>
+
+                    {# MODIFIED: Replaced single price input with dynamic size-price inputs #}
                     <div class="mb-3">
-                        <label for="campaignPrice" class="form-label">Price per Shirt</label>
-                        <input type="number" step="0.01" class="form-control" id="campaignPrice" name="price_per_shirt" required>
+                        <label class="form-label">Prices per Size</label>
+                        <div id="createCampaignSizePricesContainer">
+                            <div class="row g-2 mb-2 align-items-center size-price-row">
+                                <div class="col-5">
+                                    <input type="text" class="form-control form-control-sm campaign-size" placeholder="Size (e.g., S, M, XL)" required>
+                                </div>
+                                <div class="col-5">
+                                    <input type="number" step="0.01" class="form-control form-control-sm campaign-price" placeholder="Price" required>
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-danger btn-sm remove-size-price-row">X</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="addCreateCampaignSizePrice">Add Another Size & Price</button>
                     </div>
+                    {# END MODIFIED SECTION #}
+
                     <div class="mb-3">
                         <label for="preOrderDeadline" class="form-label">Pre-Order Deadline</label>
-                        {# MODIFIED: Changed type to "datetime-local" #}
                         <input type="datetime-local" class="form-control" id="preOrderDeadline" name="pre_order_deadline" required>
                     </div>
                     <div class="mb-3">
@@ -142,20 +158,25 @@
                 <form id="editCampaignForm" enctype="multipart/form-data">
                     <input type="hidden" id="editCampaignId" name="campaign_id">
                     <div class="mb-3">
-                        <label for="editCampaignTitle" class="form-label">Campaign Title</label> 
-                        <input type="text" class="form-control" id="editCampaignTitle" name="title" required> 
+                        <label for="editCampaignTitle" class="form-label">Campaign Title</label>
+                        <input type="text" class="form-control" id="editCampaignTitle" name="title" required>
                     </div>
                     <div class="mb-3">
                         <label for="editCampaignDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="editCampaignDescription" name="description" rows="3"></textarea>
                     </div>
+
+                    {# MODIFIED: Replaced single price input with dynamic size-price inputs #}
                     <div class="mb-3">
-                        <label for="editCampaignPrice" class="form-label">Price per Shirt</label>
-                        <input type="number" step="0.01" class="form-control" id="editCampaignPrice" name="price_per_shirt" required>
+                        <label class="form-label">Prices per Size</label>
+                        <div id="editCampaignSizePricesContainer">
+                            </div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="addEditCampaignSizePrice">Add Another Size & Price</button>
                     </div>
+                    {# END MODIFIED SECTION #}
+
                     <div class="mb-3">
-                        <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label> 
-                        {# MODIFIED: Changed type to "datetime-local" #}
+                        <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label>
                         <input type="datetime-local" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required>
                     </div>
                     <div class="mb-3">

@@ -10,38 +10,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalOrderTotalAmount = document.getElementById('modalOrderTotalAmount');
     const orderMessage = document.getElementById('orderMessage');
     const orderButtons = document.querySelectorAll('.order-button');
-    let currentPricePerShirt = 0;
+    // MODIFIED: This will now store prices by size for the currently selected campaign
+    let currentCampaignPricesBySize = {}; 
+    let currentSelectedSize = ''; // To store the selected size for new orders
 
     const orderDetailModal = document.getElementById('orderDetailModal');
     const closeOrderDetailModalButton = document.getElementById('closeOrderDetailModal');
     const orderDetailContent = document.getElementById('orderDetailContent');
     const modalOrderDetailIdDisplay = document.getElementById('modalOrderDetailId');
-    // Note: viewDetailsButtons should be re-queried or attached dynamically if orders are loaded via AJAX
-    // For static pages, this is fine if they are present on initial load
-    const viewDetailsButtons = document.querySelectorAll('.view-details-button');
 
-    // --- NEW ELEMENTS FOR UPDATE MODAL ---
     const updateOrderModal = document.getElementById('updateOrderModal');
     const closeUpdateOrderModalButton = document.querySelector('#updateOrderModal .close-button');
     const updateOrderForm = document.getElementById('updateOrderForm');
     const updateOrderId = document.getElementById('updateOrderId');
     const updateQuantityInput = document.getElementById('updateQuantity');
-    const updateShirtSizeInput = document.getElementById('updateShirtSize');
+    const updateShirtSizeInput = document.getElementById('updateShirtSize'); // This should become a select/dropdown
     const updateDisplayTotalAmount = document.getElementById('updateDisplayTotalAmount');
     const updateOrderTotalAmount = document.getElementById('updateOrderTotalAmount');
     const updateOrderMessage = document.getElementById('updateOrderMessage');
-    let currentUpdatePricePerShirt = 0;
-    // --- END NEW ELEMENTS ---
+    // MODIFIED: This will store prices by size for the campaign of the order being updated
+    let currentUpdateCampaignPricesBySize = {}; 
+    let currentUpdateSelectedSize = ''; // To store the selected size for updates
 
-    // --- NEW: Select all order elements for filtering and the toggle button ---
+
     const allOrderDisplayElements = document.querySelectorAll('.order-item, .order-card');
     const toggleCompletedOrdersButton = document.getElementById('toggleCompletedOrdersButton');
-    // Keep track of the current state of the toggle button
-    let hidingCompletedOrders = true; // Initialize to true, matching the initial button text "Hide Completed Orders"
+    let hidingCompletedOrders = true;
 
-
+    // DEFINED: URL Endpoints
+    const CREATE_ORDER_URL = '/orders/';
     const DELETE_ORDER_URL_BASE = '/orders/';
     const UPDATE_ORDER_URL_BASE = '/orders/';
+    const GET_ORDER_DETAILS_URL_BASE = '/orders/';
+    // IMPORTANT: Confirm this PayMaya URL with your backend
+    const PAYMAYA_CREATE_PAYMENT_URL = '/payments/paymaya/create'; 
 
     // --- Modal Closing Logic ---
     closeButtonOrderModal.onclick = () => {
@@ -68,30 +70,79 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- New Order Functionality ---
     orderButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() { // Added async here
             const campaignId = this.dataset.campaignId;
             const campaignTitle = this.dataset.campaignTitle;
-            currentPricePerShirt = parseFloat(this.dataset.pricePerShirt);
-            modalCampaignId.value = campaignId;
-            modalCampaignTitle.textContent = campaignTitle;
-            quantityInput.value = 1;
-            updateTotalAmount();
-            orderModal.style.display = 'block';
-            orderMessage.textContent = '';
+            
+            orderMessage.textContent = 'Loading campaign details...';
+            orderMessage.style.color = 'blue';
+
+            try {
+                // Fetch full campaign details to get prices_by_size
+                const response = await fetch(`/campaigns/${campaignId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+                const campaign = await response.json();
+
+                currentCampaignPricesBySize = campaign.prices_by_size || {};
+                
+                // Populate size selection in the modal
+                const sizeSelect = document.getElementById('shirt_size'); // MODIFIED: Changed to 'shirt_size' to match HTML
+                sizeSelect.innerHTML = ''; // Clear previous options
+
+                if (Object.keys(currentCampaignPricesBySize).length > 0) {
+                    for (const size in currentCampaignPricesBySize) {
+                        const option = document.createElement('option');
+                        option.value = size;
+                        option.textContent = `${size} (₱${currentCampaignPricesBySize[size].toFixed(2)})`;
+                        sizeSelect.appendChild(option);
+                    }
+                    currentSelectedSize = sizeSelect.value; // Set initial selected size
+                } else {
+                    sizeSelect.innerHTML = '<option value="">No sizes available</option>';
+                    currentSelectedSize = '';
+                    orderMessage.textContent = 'No sizes and prices defined for this campaign.';
+                    orderMessage.style.color = 'red';
+                    return; // Prevent opening modal if no sizes
+                }
+
+                modalCampaignId.value = campaignId;
+                modalCampaignTitle.textContent = campaignTitle;
+                quantityInput.value = 1;
+                updateTotalAmount(); // Calculate initial total based on first size
+                orderModal.style.display = 'block';
+                orderMessage.textContent = ''; // Clear message on successful load
+            } catch (error) {
+                console.error('Error fetching campaign details for order:', error);
+                orderMessage.textContent = `Failed to load campaign details: ${error.message}`;
+                orderMessage.style.color = 'red';
+            }
         });
     });
+
+    // Event listener for size selection change
+    const shirtSizeSelect = document.getElementById('shirt_size'); // MODIFIED: Changed to 'shirt_size' to match HTML
+    if (shirtSizeSelect) {
+        shirtSizeSelect.addEventListener('change', function() {
+            currentSelectedSize = this.value;
+            updateTotalAmount();
+        });
+    }
 
     quantityInput.addEventListener('input', updateTotalAmount);
 
     function updateTotalAmount() {
         const quantity = parseInt(quantityInput.value);
-        if (isNaN(quantity) || quantity < 1) {
+        const price = currentCampaignPricesBySize[currentSelectedSize]; // Get price for selected size
+
+        if (isNaN(quantity) || quantity < 1 || !currentSelectedSize || isNaN(price)) {
             quantityInput.value = 1;
-            const total = currentPricePerShirt;
-            displayTotalAmount.textContent = `₱${total.toFixed(2)}`;
-            modalOrderTotalAmount.value = total.toFixed(2);
+            displayTotalAmount.textContent = `₱0.00`;
+            modalOrderTotalAmount.value = '0.00';
         } else {
-            const total = currentPricePerShirt * quantity;
+            const total = price * quantity;
             displayTotalAmount.textContent = `₱${total.toFixed(2)}`;
             modalOrderTotalAmount.value = total.toFixed(2);
         }
@@ -100,13 +151,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Update Order Modal Price Calculation ---
     function updateOrderDetailTotalAmount() {
         const quantity = parseInt(updateQuantityInput.value);
-        if (isNaN(quantity) || quantity < 1) {
+        const price = currentUpdateCampaignPricesBySize[currentUpdateSelectedSize]; // Get price for selected size
+
+        if (isNaN(quantity) || quantity < 1 || !currentUpdateSelectedSize || isNaN(price)) {
             updateQuantityInput.value = 1;
-            const total = currentUpdatePricePerShirt;
-            updateDisplayTotalAmount.textContent = `₱${total.toFixed(2)}`;
-            updateOrderTotalAmount.value = total.toFixed(2);
+            updateDisplayTotalAmount.textContent = `₱0.00`;
+            updateOrderTotalAmount.value = '0.00';
         } else {
-            const total = currentUpdatePricePerShirt * quantity;
+            const total = price * quantity;
             updateDisplayTotalAmount.textContent = `₱${total.toFixed(2)}`;
             updateOrderTotalAmount.value = total.toFixed(2);
         }
@@ -114,17 +166,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateQuantityInput.addEventListener('input', updateOrderDetailTotalAmount);
 
+    // Event listener for update size selection change
+    if (updateShirtSizeInput) { // updateShirtSizeInput should now be a <select>
+        updateShirtSizeInput.addEventListener('change', function() {
+            currentUpdateSelectedSize = this.value;
+            updateOrderDetailTotalAmount();
+        });
+    }
+
     // --- Form Submissions ---
     orderForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         orderMessage.textContent = 'Submitting order...';
         orderMessage.style.color = 'blue';
-        const formData = new FormData(orderForm);
-        formData.set('order_total_amount', parseFloat(modalOrderTotalAmount.value));
+        
+        // MODIFIED: Ensure selected size and current price are used
+        const campaignId = modalCampaignId.value;
+        const shirtSize = currentSelectedSize;
+        const quantity = parseInt(quantityInput.value);
+        const orderTotalAmount = parseFloat(modalOrderTotalAmount.value);
+
+        // --- Start Debugging Logs ---
+        console.log('--- Order Submission Data (Before FormData) ---');
+        console.log('campaignId:', campaignId);
+        console.log('shirtSize:', shirtSize);
+        console.log('quantity:', quantity);
+        console.log('orderTotalAmount:', orderTotalAmount);
+        console.log('student_name value:', document.getElementById('student_name').value);
+        console.log('student_year_section value:', document.getElementById('student_year_section').value);
+        console.log('student_email value:', document.getElementById('student_email').value);
+        console.log('student_phone value:', document.getElementById('student_phone').value);
+        // --- End Debugging Logs ---
+
+        if (!shirtSize || isNaN(quantity) || quantity < 1 || isNaN(orderTotalAmount) || orderTotalAmount <= 0) {
+            orderMessage.textContent = 'Please select a size, enter a valid quantity, and ensure total amount is valid.';
+            orderMessage.style.color = 'red';
+            return;
+        }
+
+        // --- IMPORTANT CHANGE: Create FormData object ---
+        const formData = new FormData();
+        formData.append('campaign_id', campaignId);
+        formData.append('shirt_size', shirtSize);
+        formData.append('quantity', quantity);
+        // order_total_amount is removed from backend form parameters. If you still need it, add it here.
+        // formData.append('order_total_amount', orderTotalAmount); 
+        formData.append('student_name', document.getElementById('student_name').value);
+        formData.append('student_year_section', document.getElementById('student_year_section').value);
+        
+        // Optional fields, append only if they have values
+        const studentEmail = document.getElementById('student_email').value;
+        if (studentEmail) {
+            formData.append('student_email', studentEmail);
+        }
+        const studentPhone = document.getElementById('student_phone').value;
+        if (studentPhone) {
+            formData.append('student_phone', studentPhone);
+        }
+        // --- END IMPORTANT CHANGE ---
+
+        // Note: When sending FormData, browsers automatically set the 'Content-Type' header to 'multipart/form-data'
+        // Do NOT manually set 'Content-Type': 'application/json' or it will cause issues.
+        console.log('Payload sent to server (FormData):', formData); // Log the FormData object
+
         try {
             const response = await fetch(CREATE_ORDER_URL, {
                 method: 'POST',
-                body: formData,
+                // Removed headers: { 'Content-Type': 'application/json' }
+                body: formData, // Send FormData directly
             });
             if (response.ok) {
                 const result = await response.json();
@@ -133,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Order successful:', result);
                 setTimeout(() => {
                     orderModal.style.display = 'none';
-                    location.reload(); // Reload to reflect new order and re-apply filters
+                    location.reload(); 
                 }, 1500);
             } else {
                 const errorData = await response.json();
@@ -158,6 +267,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const updatedShirtSize = updateShirtSizeInput.value;
         const updatedTotalAmount = parseFloat(updateOrderTotalAmount.value);
 
+        // MODIFIED: Validate selected size and price data
+        if (!updatedShirtSize || isNaN(updatedQuantity) || updatedQuantity < 1 || isNaN(updatedTotalAmount) || updatedTotalAmount <= 0) {
+            updateOrderMessage.textContent = 'Please select a size, enter a valid quantity, and ensure total amount is valid.';
+            updateOrderMessage.style.color = 'red';
+            return;
+        }
+
         const updateData = {
             quantity: updatedQuantity,
             shirt_size: updatedShirtSize,
@@ -180,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Order update successful:', result);
                 setTimeout(() => {
                     updateOrderModal.style.display = 'none';
-                    location.reload(); // Reload to reflect updated order and re-apply filters
+                    location.reload();
                 }, 1500);
             } else {
                 const errorData = await response.json();
@@ -261,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok) {
                 alert('Order removed successfully!');
-                location.reload(); // Reload to reflect the deletion and re-apply filters
+                location.reload(); 
             } else {
                 const errorData = await response.json();
                 alert(`Failed to remove order: ${errorData.detail || 'Unknown error.'}`);
@@ -291,10 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- View Details Button Logic (Dynamic Attachment) ---
     function attachViewDetailsButtonListeners() {
-        // Use event delegation for dynamically added buttons if orders are loaded via AJAX
-        // or re-query all of them. For static HTML, re-querying like this is fine.
         document.querySelectorAll('.view-details-button').forEach(button => {
-            button.removeEventListener('click', handleViewDetailsClick); // Prevent duplicate listeners
+            button.removeEventListener('click', handleViewDetailsClick); 
             button.addEventListener('click', handleViewDetailsClick);
         });
     }
@@ -302,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleViewDetailsClick() {
         const orderId = this.dataset.orderId;
         modalOrderDetailIdDisplay.textContent = `(ID: ${orderId})`;
-        orderDetailContent.innerHTML = '<p class="loading-message">Loading order details...</p>';
+        orderDetailContent.innerHTML = '<p class="loading-message">Loading order details...';
         orderDetailModal.style.display = 'flex';
         try {
             const response = await fetch(`${GET_ORDER_DETAILS_URL_BASE}${orderId}`);
@@ -318,7 +432,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Initial attachment of listeners for view details buttons on page load
     attachViewDetailsButtonListeners();
 
     // --- Display Order Details in Modal ---
@@ -330,10 +443,9 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         let paymentStatusHtml = '';
-        // Check if payment is successful for determining button visibility
         const isPaymentSuccessful = order.payment && (order.payment.status === 'paid' || order.payment.status === 'success');
-        const orderCanBeRemoved = !isPaymentSuccessful; // Can only remove if not successfully paid
-        const orderCanBeEdited = !isPaymentSuccessful; // Can only edit if not successfully paid
+        const orderCanBeRemoved = !isPaymentSuccessful; 
+        const orderCanBeEdited = !isPaymentSuccessful; 
 
         if (order.payment) {
             const paymentStatusTagClass = `tag-${order.payment.status ? order.payment.status.toLowerCase() : 'pending'}`;
@@ -350,11 +462,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let campaignDetailsHtml = '';
         if (order.campaign) {
+            let campaignPriceDisplay = 'N/A';
+            if (order.campaign.prices_by_size && order.shirt_size && order.campaign.prices_by_size[order.shirt_size]) {
+                campaignPriceDisplay = `&#8369;${order.campaign.prices_by_size[order.shirt_size].toFixed(2)} (${order.shirt_size})`;
+            } else if (order.campaign.price_per_shirt) { // Fallback for old campaigns
+                campaignPriceDisplay = `&#8369;${order.campaign.price_per_shirt.toFixed(2)}`;
+            }
+
             campaignDetailsHtml = `
                 <h3>Campaign Details</h3>
                 <p><strong>Campaign:</strong> ${order.campaign.title || 'N/A'}</p>
                 <p><strong>Description:</strong> ${order.campaign.description || 'N/A'}</p>
-                <p><strong>Price per Shirt:</strong> &#8369;${(order.campaign.price_per_shirt || 0).toFixed(2)}</p>
+                <p><strong>Price per Shirt:</strong> ${campaignPriceDisplay}</p> 
                 <p><strong>Pre-order Deadline:</strong> ${new Date(order.campaign.pre_order_deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
             `;
         } else {
@@ -390,10 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let editOrderButtonHtml = '';
         if (orderCanBeEdited) {
             editOrderButtonHtml = `
-                <button class="edit-order-button" data-order-id="${order.id}"
-                        data-quantity="${order.quantity}"
-                        data-shirt-size="${order.shirt_size}"
-                        data-price-per-shirt="${order.campaign.price_per_shirt}">
+                <button class="edit-order-button" data-order-id="${order.id}">
                     Edit Order
                 </button>
             `;
@@ -427,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${removeOrderButtonHtml}
             </div>
         `;
-        // Attach listeners for buttons within the dynamically loaded content
+        
         const modalPayButton = orderDetailContent.querySelector('.paymaya-pay-button-modal');
         if (modalPayButton && !isPaymentSuccessful) {
             modalPayButton.addEventListener('click', handlePaymayaPayment);
@@ -442,40 +558,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const editOrderButton = orderDetailContent.querySelector('.edit-order-button');
         if (editOrderButton) {
-            editOrderButton.addEventListener('click', function() {
+            editOrderButton.addEventListener('click', async function() { // Added async here
                 updateOrderId.value = order.id;
                 updateQuantityInput.value = order.quantity;
-                updateShirtSizeInput.value = order.shirt_size;
-                currentUpdatePricePerShirt = order.campaign.price_per_shirt; // Assuming campaign price is available
-                updateOrderDetailTotalAmount();
+                
+                // Fetch full campaign details for update modal to get prices_by_size
+                try {
+                    const campaignResponse = await fetch(`/campaigns/${order.campaign.id}`);
+                    if (!campaignResponse.ok) {
+                        const errorData = await campaignResponse.json();
+                        throw new Error(errorData.detail || `Failed to fetch campaign details for order update.`);
+                    }
+                    const campaign = await campaignResponse.json();
+                    currentUpdateCampaignPricesBySize = campaign.prices_by_size || {};
 
-                orderDetailModal.style.display = 'none'; // Hide detail modal
-                updateOrderModal.style.display = 'block'; // Show update modal
-                updateOrderMessage.textContent = '';
+                    // Populate update shirt size select/dropdown
+                    updateShirtSizeInput.innerHTML = ''; // Clear previous options
+                    if (Object.keys(currentUpdateCampaignPricesBySize).length > 0) {
+                        for (const size in currentUpdateCampaignPricesBySize) {
+                            const option = document.createElement('option');
+                            option.value = size;
+                            option.textContent = `${size} (₱${currentUpdateCampaignPricesBySize[size].toFixed(2)})`;
+                            updateShirtSizeInput.appendChild(option);
+                        }
+                        // Set the current order's shirt size as selected
+                        updateShirtSizeInput.value = order.shirt_size;
+                        currentUpdateSelectedSize = order.shirt_size;
+                    } else {
+                        updateShirtSizeInput.innerHTML = '<option value="">No sizes available</option>';
+                        currentUpdateSelectedSize = '';
+                        updateOrderMessage.textContent = 'No sizes and prices defined for this campaign.';
+                        updateOrderMessage.style.color = 'red';
+                        return;
+                    }
+
+                    updateOrderDetailTotalAmount(); // Recalculate total based on loaded values
+
+                    orderDetailModal.style.display = 'none'; 
+                    updateOrderModal.style.display = 'block'; 
+                    updateOrderMessage.textContent = '';
+                } catch (error) {
+                    console.error('Error fetching campaign details for order update:', error);
+                    alert(`Failed to prepare order update: ${error.message}`);
+                }
             });
         }
     }
 
-
     // --- Toggle Completed Orders Functionality ---
-    // Function to apply/remove the 'hidden-order' class based on the toggle state
     function toggleCompletedOrders() {
         allOrderDisplayElements.forEach(orderElement => {
-            const paymentStatus = orderElement.dataset.paymentStatus; // Get the status from data attribute
+            const paymentStatus = orderElement.dataset.paymentStatus;
 
-            // Define statuses that should be considered "completed" and thus hidden
-            const completedStatuses = ['paid', 'success', 'collected']; // Added 'collected' as a potential completed status
+            const completedStatuses = ['paid', 'success', 'collected']; 
 
             if (paymentStatus && completedStatuses.includes(paymentStatus.toLowerCase())) {
                 if (hidingCompletedOrders) {
-                    orderElement.classList.add('hidden-order'); // Hide the element
+                    orderElement.classList.add('hidden-order'); 
                 } else {
-                    orderElement.classList.remove('hidden-order'); // Show the element
+                    orderElement.classList.remove('hidden-order'); 
                 }
             }
         });
 
-        // Update button text and state
         if (hidingCompletedOrders) {
             toggleCompletedOrdersButton.textContent = 'Show Completed Orders';
         } else {
@@ -483,14 +628,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Add event listener for the toggle button
     toggleCompletedOrdersButton.addEventListener('click', () => {
-        hidingCompletedOrders = !hidingCompletedOrders; // Toggle the state
-        toggleCompletedOrders(); // Apply the new state
+        hidingCompletedOrders = !hidingCompletedOrders;
+        toggleCompletedOrders();
     });
 
-    // --- Initial filtering when the page loads ---
-    // Call the filter function once when the DOM is loaded to apply initial hiding
     toggleCompletedOrders();
 
 
@@ -499,14 +641,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const campaignsSection = document.getElementById('campaigns-section');
     const myOrdersSection = document.getElementById('my-orders-section');
     
-    // Default to showing both sections if no hash or an invalid hash is present
     campaignsSection.style.display = 'block';
     myOrdersSection.style.display = 'block';
 
     if (hash === '#my-orders-section') {
-        // If the URL has #my-orders-section, you might want to hide campaigns and scroll to orders
-        // For now, we'll just ensure it's visible, as the default above already makes both visible.
-        // You could add: campaignsSection.style.display = 'none'; if you only want one section visible.
         myOrdersSection.scrollIntoView({ behavior: 'smooth' });
     }
 });

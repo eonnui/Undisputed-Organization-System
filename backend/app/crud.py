@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 from datetime import datetime, date, timezone, timedelta
 import logging
 from sqlalchemy.sql import exists
+philippine_timezone = timezone(timedelta(hours=8))
 from sqlalchemy import and_, or_
 from typing import Optional, Tuple, List, Dict, Any
 import json
@@ -1068,21 +1069,31 @@ def get_admin_logs(
         formatted_logs.append(schemas.AdminLog(**log_dict))
     
     return formatted_logs
+# --- Shirt Campaign CRUD Operations ---
+def create_shirt_campaign(db: Session, campaign: schemas.ShirtCampaignCreate, admin_id: int, organization_id: Optional[int]) -> models.ShirtCampaign: # <--- UPDATE SIGNATURE
+    """
+    Creates a new shirt campaign.
+    Handles prices_by_size as a dictionary and sets price_per_shirt if prices_by_size is provided.
+    """
+    first_price_from_sizes = None
+    if campaign.prices_by_size:
+        first_price_from_sizes = next(iter(campaign.prices_by_size.values()), None)
 
-# Shirt Orders
-def create_shirt_campaign(db: Session, campaign: schemas.ShirtCampaignCreate, admin_id: int) -> models.ShirtCampaign:
     db_campaign = models.ShirtCampaign(
         admin_id=admin_id,
-        organization_id=campaign.organization_id,
+        organization_id=organization_id,
         title=campaign.title,
         description=campaign.description,
-        price_per_shirt=campaign.price_per_shirt,
-        pre_order_deadline=campaign.pre_order_deadline,
-        available_stock=campaign.available_stock,   
+        prices_by_size=campaign.prices_by_size,
+        price_per_shirt=first_price_from_sizes if first_price_from_sizes is not None else campaign.price_per_shirt,
+        pre_order_deadline=campaign.pre_order_deadline, # This date comes from the schema, so its timezone depends on client input
+        available_stock=campaign.available_stock,
         is_active=campaign.is_active,
         size_chart_image_path=campaign.size_chart_image_path,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc), 
+        # created_at and updated_at will use models.py defaults, if present.
+        # If you want to force PHT here, you'd add:
+        # created_at=datetime.now(philippine_timezone)
+        # updated_at=datetime.now(philippine_timezone)
     )
     db.add(db_campaign)
     db.commit()
@@ -1104,11 +1115,9 @@ def get_all_shirt_campaigns(
     skip: int = 0,
     limit: int = 100,
     is_active: Optional[bool] = None,
-    # === RENAMED PARAMETERS TO MATCH YOUR API ENDPOINT ===
-    search: Optional[str] = None, # Changed from search_query
-    start_date: Optional[date] = None, # Changed from min_pre_order_deadline
-    end_date: Optional[date] = None # Changed from max_pre_order_deadline
-    # =====================================================
+    search: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
 ) -> List[models.ShirtCampaign]:
     """
     Retrieves all shirt campaigns with filtering and pagination options.
@@ -1123,32 +1132,61 @@ def get_all_shirt_campaigns(
     if is_active is not None:
         query = query.filter(models.ShirtCampaign.is_active == is_active)
 
-    if search: # Now using 'search' directly
+    if search:
         query = query.filter(
             or_(
                 models.ShirtCampaign.title.ilike(f"%{search}%"),
                 models.ShirtCampaign.description.ilike(f"%{search}%")
             )
         )
-    if start_date: # Now using 'start_date' directly
+    if start_date:
         query = query.filter(models.ShirtCampaign.pre_order_deadline >= start_date)
 
-    if end_date: # Now using 'end_date' directly
+    if end_date:
         # Adds 1 day to end_date to make the filter inclusive of the end_date
         query = query.filter(models.ShirtCampaign.pre_order_deadline < end_date + timedelta(days=1))
 
     # Apply sorting (defaulting to latest pre_order_deadline first) and pagination
     campaigns = query.order_by(models.ShirtCampaign.pre_order_deadline.desc()).offset(skip).limit(limit).all()
-    
+
     logging.info(f"Retrieved {len(campaigns)} shirt campaigns.")
     return campaigns
 
 def update_shirt_campaign(db: Session, campaign_id: int, campaign_update: schemas.ShirtCampaignUpdate) -> Optional[models.ShirtCampaign]:
+    """
+    Updates an existing shirt campaign.
+    Handles parsing prices_by_size if it comes as a JSON string from the form.
+    """
     db_campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == campaign_id).first()
     if db_campaign:
-        for field, value in campaign_update.model_dump(exclude_unset=True).items():
+        update_data = campaign_update.model_dump(exclude_unset=True)
+
+        # === MODIFIED: Handle prices_by_size and price_per_shirt updates ===
+        if 'prices_by_size' in update_data:
+            new_prices_by_size = update_data['prices_by_size']
+            if isinstance(new_prices_by_size, str):
+                try:
+                    new_prices_by_size = json.loads(new_prices_by_size)
+                except json.JSONDecodeError:
+                    logging.error(f"Failed to decode prices_by_size JSON string for campaign {campaign_id}")
+                    del update_data['prices_by_size']
+                    new_prices_by_size = None
+
+            if new_prices_by_size is not None:
+                setattr(db_campaign, 'prices_by_size', new_prices_by_size)
+                first_price = next(iter(new_prices_by_size.values()), None)
+                setattr(db_campaign, 'price_per_shirt', first_price)
+            else:
+                setattr(db_campaign, 'prices_by_size', None)
+                setattr(db_campaign, 'price_per_shirt', None)
+            del update_data['prices_by_size']
+
+        # Update other fields.
+        for field, value in update_data.items():
             setattr(db_campaign, field, value)
-        db_campaign.updated_at = datetime.now(timezone.utc)
+
+        # Explicitly set updated_at to Philippine time
+        db_campaign.updated_at = datetime.now(philippine_timezone) # MODIFIED
         db.add(db_campaign)
         db.commit()
         db.refresh(db_campaign)
@@ -1168,12 +1206,13 @@ def delete_shirt_campaign(db: Session, campaign_id: int) -> bool:
     else:
         logging.warning(f"Shirt campaign with id: {campaign_id} not found for deletion.")
         return False
-    
+
 
 def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCreate) -> models.StudentShirtOrder:
     """
     Creates a new student shirt order, ensuring proper linking between
     StudentShirtOrder, PaymentItem, and Payment records.
+    Calculates total amount based on prices_by_size.
     """
     # 1. Fetch the campaign to calculate the total amount
     campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == order.campaign_id).first()
@@ -1181,15 +1220,26 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
         logging.error(f"Campaign with ID {order.campaign_id} not found when creating student order.")
         raise ValueError(f"Campaign with ID {order.campaign_id} not found.")
 
-    calculated_total_amount = order.quantity * campaign.price_per_shirt
-    logging.info(f"CRUD: Calculated total amount: {calculated_total_amount} (Quantity: {order.quantity}, Price: {campaign.price_per_shirt})")
+    # === MODIFIED: Use prices_by_size for calculation, with fallback ===
+    shirt_price = None
+    if campaign.prices_by_size and order.shirt_size in campaign.prices_by_size:
+        shirt_price = campaign.prices_by_size[order.shirt_size]
+    elif campaign.price_per_shirt is not None:
+        shirt_price = campaign.price_per_shirt
 
+    if shirt_price is None:
+        logging.error(f"No valid price found for shirt size '{order.shirt_size}' in campaign ID {order.campaign_id}.")
+        raise ValueError(f"No valid price found for shirt size '{order.shirt_size}'.")
 
-    # --- Dynamic Semester and Academic Year Determination --- (Keep as is)
-    current_date = datetime.now(timezone.utc).date() # Keep date() here for academic year logic
+    calculated_total_amount = order.quantity * shirt_price
+    logging.info(f"CRUD: Calculated total amount: {calculated_total_amount} (Quantity: {order.quantity}, Price: {shirt_price})")
+    # ====================================================================
+
+    # --- Dynamic Semester and Academic Year Determination ---
+    # Use Philippine time for current_date
+    current_date = datetime.now(philippine_timezone).date() # MODIFIED: Use PHT
     current_year = current_date.year
     current_month = current_date.month
-    current_day = current_date.day
 
     academic_year = ""
     semester = ""
@@ -1203,12 +1253,6 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
     else: # July, August (vacation)
         academic_year = f"{current_year}-{current_year + 1}"
         semester = "Vacation/Intersem"
-    
-    if not academic_year or not semester:
-        logging.warning(f"Could not determine semester for date {current_date}. Defaulting to 'Unknown'.")
-        academic_year = f"{current_year}-{current_year + 1}" # Default to current year + next year
-        semester = "Unknown"
-    # --- End Dynamic Semester and Academic Year Determination ---
 
     # ====================================================================
     # === CRITICAL CHANGE: REORDERING OBJECT CREATION AND USING FLUSH ===
@@ -1225,49 +1269,46 @@ def create_student_shirt_order(db: Session, order: schemas.StudentShirtOrderCrea
         shirt_size=order.shirt_size,
         quantity=order.quantity,
         order_total_amount=calculated_total_amount,
-        # payment_id will be set later once db_payment has an ID
-        ordered_at=datetime.now(timezone.utc), # Use datetime.now(timezone.utc)
-        updated_at=datetime.now(timezone.utc), # Use datetime.now(timezone.utc)
-        status="pending" # Initial status
+        status="pending", # Initial status
+        ordered_at=datetime.now(philippine_timezone) # MODIFIED: Explicitly set to PHT
+        # updated_at will use models.py default, if present, or can be set explicitly here too
     )
     db.add(db_order)
-    db.flush() # CRITICAL: This assigns an ID to db_order from the database
+    db.flush()
     logging.info(f"CRUD: Created StudentShirtOrder (ID: {db_order.id}) with order_total_amount: {db_order.order_total_amount}")
 
 
     # 2. Create a PaymentItem record, linking it to the newly created StudentShirtOrder
     db_payment_item = models.PaymentItem(
-        user_id=order.student_id, # Link the payment item to the student user
+        user_id=order.student_id,
         fee=calculated_total_amount,
         is_paid=False,
         academic_year=academic_year,
         semester=semester,
         due_date=campaign.pre_order_deadline, # Use campaign deadline for the due date
-        created_at=datetime.now(timezone.utc), # Use datetime.now(timezone.utc)
-        updated_at=datetime.now(timezone.utc), # Use datetime.now(timezone.utc)
-        student_shirt_order_id=db_order.id, # THIS IS THE NOW CORRECTLY SET LINK!
+        student_shirt_order_id=db_order.id,
+        created_at=datetime.now(philippine_timezone) # MODIFIED: Explicitly set to PHT
+        # updated_at will use models.py default, if present, or can be set explicitly here too
     )
     db.add(db_payment_item)
-    db.flush() # CRITICAL: This assigns an ID to db_payment_item
+    db.flush()
     logging.info(f"CRUD: Created PaymentItem (ID: {db_payment_item.id}) with fee: {db_payment_item.fee}")
 
     # 3. Create a Payment record, linking it to the newly created PaymentItem
-    # SIMPLIFIED DATE ASSIGNMENT: Always use datetime.now(timezone.utc)
     db_payment = models.Payment(
-        user_id=order.student_id, # Link the payment to the student user
-        amount=calculated_total_amount, # This is correct
+        user_id=order.student_id,
+        amount=calculated_total_amount,
         status="pending",
-        created_at=datetime.now(timezone.utc), # <-- SIMPLIFIED HERE
-        updated_at=datetime.now(timezone.utc), # <-- SIMPLIFIED HERE
-        payment_item_id=db_payment_item.id, # This is the correct linkage!
+        payment_item_id=db_payment_item.id,
+        created_at=datetime.now(philippine_timezone) # MODIFIED: Explicitly set to PHT
+        # updated_at will use models.py default, if present, or can be set explicitly here too
     )
     db.add(db_payment)
-    db.flush() # CRITICAL: This assigns an ID to db_payment
+    db.flush()
     logging.info(f"CRUD: Created Payment (ID: {db_payment.id}) with amount: {db_payment.amount}")
 
     # 4. Now that db_payment has an ID, update db_order's payment_id
     db_order.payment_id = db_payment.id
-    # db.add(db_order) # No need to add again, it's already in the session and flushed
 
     # 5. Commit the entire transaction
     db.commit()
@@ -1284,20 +1325,16 @@ def get_student_shirt_order_by_id(db: Session, order_id: int) -> Optional[models
     eagerly loading its associated campaign, payment, and the payment_item linked to the payment.
     """
     order = db.query(models.StudentShirtOrder).options(
-        # Eagerly load the 'campaign' relationship
         joinedload(models.StudentShirtOrder.campaign),
-        # CRITICAL CHANGE: Eagerly load the 'payment' relationship,
-        # AND THEN within that, eagerly load the 'payment_item' relationship
         joinedload(models.StudentShirtOrder.payment).joinedload(models.Payment.payment_item)
     ).filter(models.StudentShirtOrder.id == order_id).first()
 
     if order:
         logging.info(f"Retrieved student shirt order with id: {order_id} including campaign, payment, and payment_item details.")
-        # Optional: Add print statements for debugging (remove for production)
         if order.payment and order.payment.payment_item:
-            logging.info(f"  Payment Item ID: {order.payment.payment_item.id} loaded.")
+            logging.info(f"   Payment Item ID: {order.payment.payment_item.id} loaded.")
         else:
-            logging.info(f"  Payment Item not loaded for order {order_id} (might not exist or relationship issue).")
+            logging.info(f"   Payment Item not loaded for order {order_id} (might not exist or relationship issue).")
     else:
         logging.warning(f"Student shirt order with id: {order_id} not found.")
     return order
@@ -1305,8 +1342,8 @@ def get_student_shirt_order_by_id(db: Session, order_id: int) -> Optional[models
 def get_student_shirt_orders_for_campaign(
     db: Session,
     campaign_id: int,
-    skip: int = 0,   # Add the skip parameter with a default
-    limit: int = 100 # Add the limit parameter with a default
+    skip: int = 0,
+    limit: int = 100
 ) -> List[models.StudentShirtOrder]:
     """
     Retrieves student shirt orders for a specific campaign with pagination.
@@ -1315,15 +1352,11 @@ def get_student_shirt_orders_for_campaign(
         models.StudentShirtOrder.campaign_id == campaign_id
     )
 
-    # Optional: Eager load related data if your schema includes campaign/payment details
-    # This prevents N+1 queries when FastAPI serializes the response.
-    # Make sure you have relationships defined in your models (e.g., StudentShirtOrder.campaign)
     query = query.options(
         joinedload(models.StudentShirtOrder.campaign),
-        joinedload(models.StudentShirtOrder.payment) # Assuming 'payment' is a relationship
+        joinedload(models.StudentShirtOrder.payment)
     )
 
-    # Apply pagination
     if skip is not None:
         query = query.offset(skip)
     if limit is not None:
@@ -1351,69 +1384,78 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
     if quantity changes and updating related payment records.
     """
     db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
-    
+
     if not db_order:
         logging.warning(f"Student shirt order with id: {order_id} not found for update.")
         return None
 
     original_quantity = db_order.quantity # Store original quantity for comparison
-    
+
     # Apply updates from the schema
-    for field, value in order_update.model_dump(exclude_unset=True).items():
+    update_fields = order_update.model_dump(exclude_unset=True)
+
+    for field, value in update_fields.items():
         setattr(db_order, field, value)
-    
-    # 1. Recalculate total amount if quantity has changed
-    if 'quantity' in order_update.model_dump(exclude_unset=True) and db_order.quantity != original_quantity:
-        logging.info(f"Quantity changed from {original_quantity} to {db_order.quantity}. Recalculating total amount.")
+
+    # 1. Recalculate total amount if quantity or shirt_size has changed
+    if ('quantity' in update_fields and db_order.quantity != original_quantity) or \
+       ('shirt_size' in update_fields):
+        logging.info(f"Quantity or shirt size changed for order {order_id}. Recalculating total amount.")
+
         campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == db_order.campaign_id).first()
         if not campaign:
             logging.error(f"Campaign with ID {db_order.campaign_id} not found for order {order_id}. Cannot recalculate total amount.")
-            # Depending on your error handling policy, you might want to raise an error here
-            # or revert the quantity change, or log and proceed with old amount.
-            # For now, we'll log and prevent the amount update to avoid incorrect data.
-            # Consider raising: raise ValueError(f"Campaign with ID {db_order.campaign_id} not found for order {order_id}.")
-            pass # Or handle more robustly
+            return None
 
-        if campaign: # Only proceed if campaign was found
-            calculated_total_amount = db_order.quantity * campaign.price_per_shirt
-            
-            # Update the order's total amount
-            db_order.order_total_amount = calculated_total_amount
-            logging.info(f"CRUD: Recalculated total amount for order {order_id}: {calculated_total_amount}")
+        # === MODIFIED: Use prices_by_size for recalculation, with fallback ===
+        shirt_price = None
+        if campaign.prices_by_size and db_order.shirt_size in campaign.prices_by_size:
+            shirt_price = campaign.prices_by_size[db_order.shirt_size]
+        elif campaign.price_per_shirt is not None:
+            shirt_price = campaign.price_per_shirt
 
-            # 2. Also update the related PaymentItem and Payment records
-            if db_order.payment_id:
-                # Fetch Payment record first to get payment_item_id
-                db_payment = db.query(models.Payment).filter(models.Payment.id == db_order.payment_id).first()
-                if db_payment:
-                    db_payment.amount = calculated_total_amount
-                    db_payment.updated_at = datetime.now(timezone.utc)
-                    db.add(db_payment) # Mark as dirty
-                    logging.info(f"CRUD: Updated Payment (ID: {db_payment.id}) amount to: {calculated_total_amount}")
+        if shirt_price is None:
+            logging.error(f"No valid price found for shirt size '{db_order.shirt_size}' in campaign ID {db_order.campaign_id} for order {order_id}.")
+            return None
 
-                    # Then fetch and update PaymentItem
-                    if db_payment.payment_item_id:
-                        db_payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == db_payment.payment_item_id).first()
-                        if db_payment_item:
-                            db_payment_item.fee = calculated_total_amount
-                            db_payment_item.updated_at = datetime.now(timezone.utc)
-                            db.add(db_payment_item) # Mark as dirty
-                            logging.info(f"CRUD: Updated PaymentItem (ID: {db_payment_item.id}) fee to: {calculated_total_amount}")
-                        else:
-                            logging.warning(f"PaymentItem with ID {db_payment.payment_item_id} not found for payment {db_payment.id}.")
+        calculated_total_amount = db_order.quantity * shirt_price
+        logging.info(f"CRUD: Recalculated total amount for order {order_id}: {calculated_total_amount}")
+
+        # Update the order's total amount
+        db_order.order_total_amount = calculated_total_amount
+
+        # 2. Also update the related PaymentItem and Payment records
+        if db_order.payment_id:
+            db_payment = db.query(models.Payment).filter(models.Payment.id == db_order.payment_id).first()
+            if db_payment:
+                db_payment.amount = calculated_total_amount
+                db_payment.updated_at = datetime.now(philippine_timezone) # MODIFIED: Set to PHT
+                db.add(db_payment)
+                logging.info(f"CRUD: Updated Payment (ID: {db_payment.id}) amount to: {calculated_total_amount}")
+
+                if db_payment.payment_item_id:
+                    db_payment_item = db.query(models.PaymentItem).filter(models.PaymentItem.id == db_payment.payment_item_id).first()
+                    if db_payment_item:
+                        db_payment_item.fee = calculated_total_amount
+                        db_payment_item.updated_at = datetime.now(philippine_timezone) # MODIFIED: Set to PHT
+                        db.add(db_payment_item)
+                        logging.info(f"CRUD: Updated PaymentItem (ID: {db_payment_item.id}) fee to: {calculated_total_amount}")
+                    else:
+                        logging.warning(f"PaymentItem with ID {db_payment.payment_item_id} not found for payment {db_payment.id}.")
                 else:
                     logging.warning(f"Payment with ID {db_order.payment_id} not found for order {order_id}. Cannot update related payment records.")
             else:
                 logging.warning(f"Order {order_id} has no associated payment_id. Cannot update related payment records.")
 
-    db_order.updated_at = datetime.now(timezone.utc)
-    db.add(db_order) # Ensure the order itself is marked for update, even if quantity didn't change
+    # Explicitly set db_order.updated_at to Philippine time
+    db_order.updated_at = datetime.now(philippine_timezone) # MODIFIED: Set to PHT
+    db.add(db_order)
     db.commit()
     db.refresh(db_order)
-    
+
     logging.info(f"Updated student shirt order with id: {order_id}. New quantity: {db_order.quantity}, New total amount: {db_order.order_total_amount}")
     return db_order
-    
+
 def delete_student_shirt_order(db: Session, order_id: int) -> bool:
     """
     Deletes a student shirt order by its ID.
@@ -1421,16 +1463,6 @@ def delete_student_shirt_order(db: Session, order_id: int) -> bool:
     """
     db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
     if db_order:
-        # Before deleting the order, consider if associated payment items/payments should also be handled.
-        # For a simple delete, you might also delete related payment and payment_item.
-        # This depends on your business logic for payments and orders.
-        # For now, I'm assuming SQLAlchemy's cascade delete is set up, or you'll handle it.
-        # If not, you might need:
-        # if db_order.payment:
-        #    if db_order.payment.payment_item:
-        #        db.delete(db_order.payment.payment_item)
-        #    db.delete(db_order.payment)
-
         db.delete(db_order)
         db.commit()
         logging.info(f"Deleted student shirt order with id: {order_id}")

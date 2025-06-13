@@ -24,6 +24,7 @@ import shutil
 import calendar
 from dateutil.relativedelta import relativedelta
 import logging
+import json
 
 # Configure logger
 logger = logging.getLogger("uvicorn.error")
@@ -586,17 +587,26 @@ async def admin_delete_bulletin_post(post_id: int, request: Request, db: Session
 @router.post("/campaigns/", response_model=schemas.ShirtCampaign)
 async def create_shirt_campaign_api(
     request: Request,
-    title: str = Form(...), 
+    title: str = Form(...),
     description: Optional[str] = Form(None),
-    price_per_shirt: float = Form(...),
+    prices_by_size: str = Form(..., description="JSON string of prices by size, e.g., '{\"S\": 15.0, \"M\": 16.0}'"), # New field
     pre_order_deadline: datetime = Form(...),
-    available_stock: int = Form(...), 
-    is_active: bool = Form(True),  
+    available_stock: int = Form(...),
+    is_active: bool = Form(True),
     size_chart_image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
     organization_id = admin_org.id if admin_org else None
+
+    # Parse prices_by_size JSON string
+    try:
+        parsed_prices_by_size = json.loads(prices_by_size)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid JSON format for 'prices_by_size'. It must be a dictionary like {'size': price}."
+        )
 
     size_chart_image_path = None
     if size_chart_image and size_chart_image.filename:
@@ -607,24 +617,26 @@ async def create_shirt_campaign_api(
             max_size_bytes=5 * 1024 * 1024
         )
 
+    # REMOVE organization_id from here as it's not part of ShirtCampaignCreate schema
     campaign_data = schemas.ShirtCampaignCreate(
-        organization_id=organization_id,
-        title=title,                        
+        title=title,
         description=description,
-        price_per_shirt=price_per_shirt,
-        pre_order_deadline=pre_order_deadline, 
-        available_stock=available_stock, 
+        prices_by_size=parsed_prices_by_size,
+        pre_order_deadline=pre_order_deadline,
+        available_stock=available_stock,
         is_active=is_active,
         size_chart_image_path=size_chart_image_path
     )
 
+    # Pass organization_id directly to the crud function
     db_campaign = crud.create_shirt_campaign(
         db=db,
         campaign=campaign_data,
         admin_id=admin.admin_id,
+        organization_id=organization_id, # <--- ADD THIS LINE
     )
 
-    description_log = f"Admin '{admin.first_name} {admin.last_name}' created shirt campaign: '{db_campaign.title}'." 
+    description_log = f"Admin '{admin.first_name} {admin.last_name}' created shirt campaign: '{db_campaign.title}'."
     await crud.create_admin_log(
         db=db,
         admin_id=admin.admin_id,
@@ -680,7 +692,6 @@ async def get_all_shirt_campaigns_api(
         skip=skip,
         limit=limit,
         is_active=is_active,
-        # THIS IS THE CHANGE: Pass 'search' directly as 'search'
         search=search,
         start_date=start_date,
         end_date=end_date
@@ -691,17 +702,18 @@ async def get_all_shirt_campaigns_api(
 @router.put("/campaigns/{campaign_id}", response_model=schemas.ShirtCampaign)
 async def update_shirt_campaign_api(
     campaign_id: int,
-    request: Request,    
-    title: Optional[str] = Form(None), 
+    request: Request,
+    title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
-    price_per_shirt: Optional[float] = Form(None), 
-    pre_order_deadline: Optional[datetime] = Form(None), 
-    available_stock: Optional[int] = Form(None), 
-    is_active: Optional[bool] = Form(None), 
-    size_chart_image: Optional[UploadFile] = File(None), 
+    # price_per_shirt: Optional[float] = Form(None), # Removed: prices_by_size takes precedence
+    prices_by_size: Optional[str] = Form(None, description="Optional JSON string of prices by size for update"), # New field
+    pre_order_deadline: Optional[datetime] = Form(None),
+    available_stock: Optional[int] = Form(None),
+    is_active: Optional[bool] = Form(None),
+    size_chart_image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
-    admin, admin_org = get_current_admin_with_org(request, db) 
+    admin, admin_org = get_current_admin_with_org(request, db)
 
     campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
     if not campaign:
@@ -709,40 +721,58 @@ async def update_shirt_campaign_api(
     if campaign.organization_id != admin_org.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this campaign.")
 
-    final_size_chart_image_path = campaign.size_chart_image_path 
-    if size_chart_image is not None: 
-        if size_chart_image.filename:          
+    # Prepare update data dynamically
+    update_data = {}
+    if title is not None:
+        update_data["title"] = title
+    if description is not None:
+        update_data["description"] = description
+
+    if prices_by_size is not None:
+        try:
+            update_data["prices_by_size"] = json.loads(prices_by_size)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid JSON format for 'prices_by_size'. It must be a dictionary like {'size': price}."
+            )
+    # if price_per_shirt is not None: # No longer accepting price_per_shirt directly for update
+    #     update_data["price_per_shirt"] = price_per_shirt
+
+    if pre_order_deadline is not None:
+        update_data["pre_order_deadline"] = pre_order_deadline
+    if available_stock is not None:
+        update_data["available_stock"] = available_stock
+    if is_active is not None:
+        update_data["is_active"] = is_active
+
+    final_size_chart_image_path = campaign.size_chart_image_path
+    if size_chart_image is not None:
+        if size_chart_image.filename:
             final_size_chart_image_path = await handle_file_upload(
                 size_chart_image,
                 CAMPAIGN_IMAGES_SUBDIRECTORY,
                 ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
                 max_size_bytes=5 * 1024 * 1024,
-                old_file_path=campaign.size_chart_image_path 
+                old_file_path=campaign.size_chart_image_path
             )
         else:
             delete_file_from_path(campaign.size_chart_image_path)
-            final_size_chart_image_path = None 
+            final_size_chart_image_path = None
+    update_data["size_chart_image_path"] = final_size_chart_image_path # Always include even if None
 
-    campaign_update = schemas.ShirtCampaignUpdate(
-        title=title, 
-        description=description,
-        price_per_shirt=price_per_shirt,
-        pre_order_deadline=pre_order_deadline, 
-        available_stock=available_stock,
-        is_active=is_active,
-        size_chart_image_path=final_size_chart_image_path 
-    )
+    campaign_update = schemas.ShirtCampaignUpdate(**update_data)
 
     updated_campaign = crud.update_shirt_campaign(
         db=db,
         campaign_id=campaign_id,
-        campaign_update=campaign_update 
+        campaign_update=campaign_update
     )
 
     if not updated_campaign:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shirt Campaign not found after update attempt.")
-    
-    description_log = f"Admin '{admin.first_name} {admin.last_name}' updated shirt campaign: '{updated_campaign.title}'." 
+
+    description_log = f"Admin '{admin.first_name} {admin.last_name}' updated shirt campaign: '{updated_campaign.title}'."
     await crud.create_admin_log(
         db=db,
         admin_id=admin.admin_id,
@@ -789,31 +819,31 @@ async def delete_shirt_campaign_api(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # Shirt Orders
-@router.post("/orders/", response_model=schemas.StudentShirtOrder) 
+@router.post("/orders/", response_model=schemas.StudentShirtOrder)
 async def create_student_shirt_order_api(
     request: Request,
     campaign_id: int = Form(...),
     student_name: str = Form(...),
-    student_year_section: str = Form(...), 
-    shirt_size: str = Form(...), 
+    student_year_section: str = Form(...),
+    shirt_size: str = Form(...),
     quantity: int = Form(...),
-    order_total_amount: float = Form(...), 
+    # order_total_amount: float = Form(...), # REMOVED: This is now calculated by CRUD
     student_email: Optional[str] = Form(None),
     student_phone: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     current_student, _ = get_current_user_with_org(request, db)
-    student_id = current_student.id 
+    student_id = current_student.id
     order_data = schemas.StudentShirtOrderCreate(
         campaign_id=campaign_id,
-        student_id=student_id, 
+        student_id=student_id,
         student_name=student_name,
         student_year_section=student_year_section,
         student_email=student_email,
         student_phone=student_phone,
         shirt_size=shirt_size,
         quantity=quantity,
-        order_total_amount=order_total_amount, 
+        # order_total_amount=order_total_amount, # REMOVED: Do not pass this, CRUD calculates it
     )
 
     db_order = crud.create_student_shirt_order(
@@ -846,10 +876,10 @@ async def get_student_shirt_order_api(
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student Shirt Order not found")
 
-    
+
     if order.campaign and organization and order.campaign.organization_id != organization.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
-    
+
     if not is_admin and order.student_id != current_entity.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this order.")
 
@@ -862,7 +892,7 @@ async def get_student_shirt_orders_by_campaign_api(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=200),
-    
+
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
     campaign = crud.get_shirt_campaign_by_id(db, campaign_id=campaign_id)
@@ -871,10 +901,10 @@ async def get_student_shirt_orders_by_campaign_api(
     if campaign.organization_id != admin_org.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for this campaign.")
 
-    orders = crud.get_student_shirt_orders_for_campaign( 
+    orders = crud.get_student_shirt_orders_for_campaign(
         db,
         campaign_id=campaign_id,
-        
+
         skip=skip,
         limit=limit
     )
@@ -887,7 +917,7 @@ async def get_student_shirt_orders_by_student_api(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, le=200),
-    
+
 ):
     current_entity = None
     organization = None
@@ -905,9 +935,9 @@ async def get_student_shirt_orders_by_student_api(
     if not is_admin and student_id != current_entity.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view orders for another student.")
 
-    orders = crud.get_student_shirt_orders_by_student_id( 
+    orders = crud.get_student_shirt_orders_by_student_id(
         db,
-        student_id=student_id,         
+        student_id=student_id,
         skip=skip,
         limit=limit
     )
@@ -942,7 +972,7 @@ async def update_student_shirt_order_api(
         order_id=order_id,
         order_update=order_update_data, # Use the actual update data from the request body
     )
-    
+
     if not updated_order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found after update attempt.")
 
@@ -966,7 +996,7 @@ async def delete_student_shirt_order_api(
     # Authorization: Ensure the order belongs to the current student
     if order.student_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this order. You can only delete your own orders.")
-    
+
     # Authorization: Also ensure the order's campaign belongs to the student's organization
     if order.campaign and order.campaign.organization_id != user_org.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this order. Order belongs to a different organization.")
@@ -1026,14 +1056,14 @@ async def get_student_shirt_management_page(
     )
     logger.info(f"Fetched Shirt Campaigns: {len(shirt_campaigns)} campaigns.")
     for campaign in shirt_campaigns:
-        logger.info(f"  - Campaign ID: {campaign.id}, Name: {campaign.title}, Org ID: {campaign.organization_id}, Deadline: {campaign.pre_order_deadline}")
+        logger.info(f"   - Campaign ID: {campaign.id}, Name: {campaign.title}, Org ID: {campaign.organization_id}, Deadline: {campaign.pre_order_deadline}")
         # Note: 'status' is not an attribute of 'campaign' in your schemas.
         # If 'status' is important, it needs to be part of the campaign model/schema or derived.
 
     student_shirt_orders = crud.get_student_shirt_orders_by_student_id(db, current_user.id)
     logger.info(f"Fetched Student Shirt Orders: {len(student_shirt_orders)} orders for student {current_user.id}.")
     for order in student_shirt_orders:
-        logger.info(f"  - Order ID: {order.id}, Campaign ID: {order.campaign_id}, Payment Status: {order.payment.status if order.payment else 'No Payment Record'}")
+        logger.info(f"   - Order ID: {order.id}, Campaign ID: {order.campaign_id}, Payment Status: {order.payment.status if order.payment else 'No Payment Record'}")
         # Assuming order.payment is now correctly loaded and has a .status attribute
 
     env = templates.env
@@ -1095,35 +1125,35 @@ async def get_student_shirt_order_detail_page(
         db,
         organization_id=organization_id,
         is_active=True,
-        min_pre_order_deadline=date.today() 
+        start_date=date.today() # Changed min_pre_order_deadline to start_date
     )
     logger.info(f"Fetched Shirt Campaigns: {len(shirt_campaigns)} campaigns for order detail page.")
     for campaign in shirt_campaigns:
-        logger.info(f"  - Campaign ID: {campaign.id}, Name: {campaign.title}, Org ID: {campaign.organization_id}, Deadline: {campaign.pre_order_deadline}")
+        logger.info(f"   - Campaign ID: {campaign.id}, Name: {campaign.title}, Org ID: {campaign.organization_id}, Deadline: {campaign.pre_order_deadline}")
 
     student_shirt_orders = crud.get_student_shirt_orders_by_student_id(db, current_user.id)
     logger.info(f"Fetched Student Shirt Orders: {len(student_shirt_orders)} orders for student {current_user.id} on order detail page.")
     env = templates.env
     logger.info(f"Jinja2 Environment acquired: {env}")
     if 'now' not in env.globals:
-        env.globals['now'] = datetime.now 
+        env.globals['now'] = datetime.now
         logger.info("Added 'now' to Jinja2 globals.")
     else:
         logger.info("'now' already exists in Jinja2 globals.")
 
-    context = await get_base_template_context(request, db) 
+    context = await get_base_template_context(request, db)
     logger.info(f"Base Template Context Keys: {list(context.keys())}")
     context.update({
         "shirt_campaigns": shirt_campaigns,
         "student_shirt_orders": student_shirt_orders,
         "current_user": current_user,
-        "order_detail": found_order 
+        "order_detail": found_order
     })
     logger.info(f"Final Template Context Keys: {list(context.keys())}")
     logger.info(f"--- Exiting /student/shirt-management/order/{order_id} route (rendering template) ---")
     return templates.TemplateResponse(
         "student_dashboard/student_shirt_management.html",
-        context 
+        context
     )
 
 @router.get("/admin/shirt_management", response_class=HTMLResponse, name="admin_shirt_management")
@@ -1178,20 +1208,20 @@ async def admin_payments(
 async def admin_payment_history(
     request: Request,
     db: Session = Depends(get_db),
-    student_number: Optional[str] = None 
+    student_number: Optional[str] = None
 ):
     admin, organization = get_current_admin_with_org(request, db)
 
     query = db.query(models.Payment).options(
         joinedload(models.Payment.payment_item),
         joinedload(models.Payment.user)
-    ).join(models.User).filter( 
+    ).join(models.User).filter(
         models.User.organization_id == organization.id
     )
 
     if student_number:
         query = query.filter(models.User.student_number == student_number)
-   
+
     payments = query.order_by(
         models.Payment.created_at.desc(),
         models.Payment.id.desc()
@@ -1202,44 +1232,62 @@ async def admin_payment_history(
         payment_item = payment.payment_item
         user = payment.user
 
-        if not all([
-            payment_item, user, payment_item.academic_year, payment_item.semester,
-            payment_item.fee, payment.amount, payment.status, payment_item.due_date,
-            payment.created_at, user.first_name, user.last_name, user.student_number
-        ]):
+        # --- CORRECTED LOGIC STARTS HERE ---
+        # First, check if essential related objects (payment_item, user) are not None.
+        # Then, check their specific attributes.
+        # This prevents AttributeError if payment_item or user is None.
+        if (
+            payment_item is not None and
+            user is not None and
+            payment_item.academic_year is not None and
+            payment_item.semester is not None and
+            payment_item.fee is not None and
+            payment_item.due_date is not None and
+            payment.amount is not None and
+            payment.status is not None and
+            payment.created_at is not None and
+            user.first_name is not None and
+            user.last_name is not None and
+            user.student_number is not None
+        ):
+            status_text = payment.status
+            if status_text == "pending": status_text = "Pending"
+            elif status_text == "success": status_text = "Paid"
+            elif status_text == "failed": status_text = "Failed"
+            elif status_text == "cancelled": status_text = "Cancelled"
+            elif status_text == "past_due": status_text = "Past Due"
+            elif status_text == "unpaid": status_text = "Unpaid"
+
+            # Safely build the payment_item dictionary, assuming payment_item is not None here
+            payment_item_data = {
+                "academic_year": payment_item.academic_year,
+                "semester": payment_item.semester,
+                "fee": float(payment_item.fee),
+                "due_date": payment_item.due_date.strftime('%Y-%m-%d'),
+                "is_not_responsible": payment_item.is_not_responsible
+            }
+
+            payment_history_data.append({
+                "item": {
+                    "id": payment.id,
+                    "amount": float(payment.amount),
+                    "paymaya_payment_id": payment.paymaya_payment_id,
+                    "status": payment.status,
+                    "created_at": payment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    "updated_at": payment.updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment.updated_at else None,
+                    "payment_item": payment_item_data # Use the safely built dictionary
+                },
+                "status": status_text,
+                "user_name": f"{user.first_name} {user.last_name}",
+                "student_number": user.student_number,
+                "payment_date": payment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        else:
+            # If any required data is missing, print a warning and skip this entry
             print(f"Skipping payment {payment.id} due to missing related data.")
             continue
+        # --- CORRECTED LOGIC ENDS HERE ---
 
-        status_text = payment.status
-        if status_text == "pending": status_text = "Pending"
-        elif status_text == "success": status_text = "Paid"
-        elif status_text == "failed": status_text = "Failed"
-        elif status_text == "cancelled": status_text = "Cancelled"
-        elif status_text == "past_due": status_text = "Past Due"
-        elif status_text == "unpaid": status_text = "Unpaid"
-
-
-        payment_history_data.append({
-            "item": {
-                "id": payment.id,
-                "amount": float(payment.amount), 
-                "paymaya_payment_id": payment.paymaya_payment_id,
-                "status": payment.status, 
-                "created_at": payment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                "updated_at": payment.updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment.updated_at else None,
-                "payment_item": {
-                    "academic_year": payment_item.academic_year,
-                    "semester": payment_item.semester,
-                    "fee": float(payment_item.fee), 
-                    "due_date": payment_item.due_date.strftime('%Y-%m-%d'),
-                    "is_not_responsible": payment_item.is_not_responsible
-                }
-            },
-            "status": status_text, 
-            "user_name": f"{user.first_name} {user.last_name}",
-            "student_number": user.student_number,
-            "payment_date": payment.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        })
     return JSONResponse(content={"payment_history": payment_history_data})
 
 # Update Payment Status
@@ -2563,14 +2611,33 @@ async def payment_history(request: Request, db: Session = Depends(get_db)):
     payment_history_data = []
     for payment in payments:
         payment_item = payment.payment_item
-        if not all([payment_item, payment_item.academic_year, payment_item.semester, payment_item.fee, payment.amount, payment.status, payment_item.due_date, payment.created_at]):
+
+        # --- CORRECTED LOGIC STARTS HERE ---
+        # First, ensure payment_item itself is not None.
+        # Then, ensure all necessary attributes are not None.
+        if (
+            payment_item is not None and
+            payment_item.academic_year is not None and
+            payment_item.semester is not None and
+            payment_item.fee is not None and
+            payment_item.due_date is not None and
+            # Also ensure payment's own critical attributes are not None
+            payment.amount is not None and
+            payment.status is not None and
+            payment.created_at is not None
+        ):
+            status_text = payment.status
+            if status_text == "pending": status_text = "Pending"
+            elif status_text == "success": status_text = "Paid"
+            elif status_text == "failed": status_text = "Failed"
+            elif status_text == "cancelled": status_text = "Cancelled"
+            payment_history_data.append({"item": payment, "status": status_text})
+        else:
+            # If payment_item is None, or any required attribute is None,
+            # this entry will be skipped, maintaining your original 'continue' behavior.
+            logging.warning(f"Skipping payment ID {payment.id} due to missing PaymentItem or incomplete data.")
             continue
-        status_text = payment.status
-        if status_text == "pending": status_text = "Pending"
-        elif status_text == "success": status_text = "Paid"
-        elif status_text == "failed": status_text = "Failed"
-        elif status_text == "cancelled": status_text = "Cancelled"
-        payment_history_data.append({"item": payment, "status": status_text})
+        # --- CORRECTED LOGIC ENDS HERE ---
 
     context = await get_base_template_context(request, db)
     context.update({"payment_history": payment_history_data, "current_user": user})

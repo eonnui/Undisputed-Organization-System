@@ -225,7 +225,7 @@
                             <p><strong>Pre-order Deadline:</strong> {{ campaign.pre_order_deadline.strftime('%B %d, %Y') }}</p>
                         </div>
                         <div class="campaign-actions">
-                            {% if campaign.pre_order_deadline and campaign.pre_order_deadline < now().date() %}
+                            {% if campaign.pre_order_deadline and campaign.pre_order_deadline.date() < now().date() %}
                                 <button class="closed-button" disabled>Pre-order Closed</button>
                             {% elif campaign.available_stock <= 0 %}
                                 <button class="sold-out-button" disabled>Sold Out</button>
