@@ -1,8 +1,8 @@
-/* General Styling & Layout for Dark Theme */
+/* General Styling & Layout for Light Theme with Custom Palette */
 body {
     font-family: 'Roboto', sans-serif;
-    background-color: #1a1a1a; /* Dark background */
-    color: #e0e0e0; /* Light text for contrast */
+    background-color: var(--org-bg-color); /* Light background from palette */
+    color: var(--org-text-primary); /* Primary text color from palette */
     line-height: 1.6;
 }
 
@@ -10,16 +10,16 @@ body {
     padding: 25px;
     max-width: 1200px;
     margin: 20px auto;
-    background-color: #2c2c2c; /* Slightly lighter dark for container */
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    background-color: var(--org-bg-secondary); /* White or light background for container from palette */
+    border-radius: var(--org-radius-md); /* Use palette variable for radius */
+    box-shadow: var(--org-shadow-md); /* Use palette variable for shadow */
 }
 
 .page-header {
     font-size: 2.2em;
-    color: #ffffff; /* White header text */
+    color: var(--org-dashboard-title-color); /* Darker primary text for header from palette */
     margin-bottom: 30px;
-    text-align: left; /* Aligned left as in image */
+    text-align: left;
     font-weight: 500;
     position: relative;
     padding-bottom: 10px;
@@ -28,11 +28,11 @@ body {
 .page-header::after {
     content: '';
     position: absolute;
-    left: 0; /* Aligned left */
+    left: 0;
     bottom: 0;
-    width: 60px; /* Shorter line */
-    height: 3px; /* Thinner line */
-    background-color: #00e676; /* Green accent color */
+    width: 60px;
+    height: 3px;
+    background-color: var(--org-primary); /* Primary theme color for accent from palette */
     border-radius: 1.5px;
 }
 
@@ -42,8 +42,8 @@ body {
     flex-wrap: wrap;
     gap: 15px;
     margin-bottom: 30px;
-    align-items: flex-end; /* Align items to the bottom */
-    justify-content: flex-start; /* Start from left */
+    align-items: flex-end;
+    justify-content: flex-start;
 }
 
 .filter-container {
@@ -53,8 +53,8 @@ body {
 }
 
 .filter-container label {
-    font-weight: 400; /* Regular weight */
-    color: #e0e0e0; /* Light text */
+    font-weight: 400;
+    color: var(--org-text-primary); /* Primary text color from palette */
     white-space: nowrap;
 }
 
@@ -71,40 +71,41 @@ body {
 
 .search-input {
     padding: 10px 15px;
-    border: 1px solid #444; /* Darker border */
-    background-color: #333; /* Darker input background */
-    color: #e0e0e0; /* Light input text */
-    border-radius: 5px; /* Slightly less rounded */
+    border: 1px solid var(--org-form-group-input-border); /* Input border from palette */
+    background-color: var(--org-read-only-input-bg); /* Input background from palette */
+    color: var(--org-text-primary); /* Input text color from palette */
+    border-radius: 5px;
     font-size: 1em;
     width: 250px;
-    transition: all 0.3s ease;
+    transition: var(--org-transition);
 }
 
 .search-input::placeholder {
-    color: #a0a0a0; /* Lighter placeholder text */
+    color: var(--org-text-secondary); /* Secondary text for placeholder from palette */
 }
 
 .search-input:focus {
-    border-color: #00e676; /* Green focus border */
-    box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.3); /* Green glow */
+    border-color: var(--org-form-group-input-focus-border); /* Focus border color from palette */
+    /* Using a generic shadow for focus. The specific `rgba` for shadow_base_rgb needs to be injected/derived */
+    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
     outline: none;
-    background-color: #3a3a3a; /* Slightly lighter on focus */
+    background-color: var(--org-bg-secondary); /* White or light background on focus from palette */
 }
 
 .search-button {
     padding: 10px 20px;
-    background-color: #00e676; /* Green button */
-    color: #2c2c2c; /* Dark text on green */
+    background-color: var(--org-button-bg); /* Primary button background from palette */
+    color: var(--org-button-text); /* Button text color from palette */
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
-    font-weight: 500; /* Slightly bolder text */
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-weight: 500;
+    transition: var(--org-transition);
 }
 
 .search-button:hover {
-    background-color: #00c853; /* Darker green on hover */
+    background-color: var(--org-primary-hover); /* Darker primary on hover from palette */
     transform: translateY(-1px);
 }
 
@@ -116,14 +117,14 @@ body {
 .custom-select-wrapper {
     position: relative;
     display: inline-block;
-    width: 150px; /* Adjust as needed */
+    width: 150px;
     margin-left: 10px;
     user-select: none;
 }
 
 .custom-select-trigger {
-    background-color: #333; /* Dark background */
-    border: 1px solid #444; /* Dark border */
+    background-color: var(--org-read-only-input-bg); /* Input background from palette */
+    border: 1px solid var(--org-form-group-input-border); /* Input border from palette */
     border-radius: 5px;
     padding: 10px 15px;
     cursor: pointer;
@@ -131,24 +132,25 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 1em;
-    color: #e0e0e0; /* Light text */
-    transition: all 0.3s ease;
+    color: var(--org-text-primary); /* Primary text color from palette */
+    transition: var(--org-transition);
 }
 
 .custom-select-trigger:hover {
-    border-color: #666;
+    border-color: var(--org-border-medium); /* Medium border on hover from palette */
 }
 
 .custom-select-wrapper.open .custom-select-trigger {
-    border-color: #00e676; /* Green border when open */
-    box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.3); /* Green glow */
+    border-color: var(--org-form-group-input-focus-border); /* Focus border color from palette */
+    /* Using a generic shadow for focus. The specific `rgba` for shadow_base_rgb needs to be injected/derived */
+    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
 }
 
 .dropdown-icon {
     width: 16px;
     height: 16px;
-    fill: #e0e0e0; /* Light icon */
-    transition: transform 0.3s ease;
+    fill: var(--org-text-secondary); /* Secondary text color for icon from palette */
+    transition: var(--org-transition);
 }
 
 .custom-select-wrapper.open .dropdown-icon {
@@ -156,15 +158,15 @@ body {
 }
 
 .custom-options {
-    display: none; /* Controlled by JS */
+    display: none;
     position: absolute;
     top: calc(100% + 5px);
     left: 0;
     right: 0;
-    background-color: #3a3a3a; /* Darker options background */
-    border: 1px solid #444; /* Dark border */
-    border-radius: 5px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    background-color: var(--org-dropdown-bg); /* Dropdown background from palette */
+    border: 1px solid var(--org-dropdown-border); /* Dropdown border from palette */
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
     z-index: 1000;
     max-height: 200px;
     overflow-y: auto;
@@ -189,32 +191,32 @@ body {
     padding: 12px 15px;
     cursor: pointer;
     font-size: 0.95em;
-    color: #e0e0e0; /* Light text */
+    color: var(--org-text-primary); /* Primary text for list items from palette */
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .custom-options li:hover {
-    background-color: #4a4a4a; /* Lighter dark on hover */
-    color: #00e676; /* Green text on hover */
+    background-color: var(--org-dropdown-item-hover-bg); /* Hover background for list items from palette */
+    color: var(--org-primary-hover); /* Darker primary on hover from palette */
 }
 
 .custom-options li[data-value=""] {
     font-weight: 500;
-    color: #ffffff;
-    border-bottom: 1px solid #555; /* Slightly darker separator */
+    color: var(--org-text-primary-darker); /* Darker primary text for "All" from palette */
+    border-bottom: 1px solid var(--org-border-light); /* Light border from palette */
 }
 
 /* Table Styling */
 .students-table-container {
     overflow-x: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    background-color: #2c2c2c; /* Match container background */
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
+    background-color: var(--org-bg-secondary); /* Match container background from palette */
 }
 
 .students-table {
     width: 100%;
-    border-collapse: separate; /* Use separate for rounded corners */
+    border-collapse: separate;
     border-spacing: 0;
     min-width: 800px;
 }
@@ -223,40 +225,40 @@ body {
 .students-table td {
     padding: 15px 20px;
     text-align: left;
-    border-bottom: 1px solid #3a3a3a; /* Darker border for rows */
+    border-bottom: 1px solid var(--org-border-medium); /* Medium border for rows from palette */
     white-space: nowrap;
 }
 
 .students-table thead th {
-    background-color: #2c2c2c; /* Same as container, very subtle distinction */
-    color: #ffffff; /* White header text */
+    background-color: var(--org-sidebar-bg-color); /* Table header background from palette */
+    color: var(--org-table-header-text-payments); /* Table header text color from palette */
     font-weight: 500;
     font-size: 0.95em;
     position: sticky;
     top: 0;
     z-index: 10;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: var(--org-transition);
 }
 
 .students-table thead th:hover {
-    background-color: #3a3a3a; /* Slightly lighter on hover */
+    background-color: var(--org-primary-light); /* Lighter primary on hover from palette */
 }
 
 /* Remove default first/last child borders if using border-radius on container */
 .students-table thead tr:first-child th:first-child {
-    border-top-left-radius: 8px;
+    border-top-left-radius: var(--org-radius-md);
 }
 .students-table thead tr:first-child th:last-child {
-    border-top-right-radius: 8px;
+    border-top-right-radius: var(--org-radius-md);
 }
 
 .students-table tbody tr:nth-child(even) {
-    background-color: #262626; /* Slightly darker zebra striping */
+    background-color: var(--org-highlight); /* Highlight for zebra striping from palette */
 }
 
 .students-table tbody tr:hover {
-    background-color: #353535; /* Lighter dark on hover */
+    background-color: var(--org-dropdown-item-hover-bg); /* Lighter hover background from palette */
     transition: background-color 0.2s ease;
 }
 
@@ -272,17 +274,17 @@ body {
     top: 50%;
     transform: translateY(-50%);
     border: 6px solid transparent;
-    transition: all 0.2s ease;
+    transition: var(--org-transition);
     opacity: 0.5;
 }
 
 .students-table th.sortable.asc::after {
-    border-bottom-color: #00e676; /* Green up arrow */
+    border-bottom-color: var(--org-table-header-text-payments); /* Text color for arrow from palette */
     opacity: 1;
 }
 
 .students-table th.sortable.desc::after {
-    border-top-color: #00e676; /* Green down arrow */
+    border-top-color: var(--org-table-header-text-payments); /* Text color for arrow from palette */
     opacity: 1;
 }
 
@@ -290,17 +292,17 @@ body {
 .view-history-link {
     display: inline-block;
     padding: 8px 15px;
-    background-color: #444; /* Dark button background */
-    color: #e0e0e0; /* Light text */
+    background-color: var(--org-join-btn-bg); /* Join button background (green) from palette */
+    color: var(--org-button-text); /* Button text color (white) from palette */
     text-decoration: none;
     border-radius: 5px;
     font-size: 0.9em;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: var(--org-transition);
     white-space: nowrap;
 }
 
 .view-history-link:hover {
-    background-color: #555; /* Lighter dark on hover */
+    background-color: var(--org-join-btn-hover-bg); /* Join button hover background from palette */
     transform: translateY(-1px);
 }
 
@@ -308,11 +310,10 @@ body {
 .students-table tbody tr td[colspan="7"] {
     text-align: center !important;
     padding: 30px;
-    color: #ff6b6b; /* Red error text for no data */
+    color: var(--org-error); /* Error color for no data from palette */
     font-style: italic;
     font-weight: 500;
 }
-
 
 /* Message Box */
 #message-box {
@@ -321,10 +322,10 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 20px 30px;
-    background-color: #00e676; /* Green for success/info */
-    color: #2c2c2c; /* Dark text on green */
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    background-color: var(--org-info); /* Info color for default from palette */
+    color: var(--org-text-inverse); /* Inverse text color (white) from palette */
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-md);
     z-index: 1001;
     font-family: 'Roboto', sans-serif;
     font-size: 1.1em;
@@ -335,8 +336,8 @@ body {
 }
 
 #message-box.error {
-    background-color: #ff6b6b; /* Red for errors */
-    color: white;
+    background-color: var(--org-error); /* Error color from palette */
+    color: var(--org-text-inverse); /* Inverse text color (white) from palette */
 }
 
 @keyframes fadeInOut {
