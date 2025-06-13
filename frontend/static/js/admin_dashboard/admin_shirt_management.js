@@ -1,11 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Retrieve admin_id and organization_id from the hidden data element
+    
     const adminDataElement = document.getElementById('adminData');
     const adminId = adminDataElement.dataset.adminId ? parseInt(adminDataElement.dataset.adminId) : null;
     const organizationId = adminDataElement.dataset.organizationId ? parseInt(adminDataElement.dataset.organizationId) : null;
-
-    // --- Utility Functions ---
-    // Modified to allow formatting for date-only inputs
+        
     function formatDateForInput(dateString, includeTime = true) {
         const date = new Date(dateString);
         const year = date.getFullYear();
@@ -31,8 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.container-fluid').prepend(alertDiv);
         setTimeout(() => alertDiv.remove(), 5000);
     }
-
-    // --- Campaign Management Functions ---
 
     async function fetchCampaigns() {
         try {
@@ -91,17 +87,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const newCampaign = await response.json();
             showAlert('Campaign created successfully!');
-            fetchCampaigns(); // Refresh the list
-
-            // --- Fix for 'hide' of null ---
+            fetchCampaigns(); 
+            
             const createCampaignModalElement = document.getElementById('createCampaignModal');
             let createCampaignModalInstance = bootstrap.Modal.getInstance(createCampaignModalElement);
             if (!createCampaignModalInstance) {
-                // If an instance doesn't exist, create a new one
+                
                 createCampaignModalInstance = new bootstrap.Modal(createCampaignModalElement);
             }
             createCampaignModalInstance.hide();
-            // --- End Fix ---
+            
 
             form.reset();
         } catch (error) {
@@ -129,18 +124,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const updatedCampaign = await response.json();
             showAlert('Campaign updated successfully!');
-            fetchCampaigns(); // Refresh the list
-
-            // --- Fix for 'hide' of null ---
+            fetchCampaigns(); 
+            
             const editCampaignModalElement = document.getElementById('editCampaignModal');
             let editCampaignModalInstance = bootstrap.Modal.getInstance(editCampaignModalElement);
             if (!editCampaignModalInstance) {
-                // If an instance doesn't exist, create a new one
+                
                 editCampaignModalInstance = new bootstrap.Modal(editCampaignModalElement);
             }
             editCampaignModalInstance.hide();
-            // --- End Fix ---
-
+            
         } catch (error) {
             console.error('Error updating campaign:', error);
             showAlert(`Failed to update campaign: ${error.message}`, 'danger');
@@ -157,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             showAlert('Campaign deleted successfully!');
-            fetchCampaigns(); // Refresh the list
+            fetchCampaigns(); 
         } catch (error) {
             console.error('Error deleting campaign:', error);
             showAlert('Failed to delete campaign.', 'danger');
@@ -196,9 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const campaignId = event.target.dataset.campaignId;
             handleDeleteCampaign(campaignId);
         }
-    });
-
-    // --- Order Management Functions ---
+    });  
 
     async function fetchOrders(campaignId = null, statusFilter = null) {
         let url;
@@ -290,18 +281,16 @@ document.addEventListener('DOMContentLoaded', function() {
             showAlert('Order status updated successfully!');
             const selectedCampaignId = document.getElementById('orderCampaignFilter').value;
             const selectedStatus = document.getElementById('orderStatusFilter').value;
-            fetchOrders(selectedCampaignId, selectedStatus);
+            fetchOrders(selectedCampaignId, selectedStatus);            
             
-            // --- Fix for 'hide' of null ---
             const updateOrderStatusModalElement = document.getElementById('updateOrderStatusModal');
             let updateOrderStatusModalInstance = bootstrap.Modal.getInstance(updateOrderStatusModalElement);
             if (!updateOrderStatusModalInstance) {
-                // If an instance doesn't exist, create a new one
+                
                 updateOrderStatusModalInstance = new bootstrap.Modal(updateOrderStatusModalElement);
             }
             updateOrderStatusModalInstance.hide();
-            // --- End Fix ---
-
+            
         } catch (error) {
             console.error('Error updating order status:', error);
             showAlert(`Failed to update order status: ${error.message}`, 'danger');

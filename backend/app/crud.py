@@ -1004,7 +1004,6 @@ async def create_admin_log(
     ip_address = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
 
-    # Calculate current time in PH timezone (UTC+8)
     utc_now = datetime.utcnow()
     ph_time = utc_now + timedelta(hours=8)
 
@@ -1079,13 +1078,13 @@ def create_shirt_campaign(db: Session, campaign: schemas.ShirtCampaignCreate, ad
         description=campaign.description,
         price_per_shirt=campaign.price_per_shirt,
         pre_order_deadline=campaign.pre_order_deadline,
-        available_stock=campaign.available_stock, # <--- ADD THIS LINE!
+        available_stock=campaign.available_stock, 
         gcash_number=campaign.gcash_number,
         gcash_name=campaign.gcash_name,
         is_active=campaign.is_active,
         size_chart_image_path=campaign.size_chart_image_path,
-        created_at=datetime.now(timezone.utc), # Ensure timezone is imported: from datetime import datetime, timezone
-        updated_at=datetime.now(timezone.utc), # Ensure timezone is imported
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc), 
     )
     db.add(db_campaign)
     db.commit()
@@ -1107,9 +1106,9 @@ def get_all_shirt_campaigns(
     skip: int = 0,
     limit: int = 100,
     is_active: Optional[bool] = None,
-    search_query: Optional[str] = None, # Added search_query parameter
-    start_date: Optional[date] = None,  # Added start_date parameter
-    end_date: Optional[date] = None     # Added end_date parameter
+    search_query: Optional[str] = None, 
+    start_date: Optional[date] = None,  
+    end_date: Optional[date] = None     
 ) -> List[models.ShirtCampaign]:
     query = db.query(models.ShirtCampaign)
 
@@ -1120,7 +1119,6 @@ def get_all_shirt_campaigns(
         query = query.filter(models.ShirtCampaign.is_active == is_active)
 
     if search_query:
-        # Apply search filter to name or description
         query = query.filter(
             or_(
                 models.ShirtCampaign.name.ilike(f"%{search_query}%"),
@@ -1129,12 +1127,9 @@ def get_all_shirt_campaigns(
         )
     
     if start_date:
-        # Filter campaigns where pre_order_deadline is on or after start_date
         query = query.filter(models.ShirtCampaign.pre_order_deadline >= start_date)
     
     if end_date:
-        # Filter campaigns where pre_order_deadline is on or before end_date
-        # We add 1 day to end_date to include the entire end_date
         query = query.filter(models.ShirtCampaign.pre_order_deadline < end_date + timedelta(days=1))
 
     campaigns = query.order_by(models.ShirtCampaign.pre_order_deadline.desc()).offset(skip).limit(limit).all()

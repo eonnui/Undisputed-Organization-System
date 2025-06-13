@@ -214,7 +214,7 @@ class ShirtCampaignBase(BaseModel):
     description: Optional[str] = None
     price_per_shirt: float
     pre_order_deadline: date
-    available_stock: int # <--- ADD THIS LINE
+    available_stock: int 
     gcash_number: Optional[str] = None
     gcash_name: Optional[str] = None
     is_active: bool = True

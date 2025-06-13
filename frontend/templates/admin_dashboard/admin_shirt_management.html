@@ -1,4 +1,4 @@
-{% extends "admin_base.html" %} {# This assumes you have a base template for admin pages #}
+{% extends "admin_base.html" %} 
 
 {% block title %}Shirt & Order Management{% endblock %}
 
@@ -6,7 +6,6 @@
 <div class="container-fluid mt-4">
     <h2 class="mb-4">Shirt Campaign and Order Management</h2>
 
-    {# Hidden div to pass data from Jinja2 to JavaScript safely #}
     <div id="adminData"
          data-admin-id="{{ admin_id if admin_id is not none else '' }}"
          data-organization-id="{{ organization_id if organization_id is not none else '' }}"
@@ -23,10 +22,10 @@
                 <table class="table table-striped table-hover" id="campaignsTable">
                     <thead>
                         <tr>
-                            <th>Title</th> {# Changed from Name to Title #}
+                            <th>Title</th> 
                             <th>Description</th>
                             <th>Price</th>
-                            <th>Pre-Order Deadline</th> {# Changed from Start Date #}
+                            <th>Pre-Order Deadline</th> 
                             <th>Stock</th>
                             <th>Active</th>
                             <th>Image</th>
@@ -34,7 +33,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {# Campaigns will be loaded here by JavaScript #}
                     </tbody>
                 </table>
             </div>
@@ -51,7 +49,6 @@
                     <label for="orderCampaignFilter" class="form-label">Filter by Campaign:</label>
                     <select class="form-select" id="orderCampaignFilter">
                         <option value="">All Campaigns</option>
-                        {# Campaign options loaded by JS #}
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -85,7 +82,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {# Orders will be loaded here by JavaScript #}
                     </tbody>
                 </table>
             </div>
@@ -114,7 +110,6 @@
                         <label for="campaignPrice" class="form-label">Price per Shirt</label>
                         <input type="number" step="0.01" class="form-control" id="campaignPrice" name="price_per_shirt" required>
                     </div>
-                    {# Removed campaignStartDate as it's no longer a separate backend field #}
                     <div class="mb-3">
                         <label for="preOrderDeadline" class="form-label">Pre-Order Deadline</label>
                         <input type="date" class="form-control" id="preOrderDeadline" name="pre_order_deadline" required>
@@ -152,8 +147,8 @@
                 <form id="editCampaignForm" enctype="multipart/form-data">
                     <input type="hidden" id="editCampaignId" name="campaign_id">
                     <div class="mb-3">
-                        <label for="editCampaignTitle" class="form-label">Campaign Title</label> {# Updated label #}
-                        <input type="text" class="form-control" id="editCampaignTitle" name="title" required> {# Updated id and name #}
+                        <label for="editCampaignTitle" class="form-label">Campaign Title</label> 
+                        <input type="text" class="form-control" id="editCampaignTitle" name="title" required> 
                     </div>
                     <div class="mb-3">
                         <label for="editCampaignDescription" class="form-label">Description</label>
@@ -164,10 +159,9 @@
                         <input type="number" step="0.01" class="form-control" id="editCampaignPrice" name="price_per_shirt" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label> {# Updated label #}
-                        <input type="date" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required> {# Updated id, name, and type #}
+                        <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label> 
+                        <input type="date" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required>
                     </div>
-                    {# Removed editCampaignEndDate as it's no longer a separate backend field #}
                     <div class="mb-3">
                         <label for="editCampaignStock" class="form-label">Available Stock</label>
                         <input type="number" class="form-control" id="editCampaignStock" name="available_stock" required>
