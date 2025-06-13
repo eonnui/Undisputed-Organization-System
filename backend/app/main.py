@@ -2471,7 +2471,7 @@ async def payment_success(
                                                             organization_id=organization.id, 
                                                             notification_type="shirt_order_payment",
                                                             payment_id=payment.id, 
-                                                            url=f"/admin/orders/{updated_shirt_order.id}", 
+                                                            url=f"/admin/shirt_management", 
                                                             event_identifier=f"shirt_order_payment_admin_{admin.admin_id}_order_{updated_shirt_order.id}") 
                                     logging.info(f"Notification created for admin {admin.admin_id} for shirt order payment {updated_shirt_order.id}.")
                             else:
@@ -2494,11 +2494,11 @@ async def payment_success(
             logging.info(f"User {user.id} and organization {user.organization.id} found for general fee payment.")
             for admin in user.organization.admins:
                 message = f"Payment Successful: {user.first_name} {user.last_name} has successfully paid {payment.amount} for {payment_item.academic_year} {payment_item.semester} fees."
-                crud.create_notification(db, message, admin_id=admin.admin.id, organization_id=user.organization.id, notification_type="payment_success",
+                crud.create_notification(db, message, admin_id=admin.admin_id, organization_id=user.organization.id, notification_type="payment_success",
                                          payment_id=payment.id, 
                                          url=f"/admin/payments/total_members?student_number={user.student_number}",
-                                         event_identifier=f"payment_success_admin_{admin.admin.id}_payment_{payment.id}")
-                logging.info(f"Notification created for admin {admin.admin.id} for general fee payment {payment.id}.")
+                                         event_identifier=f"payment_success_admin_{admin.admin_id}_payment_{payment.id}")
+                logging.info(f"Notification created for admin {admin.admin_id} for general fee payment {payment.id}.")
         else:
             logging.warning(f"Could not find user, organization, or academic year/semester for general fee payment {payment.id}. Notification skipped.")
     
