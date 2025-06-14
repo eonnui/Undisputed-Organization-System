@@ -265,6 +265,14 @@ body {margin: 0; padding: 0;}
     position: relative;
 }
 
+select#academic-year-filter {
+    color: var(--org-text-primary);
+}
+
+select#semester-filter {
+    color: var(--org-text-primary);
+}
+
 .filter-select:hover {
     background-color: var(--org-highlight);
 }
