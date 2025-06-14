@@ -4,204 +4,16 @@
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/student_dashboard.css">
+<link rel="stylesheet" href="/static/css/student_shirts.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<style>
-    /* Add or update your CSS for the remove button */
-    .remove-order-button {
-        background-color: #dc3545; /* Red color */
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.9em;
-        margin-left: 10px; /* Space it from the payment button */
-    }
-    .remove-order-button:hover {
-        background-color: #c82333;
-    }
-
-    /* Style for disabled payment buttons */
-    .pay-button[disabled], .paid-button {
-        background-color: #6c757d; /* Greyed out */
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-    .pay-button[disabled]:hover, .paid-button:hover {
-        background-color: #6c757d; /* Keep same on hover for disabled */
-    }
-
-    /* --- NEW CSS for Edit Order Button --- */
-    .edit-order-button {
-        background-color: #007bff; /* Blue color */
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.9em;
-        margin-left: 10px; /* Space it from other buttons */
-    }
-    .edit-order-button:hover {
-        background-color: #0056b3;
-    }
-    /* Style for disabled edit buttons (if you implement that logic) */
-    .edit-order-button[disabled] {
-        background-color: #6c757d;
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-    /* --- END NEW CSS --- */
-
-    /* Basic Modal Styling (if not already in student_dashboard.css) */
-    .modal {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 1; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-        justify-content: center; /* Center horizontally */
-        align-items: center; /* Center vertically */
-        padding-top: 60px; /* Location of the box */
-    }
-
-    .modal-content {
-        background-color: #fefefe;
-        margin: auto; /* This centers it when display is block */
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%; /* Could be more specific, e.g., 500px */
-        max-width: 600px; /* Max width for larger screens */
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        position: relative; /* For the close button positioning */
-    }
-
-    .close-button {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-        position: absolute;
-        top: 10px;
-        right: 20px;
-    }
-
-    .close-button:hover,
-    .close-button:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-    }
-
-    .form-group input[type="text"],
-    .form-group input[type="email"],
-    .form-group input[type="tel"],
-    .form-group input[type="number"],
-    .form-group select {
-        width: calc(100% - 22px); /* Account for padding and border */
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box; /* Include padding in width */
-    }
-
-    .total-amount-display {
-        font-size: 1.1em;
-        font-weight: bold;
-        color: #28a745; /* Green for total */
-        display: block; /* Ensures it takes full width */
-        margin-top: 10px;
-    }
-    .submit-order-button, .button-primary {
-        background-color: #007bff;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 1em;
-        margin-top: 10px;
-    }
-    .submit-order-button:hover, .button-primary:hover {
-        background-color: #0056b3;
-    }
-    .message-text, .message {
-        margin-top: 10px;
-        font-weight: bold;
-    }
-    .message-text.error, .message.error {
-        color: red;
-    }
-    .message-text.success, .message.success {
-        color: green;
-    }
-    .loading-message {
-        text-align: center;
-        color: #555;
-    }
-    .error-message {
-        text-align: center;
-        color: #dc3545;
-    }
-    .order-detail-actions {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-        gap: 10px; /* Space between buttons */
-        margin-top: 20px;
-    }
-
-    /* --- NEW CSS for hiding elements --- */
-    .hidden-order {
-        display: none !important; /* Important to override other display properties */
-    }
-    /* Styles for the new toggle button */
-    .toggle-orders-button {
-        background-color: #6c757d; /* Grey button */
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.9em;
-        margin-top: 10px;
-        margin-bottom: 20px; /* Space between button and order list */
-        display: block; /* Make it a block element to take full width or allow margin auto */
-        margin-left: auto; /* Center the button if container allows */
-        margin-right: auto; /* Center the button if container allows */
-    }
-    .toggle-orders-button:hover {
-        background-color: #5a6268;
-    }
-    .page-title {
-        margin-bottom: 15px; /* Add some space below the title */
-    }
-
-</style>
 {% endblock %}
 
 {% block content %}
 
 {# Shirt Campaigns Section #}
-<div class="shirt-campaigns-page" id="campaigns-section">
-    <h2 class="page-title">Available Shirt Campaigns</h2>
+<div class="shirt-campaigns-page content-section" id="campaigns-section"> {# Added content-section #}
+    <h2 class="page-title section-title">Available Shirt Campaigns</h2> {# Added section-title #}
     <div class="campaigns-grid">
         {% if shirt_campaigns %}
             {% for campaign in shirt_campaigns %}
@@ -211,7 +23,7 @@
                         <img src="{{ campaign.size_chart_image_path }}" alt="{{ campaign.title | e }} Size Chart" class="campaign-image">
                     </div>
                     {% else %}
-                    <div class="campaign-image-container">
+                    <div class="campaign-image-container no-image"> {# Added no-image class #}
                         <img src="https://placehold.co/600x400/A0A0A0/FFFFFF?text=No+Size+Chart" alt="Placeholder Image" class="campaign-image">
                     </div>
                     {% endif %}
@@ -220,17 +32,17 @@
                         <h3 class="campaign-title">{{ campaign.title }}</h3>
                         <p class="campaign-description">{{ campaign.description }}</p>
                         <div class="campaign-details">
-                            <p><strong>Price:</strong> &#8369;{{ "%.2f"|format(campaign.price_per_shirt) }}</p>
-                            <p><strong>Available Stock:</strong> {{ campaign.available_stock }}</p>
-                            <p><strong>Pre-order Deadline:</strong> {{ campaign.pre_order_deadline.strftime('%B %d, %Y') }}</p>
+                            <p class="detail-item"><strong>Price:</strong> &#8369;{{ "%.2f"|format(campaign.price_per_shirt) }}</p> {# Added detail-item #}
+                            <p class="detail-item"><strong>Available Stock:</strong> {{ campaign.available_stock }}</p> {# Added detail-item #}
+                            <p class="detail-item"><strong>Pre-order Deadline:</strong> {{ campaign.pre_order_deadline.strftime('%B %d, %Y') }}</p> {# Added detail-item #}
                         </div>
                         <div class="campaign-actions">
                             {% if campaign.pre_order_deadline and campaign.pre_order_deadline.date() < now().date() %}
-                                <button class="closed-button" disabled>Pre-order Closed</button>
+                                <button class="closed-button button-disabled" disabled>Pre-order Closed</button> {# Added button-disabled #}
                             {% elif campaign.available_stock <= 0 %}
-                                <button class="sold-out-button" disabled>Sold Out</button>
+                                <button class="sold-out-button button-disabled" disabled>Sold Out</button> {# Added button-disabled #}
                             {% else %}
-                                <button class="order-button"
+                                <button class="order-button button-primary" {# Added button-primary #}
                                         data-campaign-id="{{ campaign.id }}"
                                         data-campaign-title="{{ campaign.title | e }}"
                                         data-price-per-shirt="{{ campaign.price_per_shirt }}">
@@ -242,41 +54,41 @@
                 </div>
             {% endfor %}
         {% else %}
-            <p class="no-campaigns-message">No active shirt campaigns at the moment.</p>
+            <p class="no-campaigns-message info-message">No active shirt campaigns at the moment.</p> {# Added info-message #}
         {% endif %}
     </div>
 </div>
 
----
+<hr class="section-divider"> {# Added section-divider #}
 
 <div id="orderModal" class="modal">
     <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2>Place Your Order</h2>
-        <h3 id="modalCampaignTitle"></h3>
-        <form id="orderForm">
+        <h2 class="modal-title">Place Your Order</h2> {# Changed page-title to modal-title for specificity #}
+        <h3 id="modalCampaignTitle" class="modal-subtitle"></h3> {# Added modal-subtitle #}
+        <form id="orderForm" class="order-form"> {# Added order-form #}
             <input type="hidden" id="modalCampaignId" name="campaign_id">
             <input type="hidden" id="modalOrderTotalAmount" name="order_total_amount">
 
             <div class="form-group">
-                <label for="student_name">Your Name:</label>
-                <input type="text" id="student_name" name="student_name" value="{{ current_user.first_name }} {{ current_user.last_name }}" required readonly>
+                <label for="student_name" class="form-label">Your Name:</label> {# Added form-label #}
+                <input type="text" id="student_name" name="student_name" value="{{ current_user.first_name }} {{ current_user.last_name }}" required readonly class="form-input"> {# Added form-input #}
             </div>
             <div class="form-group">
-                <label for="student_year_section">Year & Section:</label>
-                <input type="text" id="student_year_section" name="student_year_section" value="{{ current_user.year_level }} - {{ current_user.section }}" required>
+                <label for="student_year_section" class="form-label">Year & Section:</label> {# Added form-label #}
+                <input type="text" id="student_year_section" name="student_year_section" value="{{ current_user.year_level }} - {{ current_user.section }}" required class="form-input"> {# Added form-input #}
             </div>
             <div class="form-group">
-                <label for="student_email">Email (Optional):</label>
-                <input type="email" id="student_email" name="student_email" value="{{ current_user.email or '' }}">
+                <label for="student_email" class="form-label">Email (Optional):</label> {# Added form-label #}
+                <input type="email" id="student_email" name="student_email" value="{{ current_user.email or '' }}" class="form-input"> {# Added form-input #}
             </div>
             <div class="form-group">
-                <label for="student_phone">Phone (Optional):</label>
-                <input type="tel" id="student_phone" name="student_phone" value="{{ current_user.contact or '' }}">
+                <label for="student_phone" class="form-label">Phone (Optional):</label> {# Added form-label #}
+                <input type="tel" id="student_phone" name="student_phone" value="{{ current_user.contact or '' }}" class="form-input"> {# Added form-input #}
             </div>
             <div class="form-group">
-                <label for="shirt_size">Shirt Size:</label>
-                <select id="shirt_size" name="shirt_size" required>
+                <label for="shirt_size" class="form-label">Shirt Size:</label> {# Added form-label #}
+                <select id="shirt_size" name="shirt_size" required class="form-input form-select"> {# Added form-input, form-select #}
                     <option value="">Select Size</option>
                     <option value="XS">XS</option>
                     <option value="S">S</option>
@@ -287,24 +99,24 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="quantity">Quantity:</label>
-                <input type="number" id="quantity" name="quantity" min="1" value="1" required>
+                <label for="quantity" class="form-label">Quantity:</label> {# Added form-label #}
+                <input type="number" id="quantity" name="quantity" min="1" value="1" required class="form-input form-number-input"> {# Added form-input, form-number-input #}
             </div>
             <div class="form-group total-amount-display">
-                <strong>Total Amount:</strong> <span id="displayTotalAmount">&#8369;0.00</span>
+                <strong class="total-label">Total Amount:</strong> <span id="displayTotalAmount" class="total-value">&#8369;0.00</span> {# Added total-label, total-value #}
             </div>
 
-            <button type="submit" class="submit-order-button">Submit Order</button>
+            <button type="submit" class="submit-order-button button-primary">Submit Order</button> {# Added button-primary #}
             <p id="orderMessage" class="message-text"></p>
         </form>
     </div>
 </div>
 
----
+<hr class="section-divider"> {# Added section-divider #}
 
-<div class="my-shirt-orders-page" id="my-orders-section">
-    <h2 class="page-title">My Shirt Orders</h2>
-    <button id="toggleCompletedOrdersButton" class="toggle-orders-button">Hide Completed Orders</button>
+<div class="my-shirt-orders-page content-section" id="my-orders-section"> {# Added content-section #}
+    <h2 class="page-title section-title">My Shirt Orders</h2> {# Added section-title #}
+    <button id="toggleCompletedOrdersButton" class="toggle-orders-button button-secondary">Hide Completed Orders</button> {# Added button-secondary #}
 
     <div class="orders-list-container">
         {% if student_shirt_orders %}
@@ -314,19 +126,19 @@
                      data-payment-status="{{ order.payment.status if order.payment else 'pending' }}">
                     <div class="order-header">
                         <h3 class="order-campaign-title">{{ order.campaign.title if order.campaign else 'N/A' }}</h3>
-                      
+                    
                         <span class="order-status-tag tag-{{ (order.payment.status if order.payment else 'pending') | lower }}">
                             {{ order.payment.status if order.payment else 'Pending Payment' }}
                         </span>
                     </div>
                     <div class="order-details">
-                        <p><strong>Order ID:</strong> {{ order.id }}</p>
-                        <p><strong>Your Name:</strong> {{ order.student_name }}</p>
-                        <p><strong>Year & Section:</strong> {{ order.student_year_section }}</p>
-                        <p><strong>Size:</strong> {{ order.shirt_size }}</p>
-                        <p><strong>Quantity:</strong> {{ order.quantity }}</p>
-                        <p><strong>Total Amount:</strong> &#8369;{{ "%.2f"|format(order.order_total_amount) }}</p>
-                        <p><strong>Ordered On:</strong> {{ order.ordered_at.strftime('%B %d, %Y %I:%M %p') }}</p>
+                        <p class="detail-item"><strong>Order ID:</strong> {{ order.id }}</p> {# Added detail-item #}
+                        <p class="detail-item"><strong>Your Name:</strong> {{ order.student_name }}</p> {# Added detail-item #}
+                        <p class="detail-item"><strong>Year & Section:</strong> {{ order.student_year_section }}</p> {# Added detail-item #}
+                        <p class="detail-item"><strong>Size:</strong> {{ order.shirt_size }}</p> {# Added detail-item #}
+                        <p class="detail-item"><strong>Quantity:</strong> {{ order.quantity }}</p> {# Added detail-item #}
+                        <p class="detail-item"><strong>Total Amount:</strong> &#8369;{{ "%.2f"|format(order.order_total_amount) }}</p> {# Added detail-item #}
+                        <p class="detail-item"><strong>Ordered On:</strong> {{ order.ordered_at.strftime('%B %d, %Y %I:%M %p') }}</p> {# Added detail-item #}
                     </div>
                     <div class="order-actions">
                         {# Determine if payment is successful for button display #}
@@ -334,63 +146,61 @@
 
                         {% if not is_payment_successful %}
                             {# If payment is not successful, show the 'Complete Payment' button #}
-                            <button class="pay-button paymaya-pay-button"
+                            <button class="pay-button paymaya-pay-button button-primary" {# Added button-primary #}
                                     data-payment-item-id="{{ order.payment.payment_item.id if order.payment and order.payment.payment_item else '' }}"
                                     data-order-id="{{ order.id }}">
                                 Complete Payment
                             </button>
                         {% else %}
                             {# If payment is successful, show a disabled 'Payment Successful' button #}
-                            <button class="paid-button" disabled style="cursor: not-allowed;">
+                            <button class="paid-button button-disabled" disabled> {# Added button-disabled #}
                                 Payment Successful
                             </button>
                         {% endif %}
                         
                         {# View Details Button (always available) #}
-                        <button class="view-details-button" data-order-id="{{ order.id }}">View Details</button>
+                        <button class="view-details-button button-secondary" data-order-id="{{ order.id }}">View Details</button> {# Added button-secondary #}
                     </div>
                 </div>
             {% endfor %}
         {% else %}
-            <p class="no-orders-message">You have not placed any shirt orders yet.</p>
+            <p class="no-orders-message info-message">You have not placed any shirt orders yet.</p> {# Added info-message #}
             <p class="cta-message">Check out the <a href="#campaigns-section">available campaigns</a> to place your first order!</p>
         {% endif %}
     </div>
 </div>
 
----
+<hr class="section-divider"> {# Added section-divider #}
 
 {# Student Shirt Order Detail MODAL #}
 <div id="orderDetailModal" class="modal">
     <div class="modal-content">
         <span class="close-button" id="closeOrderDetailModal">&times;</span>
-        <h2 class="page-title">Order Details <span id="modalOrderDetailId"></span></h2>
+        <h2 class="modal-title">Order Details <span id="modalOrderDetailId"></span></h2> {# Changed page-title to modal-title #}
         <div class="order-detail-card" id="orderDetailContent">
             {# Content will be dynamically loaded here by JavaScript #}
-            <p class="loading-message">Loading order details...</p>
+            <p class="loading-message info-message">Loading order details...</p> {# Added info-message #}
         </div>
         {# The payment and remove buttons will be injected by JavaScript into orderDetailContent #}
     </div>
 </div>
 
----
-
 {# NEW: Update Order Modal #}
 <div id="updateOrderModal" class="modal">
     <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2>Update Your Order</h2>
-        <form id="updateOrderForm">
+        <h2 class="modal-title">Update Your Order</h2> {# Changed h2 to modal-title #}
+        <form id="updateOrderForm" class="order-form"> {# Added order-form #}
             <input type="hidden" id="updateOrderId" name="order_id">
             
             <div class="form-group">
-                <label for="updateQuantity">Quantity:</label>
-                <input type="number" id="updateQuantity" name="quantity" min="1" required>
+                <label for="updateQuantity" class="form-label">Quantity:</label> {# Added form-label #}
+                <input type="number" id="updateQuantity" name="quantity" min="1" required class="form-input form-number-input"> {# Added form-input, form-number-input #}
             </div>
             
             <div class="form-group">
-                <label for="updateShirtSize">Shirt Size:</label>
-                <select id="updateShirtSize" name="shirt_size" required>
+                <label for="updateShirtSize" class="form-label">Shirt Size:</label> {# Added form-label #}
+                <select id="updateShirtSize" name="shirt_size" required class="form-input form-select"> {# Added form-input, form-select #}
                     <option value="">Select Size</option>
                     <option value="XS">XS</option>
                     <option value="S">S</option>
@@ -402,13 +212,13 @@
             </div>
 
             <div class="form-group">
-                <label>Current Total:</label>
-                <span id="updateDisplayTotalAmount" class="total-amount-display">₱0.00</span>
+                <label class="form-label">Current Total:</label> {# Added form-label #}
+                <span id="updateDisplayTotalAmount" class="total-amount-display total-value">₱0.00</span> {# Added total-value #}
                 <input type="hidden" id="updateOrderTotalAmount" name="order_total_amount">
             </div>
 
             <button type="submit" class="button-primary">Update Order</button>
-            <p id="updateOrderMessage" class="message"></p>
+            <p id="updateOrderMessage" class="message-text"></p> {# Changed class to message-text #}
         </form>
     </div>
 </div>
