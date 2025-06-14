@@ -59,12 +59,12 @@
 }
 
 .button-primary, .order-button, .submit-order-button, .pay-button {
-    background-color: var(--primary-color);
+    background-color: var(--org-sidebar-bg-color);
     color: var(--org-button-text);
 }
 
 .button-primary:hover, .order-button:hover, .submit-order-button:hover, .pay-button:hover {
-    background-color: var(--primary-hover-color);
+    background-color: var(--org-primary-hover);
     transform: translateY(-1px); /* Subtle lift effect */
     box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.3); /* Using org shadow base */
 }
@@ -228,6 +228,7 @@
     position: relative;
     overflow-y: auto;
     max-height: 90vh;
+    margin-top: 5em;
     animation: fadeInScale 0.3s ease-out; /* Simple entry animation */
 }
 
@@ -445,9 +446,7 @@
 }
 
 .message-text {
-    background-color: var(--org-highlight);
     color: var(--org-primary);
-    border: 1px solid var(--org-accent-light);
 }
 
 .info-message {
