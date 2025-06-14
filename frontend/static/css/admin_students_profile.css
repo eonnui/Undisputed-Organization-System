@@ -727,3 +727,13 @@
         border-right: none;
     }
 }
+
+#studentProfileModal {
+    display: none; /* This ensures the modal is hidden by default */
+    /* Other modal styling like position, z-index, background-color, etc. */
+}
+
+/* Example of what your modal might look like when shown */
+#studentProfileModal.show-modal { /* You could use a class to show it dynamically */
+    display: flex; /* Or block, or grid, depending on how you want it to be displayed */
+}

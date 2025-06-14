@@ -1603,22 +1603,27 @@ async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
     today = date.today()
     all_months_data = OrderedDict()
 
+    # Populate all_months_data with 0.0 for the last N months
     for i in range(num_months_to_display - 1, -1, -1):
         target_date = today - relativedelta(months=i)
         all_months_data[(target_date.year, target_date.month)] = 0.0
-    
-    earliest_year, earliest_month = next(iter(all_months_data.keys()))
-    earliest_date_for_filter = datetime(earliest_year, earliest_month, 1)
 
+    earliest_year, earliest_month = next(iter(all_months_data.keys()))
+    earliest_date_for_filter = datetime(earliest_year, earliest_month, 1).date() # Ensure it's a date object
+
+    # Modified query to exclude PaymentItems with a student_shirt_order_id
     financial_data_raw = db.query(
         func.extract('year', models.Payment.created_at).label('year'),
         func.extract('month', models.Payment.created_at).label('month'),
         func.sum(models.Payment.amount).label('total'),
-    ).join(models.Payment.user).filter(
-        models.Payment.status == "success",
-        models.User.organization_id == admin_org.id,
-        models.Payment.created_at >= earliest_date_for_filter,
-        models.Payment.created_at <= today
+    ).join(models.Payment.payment_item).join(models.Payment.user).filter( # Join Payment with PaymentItem
+        and_(
+            models.Payment.status == "success",
+            models.User.organization_id == admin_org.id,
+            models.Payment.created_at >= earliest_date_for_filter,
+            models.Payment.created_at <= today,
+            models.PaymentItem.student_shirt_order_id == None # Exclude student shirt orders here
+        )
     ).group_by('year', 'month').all()
 
     for row in financial_data_raw:
@@ -1628,6 +1633,7 @@ async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
 
     labels = [f"{year}-{month:02d}" for year, month in all_months_data.keys()]
     data = list(all_months_data.values())
+
     return {"labels": labels, "data": data}
 
 # Expenses by Category
@@ -1648,11 +1654,15 @@ async def get_expenses_by_category(request: Request, db: Session = Depends(get_d
 async def get_fund_distribution(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
 
+    # Modified query to exclude PaymentItems with a student_shirt_order_id
     fund_allocation = db.query(models.PaymentItem.academic_year, func.sum(models.Payment.amount)).join(
         models.Payment, models.PaymentItem.id == models.Payment.payment_item_id
     ).join(models.PaymentItem.user).filter(
-        models.Payment.status == "success",
-        models.User.organization_id == admin_org.id
+        and_(
+            models.Payment.status == "success",
+            models.User.organization_id == admin_org.id,
+            models.PaymentItem.student_shirt_order_id == None # Exclude student shirt orders
+        )
     ).group_by(models.PaymentItem.academic_year).all()
 
     distribution_data = {}
@@ -1671,14 +1681,15 @@ async def admin_outstanding_dues(
 ) -> List[Dict[str, Any]]:
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    today = date.today() 
+    today = date.today()
 
     if academic_year:
         resolved_academic_year = academic_year
-    else:       
+    else:
+        # Determine current academic year based on current month
         start_year = today.year - 1 if today.month < 9 else today.year
         resolved_academic_year = f"{start_year}-{start_year + 1}"
-    
+
     current_semester_name = None
     if 9 <= today.month <= 12 or today.month == 1:
         current_semester_name = "1st"
@@ -1694,15 +1705,18 @@ async def admin_outstanding_dues(
                 func.lower(models.PaymentItem.academic_year) == resolved_academic_year.lower(),
                 models.PaymentItem.semester == current_semester_name,
                 models.User.organization_id == admin_org.id,
-                models.PaymentItem.is_not_responsible == False
+                models.PaymentItem.is_not_responsible == False,
+                # --- START OF YOUR REQUESTED MODIFICATION ---
+                models.PaymentItem.student_shirt_order_id == None # Exclude student shirt orders
+                # --- END OF YOUR REQUESTED MODIFICATION ---
             )
         ).all()
-                   
+
         total_outstanding_amount = sum(
             item.fee for item in relevant_payment_items
             if not item.is_paid
         )
-    
+
     return [{
         "total_outstanding_amount": total_outstanding_amount,
         "semester_status": current_semester_name,
