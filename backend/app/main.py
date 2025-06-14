@@ -2896,21 +2896,36 @@ async def payment_history(request: Request, db: Session = Depends(get_db)):
 # Financial Statement (User)
 @app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
 async def financial_statement(request: Request, db: Session = Depends(get_db)):
+    """
+    Retrieves and categorizes financial data for a user and their organization.
+    """
     user, user_org = get_current_user_with_org(request, db)
 
+    # --- User-Specific Financial Data ---
     all_user_payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user.id).all()
-    
+
     total_paid_by_user = sum(item.fee for item in all_user_payment_items if item.is_paid)
     total_outstanding_fees_user = sum(item.fee for item in all_user_payment_items if not item.is_paid)
     total_past_due_fees_user = sum(item.fee for item in all_user_payment_items if not item.is_paid and item.due_date and item.due_date < date.today())
 
     collected_fees_by_category_user = defaultdict(float)
     outstanding_fees_by_category_user = defaultdict(float)
-    for item in all_user_payment_items:
-        category_name = f"AY {item.academic_year} - {item.semester} Fees" if item.academic_year and item.semester else "Miscellaneous Fees"
-        if item.is_paid: collected_fees_by_category_user[category_name] += item.fee
-        else: outstanding_fees_by_category_user[category_name] += item.fee
 
+    for item in all_user_payment_items:
+        category_name = ""
+        if item.student_shirt_order_id is not None:
+            category_name = "Student Shirt Order Fees"
+        elif item.academic_year and item.semester:
+            category_name = f"AY {item.academic_year} - {item.semester} Fees (Membership)"
+        else:
+            category_name = "Miscellaneous Fees" # Fallback for other non-shirt/non-academic fees
+
+        if item.is_paid:
+            collected_fees_by_category_user[category_name] += item.fee
+        else:
+            outstanding_fees_by_category_user[category_name] += item.fee
+
+    # --- Organization-Specific Financial Data ---
     organization_total_revenue = 0.0
     all_org_paid_payment_items = db.query(models.PaymentItem).join(models.User).filter(
         models.PaymentItem.is_paid == True,
@@ -2926,19 +2941,29 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     for expense in all_expenses_org:
         expenses_by_category_org[expense.category if expense.category else "Uncategorized"] += expense.amount
 
+    # --- Combined Financial Summary (User Payments & Org Expenses) ---
     financial_summary_items_combined = []
     for item in all_user_payment_items:
         if item.is_paid and (item.updated_at or item.created_at):
             relevant_date = item.updated_at or item.created_at
-            category_name_summary = f"AY {item.academic_year} - {item.semester} Fees (Your Payment)" if item.academic_year and item.semester else "Miscellaneous Fees (Your Payment)"
-            financial_summary_items_combined.append({"date": relevant_date, "event_item": category_name_summary, "inflows": item.fee, "outflows": 0.00})
+            summary_category_name = ""
+            if item.student_shirt_order_id is not None:
+                summary_category_name = "Student Shirt Order (Your Payment)"
+            elif item.academic_year and item.semester:
+                summary_category_name = f"AY {item.academic_year} - {item.semester} Fees (Your Payment)"
+            else:
+                summary_category_name = "Miscellaneous Fees (Your Payment)"
+            financial_summary_items_combined.append({"date": relevant_date, "event_item": summary_category_name, "inflows": item.fee, "outflows": 0.00})
+
     for expense in all_expenses_org:
         if expense.incurred_at:
             financial_summary_items_combined.append({"date": expense.incurred_at, "event_item": f"Org Expense - {expense.category if expense.category else 'Uncategorized'}", "inflows": 0.00, "outflows": expense.amount})
+
     financial_summary_items_combined.sort(key=lambda x: x['date'])
     for item in financial_summary_items_combined:
         item['date'] = item['date'].strftime("%Y-%m-%d")
 
+    # --- Monthly Organization Financials ---
     months_full = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     org_inflows_by_month_current_year = defaultdict(float)
     for item in all_org_paid_payment_items:
@@ -2957,22 +2982,30 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         month_name_lower = month_name.lower()
         inflows_this_month_org = org_inflows_by_month_current_year.get(month_name_lower, 0.00)
         outflows_this_month_org = expenses_by_month_current_year_org.get(month_name_lower, 0.00)
-        
+
         starting_balance = running_balance_org_level
         ending_balance = starting_balance + inflows_this_month_org - outflows_this_month_org
         running_balance_org_level = ending_balance
-        
-        monthly_data_org[month_name_lower] = {"starting_balance": starting_balance, "inflows": inflows_this_month_org, "outflows": outflows_this_month_org, "ending_balance": ending_balance}
 
+        monthly_data_org[month_name_lower] = {
+            "starting_balance": starting_balance,
+            "inflows": inflows_this_month_org,
+            "outflows": outflows_this_month_org,
+            "ending_balance": ending_balance
+        }
+
+    # --- Prepare Data for Template ---
     financial_data = {
         "user_financials": {
-            "total_paid_by_user": total_paid_by_user, "total_outstanding_fees": total_outstanding_fees_user,
+            "total_paid_by_user": total_paid_by_user,
+            "total_outstanding_fees": total_outstanding_fees_user,
             "total_past_due_fees": total_past_due_fees_user,
             "collected_fees_by_category": [{"category": k, "amount": v} for k, v in collected_fees_by_category_user.items()],
             "outstanding_fees_by_category": [{"category": k, "amount": v} for k, v in outstanding_fees_by_category_user.items()],
         },
         "organization_financials": {
-            "total_revenue_org": organization_total_revenue, "total_expenses_org": total_expenses_org,
+            "total_revenue_org": organization_total_revenue,
+            "total_expenses_org": total_expenses_org,
             "net_income_org": net_income_org,
             "expenses_by_category_org": [{"category": k, "amount": v} for k, v in expenses_by_category_org.items()],
             "monthly_data_org": monthly_data_org,
@@ -2980,6 +3013,7 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         "financial_summary_items_combined": financial_summary_items_combined,
         "current_date": date.today().strftime("%B %d, %Y")
     }
+
     context = await get_base_template_context(request, db)
     context.update({"financial_data": financial_data})
     return templates.TemplateResponse("student_dashboard/financial_statement.html", context)
@@ -3017,9 +3051,18 @@ async def get_detailed_monthly_report_json(
     all_financial_events = []
     if report_type in ['user', 'combined', None]:
         for item in db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user.id).all():
-            relevant_date = (item.updated_at or item.created_at) 
-            if relevant_date and start_date_of_month <= relevant_date <= end_date_of_month: 
-                category_name = f"AY {item.academic_year} - {item.semester} Fee" if item.academic_year and item.semester else "Miscellaneous Fee"
+            relevant_date = (item.updated_at or item.created_at)
+            # Ensure relevant_date is a date object for comparison
+            if relevant_date and start_date_of_month <= relevant_date <= end_date_of_month:
+                # --- START OF YOUR REQUESTED MODIFICATION ---
+                category_name = ""
+                if item.student_shirt_order_id is not None:
+                    category_name = "Student Shirt Order"
+                elif item.academic_year and item.semester:
+                    category_name = f"AY {item.academic_year} - {item.semester} Membership Fee"
+                else:
+                    category_name = "Miscellaneous Fee"
+                # --- END OF YOUR REQUESTED MODIFICATION ---
                 status_str = "Paid" if item.is_paid else ("Past Due" if not item.is_paid and item.due_date and item.due_date < date.today() else "Unpaid")
                 all_financial_events.append((relevant_date, f"Your Payment - {category_name}", item.fee if item.is_paid else 0.00, 0.00, status_str, item.fee, item))
 
@@ -3027,7 +3070,7 @@ async def get_detailed_monthly_report_json(
     if report_type in ['organization', 'combined', None]:
         org_inflows_query = db.query(models.PaymentItem).join(models.User).filter(models.PaymentItem.is_paid == True, models.User.organization_id == org_id_for_query)
         if report_type in ['user', 'combined', None]: org_inflows_query = org_inflows_query.filter(models.PaymentItem.user_id != user.id)
-        
+
         org_inflows_for_month = org_inflows_query.filter(
             or_(
                 and_(models.PaymentItem.updated_at >= start_date_of_month, models.PaymentItem.updated_at <= end_date_of_month),
@@ -3052,14 +3095,21 @@ async def get_detailed_monthly_report_json(
     current_running_balance = 0.00
     starting_balance_month = 0.00
 
+    # Calculate starting balance
     for event_date, description, inflow, outflow, status_str, original_value, original_item_obj in all_financial_events:
-        if event_date < start_date_of_month: current_running_balance += inflow - outflow
+        if event_date < start_date_of_month: # Use .date() for comparison
+            current_running_balance += inflow - outflow
         else:
             starting_balance_month = current_running_balance
             break
+    # If all events are within or after the current month, starting balance is 0
+    if not all_financial_events or all_financial_events[0][0] >= start_date_of_month:
+        starting_balance_month = 0.00
+    
+    current_running_balance = starting_balance_month # Reset for processing current month's transactions
 
     for event_date, description, inflow, outflow, status_str, original_value, original_item_obj in all_financial_events:
-        if start_date_of_month <= event_date <= end_date_of_month:
+        if start_date_of_month <= event_date <= end_date_of_month: # Use .date() for comparison
             is_user_payment_event = "Your Payment" in description
             is_org_inflow_event = "Organization Inflows" in description
             is_org_expense_event = "Org Expense" in description
