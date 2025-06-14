@@ -147,7 +147,7 @@ body {
     align-items: center;
     text-decoration: none;
     color: var(--org-text-inverse);
-    padding: 1.2vw 1.2vw; /* MODIFIED: Increased horizontal padding for a proper gap */
+    padding: 1.2vw .04vw;
     width: 100%; /* Ensure link takes full width of li */
     text-align: left;
     font-size: clamp(0.9rem, 1.25vw, 1.3rem);
