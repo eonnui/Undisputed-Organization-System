@@ -288,23 +288,35 @@ body {
     opacity: 1;
 }
 
-/* Action Link */
-.view-history-link {
+/* Action Link - Now styled as a proper button */
+.view-profile-button {
     display: inline-block;
     padding: 8px 15px;
-    background-color: var(--org-join-btn-bg); /* Join button background (green) from palette */
-    color: var(--org-button-text); /* Button text color (white) from palette */
+    background-color: var(--org-read-only-input-bg);
+ /* Primary button background from palette */
+    color: var(--org-button-text); /* Button text color from palette */
     text-decoration: none;
+    border: none;
     border-radius: 5px;
     font-size: 0.9em;
-    transition: var(--org-transition);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
     white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for button */
 }
 
-.view-history-link:hover {
-    background-color: var(--org-join-btn-hover-bg); /* Join button hover background from palette */
+.view-profile-button:hover {
+    background-color: var(--org-primary-hover); /* Darker primary on hover from palette */
     transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
+
+.view-profile-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 
 /* No data message */
 .students-table tbody tr td[colspan="7"] {
@@ -345,6 +357,144 @@ body {
     10% { opacity: 1; transform: translate(-50%, -50%); }
     90% { opacity: 1; transform: translate(-50%, -50%); }
     100% { opacity: 0; transform: translate(-50%, -60%); }
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 2000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.6); /* Black w/ opacity */
+    /* Removed "display: flex;" from here so it starts as "display: none;" */
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Add some padding for smaller screens */
+    box-sizing: border-box; /* Include padding in width/height */
+}
+
+.modal-content {
+    background-color: var(--org-bg-secondary); /* White or light background from palette */
+    margin: auto;
+    padding: 30px;
+    border-radius: var(--org-radius-lg); /* Larger radius for modal */
+    box-shadow: var(--org-shadow-lg); /* Larger shadow for modal */
+    position: relative;
+    max-width: 700px; /* Increased max width for modal content */
+    width: 100%; /* Responsive width */
+    color: var(--org-text-primary);
+    animation: fadeInScale 0.3s ease-out forwards; /* Simple animation */
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.close-button {
+    color: var(--org-text-secondary);
+    font-size: 32px;
+    font-weight: bold;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--org-error); /* Use error color for close button hover */
+    text-decoration: none;
+}
+
+#modalStudentName {
+    font-size: 1.8em;
+    color: var(--org-dashboard-title-color); /* Darker primary text for modal header */
+    margin-bottom: 25px;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--org-border-light);
+}
+
+.modal-header-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--org-border-light);
+}
+
+.student-photo-placeholder {
+    width: 120px;
+    height: 120px;
+    background-color: var(--org-highlight); /* Light background for placeholder */
+    border-radius: 50%; /* Circular photo placeholder */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3em;
+    color: var(--org-text-secondary); /* Placeholder icon color */
+    margin-bottom: 15px;
+    overflow: hidden; /* Ensure image fits if used */
+    border: 2px solid var(--org-border-medium); /* Border around photo */
+    box-shadow: var(--org-shadow-sm); /* Small shadow for depth */
+}
+
+.student-photo-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#modalStudentName {
+    font-size: 2em; /* Slightly larger name */
+    color: var(--org-dashboard-title-color);
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+}
+
+
+.modal-body {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column by default */
+    gap: 15px;
+    font-size: 1.0em;
+}
+
+.profile-item {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--org-border-light); /* Dashed border for profile items */
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    align-items: baseline;
+}
+
+.profile-item:last-child {
+    border-bottom: none; /* No border for the last item */
+}
+
+.profile-item strong {
+    color: var(--org-text-primary-darker); /* Darker primary text for labels */
+    min-width: 120px; /* Ensure labels have minimum width */
+    margin-right: 10px;
+    flex-shrink: 0; /* Prevent strong from shrinking */
+}
+
+.profile-item span {
+    flex-grow: 1; /* Allow content to take up remaining space */
+    color: var(--org-text-primary);
 }
 
 /* Responsive Adjustments */
@@ -390,6 +540,33 @@ body {
     .students-table thead th {
         font-size: 0.9em;
     }
+
+    .modal-content {
+        padding: 25px 20px;
+        max-width: 95%; /* Adjust max-width for very small screens */
+    }
+
+    #modalStudentName {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+    }
+
+    .profile-item strong {
+        min-width: 90px;
+    }
+
+    .modal-header-section {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    .student-photo-placeholder {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5em;
+    }
+    #modalStudentName {
+        font-size: 1.8em;
+    }
 }
 
 @media (max-width: 480px) {
@@ -402,8 +579,80 @@ body {
         font-size: 0.85em;
     }
 
-    .view-history-link {
+    .view-profile-button { /* Changed from .view-history-link */
         padding: 6px 12px;
         font-size: 0.8em;
+    }
+
+    .modal-content {
+        padding: 20px 15px;
+    }
+
+    #modalStudentName {
+        font-size: 1.3em;
+    }
+
+    .modal-body {
+        gap: 10px;
+        font-size: 0.95em;
+    }
+
+    .profile-item strong {
+        min-width: auto; /* Allow label to wrap more freely */
+        width: 100%; /* Take full width on very small screens */
+        margin-bottom: 5px; /* Add space below label if it wraps */
+    }
+
+    .student-photo-placeholder {
+        width: 80px;
+        height: 80px;
+        font-size: 2em;
+    }
+    #modalStudentName {
+        font-size: 1.5em;
+    }
+}
+
+/* For wider screens, make modal body two columns */
+@media (min-width: 600px) {
+    .modal-body {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px 30px;
+    }
+    .profile-item {
+        border-bottom: none; /* No bottom border in two-column layout */
+    }
+    /* Ensure no dashed borders for elements that span across columns */
+    .profile-item:nth-child(odd) {
+        border-right: 1px dashed var(--org-border-light); /* Add right border for odd items */
+        padding-right: 15px;
+    }
+    .profile-item:last-child {
+        border-right: none; /* No right border for last item */
+    }
+    .profile-item strong {
+        min-width: 100px;
+    }
+}
+
+/* Specific adjustments for 2-column layout to align items */
+@media (min-width: 600px) {
+    .profile-item:nth-child(odd) {
+        /* This rule targets the left column items */
+        border-right: 1px dashed var(--org-border-light);
+        padding-right: 15px;
+    }
+    .profile-item:nth-child(even) {
+        /* This rule targets the right column items */
+        padding-left: 15px;
+    }
+    /* Remove borders for the last row if there are an even number of items, or if the last item is odd */
+    .modal-body > .profile-item:nth-last-child(1),
+    .modal-body > .profile-item:nth-last-child(2) {
+        border-bottom: none;
+    }
+    /* Remove the right border for the last item if it's odd and the only one in its row */
+    .modal-body > .profile-item:last-child:nth-child(odd) {
+        border-right: none;
     }
 }
