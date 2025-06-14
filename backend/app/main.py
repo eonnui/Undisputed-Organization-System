@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException, status, File, Uplo
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, contains_eager
 from sqlalchemy import func, and_, or_, extract, desc
 from . import models, schemas, crud
 from .database import SessionLocal, engine
@@ -1271,7 +1271,10 @@ async def admin_payments(
 ):
     admin, organization = get_current_admin_with_org(request, db)
 
-    query = db.query(models.PaymentItem).join(models.User).filter(models.User.organization_id == organization.id)
+    query = db.query(models.PaymentItem).join(models.User).filter(
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude student shirt orders
+    )
     if student_number:
         query = query.filter(models.User.student_number == student_number)
     payment_items = query.all()
@@ -1477,7 +1480,8 @@ async def admin_membership(
                 user_relevant_payment_items = [
                     pi for pi in other_user.payment_items
                     if (academic_year is None or pi.academic_year == academic_year) and
-                       (semester is None or pi.semester == semester)
+                       (semester is None or pi.semester == semester) and
+                       (pi.student_shirt_order_id is None) # Exclude shirt orders here
                 ]
                 
                 is_user_fully_paid_for_period = False
@@ -1523,32 +1527,64 @@ async def admin_individual_members(
 ) -> List[Dict]:
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    query = db.query(models.User).options(
-        joinedload(models.User.payment_items).options(joinedload(models.PaymentItem.payments))
+    # Start the query by joining User and PaymentItem
+    # We use .outerjoin() to ensure users with no matching payment items are still included,
+    # but their payment_items list will be empty.
+    # The 'sa_payment_item' alias is crucial for contains_eager.
+    query = db.query(models.User).outerjoin(
+        models.PaymentItem,
+        models.User.id == models.PaymentItem.user_id
     ).filter(models.User.organization_id == admin_org.id)
 
-    filters = []
-    if academic_year: filters.append(models.PaymentItem.academic_year == academic_year)
-    if semester: filters.append(models.PaymentItem.semester == semester)
-    if filters: query = query.join(models.PaymentItem).filter(*filters)
+    # Build the filters for PaymentItem
+    payment_item_filters = [
+        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude student shirt orders
+    ]
+    if academic_year:
+        payment_item_filters.append(models.PaymentItem.academic_year == academic_year)
+    if semester:
+        payment_item_filters.append(models.PaymentItem.semester == semester)
+
+    # Apply the filters to the joined PaymentItem table
+    # This filters the rows returned by the JOIN.
+    if payment_item_filters:
+        query = query.filter(*payment_item_filters)
+
+    # Use contains_eager to load the filtered payment_items into the user.payment_items relationship.
+    # This tells SQLAlchemy to map the results from the join back into the relationship.
+    query = query.options(contains_eager(models.User.payment_items))
+    
+    # We need to ensure distinct users if a user can have multiple matching payment items
+    query = query.distinct(models.User.id).order_by(models.User.id) # Order by ID for consistent results
+
 
     users = query.all()
     membership_data = []
+
     for user in users:
         total_paid = 0
         total_amount = 0
         payment_status = "No Dues" if not (academic_year or semester) else "Not Applicable"
 
+        # Now, user.payment_items will correctly contain only the filtered membership items
         for pi in user.payment_items:
-            if (academic_year is None or pi.academic_year == academic_year) and \
-               (semester is None or pi.semester == semester):
+            # Check if this PaymentItem is NOT responsible to be excluded from totals,
+            # as per your original logic in the /admin/membership/ endpoint for total_amount
+            if not pi.is_not_responsible:
                 total_amount += pi.fee
-                for p in pi.payments:
-                    if p.status == 'success':
-                        total_paid += p.amount
+                
+                # Check the is_paid flag directly from the PaymentItem
+                if pi.is_paid:
+                    total_paid += pi.fee
 
         if total_amount > 0:
             payment_status = "Paid" if total_paid >= total_amount else "Partially Paid"
+        else:
+            # If total_amount is 0, status remains the default or specific for no dues
+            if academic_year or semester:
+                payment_status = "No Dues for Period"
+            else:
+                payment_status = "No Dues"
 
         membership_data.append({
             'student_number': user.student_number, 'email': user.email, 'first_name': user.first_name,
@@ -2041,13 +2077,38 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     net_income_ytd = total_revenue_ytd - total_expenses_ytd
     profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
     
-    top_revenue_source_query = db.query(models.PaymentItem.academic_year, models.PaymentItem.semester, func.sum(models.PaymentItem.fee).label('total_fee')).join(models.User).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, models.PaymentItem.is_paid == True, models.User.organization_id == organization.id
+    # Top Revenue Source
+    # We will get the top revenue from either membership fees or student shirt orders
+    top_revenue_source_membership_query = db.query(
+        models.PaymentItem.academic_year, 
+        models.PaymentItem.semester, 
+        func.sum(models.PaymentItem.fee).label('total_fee')
+    ).join(models.User).filter(
+        extract('year', models.PaymentItem.updated_at) == current_year, 
+        models.PaymentItem.is_paid == True, 
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.is_(None) # Filter for membership fees
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).order_by(func.sum(models.PaymentItem.fee).desc()).first()
+
+    top_revenue_source_shirt_query = db.query(
+        func.sum(models.PaymentItem.fee).label('total_fee')
+    ).join(models.User).filter(
+        extract('year', models.PaymentItem.updated_at) == current_year, 
+        models.PaymentItem.is_paid == True, 
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.isnot(None) # Filter for student shirt orders
+    ).group_by(models.PaymentItem.student_shirt_order_id).order_by(func.sum(models.PaymentItem.fee).desc()).first()
+
+
     top_revenue_source = {"name": "N/A", "amount": 0.0}
-    if top_revenue_source_query:
-        source_name = f"AY {top_revenue_source_query.academic_year} - {top_revenue_source_query.semester} Fees" if top_revenue_source_query.academic_year and top_revenue_source_query.semester else "Miscellaneous Fees"
-        top_revenue_source = {"name": source_name, "amount": round(float(top_revenue_source_query.total_fee), 2)}
+    
+    # Determine the actual top revenue source
+    if top_revenue_source_membership_query and (not top_revenue_source_shirt_query or top_revenue_source_membership_query.total_fee >= top_revenue_source_shirt_query.total_fee):
+        source_name = f"AY {top_revenue_source_membership_query.academic_year} - {top_revenue_source_membership_query.semester} Fees" if top_revenue_source_membership_query.academic_year and top_revenue_source_membership_query.semester else "Miscellaneous Fees"
+        top_revenue_source = {"name": source_name, "amount": round(float(top_revenue_source_membership_query.total_fee), 2)}
+    elif top_revenue_source_shirt_query:
+        top_revenue_source = {"name": "Student Shirt Orders", "amount": round(float(top_revenue_source_shirt_query.total_fee), 2)}
+
 
     largest_expense_query = db.query(models.Expense.category, func.sum(models.Expense.amount).label('total_amount')).filter(
         extract('year', models.Expense.incurred_at) == current_year, models.Expense.organization_id == organization.id
@@ -2058,16 +2119,43 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         largest_expense_category = largest_expense_query.category if largest_expense_query.category else "Uncategorized"
         largest_expense_amount = round(float(largest_expense_query.total_amount), 2)
 
-    revenues_breakdown_query = db.query(models.PaymentItem.academic_year, models.PaymentItem.semester, func.sum(models.PaymentItem.fee).label('total_fee')).join(models.User).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, models.PaymentItem.is_paid == True, models.User.organization_id == organization.id
-    ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
+    # Revenues Breakdown
     revenues_breakdown = []
-    for item in revenues_breakdown_query:
+
+    # Query for Membership Fees
+    membership_revenues_query = db.query(
+        models.PaymentItem.academic_year, 
+        models.PaymentItem.semester, 
+        func.sum(models.PaymentItem.fee).label('total_fee')
+    ).join(models.User).filter(
+        extract('year', models.PaymentItem.updated_at) == current_year, 
+        models.PaymentItem.is_paid == True, 
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.is_(None) # Only membership fees
+    ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
+
+    for item in membership_revenues_query:
         source_name = f"AY {item.academic_year} - {item.semester} Fees" if item.academic_year and item.semester else "Miscellaneous Fees"
         percentage = round((float(item.total_fee) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
         revenues_breakdown.append({"source": source_name, "amount": round(float(item.total_fee), 2), "trend": "Stable", "percentage": percentage})
+
+    # Query for Student Shirt Order Fees
+    shirt_order_revenues_query = db.query(
+        func.sum(models.PaymentItem.fee).label('total_fee')
+    ).join(models.User).filter(
+        extract('year', models.PaymentItem.updated_at) == current_year, 
+        models.PaymentItem.is_paid == True, 
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.isnot(None) # Only student shirt orders
+    ).scalar() or 0.0 # Use scalar() since we are summing all shirt order fees
+
+    if shirt_order_revenues_query > 0:
+        percentage = round((float(shirt_order_revenues_query) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
+        revenues_breakdown.append({"source": "Student Shirt Orders", "amount": round(float(shirt_order_revenues_query), 2), "trend": "Stable", "percentage": percentage})
+
     if not revenues_breakdown and total_revenue_ytd > 0:
         revenues_breakdown.append({"source": "General Collected Fees", "amount": total_revenue_ytd, "trend": "Stable", "percentage": 100.0})
+
 
     expenses_breakdown_query = db.query(models.Expense.category, func.sum(models.Expense.amount).label('total_amount')).filter(
         extract('year', models.Expense.incurred_at) == current_year, models.Expense.organization_id == organization.id
