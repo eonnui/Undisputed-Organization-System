@@ -1136,6 +1136,132 @@ async def admin_shirt_management(request: Request, db: Session = Depends(get_db)
     })
     return templates.TemplateResponse("admin_dashboard/admin_students_profile.html", context)
 
+@router.get("/admin/students", response_model=List[dict])
+async def get_students(
+    db: Session = Depends(get_db),
+    admin_with_org: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org), # Inject the admin and their organization
+    search: Optional[str] = Query(None, description="Search query for student name or student number"),
+    year_level: Optional[str] = Query(None, description="Filter by year level"),
+    section: Optional[str] = Query(None, description="Filter by section"),
+    sort_by: Optional[str] = Query("last_name", description="Column to sort by (e.g., first_name, last_name, student_number, year_level, section, email)"),
+    sort_direction: Optional[str] = Query("asc", description="Sort direction (asc or desc)"),
+):
+    """
+    Retrieves a list of students for the admin's organization with optional search, filter, and sort capabilities.
+    """
+    admin, organization = admin_with_org # Unpack the tuple to get the organization object
+
+    query = db.query(models.User)
+
+    # 1. Filter by the admin's organization
+    # This is the crucial addition to restrict students to the admin's organization
+    query = query.filter(models.User.organization_id == organization.id)
+
+    # 2. Apply Search Filter
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            (models.User.first_name.ilike(search_pattern)) |
+            (models.User.last_name.ilike(search_pattern)) |
+            (models.User.student_number.ilike(search_pattern))
+        )
+
+    # 3. Apply Year Level Filter
+    if year_level:
+        query = query.filter(models.User.year_level == year_level)
+
+    # 4. Apply Section Filter
+    if section:
+        query = query.filter(models.User.section == section)
+
+    # 5. Apply Sorting
+    sortable_columns = {
+        "student_number": models.User.student_number,
+        "first_name": models.User.first_name,
+        "last_name": models.User.last_name,
+        "year_level": models.User.year_level,
+        "section": models.User.section,
+        "email": models.User.email,
+    }
+
+    sort_column_attr = sortable_columns.get(sort_by)
+    if sort_column_attr:
+        if sort_direction == 'desc':
+            query = query.order_by(sort_column_attr.desc())
+        else:
+            query = query.order_by(sort_column_attr.asc())
+    else:
+        query = query.order_by(models.User.last_name.asc())
+
+    students = query.all()
+
+    students_data = [
+        {
+            "student_number": student.student_number,
+            "first_name": student.first_name,
+            "last_name": student.last_name,
+            "year_level": student.year_level,
+            "section": student.section,
+            "email": student.email,
+        }
+        for student in students
+    ]
+
+    return students_data
+
+# Admin View Student Profile
+@router.get("/admin/students/profile/{student_number}", response_model=dict)
+async def get_student_profile(
+    student_number: str,
+    db: Session = Depends(get_db),
+    admin_with_org: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org),
+):
+    """
+    Retrieves the profile of a specific student by student_number,
+    ensuring they belong to the viewing admin's organization.
+    """
+    admin, organization = admin_with_org # Unpack the tuple
+
+    # Query the student, filtered by student_number and organization_id
+    student = db.query(models.User).filter(
+        models.User.student_number == student_number,
+        models.User.organization_id == organization.id # Ensure student belongs to admin's organization
+    ).first()
+
+    if not student:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found or not in your organization.")
+
+    # You might want to return more detailed information for a profile view.
+    # Adjust this dictionary to include all the student attributes you need on the profile page.
+    student_profile_data = {
+        "id": student.id,
+        "student_number": student.student_number,
+        "first_name": student.first_name,
+        "last_name": student.last_name,
+        "email": student.email,
+        "year_level": student.year_level,
+        "section": student.section,
+        "campus": student.campus,
+        "semester": student.semester,
+        "course": student.course,
+        "school_year": student.school_year,
+        "address": student.address,
+        "birthdate": student.birthdate, # Consider converting to a proper date format if needed
+        "sex": student.sex,
+        "contact": student.contact,
+        "guardian_name": student.guardian_name,
+        "guardian_contact": student.guardian_contact,
+        "registration_form": student.registration_form,
+        "profile_picture": student.profile_picture,
+        "is_verified": student.is_verified,
+        "verified_by": student.verified_by,
+        "verification_date": student.verification_date.isoformat() if student.verification_date else None,
+        "organization_id": student.organization_id,
+        # Add any other relevant fields from the User model
+    }
+
+    return student_profile_data
+
 # Admin Payments Page
 @router.get("/Admin/payments", response_class=HTMLResponse, name="admin_payments")
 async def admin_payments(

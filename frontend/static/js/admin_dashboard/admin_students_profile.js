@@ -79,19 +79,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial load of the table
     updateStudentsTable();
 
-    // Event listener for the search input (on 'input' for live search, or 'keypress' for enter)
+    // Event listener for the search input
     document.getElementById('student-search-filter').addEventListener('input', function() {
-        // You can add a debounce here if you want to limit API calls for live search
-        // For simplicity, we'll just call updateStudentsTable on input
         updateStudentsTable();
     });
 
-    // If you prefer to only search on 'Enter' key press or button click, keep this:
-    // document.getElementById('student-search-filter').addEventListener('keypress', function(event) {
-    //     if (event.key === 'Enter') {
-    //         updateStudentsTable();
-    //     }
-    // });
+    // Modal close button functionality
+    const modal = document.getElementById('studentProfileModal');
+    const closeButton = modal.querySelector('.close-button');
+
+    closeButton.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside of the modal content
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 });
 
 async function updateStudentsTable() {
@@ -147,7 +153,17 @@ async function updateStudentsTable() {
             row.insertCell().textContent = student.year_level;
             row.insertCell().textContent = student.section;
             row.insertCell().textContent = student.email;
-            row.insertCell().innerHTML = `<a href="/admin/students/profile/${student.student_number}" class="view-history-link">View Profile</a>`;
+            // Modified: Use data-attribute and a class for modal trigger
+            const actionCell = row.insertCell();
+            actionCell.innerHTML = `<button class="view-profile-button" data-student-number="${student.student_number}">View Profile</button>`;
+        });
+
+        // Attach event listeners to the newly created "View Profile" buttons
+        document.querySelectorAll('.view-profile-button').forEach(button => {
+            button.addEventListener('click', async function() {
+                const studentNumber = this.dataset.studentNumber;
+                await fetchStudentProfileAndShowModal(studentNumber);
+            });
         });
 
     } catch (error) {
@@ -156,6 +172,55 @@ async function updateStudentsTable() {
         tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Error loading student data.</td></tr>`;
     }
 }
+
+// New function to fetch student profile and show modal
+async function fetchStudentProfileAndShowModal(studentNumber) {
+    const modal = document.getElementById('studentProfileModal');
+    const modalStudentName = document.getElementById('modalStudentName');
+    const modalStudentNumber = document.getElementById('modalStudentNumber');
+    const modalEmail = document.getElementById('modalEmail');
+    const modalYearLevel = document.getElementById('modalYearLevel');
+    const modalSection = document.getElementById('modalSection');
+    const modalCampus = document.getElementById('modalCampus');
+    const modalCourse = document.getElementById('modalCourse');
+    const modalSchoolYear = document.getElementById('modalSchoolYear');
+    const modalAddress = document.getElementById('modalAddress');
+    const modalBirthdate = document.getElementById('modalBirthdate');
+    const modalSex = document.getElementById('modalSex');
+    const modalGuardianName = document.getElementById('modalGuardianName');
+    const modalGuardianContact = document.getElementById('modalGuardianContact');
+
+    try {
+        const response = await fetch(`/admin/students/profile/${studentNumber}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const student = await response.json();
+
+        // Populate modal with student data
+        modalStudentName.textContent = `${student.first_name} ${student.last_name}`;
+        modalStudentNumber.textContent = student.student_number;
+        modalEmail.textContent = student.email;
+        modalYearLevel.textContent = student.year_level || 'N/A';
+        modalSection.textContent = student.section || 'N/A';
+        modalCampus.textContent = student.campus || 'N/A';
+        modalCourse.textContent = student.course || 'N/A';
+        modalSchoolYear.textContent = student.school_year || 'N/A';
+        modalAddress.textContent = student.address || 'N/A';
+        modalBirthdate.textContent = student.birthdate || 'N/A';
+        modalSex.textContent = student.sex || 'N/A';
+        modalGuardianName.textContent = student.guardian_name || 'N/A';
+        modalGuardianContact.textContent = student.guardian_contact || 'N/A';
+
+
+        modal.style.display = 'block'; // Show the modal
+
+    } catch (error) {
+        console.error("Failed to fetch student profile:", error);
+        displayMessageBox("Error loading student profile. Please try again.", "error");
+    }
+}
+
 
 // Function to display messages (re-used and slightly enhanced)
 function displayMessageBox(message, type = 'info') {
