@@ -2258,3 +2258,72 @@ h1 {
 .modal-content .error-message {
     color: red;
 }
+
+.event-item {
+    padding: 15px;
+    margin-bottom: 15px; 
+    border-radius: 12px;
+    background-color: var(--org-announcement-card-bg);
+    border-left: 4px solid var(--org-accent-light);
+    transition: all 0.3s ease;
+    position: relative; 
+    animation: slideInLeft 0.4s ease-out;
+    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
+}
+
+.event-item:hover {
+    transform: translateX(5px) translateY(-5px);
+    background-color: var(--org-event-item-hover-bg);
+    box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.08);
+}
+
+.event-title {
+    font-weight: bold;
+    color: var(--org-dashboard-title-color);
+    margin-bottom: 8px;
+    font-size: 1.2em;
+}
+
+.event-date,
+.event-location,
+.event-participants {
+    color: var(--org-event-meta-color);
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.event-date::before { content: "📅"; }
+.event-location::before { content: "📍"; }
+.event-participants::before { content: "👥 "; }
+
+.event-action {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.event-tag {
+    background-color: var(--org-event-tag-bg);
+    color: var(--org-event-tag-text);
+    padding: 1px 15px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: bold;
+    align-self: flex-start; 
+    margin-bottom: 15px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.event-tag:hover {
+    transform: scale(1.1);
+}
+
+.tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
+.tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
+.tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); }
+.tag-music { background-color: var(--org-music-tag-bg); color: var(--org-music-tag-text); }
+.tag-esports { background-color: var(--org-esports-tag-bg); color: var(--org-esports-tag-text); }
+.tag-cultural { background-color: var(--org-cultural-tag-bg); color: var(--org-cultural-tag-text); }
