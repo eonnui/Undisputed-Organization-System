@@ -1452,13 +1452,28 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
 
 def delete_student_shirt_order(db: Session, order_id: int) -> bool:
     """
-    Deletes a student shirt order by its ID.
+    Deletes a student shirt order by its ID, and returns the ordered quantity
+    back to the associated shirt campaign's available stock.
     Returns True if the order was found and deleted, False otherwise.
     """
     db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
+    
     if db_order:
-        db.delete(db_order)
-        db.commit()
+        # Before deleting the order, get the associated campaign and return stock
+        campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == db_order.campaign_id).first()
+
+        if campaign:
+            returned_quantity = db_order.quantity
+            campaign.available_stock += returned_quantity
+            campaign.updated_at = datetime.now(philippine_timezone) # Update timestamp for the campaign
+            db.add(campaign) # Mark campaign for update
+            logging.info(f"CRUD: Returned {returned_quantity} units to campaign '{campaign.title}' (ID: {campaign.id}). New stock: {campaign.available_stock}")
+        else:
+            logging.warning(f"Campaign with ID {db_order.campaign_id} not found for order {order_id}. Cannot return stock.")
+
+        db.delete(db_order) # Mark order for deletion
+        db.commit() # Commit all pending changes (campaign update and order deletion)
+        
         logging.info(f"Deleted student shirt order with id: {order_id}")
         return True
     else:
