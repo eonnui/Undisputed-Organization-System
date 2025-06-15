@@ -3,61 +3,66 @@
 {% block title %}Settings{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/settings.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+{% endblock %}
+
+{% block content_header %}
+    <h1 class="dashboard-title">Account Settings</h1>
 {% endblock %}
 
 {% block content %}
-<div class="content">
-    <h1>Account Settings</h1>
+<div class="content-container"> 
 
-    <div class="student-info-section">
-        <h2>Student Information <span id="registrationStatus" class="unverified">
+    <div class="card content-section student-info-section">
+        <h2 class="section-title">Student Information
+            <span id="registrationStatus" class="status-tag {% if user.is_verified %}verified{% else %}unverified{% endif %}">
                 {% if user.is_verified %}Verified{% else %}Not Verified{% endif %}
-            </span></h2>
-        <form id="studentInfoForm">
+            </span>
+        </h2>
+        <form id="studentInfoForm" class="form-container">
             <div class="form-group">
-                <label for="studentNumber">Student Number</label>
+                <label for="studentNumber" class="form-label">Student Number</label>
                 <input type="text" id="studentNumber" name="studentNumber" value="{{ user.student_number }}"
-                    class="read-only-input" readonly>
+                    class="form-input read-only-input" readonly>
             </div>
             <div class="form-group">
-                <label for="firstName">First Name</label>
-                <input type="text" id="firstName" name="firstName" value="{{ user.first_name }}" class="read-only-input"
+                <label for="firstName" class="form-label">First Name</label>
+                <input type="text" id="firstName" name="firstName" value="{{ user.first_name }}" class="form-input read-only-input"
                     readonly>
             </div>
             <div class="form-group">
-                <label for="lastName">Last Name</label>
-                <input type="text" id="lastName" name="lastName" value="{{ user.last_name }}" class="read-only-input"
+                <label for="lastName" class="form-label">Last Name</label>
+                <input type="text" id="lastName" name="lastName" value="{{ user.last_name }}" class="form-input read-only-input"
                     readonly>
             </div>
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="text" id="email" name="email" value="{{ user.email }}" class="read-only-input" readonly>
+                <label for="email" class="form-label">Email</label>
+                <input type="text" id="email" name="email" value="{{ user.email }}" class="form-input read-only-input" readonly>
             </div>
-            <div class="form-group">
-                <label>Birth Date </label>
-                <div class="input-wrapper">
-                    <span id="birthDateDisplay">
+            <div class="form-group editable-field"> 
+                <label class="form-label">Birth Date</label>
+                <div class="input-display-wrapper">
+                    <span id="birthDateDisplay" class="display-value">
                         {% if user.birthdate %}
                             {{ user.birthdate.split(' ')[0] }}
                         {% else %}
-                                
+                            -- / -- / ----
                         {% endif %}
                     </span>
                     <span class="material-symbols-outlined edit-icon" id="editBirthDate">edit</span>
-                    <input type="date" id="birthDate" name="birthdate" class="hidden" value="{{ formatted_birthdate }}">
+                    <input type="date" id="birthDate" name="birthdate" class="form-input edit-input hidden" value="{{ formatted_birthdate }}">
                 </div>
-                <small>Please enter your date of birth.</small>
+                <small class="form-helper-text">Please enter your date of birth.</small>
                 <div class="error-message" id="birthDateError"></div>
             </div>
-            <div class="form-group">
-                <label>Gender</label>
-                <div class="input-wrapper">
-                    <span id="genderDisplay">{{ user.sex if user.sex else '' }}</span>
+            <div class="form-group editable-field"> 
+                <label class="form-label">Gender</label>
+                <div class="input-display-wrapper">
+                    <span id="genderDisplay" class="display-value">{{ user.sex if user.sex else '--' }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGender">edit</span>
-                    <select id="gender" name="sex" class="hidden">
+                    <select id="gender" name="sex" class="form-input form-select edit-input hidden">
                         <option value="">Select Gender</option>
                         <option value="Male" {% if user.sex == 'Male' %} selected {% endif %}>Male</option>
                         <option value="Female" {% if user.sex == 'Female' %} selected {% endif %}>Female</option>
@@ -67,120 +72,135 @@
                 <div class="error-message" id="genderError"></div>
             </div>
             <div class="form-group">
-                <label>Address</label>
+                <label for="address" class="form-label">Address</label>
                 <input type="text" id="address" name="address" value="{{ user.address if user.address else '' }}"
-                    class="read-only-input" readonly>
+                    class="form-input read-only-input" readonly>
                 <div class="error-message" id="addressError"></div>
             </div>
             <div class="form-group">
-                <label>Year Level</label>
+                <label for="yearLevel" class="form-label">Year Level</label>
                 <input type="text" id="yearLevel" name="yearLevel" value="{{ user.year_level if user.year_level else '' }}"
-                    class="read-only-input" readonly>
+                    class="form-input read-only-input" readonly>
                 <div class="error-message" id="yearLevelError"></div>
             </div>
             <div class="form-group">
-                <label>Section</label>
+                <label for="section" class="form-label">Section</label>
                 <input type="text" id="section" name="section" value="{{ user.section if user.section else '' }}"
-                    class="read-only-input" readonly>
+                    class="form-input read-only-input" readonly>
                 <div class="error-message" id="sectionError"></div>
             </div>
-            <div class="form-group">
-                <label>Guardian Name</label>
-                <div class="input-wrapper">
-                    <span id="guardianNameDisplay">{{ user.guardian_name if user.guardian_name else '' }}</span>
+            <div class="form-group editable-field"> 
+                <label class="form-label">Guardian Name</label>
+                <div class="input-display-wrapper">
+                    <span id="guardianNameDisplay" class="display-value">{{ user.guardian_name if user.guardian_name else '--' }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianName">edit</span>
-                    <input type="text" id="guardianName" name="guardian_name" class="hidden"
+                    <input type="text" id="guardianName" name="guardian_name" class="form-input edit-input hidden"
                         value="{{ user.guardian_name if user.guardian_name else '' }}">
                     </div>
                 <div class="error-message" id="guardianNameError"></div>
             </div>
-            <div class="form-group">
-                <label>Guardian Contact</label>
-                <div class="input-wrapper">
-                    <span id="guardianContactDisplay">{{ user.guardian_contact if user.guardian_contact else '' }}</span>
+            <div class="form-group editable-field"> 
+                <label class="form-label">Guardian Contact</label>
+                <div class="input-display-wrapper">
+                    <span id="guardianContactDisplay" class="display-value">{{ user.guardian_contact if user.guardian_contact else '--' }}</span>
                     <span class="material-symbols-outlined edit-icon" id="editGuardianContact">edit</span>
-                    <input type="text" id="guardianContact" name="guardian_contact" class="hidden"
+                    <input type="text" id="guardianContact" name="guardian_contact" class="form-input edit-input hidden"
                         value="{{ user.guardian_contact if user.guardian_contact else '' }}">
                     </div>
                 <div class="error-message" id="guardianContactError"></div>
             </div>
-        
+
             <div class="button-group">
-                <button type="button" class="clear" id="clearStudentInfoForm">Clear</button>
-                <button type="submit" class="update">Update Information</button>
+                <button type="button" class="button-secondary" id="clearStudentInfoForm">Clear</button>
+                <button type="submit" class="button-primary">Update Information</button>
             </div>
+             <p id="studentInfoMessage" class="message-text"></p> 
         </form>
     </div>
 
-    <div class="registration-form-section">
-        <h2>Registration Form</h2>
-        <form id="registrationFormOnly" enctype="multipart/form-data">
+    <hr class="section-divider">
+
+    <div class="card content-section registration-form-section">
+        <h2 class="section-title">Registration Form</h2>
+        <form id="registrationFormOnly" enctype="multipart/form-data" class="form-container">
             <div class="form-group">
-                <label>Registration Form</label>
-                <div class="input-wrapper">
-                    <span id="registrationFormDisplay">{{ user.registration_form }}</span>
+                <label for="registrationFormOnlyUpload" class="form-label">Upload Registration Form (PDF)</label>
+                <div class="current-file-display">
+                    <span id="registrationFormDisplay" class="file-name-display">
+                        {% if user.registration_form %}
+                            <a href="{{ user.registration_form }}" target="_blank" class="file-link"><i class="fas fa-file-pdf"></i> View Current Form</a>
+                        {% else %}
+                            No form uploaded.
+                        {% endif %}
+                    </span>
+                    <input type="file" id="registrationFormOnlyUpload" name="registration_form" accept=".pdf" class="form-input file-input">
                 </div>
-                <input type="file" id="registrationFormOnlyUpload" name="registration_form" accept=".pdf">
-                <small>Accepted formats: PDF</small>
+                <small class="form-helper-text">Accepted formats: PDF. Max size: 5MB.</small>
                 <div class="error-message" id="registrationFormOnlyError"></div>
             </div>
             <div class="button-group">
-                {# Removed: <button type="button" class="clear" id="clearRegistrationFormOnly">Clear</button> #}
-                <button type="submit" class="update">Update Registration Form</button>
+                <button type="submit" class="button-primary">Update Registration Form</button>
             </div>
+            <p id="registrationFormMessage" class="message-text"></p> 
         </form>
     </div>
 
-    <div class="settings-grid">
-        <div class="settings-section profile-picture-section">
-            <h2>Profile Picture</h2>
-            <img src="{{ user.profile_picture }}" alt="Current Profile Picture" class="profile-picture-preview">
-            <form id="profilePictureForm" enctype="multipart/form-data">
+    <hr class="section-divider">
+
+    <div class="settings-grid-container"> 
+        <div class="card settings-section profile-picture-section">
+            <h2 class="section-title">Profile Picture</h2>
+            <div class="profile-picture-preview-container">
+                <img src="{{ user.profile_picture if user.profile_picture else '/static/images/default_profile.png' }}" alt="Current Profile Picture" class="profile-picture-preview">
+            </div>
+            <form id="profilePictureForm" enctype="multipart/form-data" class="form-container">
                 <div class="form-group">
-                    <label for="profilePicture">Upload New Picture</label>
-                    <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
-                    <small>Accepted formats: JPG, PNG, GIF.</small>
+                    <label for="profilePicture" class="form-label">Upload New Picture</label>
+                    <input type="file" id="profilePicture" name="profilePicture" accept="image/*" class="form-input file-input">
+                    <small class="form-helper-text">Accepted formats: JPG, PNG, GIF. Max size: 2MB.</small>
                     <div class="error-message" id="profilePictureError"></div>
                 </div>
                 <div class="button-group">
-                    {# Removed: <button type="button" class="clear" id="clearProfilePicture">Clear</button> #}
-                    <button type="submit" class="change-profile-pic">Change Profile Picture</button>
+                    <button type="submit" class="button-primary">Change Profile Picture</button>
                 </div>
+                <p id="profilePictureMessage" class="message-text"></p> 
             </form>
         </div>
 
-        <div class="settings-section">
-            <h2>Security</h2>
-            <form id="securityForm">
+        <div class="card settings-section security-section">
+            <h2 class="section-title">Security</h2>
+            <form id="securityForm" class="form-container">
                 <div class="form-group">
-                    <label for="currentPassword">Current Password *</label>
-                    <input type="password" id="currentPassword" name="current_password" required>
-                    <small id="currentPasswordSmallText"></small>
+                    <label for="currentPassword" class="form-label">Current Password *</label>
+                    <input type="password" id="currentPassword" name="current_password" required class="form-input">
+                    <small id="currentPasswordSmallText" class="form-helper-text"></small>
                     <div class="error-message" id="currentPasswordError"></div>
                 </div>
                 <div class="form-group">
-                    <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" name="new_password">
-                    <small id="newPasswordSmallText">Must be at least 8 characters long (leave blank to keep current).</small>
+                    <label for="newPassword" class="form-label">New Password</label>
+                    <input type="password" id="newPassword" name="new_password" class="form-input">
+                    <small id="newPasswordSmallText" class="form-helper-text">Must be at least 8 characters long (leave blank to keep current).</small>
                     <div class="error-message" id="newPasswordError"></div>
                 </div>
                 <div class="form-group">
-                    <label for="confirmPassword">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" name="confirm_password">
-                    <small id="confirmPasswordSmallText"></small>
+                    <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirm_password" class="form-input">
+                    <small id="confirmPasswordSmallText" class="form-helper-text"></small>
                     <div class="error-message" id="confirmPasswordError"></div>
                 </div>
                 <div class="button-group">
-                    <button type="button" class="clear" id="clearSecurityForm">Clear</button>
-                    <button type="submit" class="update">Update Security</button>
+                    <button type="button" class="button-secondary" id="clearSecurityForm">Clear</button>
+                    <button type="submit" class="button-primary">Update Security</button>
                 </div>
+                <p id="securityMessage" class="message-text"></p> 
             </form>
         </div>
-    </div>
-</div>
+    </div> 
+
+</div> 
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/student_dashboard/settings.js"></script>
-<script src="../../static/js/script.js"></script>
+<script src="/static/js/student_dashboard/settings.js"></script>
+<script src="/static/js/script.js"></script> 
 {% endblock %}

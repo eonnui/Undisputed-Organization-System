@@ -3,17 +3,19 @@
 {% block title %}Shirt Management{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/student_shirt_management.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 {% endblock %}
 
+{% block content_header %}
+    <h1 class="dashboard-title">Shirt Management</h1>
+{% endblock %}
+
 {% block content %}
 
-{# Shirt Campaigns Section #}
-<div class="shirt-campaigns-page content-section" id="campaigns-section"> {# Added content-section #}
-    <h2 class="page-title section-title">Available Shirt Campaigns</h2> {# Added section-title #}
+<div class="card content-section" id="campaigns-section"> 
+    <h2 class="section-title">Available Shirt Campaigns</h2>
     <div class="campaigns-grid">
         {% if shirt_campaigns %}
             {% for campaign in shirt_campaigns %}
@@ -23,26 +25,27 @@
                         <img src="{{ campaign.size_chart_image_path }}" alt="{{ campaign.title | e }} Size Chart" class="campaign-image">
                     </div>
                     {% else %}
-                    <div class="campaign-image-container no-image"> {# Added no-image class #}
+                    <div class="campaign-image-container no-image">
                         <img src="https://placehold.co/600x400/A0A0A0/FFFFFF?text=No+Size+Chart" alt="Placeholder Image" class="campaign-image">
                     </div>
                     {% endif %}
-                    
+
                     <div class="campaign-card-content">
                         <h3 class="campaign-title">{{ campaign.title }}</h3>
                         <p class="campaign-description">{{ campaign.description }}</p>
                         <div class="campaign-details">
-                            <p class="detail-item"><strong>Price:</strong> &#8369;{{ "%.2f"|format(campaign.price_per_shirt) }}</p> {# Added detail-item #}
-                            <p class="detail-item"><strong>Available Stock:</strong> {{ campaign.available_stock }}</p> {# Added detail-item #}
-                            <p class="detail-item"><strong>Pre-order Deadline:</strong> {{ campaign.pre_order_deadline.strftime('%B %d, %Y') }}</p> {# Added detail-item #}
+                            <p class="detail-item"><strong>Price:</strong> &#8369;{{ "%.2f"|format(campaign.price_per_shirt) }}</p>
+                            <p class="detail-item"><strong>Available Stock:</strong> {{ campaign.available_stock }}</p>
+                            <p class="detail-item"><strong>Pre-order Deadline:</strong> {{ campaign.pre_order_deadline.strftime('%B %d, %Y') }}</p>
                         </div>
                         <div class="campaign-actions">
-                            {% if campaign.pre_order_deadline and campaign.pre_order_deadline.date() < now().date() %}
-                                <button class="closed-button button-disabled" disabled>Pre-order Closed</button> {# Added button-disabled #}
+                            {% set current_datetime = now() %} 
+                            {% if campaign.pre_order_deadline and campaign.pre_order_deadline.date() < current_datetime.date() %}
+                                <button class="closed-button button-disabled" disabled>Pre-order Closed</button>
                             {% elif campaign.available_stock <= 0 %}
-                                <button class="sold-out-button button-disabled" disabled>Sold Out</button> {# Added button-disabled #}
+                                <button class="sold-out-button button-disabled" disabled>Sold Out</button>
                             {% else %}
-                                <button class="order-button button-primary" {# Added button-primary #}
+                                <button class="order-button button-primary"
                                         data-campaign-id="{{ campaign.id }}"
                                         data-campaign-title="{{ campaign.title | e }}"
                                         data-price-per-shirt="{{ campaign.price_per_shirt }}">
@@ -54,41 +57,95 @@
                 </div>
             {% endfor %}
         {% else %}
-            <p class="no-campaigns-message info-message">No active shirt campaigns at the moment.</p> {# Added info-message #}
+            <p class="no-campaigns-message info-message">No active shirt campaigns at the moment.</p>
         {% endif %}
     </div>
 </div>
 
-<hr class="section-divider"> {# Added section-divider #}
+<hr class="section-divider">
+
+<div class="card content-section" id="my-orders-section"> 
+    <h2 class="section-title">My Shirt Orders</h2>
+    <button id="toggleCompletedOrdersButton" class="toggle-orders-button button-secondary">Hide Completed Orders</button>
+
+    <div class="orders-list-container">
+        {% if student_shirt_orders %}
+            {% for order in student_shirt_orders %}
+                <div class="order-card order-item"
+                     data-order-id="{{ order.id }}"
+                     data-payment-status="{{ order.payment.status if order.payment else 'pending' }}">
+                    <div class="order-header">
+                        <h3 class="order-campaign-title">{{ order.campaign.title if order.campaign else 'N/A' }}</h3>
+
+                        <span class="order-status-tag tag-{{ (order.payment.status if order.payment else 'pending') | lower }}">
+                            {{ order.payment.status if order.payment else 'Pending Payment' }}
+                        </span>
+                    </div>
+                    <div class="order-details">
+                        <p class="detail-item"><strong>Order ID:</strong> {{ order.id }}</p>
+                        <p class="detail-item"><strong>Your Name:</strong> {{ order.student_name }}</p>
+                        <p class="detail-item"><strong>Year & Section:</strong> {{ order.student_year_section }}</p>
+                        <p class="detail-item"><strong>Size:</strong> {{ order.shirt_size }}</p>
+                        <p class="detail-item"><strong>Quantity:</strong> {{ order.quantity }}</p>
+                        <p class="detail-item"><strong>Total Amount:</strong> &#8369;{{ "%.2f"|format(order.order_total_amount) }}</p>
+                        <p class="detail-item"><strong>Ordered On:</strong> {{ order.ordered_at.strftime('%B %d, %Y %I:%M %p') }}</p>
+                    </div>
+                    <div class="order-actions">
+                        {% set is_payment_successful = order.payment and (order.payment.status == 'paid' or order.payment.status == 'success') %}
+
+                        {% if not is_payment_successful %}
+                            <button class="pay-button paymaya-pay-button button-primary"
+                                    data-payment-item-id="{{ order.payment.payment_item.id if order.payment and order.payment.payment_item else '' }}"
+                                    data-order-id="{{ order.id }}">
+                                Complete Payment
+                            </button>
+                        {% else %}
+                            <button class="paid-button button-disabled" disabled>
+                                Payment Successful
+                            </button>
+                        {% endif %}
+
+                        <button class="view-details-button button-secondary" data-order-id="{{ order.id }}">View Details</button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-orders-message info-message">You have not placed any shirt orders yet.</p>
+            <p class="cta-message">Check out the <a href="#campaigns-section">available campaigns</a> to place your first order!</p>
+        {% endif %}
+    </div>
+</div>
+
+<hr class="section-divider">
 
 <div id="orderModal" class="modal">
     <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2 class="modal-title">Place Your Order</h2> {# Changed page-title to modal-title for specificity #}
-        <h3 id="modalCampaignTitle" class="modal-subtitle"></h3> {# Added modal-subtitle #}
-        <form id="orderForm" class="order-form"> {# Added order-form #}
+        <h2 class="modal-title">Place Your Order</h2>
+        <h3 id="modalCampaignTitle" class="modal-subtitle"></h3>
+        <form id="orderForm" class="form-container"> 
             <input type="hidden" id="modalCampaignId" name="campaign_id">
             <input type="hidden" id="modalOrderTotalAmount" name="order_total_amount">
 
             <div class="form-group">
-                <label for="student_name" class="form-label">Your Name:</label> {# Added form-label #}
-                <input type="text" id="student_name" name="student_name" value="{{ current_user.first_name }} {{ current_user.last_name }}" required readonly class="form-input"> {# Added form-input #}
+                <label for="student_name" class="form-label">Your Name:</label>
+                <input type="text" id="student_name" name="student_name" value="{{ current_user.first_name }} {{ current_user.last_name }}" required readonly class="form-input">
             </div>
             <div class="form-group">
-                <label for="student_year_section" class="form-label">Year & Section:</label> {# Added form-label #}
-                <input type="text" id="student_year_section" name="student_year_section" value="{{ current_user.year_level }} - {{ current_user.section }}" required class="form-input"> {# Added form-input #}
+                <label for="student_year_section" class="form-label">Year & Section:</label>
+                <input type="text" id="student_year_section" name="student_year_section" value="{{ current_user.year_level }} - {{ current_user.section }}" required class="form-input">
             </div>
             <div class="form-group">
-                <label for="student_email" class="form-label">Email (Optional):</label> {# Added form-label #}
-                <input type="email" id="student_email" name="student_email" value="{{ current_user.email or '' }}" class="form-input"> {# Added form-input #}
+                <label for="student_email" class="form-label">Email (Optional):</label>
+                <input type="email" id="student_email" name="student_email" value="{{ current_user.email or '' }}" class="form-input">
             </div>
             <div class="form-group">
-                <label for="student_phone" class="form-label">Phone (Optional):</label> {# Added form-label #}
-                <input type="tel" id="student_phone" name="student_phone" value="{{ current_user.contact or '' }}" class="form-input"> {# Added form-input #}
+                <label for="student_phone" class="form-label">Phone (Optional):</label>
+                <input type="tel" id="student_phone" name="student_phone" value="{{ current_user.contact or '' }}" class="form-input">
             </div>
             <div class="form-group">
-                <label for="shirt_size" class="form-label">Shirt Size:</label> {# Added form-label #}
-                <select id="shirt_size" name="shirt_size" required class="form-input form-select"> {# Added form-input, form-select #}
+                <label for="shirt_size" class="form-label">Shirt Size:</label>
+                <select id="shirt_size" name="shirt_size" required class="form-input form-select">
                     <option value="">Select Size</option>
                     <option value="XS">XS</option>
                     <option value="S">S</option>
@@ -99,126 +156,63 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="quantity" class="form-label">Quantity:</label> {# Added form-label #}
-                <input type="number" id="quantity" name="quantity" min="1" value="1" required class="form-input form-number-input"> {# Added form-input, form-number-input #}
+                <label for="quantity" class="form-label">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" min="1" value="1" required class="form-input form-number-input">
             </div>
             <div class="form-group total-amount-display">
-                <strong class="total-label">Total Amount:</strong> <span id="displayTotalAmount" class="total-value">&#8369;0.00</span> {# Added total-label, total-value #}
+                <strong class="total-label">Total Amount:</strong> <span id="displayTotalAmount" class="total-value">&#8369;0.00</span>
             </div>
 
-            <button type="submit" class="submit-order-button button-primary">Submit Order</button> {# Added button-primary #}
+            <button type="submit" class="submit-order-button button-primary">Submit Order</button>
             <p id="orderMessage" class="message-text"></p>
         </form>
     </div>
 </div>
 
-<hr class="section-divider"> {# Added section-divider #}
-
-<div class="my-shirt-orders-page content-section" id="my-orders-section"> {# Added content-section #}
-    <h2 class="page-title section-title">My Shirt Orders</h2> {# Added section-title #}
-    <button id="toggleCompletedOrdersButton" class="toggle-orders-button button-secondary">Hide Completed Orders</button> {# Added button-secondary #}
-
-    <div class="orders-list-container">
-        {% if student_shirt_orders %}
-            {% for order in student_shirt_orders %}
-                <div class="order-card order-item"
-                     data-order-id="{{ order.id }}"
-                     data-payment-status="{{ order.payment.status if order.payment else 'pending' }}">
-                    <div class="order-header">
-                        <h3 class="order-campaign-title">{{ order.campaign.title if order.campaign else 'N/A' }}</h3>
-                    
-                        <span class="order-status-tag tag-{{ (order.payment.status if order.payment else 'pending') | lower }}">
-                            {{ order.payment.status if order.payment else 'Pending Payment' }}
-                        </span>
-                    </div>
-                    <div class="order-details">
-                        <p class="detail-item"><strong>Order ID:</strong> {{ order.id }}</p> {# Added detail-item #}
-                        <p class="detail-item"><strong>Your Name:</strong> {{ order.student_name }}</p> {# Added detail-item #}
-                        <p class="detail-item"><strong>Year & Section:</strong> {{ order.student_year_section }}</p> {# Added detail-item #}
-                        <p class="detail-item"><strong>Size:</strong> {{ order.shirt_size }}</p> {# Added detail-item #}
-                        <p class="detail-item"><strong>Quantity:</strong> {{ order.quantity }}</p> {# Added detail-item #}
-                        <p class="detail-item"><strong>Total Amount:</strong> &#8369;{{ "%.2f"|format(order.order_total_amount) }}</p> {# Added detail-item #}
-                        <p class="detail-item"><strong>Ordered On:</strong> {{ order.ordered_at.strftime('%B %d, %Y %I:%M %p') }}</p> {# Added detail-item #}
-                    </div>
-                    <div class="order-actions">
-                        {# Determine if payment is successful for button display #}
-                        {% set is_payment_successful = order.payment and (order.payment.status == 'paid' or order.payment.status == 'success') %}
-
-                        {% if not is_payment_successful %}
-                            {# If payment is not successful, show the 'Complete Payment' button #}
-                            <button class="pay-button paymaya-pay-button button-primary" {# Added button-primary #}
-                                    data-payment-item-id="{{ order.payment.payment_item.id if order.payment and order.payment.payment_item else '' }}"
-                                    data-order-id="{{ order.id }}">
-                                Complete Payment
-                            </button>
-                        {% else %}
-                            {# If payment is successful, show a disabled 'Payment Successful' button #}
-                            <button class="paid-button button-disabled" disabled> {# Added button-disabled #}
-                                Payment Successful
-                            </button>
-                        {% endif %}
-                        
-                        {# View Details Button (always available) #}
-                        <button class="view-details-button button-secondary" data-order-id="{{ order.id }}">View Details</button> {# Added button-secondary #}
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p class="no-orders-message info-message">You have not placed any shirt orders yet.</p> {# Added info-message #}
-            <p class="cta-message">Check out the <a href="#campaigns-section">available campaigns</a> to place your first order!</p>
-        {% endif %}
-    </div>
-</div>
-
-<hr class="section-divider"> {# Added section-divider #}
-
-{# Student Shirt Order Detail MODAL #}
 <div id="orderDetailModal" class="modal">
     <div class="modal-content">
         <span class="close-button" id="closeOrderDetailModal">&times;</span>
-        <h2 class="modal-title">Order Details <span id="modalOrderDetailId"></span></h2> {# Changed page-title to modal-title #}
+        <h2 class="modal-title">Order Details <span id="modalOrderDetailId"></span></h2>
         <div class="order-detail-card" id="orderDetailContent">
-            {# Content will be dynamically loaded here by JavaScript #}
-            <p class="loading-message info-message">Loading order details...</p> {# Added info-message #}
+            
+            <p class="loading-message info-message">Loading order details...</p>
         </div>
-        {# The payment and remove buttons will be injected by JavaScript into orderDetailContent #}
     </div>
 </div>
 
-{# NEW: Update Order Modal #}
 <div id="updateOrderModal" class="modal">
     <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2 class="modal-title">Update Your Order</h2> {# Changed h2 to modal-title #}
-        <form id="updateOrderForm" class="order-form"> {# Added order-form #}
+        <h2 class="modal-title">Update Your Order</h2>
+        <form id="updateOrderForm" class="form-container"> 
             <input type="hidden" id="updateOrderId" name="order_id">
-            
+
             <div class="form-group">
-                <label for="updateQuantity" class="form-label">Quantity:</label> {# Added form-label #}
-                <input type="number" id="updateQuantity" name="quantity" min="1" required class="form-input form-number-input"> {# Added form-input, form-number-input #}
+                <label for="updateQuantity" class="form-label">Quantity:</label>
+                <input type="number" id="updateQuantity" name="quantity" min="1" required class="form-input form-number-input">
             </div>
-            
+
             <div class="form-group">
-                <label for="updateShirtSize" class="form-label">Shirt Size:</label> {# Added form-label #}
-                <select id="updateShirtSize" name="shirt_size" required class="form-input form-select"> {# Added form-input, form-select #}
+                <label for="updateShirtSize" class="form-label">Shirt Size:</label>
+                <select id="updateShirtSize" name="shirt_size" required class="form-input form-select">
                     <option value="">Select Size</option>
                     <option value="XS">XS</option>
                     <option value="S">S</option>
                     <option value="M">M</option>
                     <option value="L">L</option>
                     <option value="XL">XL</option>
-                    <option value="XXL">XXL</option> {# Make sure this matches your backend enum/schema #}
+                    <option value="XXL">XXL</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Current Total:</label> {# Added form-label #}
-                <span id="updateDisplayTotalAmount" class="total-amount-display total-value">₱0.00</span> {# Added total-value #}
+                <label class="form-label">Current Total:</label>
+                <span id="updateDisplayTotalAmount" class="total-amount-display total-value">₱0.00</span>
                 <input type="hidden" id="updateOrderTotalAmount" name="order_total_amount">
             </div>
 
             <button type="submit" class="button-primary">Update Order</button>
-            <p id="updateOrderMessage" class="message-text"></p> {# Changed class to message-text #}
+            <p id="updateOrderMessage" class="message-text"></p>
         </form>
     </div>
 </div>
@@ -231,7 +225,7 @@
     const CREATE_ORDER_URL = "{{ url_for('create_student_shirt_order_api') }}";
     const PAYMAYA_CREATE_PAYMENT_URL = "{{ url_for('paymaya_create_payment') }}";
     const GET_ORDER_DETAILS_URL_BASE = "{{ url_for('get_student_shirt_order_api', order_id='_PLACEHOLDER_') }}".replace('_PLACEHOLDER_', '');
-    
+
     // *** THE CRUCIAL CHANGE FOR DELETE URL ***
     // Hardcode the base URL for the delete endpoint to match your FastAPI route.
     // Your FastAPI route is `@router.delete("/orders/{order_id}")`

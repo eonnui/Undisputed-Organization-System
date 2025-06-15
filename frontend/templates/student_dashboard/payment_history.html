@@ -3,95 +3,102 @@
 {% block title %}Payment History{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/payment_history.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 {% endblock %}
 
+{% block content_header %}
+    <h1 class="dashboard-title">Your Payment History</h1>
+    {# You might want to add a "Back to Payments" button here, similar to the "View History" button on the payments page #}
+    <a href="{{ url_for('payments') }}" class="back-to-payments-button-header">
+        <i class="fas fa-arrow-left"></i> Back to Payments
+    </a>
+{% endblock %}
+
 {% block content %}
 <div class="payment-history-page">
-    <h1 class="page-title">Your Payment History</h1>
+    {# The h1.page-title is now in block content_header #}
 
-    <div class="history-container">
-        {% if payment_history %}
-        <div class="payments-table-container">
-            <table class="payment-history-table">
-                <thead>
-                    <tr>
-                        <th>Academic Year</th>
-                        <th>Semester</th>
-                        <th>Fee</th>
-                        <th>Transaction</th> 
-                        <th>Status</th>
-                        <th>Due Date</th>
-                        <th>Payment Date</th> 
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item_data in payment_history %}
-                    {% set item = item_data.item %}
-                    {% set status = item_data.status %}
-                    <tr class="{{ status | lower | replace(' ', '-') }}">
-                        <td>
-                            {% if item.payment_item %}
-                                {{ item.payment_item.academic_year }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if item.payment_item %}
-                                {{ item.payment_item.semester }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if item.payment_item %}
-                                ₱{{ "{:,.2f}".format(item.payment_item.fee) }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>                            
-                            ₱{{ "{:,.2f}".format(item.amount) }}
-                        </td>
-                        <td>
-                            <span class="status {{ status | lower | replace(' ', '-') }}">
-                                {% if status == 'Paid' %}<i class="fas fa-check-circle"></i>
-                                {% elif status == 'Unpaid' or status == 'Past Due' %}<i class="fas fa-exclamation-circle"></i>
-                                {% elif status == 'Not Responsible' %}<i class="fas fa-info-circle"></i>
-                                {% endif %}
-                                {{ status }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if item.payment_item and item.payment_item.due_date %}
-                                {{ item.payment_item.due_date.strftime('%Y-%m-%d') }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>                            
-                            {% if item.created_at %}
-                                {{ item.created_at.strftime('%Y-%m-%d') }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-money-bill-wave-alt"></i>
-            <p>No payment history found.</p>
-            <p>All your past and present payment items will appear here.</p>
-        </div>
-        {% endif %}
-    </div>
+    <div class="history-container">
+        {% if payment_history %}
+        <div class="payments-table-container">
+            <table class="payment-history-table">
+                <thead>
+                    <tr>
+                        <th>Academic Year</th>
+                        <th>Semester</th>
+                        <th>Fee</th>
+                        <th>Transaction</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                        <th>Payment Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item_data in payment_history %}
+                    {% set item = item_data.item %}
+                    {% set status = item_data.status %}
+                    <tr class="{{ status | lower | replace(' ', '-') }}">
+                        <td data-label="Academic Year">
+                            {% if item.payment_item %}
+                                {{ item.payment_item.academic_year }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td data-label="Semester">
+                            {% if item.payment_item %}
+                                {{ item.payment_item.semester }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td data-label="Fee">
+                            {% if item.payment_item %}
+                                ₱{{ "{:,.2f}".format(item.payment_item.fee) }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td data-label="Transaction">
+                            ₱{{ "{:,.2f}".format(item.amount) }}
+                        </td>
+                        <td data-label="Status">
+                            <span class="status {{ status | lower | replace(' ', '-') }}">
+                                {% if status == 'Paid' %}<i class="fas fa-check-circle"></i>
+                                {% elif status == 'Unpaid' or status == 'Past Due' %}<i class="fas fa-exclamation-circle"></i>
+                                {% elif status == 'Not Responsible' %}<i class="fas fa-info-circle"></i>
+                                {% endif %}
+                                {{ status }}
+                            </span>
+                        </td>
+                        <td data-label="Due Date">
+                            {% if item.payment_item and item.payment_item.due_date %}
+                                {{ item.payment_item.due_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td data-label="Payment Date">
+                            {% if item.created_at %}
+                                {{ item.created_at.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-money-bill-wave-alt"></i>
+            <p>No payment history found.</p>
+            <p>All your past and present payment items will appear here.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

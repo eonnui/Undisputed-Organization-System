@@ -4,21 +4,16 @@
 
 {% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/home.css">
-<link rel="stylesheet" href="/static/css/student_dashboard/events.css">
 {% endblock %}
 
 {% block content_header %}
-    {# This is where your page-specific header goes, taking advantage of the .content-header styling #}
     <div class="page-header-content">
         <h1 class="dashboard-title">Home</h1>       
     </div>
-    {# You could add other elements here like a quick action button if needed globally for this page #}
 {% endblock %}
 
 {% block content %}
-    {# The content within this block will now automatically be wrapped by .content-wrapper from base.html #}
     <div class="home-dashboard">
         <div class="dashboard-grid">
             <div class="dashboard-section announcements">

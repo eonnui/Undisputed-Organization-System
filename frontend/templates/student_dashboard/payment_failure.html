@@ -2,48 +2,60 @@
 {% block title %}Payment Failed{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/payment_failure.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content_header %}
+    <h1 class="dashboard-title">Payment Status</h1>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="error-icon"><i class="fas fa-times-circle"></i></h1>
-    <h1>Payment Failed</h1>
-    <p class="lead">We're sorry, but your payment was unsuccessful. Please review the details below and try again.</p>
+<div class="content-container">
+    <div class="card payment-status-card">
+        <div class="error-icon-wrapper">
+            <i class="fas fa-times-circle error-icon"></i>
+        </div>
+        <h2 class="section-title">Payment Failed</h2>
+        <p class="info-message lead-text">We're sorry, but your payment was unsuccessful. Please review the details below and try again.</p>
 
-    <div class="payment-info">
-        <p><strong>Payment ID:</strong> {{ payment_id }}</p>
-        {% if payment_item %}
-        <p><strong>Payment For:</strong>
-            {% if payment_item.user %}
-                {{ payment_item.user.first_name }} {{ payment_item.user.last_name }} ({{ payment_item.user.student_number }})
-            {% else %}
-                N/A
-            {% endif %}
-        </p>
-        {% if payment_item.academic_year %}
-        <p><strong>Academic Year:</strong> {{ payment_item.academic_year }}</p>
-        {% endif %}
-        {% if payment_item.semester %}
-        <p><strong>Semester:</strong> {{ payment_item.semester }}</p>
-        {% endif %}
-        <p><strong>Amount:</strong> ₱{{ payment_item.fee if payment_item else 'N/A' }}</p>
-        {% endif %}
-        <p>Please ensure your payment details are correct and your account has sufficient funds.</p>
+        <div class="payment-summary">
+            <h3 class="summary-title">Transaction Details</h3>
+            <div class="info-group">
+                <p class="info-item"><strong>Payment ID:</strong> <span class="info-value">{{ payment_id }}</span></p>
+                {% if payment_item %}
+                <p class="info-item"><strong>Payment For:</strong>
+                    <span class="info-value">
+                        {% if payment_item.user %}
+                            {{ payment_item.user.first_name }} {{ payment_item.user.last_name }} ({{ payment_item.user.student_number }})
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                </p>
+                {% if payment_item.academic_year %}
+                <p class="info-item"><strong>Academic Year:</strong> <span class="info-value">{{ payment_item.academic_year }}</span></p>
+                {% endif %}
+                {% if payment_item.semester %}
+                <p class="info-item"><strong>Semester:</strong> <span class="info-value">{{ payment_item.semester }}</span></p>
+                {% endif %}
+                <p class="info-item"><strong>Amount:</strong> <span class="info-value">₱{{ "{:,.2f}".format(payment_item.fee) if payment_item.fee is not none else 'N/A' }}</span></p>
+                {% endif %}
+            </div>
+            <p class="info-message">Please ensure your payment details are correct and your account has sufficient funds.</p>
+        </div>
+
+        <div class="button-group-center">
+            <a href="/Payments">Try Again</a>
+            <a href="/home">Back to Dashboard</a>
+            <a href="{{ url_for('payment_history') }}">View Payment History</a>
+        </div>
+
+        <p class="footer-text text-muted">If the issue persists, please contact our support team.</p>
     </div>
-
-    <div class="button-container">
-        <a href="/Payments">Try Again</a>
-        <a href="/home">Back to Dashboard</a>
-        <a href="{{ url_for('payment_history') }}">View Payment History</a>
-    </div>
-
-    <p class="text-muted">If the issue persists, please contact our support team.</p>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://kit.fontawesome.com/your_fontawesome_kit.js" crossorigin="anonymous"></script>
 {% endblock %}

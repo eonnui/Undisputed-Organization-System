@@ -2,49 +2,61 @@
 {% block title %}Payment Successful{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/payment_success.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content_header %}
+    <h1 class="dashboard-title">Payment Status</h1>
 {% endblock %}
 
 {% block content %}
-  <div class="container">
-    <h1><i class="fas fa-check-circle text-success"></i> Payment Successful!</h1>
-    <p class="lead">Your transaction has been successfully processed. Here are your payment details:</p>
+<div class="content-container">
+    <div class="card payment-status-card">
+        <div class="success-icon-wrapper">
+            <i class="fas fa-check-circle success-icon"></i>
+        </div>
+        <h2 class="section-title">Payment Successful!</h2>
+        <p class="info-message lead-text">Your transaction has been successfully processed. Here are your payment details:</p>
 
-    <div class="payment-details">
-      <h2><i class="fas fa-info-circle"></i> Payment Information</h2>
-      <p><strong>Payment ID:</strong> {{ payment_id }}</p>
-      <p><strong>Payment Item ID:</strong> {{ payment_item_id }}</p>
-      <p><strong>Amount Paid:</strong> ₱{{ payment_item.fee if payment_item else 'N/A' }}</p>
-      <p><strong>Payment Date:</strong> {{ payment.created_at.strftime('%Y-%m-%d %H:%M:%S') if payment else 'N/A' }}</p>
+        <div class="payment-summary">
+            <h3 class="summary-title">Payment Information</h3>
+            <div class="info-group">
+                <p class="info-item"><strong>Payment ID:</strong> <span class="info-value">{{ payment_id }}</span></p>
+                <p class="info-item"><strong>Payment Item ID:</strong> <span class="info-value">{{ payment_item_id }}</span></p>
+                <p class="info-item"><strong>Amount Paid:</strong> <span class="info-value">₱{{ "{:,.2f}".format(payment_item.fee) if payment_item.fee is not none else 'N/A' }}</span></p>
+                <p class="info-item"><strong>Payment Date:</strong> <span class="info-value">{{ payment.created_at.strftime('%Y-%m-%d %H:%M:%S') if payment else 'N/A' }}</span></p>
+            </div>
 
-      {% if payment_item %}
-      <h2><i class="fas fa-file-invoice"></i> Payment For</h2>
-      <p><strong>Student Name:</strong> {{ payment_item.user.first_name if payment_item.user else 'N/A' }} {{ payment_item.user.last_name if payment_item.user else 'N/A' }}</p>
-      <p><strong>Student Number:</strong> {{ payment_item.user.student_number if payment_item.user else 'N/A' }}</p>
-      {% if payment_item.academic_year %}
-      <p><strong>Academic Year:</strong> {{ payment_item.academic_year }}</p>
-      {% endif %}
-      {% if payment_item.semester %}
-      <p><strong>Semester:</strong> {{ payment_item.semester }}</p>
-      {% endif %}
-      {% if payment_item.due_date %}
-      <p><strong>Due Date:</strong> {{ payment_item.due_date.strftime('%Y-%m-%d') }}</p>
-      {% endif %}
-      {% endif %}
+            {% if payment_item %}
+            <h3 class="summary-title-alt">Payment For</h3> {# A slightly different title style for sub-sections #}
+            <div class="info-group">
+                <p class="info-item"><strong>Student Name:</strong> <span class="info-value">{{ payment_item.user.first_name if payment_item.user else 'N/A' }} {{ payment_item.user.last_name if payment_item.user else 'N/A' }}</span></p>
+                <p class="info-item"><strong>Student Number:</strong> <span class="info-value">{{ payment_item.user.student_number if payment_item.user else 'N/A' }}</span></p>
+                {% if payment_item.academic_year %}
+                <p class="info-item"><strong>Academic Year:</strong> <span class="info-value">{{ payment_item.academic_year }}</span></p>
+                {% endif %}
+                {% if payment_item.semester %}
+                <p class="info-item"><strong>Semester:</strong> <span class="info-value">{{ payment_item.semester }}</span></p>
+                {% endif %}
+                {% if payment_item.due_date %}
+                <p class="info-item"><strong>Due Date:</strong> <span class="info-value">{{ payment_item.due_date.strftime('%Y-%m-%d') }}</span></p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="button-group-center">
+            <a href="javascript:window.print()" class="button-secondary print-button"><i class="fas fa-print"></i> Print this page</a>
+            <a href="/home">Back to Dashboard</a>
+            <a href="{{ url_for('payment_history') }}">View Payment History</a>
+        </div>
+
+        <p class="footer-text text-muted"><i class="fas fa-question-circle"></i> If you have any questions regarding this payment, please contact the administration office.</p>
     </div>
-
-    <div class="button-container">
-      <a href="javascript:window.print()"><i class="fas fa-print"></i> Print this page</a>
-      <a href="/Payments">Back to Dashboard</a>
-      <a href="{{ url_for('payment_history') }}"><i class="fas fa-history"></i> View Payment History</a>
-    </div>
-
-    <p class="mt-4 text-muted"><i class="fas fa-question-circle"></i> If you have any questions regarding this payment, please contact the administration office.</p>
-  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
-  <script src="https://kit.fontawesome.com/your_fontawesome_kit.js" crossorigin="anonymous"></script>
 {% endblock %}

@@ -3,51 +3,60 @@
 {% block title %}Detailed Monthly Cash Flow{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/detailed_monthly_report.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
+{% block content_header %}
+    <h1 class="dashboard-title" id="detailed-month-title">MONTH</h1>
+    <a href="{{ url_for('financial_statement') }}" class="back-button-header">
+        <i class="fas fa-arrow-left"></i> Back to Financial Dashboard
+    </a>
 {% endblock %}
 
 {% block content %}
-<div class="monthly-cashflow-detailed">
-    <h2 id="detailed-month-title">MONTH</h2>
-    <p>Monthly Cash Flow</p>
-    <p id="detailed-month-date">For the month of --</p>
+<div class="monthly-cashflow-detailed-content">
+    <p class="subtitle">Monthly Cash Flow</p>
+    <p id="detailed-month-date" class="date-info">For the month of --</p>
 
-    <div style="margin-bottom: 20px;">
+    <div class="report-controls">
         <label for="report-type-select" class="report-type-label">Report Type:</label>
-        <select id="report-type-select" style="padding: 5px; border-radius: 5px; border: 1px solid #ccc;">
+        <select id="report-type-select" class="report-type-select-dropdown">
             <option value="combined">Combined (User & Organization)</option>
             <option value="user">User Payments</option>
             <option value="organization">Organization Expenses</option>
         </select>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Particulars</th>
-                <th>Status</th>
-                <th class="amount">Cash Received</th>
-                <th class="amount">Cash Disbursed</th>
-                <th class="amount">Running Balance</th>
-            </tr>
-        </thead>
-        <tbody id="detailed-monthly-data-body">
-        </tbody>
-        <tfoot>
-            <tr>
-                <th colspan="3">TOTAL - MONTH OF <span id="detailed-month-footer">--</span></th>
-                <th class="amount" id="footer-cash-received">₱0.00</th>
-                <th class="amount" id="footer-cash-disbursed">₱0.00</th>
-                <th class="amount" id="footer-running-balance">₱0.00</th>
-            </tr>
-        </tfoot>
-    </table>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Particulars</th>
+                    <th>Status</th>
+                    <th class="amount">Cash Received</th>
+                    <th class="amount">Cash Disbursed</th>
+                    <th class="amount">Running Balance</th>
+                </tr>
+            </thead>
+            <tbody id="detailed-monthly-data-body">
+                
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" data-label="Total">TOTAL - MONTH OF <span id="detailed-month-footer">--</span></th>
+                    <th class="amount" id="footer-cash-received" data-label="Cash Received Total">₱0.00</th>
+                    <th class="amount" id="footer-cash-disbursed" data-label="Cash Disbursed Total">₱0.00</th>
+                    <th class="amount" id="footer-running-balance" data-label="Running Balance Total">₱0.00</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/student_dashboard/detailed_monthly_report.js"></script>
+<script src="/static/js/student_dashboard/detailed_monthly_report.js"></script>
 {% endblock %}

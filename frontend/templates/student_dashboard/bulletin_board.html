@@ -4,8 +4,6 @@
 
 {% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="/static/css/admin_dashboard/admin_common_styles.css">
-<link rel="stylesheet" href="/static/css/admin_dashboard/admin_bulletin_board.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/bulletin_board.css">
 {% endblock %}
 
@@ -73,18 +71,14 @@
         <div class="rules-wiki-container">
             <div class="org-chart-section">
                 <h2 class="org-chart-header">Organizational Chart</h2>
-                {# This button will now trigger the global modal #}
                 <button id="viewOrgChartButton" class="view-org-chart-button"
                         data-modal-title="Organizational Chart"
                         data-modal-content-id="organizationChartContent">
                     View Chart
                 </button>
-                {# This content will be moved to the global modal's body when triggered #}
                 <div id="organizationChartContent" style="display: none;">
                     <div class="organization-chart-display">
                         <p class="loading-message">Loading organizational chart...</p>
-                        {# In a real application, you might load this content dynamically via JS #}
-                        {# or fetch it from a hidden div like this and move it #}
                     </div>
                 </div>
             </div>

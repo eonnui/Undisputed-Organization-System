@@ -3,14 +3,16 @@
 {% block title %}Financial Statement Dashboard{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/student_dashboard/student_common_styles.css">
 <link rel="stylesheet" href="/static/css/student_dashboard/financial_statement.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
+{% block content_header %}
+    <h1 class="dashboard-title">Financial Statement Dashboard</h1>
+{% endblock %}
+
 {% block content %}
-<div class="content" 
-     id="financial-data-container" 
+<div id="financial-data-container"
      data-current-year="{{ year | e }}">
 
     <script id="financial-data-json" type="application/json">
@@ -18,8 +20,6 @@
     </script>
 
     <section id="dashboard" class="section active">
-        <h1>Financial Statement Dashboard</h1>
-
         <div class="quick-stats">
             <div class="stat-card positive">
                 <h3>Total Paid by You</h3>
@@ -79,8 +79,8 @@
                         {% if financial_data.user_financials.collected_fees_by_category %}
                             {% for item in financial_data.user_financials.collected_fees_by_category %}
                                 <tr>
-                                    <td>{{ item.category }}</td>
-                                    <td class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                                    <td data-label="Fee Category">{{ item.category }}</td>
+                                    <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
                                 </tr>
                             {% endfor %}
                         {% else %}
@@ -91,8 +91,8 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL COLLECTED FEES (Your Payments):</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_paid_by_user) }}</th>
+                            <th data-label="Total">TOTAL COLLECTED FEES (Your Payments):</th>
+                            <th data-label="Total Amount" class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_paid_by_user) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -116,8 +116,8 @@
                         {% if financial_data.user_financials.outstanding_fees_by_category %}
                             {% for item in financial_data.user_financials.outstanding_fees_by_category %}
                                 <tr>
-                                    <td>{{ item.category }}</td>
-                                    <td class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                                    <td data-label="Fee Category">{{ item.category }}</td>
+                                    <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
                                 </tr>
                             {% endfor %}
                         {% else %}
@@ -128,12 +128,12 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL OUTSTANDING FEES (Your Payments):</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_outstanding_fees) }}</th>
+                            <th data-label="Total Outstanding">TOTAL OUTSTANDING FEES (Your Payments):</th>
+                            <th data-label="Total Amount" class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_outstanding_fees) }}</th>
                         </tr>
                         <tr>
-                            <th>TOTAL PAST DUE FEES (Your Payments):</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_past_due_fees) }}</th>
+                            <th data-label="Total Past Due">TOTAL PAST DUE FEES (Your Payments):</th>
+                            <th data-label="Total Amount" class="amount">₱{{ "%.2f"|format(financial_data.user_financials.total_past_due_fees) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -157,8 +157,8 @@
                         {% if financial_data.organization_financials.expenses_by_category_org %}
                             {% for item in financial_data.organization_financials.expenses_by_category_org %}
                                 <tr>
-                                    <td>{{ item.category }}</td>
-                                    <td class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                                    <td data-label="Expense Category">{{ item.category }}</td>
+                                    <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
                                 </tr>
                             {% endfor %}
                         {% else %}
@@ -169,8 +169,8 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL ORGANIZATION EXPENSES:</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</th>
+                            <th data-label="Total Expenses">TOTAL ORGANIZATION EXPENSES:</th>
+                            <th data-label="Total Amount" class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -196,15 +196,15 @@
                         {% if financial_data.financial_summary_items_combined %}
                             {% for item in financial_data.financial_summary_items_combined %}
                                 <tr class="{% if 'Your Payment' in item.event_item %}user-payment{% else %}org-expense{% endif %}">
-                                    <td>{{ item.date }}</td>
-                                    <td>
+                                    <td data-label="Date">{{ item.date }}</td>
+                                    <td data-label="Event/Item">
                                         <span class="event-item-label">{{ item.event_item.split(' - ')[0] | default(item.event_item) }}</span>
                                         {% if ' - ' in item.event_item %}
                                             <br><span class="event-item-description">({{ item.event_item.split(' - ')[1] }})</span>
                                         {% endif %}
                                     </td>
-                                    <td class="amount">₱{{ "%.2f"|format(item.inflows) }}</td>
-                                    <td class="amount">₱{{ "%.2f"|format(item.outflows) }}</td>
+                                    <td data-label="Inflows" class="amount">₱{{ "%.2f"|format(item.inflows) }}</td>
+                                    <td data-label="Outflows" class="amount">₱{{ "%.2f"|format(item.outflows) }}</td>
                                 </tr>
                             {% endfor %}
                         {% else %}
@@ -215,18 +215,18 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th colspan="2">TOTAL INFLOWS (Org-Wide):</th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_revenue_org) }}</th>
+                            <th data-label="Total Inflows" colspan="2">TOTAL INFLOWS (Org-Wide):</th>
+                            <th data-label="Amount Inflows" class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_revenue_org) }}</th>
                             <th></th>
                         </tr>
                         <tr>
-                            <th colspan="2">TOTAL OUTFLOWS (Org-Wide):</th>
+                            <th data-label="Total Outflows" colspan="2">TOTAL OUTFLOWS (Org-Wide):</th>
                             <th></th>
-                            <th class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</th>
+                            <th data-label="Amount Outflows" class="amount">₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</th>
                         </tr>
                         <tr>
-                            <th colspan="2">ORGANIZATION NET BALANCE:</th>
-                            <th class="amount" colspan="2">₱{{ "%.2f"|format(financial_data.organization_financials.net_income_org) }}</th>
+                            <th data-label="Net Balance" colspan="2">ORGANIZATION NET BALANCE:</th>
+                            <th data-label="Net Balance Amount" class="amount" colspan="2">₱{{ "%.2f"|format(financial_data.organization_financials.net_income_org) }}</th>
                         </tr>
                     </tfoot>
                 </table>
@@ -240,27 +240,28 @@
             </div>
             <div class="report-body">
                 <div class="monthly-toggles">
-                    <button class="active">January</button>
-                    <button>February</button>
-                    <button>March</button>
-                    <button>April</button>
-                    <button>May</button>
-                    <button>June</button>
-                    <button>July</button>
-                    <button>August</button>
-                    <button>September</button>
-                    <button>October</button>
-                    <button>November</button>
-                    <button>December</button>
+                    <button class="active" data-month="1">January</button>
+                    <button data-month="2">February</button>
+                    <button data-month="3">March</button>
+                    <button data-month="4">April</button>
+                    <button data-month="5">May</button>
+                    <button data-month="6">June</button>
+                    <button data-month="7">July</button>
+                    <button data-month="8">August</button>
+                    <button data-month="9">September</button>
+                    <button data-month="10">October</button>
+                    <button data-month="11">November</button>
+                    <button data-month="12">December</button>
                 </div>
                 <table>
                     <thead>
                         <tr>
-                            <th></th>
+                            <th>Item</th>
                             <th>Amount (₱)</th>
                         </tr>
                     </thead>
                     <tbody id="monthly-data-table">
+                        
                     </tbody>
                 </table>
                 <a href="{{ url_for('static', path='html/student_dashboard/detailed_monthly_report.html') }}?month=january&type=organization" id="view-detailed-monthly-report-link" class="view-detail-link">
@@ -274,5 +275,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/student_dashboard/financial_statement.js"></script>
+<script src="/static/js/student_dashboard/financial_statement.js"></script>
 {% endblock %}
