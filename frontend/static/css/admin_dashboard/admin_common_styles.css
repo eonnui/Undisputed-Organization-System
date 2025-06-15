@@ -3,6 +3,32 @@ html {font-size: 16px;}
 img, video, canvas {max-width: 100%; height: auto; display: block;}
 body {margin: 0; padding: 0;}
 
+h2{
+    color: var(--org-text-primary);
+}
+
+h3{
+    color: var(--org-text-primary);
+}
+
+h4{
+    color: var(--org-text-primary);
+}
+
+th {
+    display: table-cell;
+    color: var(--org-text-primary);
+    vertical-align: inherit;
+    unicode-bidi: isolate;
+}
+
+td {
+    display: table-cell;
+    color: var(--org-text-primary);
+    vertical-align: inherit;
+    unicode-bidi: isolate;
+}
+
 /* Keyframes */
 @keyframes fadeIn {
     from {

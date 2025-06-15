@@ -1139,7 +1139,7 @@ async def admin_shirt_management(request: Request, db: Session = Depends(get_db)
 @router.get("/admin/students", response_model=List[dict])
 async def get_students(
     db: Session = Depends(get_db),
-    admin_with_org: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org), # Inject the admin and their organization
+    admin_with_org: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org),
     search: Optional[str] = Query(None, description="Search query for student name or student number"),
     year_level: Optional[str] = Query(None, description="Filter by year level"),
     section: Optional[str] = Query(None, description="Filter by section"),
@@ -1149,15 +1149,12 @@ async def get_students(
     """
     Retrieves a list of students for the admin's organization with optional search, filter, and sort capabilities.
     """
-    admin, organization = admin_with_org # Unpack the tuple to get the organization object
+    admin, organization = admin_with_org 
 
     query = db.query(models.User)
 
-    # 1. Filter by the admin's organization
-    # This is the crucial addition to restrict students to the admin's organization
     query = query.filter(models.User.organization_id == organization.id)
 
-    # 2. Apply Search Filter
     if search:
         search_pattern = f"%{search}%"
         query = query.filter(
@@ -1166,15 +1163,12 @@ async def get_students(
             (models.User.student_number.ilike(search_pattern))
         )
 
-    # 3. Apply Year Level Filter
     if year_level:
         query = query.filter(models.User.year_level == year_level)
 
-    # 4. Apply Section Filter
     if section:
         query = query.filter(models.User.section == section)
 
-    # 5. Apply Sorting
     sortable_columns = {
         "student_number": models.User.student_number,
         "first_name": models.User.first_name,
@@ -1220,19 +1214,16 @@ async def get_student_profile(
     Retrieves the profile of a specific student by student_number,
     ensuring they belong to the viewing admin's organization.
     """
-    admin, organization = admin_with_org # Unpack the tuple
+    admin, organization = admin_with_org 
 
-    # Query the student, filtered by student_number and organization_id
     student = db.query(models.User).filter(
         models.User.student_number == student_number,
-        models.User.organization_id == organization.id # Ensure student belongs to admin's organization
+        models.User.organization_id == organization.id 
     ).first()
 
     if not student:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found or not in your organization.")
 
-    # You might want to return more detailed information for a profile view.
-    # Adjust this dictionary to include all the student attributes you need on the profile page.
     student_profile_data = {
         "id": student.id,
         "student_number": student.student_number,
@@ -1246,7 +1237,7 @@ async def get_student_profile(
         "course": student.course,
         "school_year": student.school_year,
         "address": student.address,
-        "birthdate": student.birthdate, # Consider converting to a proper date format if needed
+        "birthdate": student.birthdate, 
         "sex": student.sex,
         "contact": student.contact,
         "guardian_name": student.guardian_name,
@@ -1257,7 +1248,6 @@ async def get_student_profile(
         "verified_by": student.verified_by,
         "verification_date": student.verification_date.isoformat() if student.verification_date else None,
         "organization_id": student.organization_id,
-        # Add any other relevant fields from the User model
     }
 
     return student_profile_data
@@ -1273,7 +1263,7 @@ async def admin_payments(
 
     query = db.query(models.PaymentItem).join(models.User).filter(
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude student shirt orders
+        models.PaymentItem.student_shirt_order_id.is_(None) 
     )
     if student_number:
         query = query.filter(models.User.student_number == student_number)
@@ -1481,7 +1471,7 @@ async def admin_membership(
                     pi for pi in other_user.payment_items
                     if (academic_year is None or pi.academic_year == academic_year) and
                        (semester is None or pi.semester == semester) and
-                       (pi.student_shirt_order_id is None) # Exclude shirt orders here
+                       (pi.student_shirt_order_id is None) 
                 ]
                 
                 is_user_fully_paid_for_period = False
@@ -1527,35 +1517,25 @@ async def admin_individual_members(
 ) -> List[Dict]:
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    # Start the query by joining User and PaymentItem
-    # We use .outerjoin() to ensure users with no matching payment items are still included,
-    # but their payment_items list will be empty.
-    # The 'sa_payment_item' alias is crucial for contains_eager.
     query = db.query(models.User).outerjoin(
         models.PaymentItem,
         models.User.id == models.PaymentItem.user_id
     ).filter(models.User.organization_id == admin_org.id)
 
-    # Build the filters for PaymentItem
     payment_item_filters = [
-        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude student shirt orders
+        models.PaymentItem.student_shirt_order_id.is_(None) 
     ]
     if academic_year:
         payment_item_filters.append(models.PaymentItem.academic_year == academic_year)
     if semester:
         payment_item_filters.append(models.PaymentItem.semester == semester)
 
-    # Apply the filters to the joined PaymentItem table
-    # This filters the rows returned by the JOIN.
     if payment_item_filters:
         query = query.filter(*payment_item_filters)
 
-    # Use contains_eager to load the filtered payment_items into the user.payment_items relationship.
-    # This tells SQLAlchemy to map the results from the join back into the relationship.
     query = query.options(contains_eager(models.User.payment_items))
     
-    # We need to ensure distinct users if a user can have multiple matching payment items
-    query = query.distinct(models.User.id).order_by(models.User.id) # Order by ID for consistent results
+    query = query.distinct(models.User.id).order_by(models.User.id) 
 
 
     users = query.all()
@@ -1566,21 +1546,16 @@ async def admin_individual_members(
         total_amount = 0
         payment_status = "No Dues" if not (academic_year or semester) else "Not Applicable"
 
-        # Now, user.payment_items will correctly contain only the filtered membership items
         for pi in user.payment_items:
-            # Check if this PaymentItem is NOT responsible to be excluded from totals,
-            # as per your original logic in the /admin/membership/ endpoint for total_amount
             if not pi.is_not_responsible:
                 total_amount += pi.fee
                 
-                # Check the is_paid flag directly from the PaymentItem
                 if pi.is_paid:
                     total_paid += pi.fee
 
         if total_amount > 0:
             payment_status = "Paid" if total_paid >= total_amount else "Partially Paid"
         else:
-            # If total_amount is 0, status remains the default or specific for no dues
             if academic_year or semester:
                 payment_status = "No Dues for Period"
             else:
@@ -1603,26 +1578,24 @@ async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
     today = date.today()
     all_months_data = OrderedDict()
 
-    # Populate all_months_data with 0.0 for the last N months
     for i in range(num_months_to_display - 1, -1, -1):
         target_date = today - relativedelta(months=i)
         all_months_data[(target_date.year, target_date.month)] = 0.0
 
     earliest_year, earliest_month = next(iter(all_months_data.keys()))
-    earliest_date_for_filter = datetime(earliest_year, earliest_month, 1).date() # Ensure it's a date object
+    earliest_date_for_filter = datetime(earliest_year, earliest_month, 1).date() 
 
-    # Modified query to exclude PaymentItems with a student_shirt_order_id
     financial_data_raw = db.query(
         func.extract('year', models.Payment.created_at).label('year'),
         func.extract('month', models.Payment.created_at).label('month'),
         func.sum(models.Payment.amount).label('total'),
-    ).join(models.Payment.payment_item).join(models.Payment.user).filter( # Join Payment with PaymentItem
+    ).join(models.Payment.payment_item).join(models.Payment.user).filter( 
         and_(
             models.Payment.status == "success",
             models.User.organization_id == admin_org.id,
             models.Payment.created_at >= earliest_date_for_filter,
             models.Payment.created_at <= today,
-            models.PaymentItem.student_shirt_order_id == None # Exclude student shirt orders here
+            models.PaymentItem.student_shirt_order_id == None 
         )
     ).group_by('year', 'month').all()
 
@@ -1654,14 +1627,13 @@ async def get_expenses_by_category(request: Request, db: Session = Depends(get_d
 async def get_fund_distribution(request: Request, db: Session = Depends(get_db)):
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    # Modified query to exclude PaymentItems with a student_shirt_order_id
     fund_allocation = db.query(models.PaymentItem.academic_year, func.sum(models.Payment.amount)).join(
         models.Payment, models.PaymentItem.id == models.Payment.payment_item_id
     ).join(models.PaymentItem.user).filter(
         and_(
             models.Payment.status == "success",
             models.User.organization_id == admin_org.id,
-            models.PaymentItem.student_shirt_order_id == None # Exclude student shirt orders
+            models.PaymentItem.student_shirt_order_id == None 
         )
     ).group_by(models.PaymentItem.academic_year).all()
 
@@ -1686,7 +1658,6 @@ async def admin_outstanding_dues(
     if academic_year:
         resolved_academic_year = academic_year
     else:
-        # Determine current academic year based on current month
         start_year = today.year - 1 if today.month < 9 else today.year
         resolved_academic_year = f"{start_year}-{start_year + 1}"
 
@@ -1706,9 +1677,7 @@ async def admin_outstanding_dues(
                 models.PaymentItem.semester == current_semester_name,
                 models.User.organization_id == admin_org.id,
                 models.PaymentItem.is_not_responsible == False,
-                # --- START OF YOUR REQUESTED MODIFICATION ---
-                models.PaymentItem.student_shirt_order_id == None # Exclude student shirt orders
-                # --- END OF YOUR REQUESTED MODIFICATION ---
+                models.PaymentItem.student_shirt_order_id == None 
             )
         ).all()
 
@@ -1991,9 +1960,6 @@ async def get_event_participants_api(event_id: int, db: Session = Depends(get_db
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     
-    # Use the existing participants_list_json property from the Event model
-    # FastAPI's JSONResponse will automatically serialize this list of dicts
-    # according to the response_model.
     return event.participants_list_json
 
 # Admin Events Page 
@@ -2091,8 +2057,6 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     net_income_ytd = total_revenue_ytd - total_expenses_ytd
     profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
     
-    # Top Revenue Source
-    # We will get the top revenue from either membership fees or student shirt orders
     top_revenue_source_membership_query = db.query(
         models.PaymentItem.academic_year, 
         models.PaymentItem.semester, 
@@ -2101,7 +2065,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) # Filter for membership fees
+        models.PaymentItem.student_shirt_order_id.is_(None) 
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).order_by(func.sum(models.PaymentItem.fee).desc()).first()
 
     top_revenue_source_shirt_query = db.query(
@@ -2110,13 +2074,12 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.isnot(None) # Filter for student shirt orders
+        models.PaymentItem.student_shirt_order_id.isnot(None) 
     ).group_by(models.PaymentItem.student_shirt_order_id).order_by(func.sum(models.PaymentItem.fee).desc()).first()
 
 
     top_revenue_source = {"name": "N/A", "amount": 0.0}
     
-    # Determine the actual top revenue source
     if top_revenue_source_membership_query and (not top_revenue_source_shirt_query or top_revenue_source_membership_query.total_fee >= top_revenue_source_shirt_query.total_fee):
         source_name = f"AY {top_revenue_source_membership_query.academic_year} - {top_revenue_source_membership_query.semester} Fees" if top_revenue_source_membership_query.academic_year and top_revenue_source_membership_query.semester else "Miscellaneous Fees"
         top_revenue_source = {"name": source_name, "amount": round(float(top_revenue_source_membership_query.total_fee), 2)}
@@ -2133,10 +2096,8 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         largest_expense_category = largest_expense_query.category if largest_expense_query.category else "Uncategorized"
         largest_expense_amount = round(float(largest_expense_query.total_amount), 2)
 
-    # Revenues Breakdown
     revenues_breakdown = []
 
-    # Query for Membership Fees
     membership_revenues_query = db.query(
         models.PaymentItem.academic_year, 
         models.PaymentItem.semester, 
@@ -2145,7 +2106,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) # Only membership fees
+        models.PaymentItem.student_shirt_order_id.is_(None) 
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
 
     for item in membership_revenues_query:
@@ -2153,15 +2114,14 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         percentage = round((float(item.total_fee) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
         revenues_breakdown.append({"source": source_name, "amount": round(float(item.total_fee), 2), "trend": "Stable", "percentage": percentage})
 
-    # Query for Student Shirt Order Fees
     shirt_order_revenues_query = db.query(
         func.sum(models.PaymentItem.fee).label('total_fee')
     ).join(models.User).filter(
         extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.isnot(None) # Only student shirt orders
-    ).scalar() or 0.0 # Use scalar() since we are summing all shirt order fees
+        models.PaymentItem.student_shirt_order_id.isnot(None) 
+    ).scalar() or 0.0 
 
     if shirt_order_revenues_query > 0:
         percentage = round((float(shirt_order_revenues_query) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
@@ -3003,7 +2963,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     """
     user, user_org = get_current_user_with_org(request, db)
 
-    # --- User-Specific Financial Data ---
     all_user_payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user.id).all()
 
     total_paid_by_user = sum(item.fee for item in all_user_payment_items if item.is_paid)
@@ -3020,14 +2979,13 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         elif item.academic_year and item.semester:
             category_name = f"AY {item.academic_year} - {item.semester} Fees (Membership)"
         else:
-            category_name = "Miscellaneous Fees" # Fallback for other non-shirt/non-academic fees
+            category_name = "Miscellaneous Fees" 
 
         if item.is_paid:
             collected_fees_by_category_user[category_name] += item.fee
         else:
             outstanding_fees_by_category_user[category_name] += item.fee
 
-    # --- Organization-Specific Financial Data ---
     organization_total_revenue = 0.0
     all_org_paid_payment_items = db.query(models.PaymentItem).join(models.User).filter(
         models.PaymentItem.is_paid == True,
@@ -3043,7 +3001,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     for expense in all_expenses_org:
         expenses_by_category_org[expense.category if expense.category else "Uncategorized"] += expense.amount
 
-    # --- Combined Financial Summary (User Payments & Org Expenses) ---
     financial_summary_items_combined = []
     for item in all_user_payment_items:
         if item.is_paid and (item.updated_at or item.created_at):
@@ -3065,7 +3022,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
     for item in financial_summary_items_combined:
         item['date'] = item['date'].strftime("%Y-%m-%d")
 
-    # --- Monthly Organization Financials ---
     months_full = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     org_inflows_by_month_current_year = defaultdict(float)
     for item in all_org_paid_payment_items:
@@ -3096,7 +3052,6 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
             "ending_balance": ending_balance
         }
 
-    # --- Prepare Data for Template ---
     financial_data = {
         "user_financials": {
             "total_paid_by_user": total_paid_by_user,
@@ -3154,9 +3109,7 @@ async def get_detailed_monthly_report_json(
     if report_type in ['user', 'combined', None]:
         for item in db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user.id).all():
             relevant_date = (item.updated_at or item.created_at)
-            # Ensure relevant_date is a date object for comparison
             if relevant_date and start_date_of_month <= relevant_date <= end_date_of_month:
-                # --- START OF YOUR REQUESTED MODIFICATION ---
                 category_name = ""
                 if item.student_shirt_order_id is not None:
                     category_name = "Student Shirt Order"
@@ -3164,7 +3117,6 @@ async def get_detailed_monthly_report_json(
                     category_name = f"AY {item.academic_year} - {item.semester} Membership Fee"
                 else:
                     category_name = "Miscellaneous Fee"
-                # --- END OF YOUR REQUESTED MODIFICATION ---
                 status_str = "Paid" if item.is_paid else ("Past Due" if not item.is_paid and item.due_date and item.due_date < date.today() else "Unpaid")
                 all_financial_events.append((relevant_date, f"Your Payment - {category_name}", item.fee if item.is_paid else 0.00, 0.00, status_str, item.fee, item))
 
@@ -3197,21 +3149,19 @@ async def get_detailed_monthly_report_json(
     current_running_balance = 0.00
     starting_balance_month = 0.00
 
-    # Calculate starting balance
     for event_date, description, inflow, outflow, status_str, original_value, original_item_obj in all_financial_events:
-        if event_date < start_date_of_month: # Use .date() for comparison
+        if event_date < start_date_of_month: 
             current_running_balance += inflow - outflow
         else:
             starting_balance_month = current_running_balance
             break
-    # If all events are within or after the current month, starting balance is 0
     if not all_financial_events or all_financial_events[0][0] >= start_date_of_month:
         starting_balance_month = 0.00
     
-    current_running_balance = starting_balance_month # Reset for processing current month's transactions
+    current_running_balance = starting_balance_month 
 
     for event_date, description, inflow, outflow, status_str, original_value, original_item_obj in all_financial_events:
-        if start_date_of_month <= event_date <= end_date_of_month: # Use .date() for comparison
+        if start_date_of_month <= event_date <= end_date_of_month: 
             is_user_payment_event = "Your Payment" in description
             is_org_inflow_event = "Organization Inflows" in description
             is_org_expense_event = "Org Expense" in description

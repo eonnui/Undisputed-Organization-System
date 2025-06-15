@@ -1,739 +1,727 @@
-/* Container for pages like Shirt Campaigns, matching .students-page-container idea */
 .content-section {
-    padding: 25px;
-    max-width: 1200px;
-    margin: 20px auto;
-    background-color: var(--org-bg-secondary);
-    border-radius: var(--org-radius-md);
-    box-shadow: var(--org-shadow-md);
+  padding: 25px;
+  max-width: 1200px;
+  margin: 20px auto;
+  background-color: var(--org-bg-secondary);
+  border-radius: var(--org-radius-md);
+  box-shadow: var(--org-shadow-md);
 }
 
-/* Page Headers, matching .page-header idea */
 .page-title.section-title {
-    font-size: 2.2em;
-    color: var(--org-dashboard-title-color);
-    margin-bottom: 30px;
-    text-align: left;
-    font-weight: 500;
-    position: relative;
-    padding-bottom: 10px;
+  font-size: 2.2em;
+  color: var(--org-dashboard-title-color);
+  margin-bottom: 30px;
+  text-align: left;
+  font-weight: 500;
+  position: relative;
+  padding-bottom: 10px;
 }
 
 .page-title.section-title::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 60px;
-    height: 3px;
-    background-color: var(--org-primary);
-    border-radius: 1.5px;
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 60px;
+  height: 3px;
+  background-color: var(--org-primary);
+  border-radius: 1.5px;
 }
 
-/* Header Actions & Filters (if applicable to your page) */
 .header-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 30px;
-    align-items: flex-end;
-    justify-content: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+  align-items: flex-end;
+  justify-content: flex-start;
 }
 
 .filter-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .filter-container label {
-    font-weight: 400;
-    color: var(--org-text-primary);
-    white-space: nowrap;
+  font-weight: 400;
+  color: var(--org-text-primary);
+  white-space: nowrap;
 }
 
-.sr-only { /* Screen reader only */
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
-/* Form Elements */
 .form-group label.form-label {
-    color: var(--org-text-primary);
+  color: var(--org-text-primary);
 }
 
 .form-input,
-.search-input { /* Assuming search-input uses general input styling */
-    padding: 10px 15px;
-    border: 1px solid var(--org-form-group-input-border);
-    background-color: var(--org-read-only-input-bg); /* Use for fields that might be read-only or subtle */
-    color: var(--org-text-primary);
-    border-radius: 5px;
-    font-size: 1em;
-    width: 100%; /* Or specify width like 250px for search-input */
-    transition: var(--org-transition);
+.search-input {
+  padding: 10px 15px;
+  border: 1px solid var(--org-form-group-input-border);
+  background-color: var(--org-read-only-input-bg);
+  color: var(--org-text-primary);
+  border-radius: 5px;
+  font-size: 1em;
+  width: 100%;
+  transition: var(--org-transition);
 }
 
 .form-input::placeholder,
 .search-input::placeholder {
-    color: var(--org-text-secondary);
+  color: var(--org-text-secondary);
 }
 
 .form-input:focus,
 .search-input:focus {
-    border-color: var(--org-form-group-input-focus-border);
-    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
-    outline: none;
-    background-color: var(--org-bg-secondary); /* White or light background on focus */
+  border-color: var(--org-form-group-input-focus-border);
+  box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
+  outline: none;
+  background-color: var(--org-bg-secondary);
 }
 
-/* Buttons */
 .button-primary,
-.search-button { /* Assuming search-button uses primary button styling */
-    padding: 10px 20px;
-    background-color: var(--org-button-bg);
-    color: var(--org-button-text);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 500;
-    transition: var(--org-transition);
+.search-button {
+  padding: 10px 20px;
+  background-color: var(--org-button-bg);
+  color: var(--org-button-text);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+  transition: var(--org-transition);
 }
 
 .button-primary:hover,
 .search-button:hover {
-    background-color: var(--org-primary-hover);
-    transform: translateY(-1px);
+  background-color: var(--org-primary-hover);
+  transform: translateY(-1px);
 }
 
 .button-primary:active,
 .search-button:active {
-    transform: translateY(0);
+  transform: translateY(0);
 }
 
 .button-secondary,
-.view-profile-button { /* Action link now styled as a button */
-    display: inline-block;
-    padding: 8px 15px;
-    background-color: var(--org-read-only-input-bg); /* Lighter background */
-    color: var(--org-text-primary); /* Primary text color */
-    text-decoration: none;
-    border: 1px solid var(--org-border-medium); /* Subtle border */
-    border-radius: 5px;
-    font-size: 0.9em;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--org-transition);
-    white-space: nowrap;
-    box-shadow: var(--org-shadow-sm); /* Subtle shadow */
+.view-profile-button {
+  display: inline-block;
+  padding: 8px 15px;
+  background-color: var(--org-read-only-input-bg);
+  color: var(--org-text-primary);
+  text-decoration: none;
+  border: 1px solid var(--org-border-medium);
+  border-radius: 5px;
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--org-transition);
+  white-space: nowrap;
+  box-shadow: var(--org-shadow-sm);
 }
 
 .button-secondary:hover,
 .view-profile-button:hover {
-    background-color: var(--org-highlight); /* Lighter background on hover */
-    transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(var(--org-shadow-base-rgb), 0.12);
+  background-color: var(--org-highlight);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(var(--org-shadow-base-rgb), 0.12);
 }
 
 .button-secondary:active,
 .view-profile-button:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
 }
 
 .button-disabled {
-    padding: 10px 20px;
-    background-color: var(--org-border-medium);
-    color: var(--org-text-secondary);
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    font-weight: 500;
-    cursor: not-allowed;
-    opacity: 0.8;
+  padding: 10px 20px;
+  background-color: var(--org-border-medium);
+  color: var(--org-text-secondary);
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
-/* Custom Select Dropdowns */
-.custom-select-wrapper { /* If you implement custom selects */
-    position: relative;
-    display: inline-block;
-    width: 150px;
-    margin-left: 10px;
-    user-select: none;
+.custom-select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 150px;
+  margin-left: 10px;
+  user-select: none;
 }
 
 .custom-select-trigger {
-    background-color: var(--org-read-only-input-bg);
-    border: 1px solid var(--org-form-group-input-border);
-    border-radius: 5px;
-    padding: 10px 15px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1em;
-    color: var(--org-text-primary);
-    transition: var(--org-transition);
+  background-color: var(--org-read-only-input-bg);
+  border: 1px solid var(--org-form-group-input-border);
+  border-radius: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1em;
+  color: var(--org-text-primary);
+  transition: var(--org-transition);
 }
 
 .custom-select-trigger:hover {
-    border-color: var(--org-border-medium);
+  border-color: var(--org-border-medium);
 }
 
 .custom-select-wrapper.open .custom-select-trigger {
-    border-color: var(--org-form-group-input-focus-border);
-    box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
+  border-color: var(--org-form-group-input-focus-border);
+  box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
 }
 
 .dropdown-icon {
-    width: 16px;
-    height: 16px;
-    fill: var(--org-text-secondary);
-    transition: var(--org-transition);
+  width: 16px;
+  height: 16px;
+  fill: var(--org-text-secondary);
+  transition: var(--org-transition);
 }
 
 .custom-select-wrapper.open .dropdown-icon {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
 .custom-options {
-    display: none;
-    position: absolute;
-    top: calc(100% + 5px);
-    left: 0;
-    right: 0;
-    background-color: var(--org-dropdown-bg);
-    border: 1px solid var(--org-dropdown-border);
-    border-radius: var(--org-radius-md);
-    box-shadow: var(--org-shadow-md);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
-    opacity: 0;
-    transform: translateY(5px);
-    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  background-color: var(--org-dropdown-bg);
+  border: 1px solid var(--org-dropdown-border);
+  border-radius: var(--org-radius-md);
+  box-shadow: var(--org-shadow-md);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 }
 
 .custom-select-wrapper.open .custom-options {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .custom-options ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .custom-options li {
-    padding: 12px 15px;
-    cursor: pointer;
-    font-size: 0.95em;
-    color: var(--org-text-primary);
-    transition: background-color 0.2s ease, color 0.2s ease;
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 0.95em;
+  color: var(--org-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .custom-options li:hover {
-    background-color: var(--org-dropdown-item-hover-bg);
-    color: var(--org-primary-hover);
+  background-color: var(--org-dropdown-item-hover-bg);
+  color: var(--org-primary-hover);
 }
 
 .custom-options li[data-value=""] {
-    font-weight: 500;
-    color: var(--org-text-primary-darker);
-    border-bottom: 1px solid var(--org-border-light);
+  font-weight: 500;
+  color: var(--org-text-primary-darker);
+  border-bottom: 1px solid var(--org-border-light);
 }
 
-/* Campaign and Order Cards */
 .campaign-card,
 .order-card {
-    background-color: var(--org-card-bg);
-    border-radius: var(--org-radius-md);
-    box-shadow: var(--org-shadow-sm);
-    transition: var(--org-transition);
-    border: 1px solid var(--org-border-light);
-    margin-bottom: 20px; /* Example spacing */
-    padding: 20px; /* Example padding */
+  background-color: var(--org-card-bg);
+  border-radius: var(--org-radius-md);
+  box-shadow: var(--org-shadow-sm);
+  transition: var(--org-transition);
+  border: 1px solid var(--org-border-light);
+  margin-bottom: 20px;
+  padding: 20px;
 }
 .campaign-card:hover,
 .order-card:hover {
-    box-shadow: var(--org-shadow-md);
-    transform: translateY(-2px);
+  box-shadow: var(--org-shadow-md);
+  transform: translateY(-2px);
 }
 
 .campaign-card-content,
 .order-details {
-    color: var(--org-text-primary);
+  color: var(--org-text-primary);
 }
 
 .detail-item strong {
-    color: var(--org-text-primary-darker);
+  color: var(--org-text-primary-darker);
 }
 
 .total-amount-display .total-label {
-    color: var(--org-text-primary-darker);
+  color: var(--org-text-primary-darker);
 }
 .total-amount-display .total-value {
-    color: var(--org-primary);
-    font-weight: bold;
+  color: var(--org-primary);
+  font-weight: bold;
 }
 
-.order-status-tag, .payment-status-tag { /* Assuming both use similar styling */
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: var(--org-radius-sm);
-    font-size: 0.8em;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--org-text-inverse);
+.order-status-tag,
+.payment-status-tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: var(--org-radius-sm);
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--org-text-inverse);
 }
-.tag-pending, .tag-processing {
-    background-color: var(--org-warning);
+.tag-pending,
+.tag-processing {
+  background-color: var(--org-warning);
 }
-.tag-paid, .tag-success, .tag-completed { /* Added .tag-completed */
-    background-color: var(--org-success);
+.tag-paid,
+.tag-success,
+.tag-completed {
+  background-color: var(--org-success);
 }
-.tag-cancelled, .tag-failed, .tag-declined { /* Added .tag-declined */
-    background-color: var(--org-error);
+.tag-cancelled,
+.tag-failed,
+.tag-declined {
+  background-color: var(--org-error);
 }
-.tag-info { /* For other statuses */
-    background-color: var(--org-info);
+.tag-info {
+  background-color: var(--org-info);
 }
 
-/* Table Styling (if you have tables similar to .students-table) */
-.students-table-container { /* If you have a table container */
-    overflow-x: auto;
-    border-radius: var(--org-radius-md);
-    box-shadow: var(--org-shadow-md);
-    background-color: var(--org-bg-secondary);
+.students-table-container {
+  overflow-x: auto;
+  border-radius: var(--org-radius-md);
+  box-shadow: var(--org-shadow-md);
+  background-color: var(--org-bg-secondary);
 }
 
 .students-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    min-width: 800px; /* Adjust min-width for your content */
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 800px;
 }
 
 .students-table th,
 .students-table td {
-    padding: 15px 20px;
-    text-align: left;
-    border-bottom: 1px solid var(--org-border-medium);
-    white-space: nowrap;
+  padding: 15px 20px;
+  text-align: left;
+  border-bottom: 1px solid var(--org-border-medium);
+  white-space: nowrap;
 }
 
 .students-table thead th {
-    background-color: var(--org-sidebar-bg-color); /* Dark header background */
-    color: var(--org-table-header-text-payments); /* White text */
-    font-weight: 500;
-    font-size: 0.95em;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    cursor: pointer;
-    transition: var(--org-transition);
+  background-color: var(--org-sidebar-bg-color);
+  color: var(--org-table-header-text-payments);
+  font-weight: 500;
+  font-size: 0.95em;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  cursor: pointer;
+  transition: var(--org-transition);
 }
 
 .students-table thead th:hover {
-    background-color: var(--org-primary-light); /* Lighter primary on hover */
+  background-color: var(--org-primary-light);
 }
 
 .students-table thead tr:first-child th:first-child {
-    border-top-left-radius: var(--org-radius-md);
+  border-top-left-radius: var(--org-radius-md);
 }
 .students-table thead tr:first-child th:last-child {
-    border-top-right-radius: var(--org-radius-md);
+  border-top-right-radius: var(--org-radius-md);
 }
 
 .students-table tbody tr:nth-child(even) {
-    background-color: var(--org-highlight); /* Zebra striping */
+  background-color: var(--org-highlight);
 }
 
 .students-table tbody tr:hover {
-    background-color: var(--org-dropdown-item-hover-bg); /* Lighter hover background */
-    transition: background-color 0.2s ease;
+  background-color: var(--org-dropdown-item-hover-bg);
+  transition: background-color 0.2s ease;
 }
 
-/* Sorting indicators for table headers */
 .students-table th.sortable {
-    position: relative;
-    padding-right: 30px;
+  position: relative;
+  padding-right: 30px;
 }
 
 .students-table th.sortable::after {
-    content: '';
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 6px solid transparent;
-    transition: var(--org-transition);
-    opacity: 0.5;
+  content: "";
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  transition: var(--org-transition);
+  opacity: 0.5;
 }
 
 .students-table th.sortable.asc::after {
-    border-bottom-color: var(--org-table-header-text-payments);
-    opacity: 1;
+  border-bottom-color: var(--org-table-header-text-payments);
+  opacity: 1;
 }
 
 .students-table th.sortable.desc::after {
-    border-top-color: var(--org-table-header-text-payments);
-    opacity: 1;
+  border-top-color: var(--org-table-header-text-payments);
+  opacity: 1;
 }
 
-/* No data message for tables */
 .students-table tbody tr td[colspan="7"] {
-    text-align: center !important;
-    padding: 30px;
-    color: var(--org-error);
-    font-style: italic;
-    font-weight: 500;
+  text-align: center !important;
+  padding: 30px;
+  color: var(--org-error);
+  font-style: italic;
+  font-weight: 500;
 }
 
-
-/* Modal Styles (Crucial for the auto-opening fix) */
 .modal {
-    display: none; /* Hidden by default - THIS IS THE FIX */
-    position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex; /* Changed from 'display: none;' for initial state of flex. For showing, JS will switch display. */
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    box-sizing: border-box;
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .modal-content {
-    background-color: var(--org-bg-secondary);
-    margin: auto;
-    padding: 30px;
-    border-radius: var(--org-radius-lg);
-    box-shadow: var(--org-shadow-lg);
-    position: relative;
-    max-width: 700px;
-    width: 100%;
-    color: var(--org-text-primary);
-    animation: fadeInScale 0.3s ease-out forwards;
+  background-color: var(--org-bg-secondary);
+  margin: auto;
+  padding: 30px;
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--org-shadow-lg);
+  position: relative;
+  max-width: 700px;
+  width: 100%;
+  color: var(--org-text-primary);
+  animation: fadeInScale 0.3s ease-out forwards;
 }
 
 @keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .close-button {
-    color: var(--org-text-secondary);
-    font-size: 32px;
-    font-weight: bold;
-    position: absolute;
-    top: 15px;
-    right: 25px;
-    cursor: pointer;
-    transition: color 0.2s ease;
+  color: var(--org-text-secondary);
+  font-size: 32px;
+  font-weight: bold;
+  position: absolute;
+  top: 15px;
+  right: 25px;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .close-button:hover,
 .close-button:focus {
-    color: var(--org-error);
-    text-decoration: none;
+  color: var(--org-error);
+  text-decoration: none;
 }
 
-/* Student Profile Modal Specific Styles (if applicable to your modal) */
-#modalStudentName { /* Or apply to a general .modal-title class */
-    font-size: 2em; /* Slightly larger name */
-    color: var(--org-dashboard-title-color);
-    margin: 0; /* Remove default margin */
-    padding: 0; /* Remove default padding */
-    margin-bottom: 25px;
-    text-align: center;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--org-border-light);
+#modalStudentName {
+  font-size: 2em;
+  color: var(--org-dashboard-title-color);
+  margin: 0;
+  padding: 0;
+  margin-bottom: 25px;
+  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--org-border-light);
 }
 
 .modal-header-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--org-border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--org-border-light);
 }
 
 .student-photo-placeholder {
-    width: 120px;
-    height: 120px;
-    background-color: var(--org-highlight);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 3em;
-    color: var(--org-text-secondary);
-    margin-bottom: 15px;
-    overflow: hidden;
-    border: 2px solid var(--org-border-medium);
-    box-shadow: var(--org-shadow-sm);
+  width: 120px;
+  height: 120px;
+  background-color: var(--org-highlight);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3em;
+  color: var(--org-text-secondary);
+  margin-bottom: 15px;
+  overflow: hidden;
+  border: 2px solid var(--org-border-medium);
+  box-shadow: var(--org-shadow-sm);
 }
 
 .student-photo-placeholder img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .modal-body {
-    display: grid;
-    grid-template-columns: 1fr; /* Single column by default */
-    gap: 15px;
-    font-size: 1.0em;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+  font-size: 1em;
 }
 
 .profile-item {
-    padding: 8px 0;
-    border-bottom: 1px dashed var(--org-border-light);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--org-border-light);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
 }
 
 .profile-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .profile-item strong {
-    color: var(--org-text-primary-darker);
-    min-width: 120px;
-    margin-right: 10px;
-    flex-shrink: 0;
+  color: var(--org-text-primary-darker);
+  min-width: 120px;
+  margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .profile-item span {
-    flex-grow: 1;
-    color: var(--org-text-primary);
+  flex-grow: 1;
+  color: var(--org-text-primary);
 }
 
-/* Order Detail Modal Specific Styles (if applicable to your order modal) */
-.modal-subtitle { /* For the campaign title in order modal */
-    font-size: 1.5em;
-    color: var(--org-text-primary-darker);
-    text-align: center;
-    margin-top: -15px;
-    margin-bottom: 20px;
+.modal-subtitle {
+  font-size: 1.5em;
+  color: var(--org-text-primary-darker);
+  text-align: center;
+  margin-top: -15px;
+  margin-bottom: 20px;
 }
 
 .order-detail-card {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .order-detail-card .detail-section {
-    background-color: var(--org-highlight);
-    padding: 15px;
-    border-radius: var(--org-radius-sm);
-    border: 1px solid var(--org-border-light);
+  background-color: var(--org-highlight);
+  padding: 15px;
+  border-radius: var(--org-radius-sm);
+  border: 1px solid var(--org-border-light);
 }
 
 .order-detail-card .detail-section h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: var(--org-text-primary-darker);
-    border-bottom: 1px solid var(--org-border-medium);
-    padding-bottom: 5px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--org-text-primary-darker);
+  border-bottom: 1px solid var(--org-border-medium);
+  padding-bottom: 5px;
 }
 
 .order-detail-card .detail-section p {
-    margin: 5px 0;
-    font-size: 0.95em;
-    line-height: 1.4;
-    color: var(--org-text-primary);
+  margin: 5px 0;
+  font-size: 0.95em;
+  line-height: 1.4;
+  color: var(--org-text-primary);
 }
 
 .order-detail-card .detail-section strong {
-    color: var(--org-text-secondary);
+  color: var(--org-text-secondary);
 }
 
 .order-detail-actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-/* Responsive Adjustments */
 @media (max-width: 768px) {
-    .content-section { /* students-page-container */
-        padding: 15px;
-        margin: 15px auto;
-    }
+  .content-section {
+    padding: 15px;
+    margin: 15px auto;
+  }
 
-    .page-title.section-title { /* page-header */
-        font-size: 1.8em;
-        margin-bottom: 20px;
-    }
+  .page-title.section-title {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+  }
 
-    .header-actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 
-    .filter-container {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 5px;
-    }
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+  }
 
-    .search-input,
-    .search-button,
-    .form-input {
-        width: 100%;
-        box-sizing: border-box;
-    }
+  .search-input,
+  .search-button,
+  .form-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-    .custom-select-wrapper {
-        width: 100%;
-        margin-left: 0;
-    }
+  .custom-select-wrapper {
+    width: 100%;
+    margin-left: 0;
+  }
 
-    .students-table th,
-    .students-table td {
-        padding: 12px 15px;
-    }
+  .students-table th,
+  .students-table td {
+    padding: 12px 15px;
+  }
 
-    .students-table thead th {
-        font-size: 0.9em;
-    }
+  .students-table thead th {
+    font-size: 0.9em;
+  }
 
-    .modal-content {
-        padding: 25px 20px;
-        max-width: 95%;
-    }
+  .modal-content {
+    padding: 25px 20px;
+    max-width: 95%;
+  }
 
-    #modalStudentName {
-        font-size: 1.5em;
-        margin-bottom: 20px;
-    }
+  #modalStudentName {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+  }
 
-    .profile-item strong {
-        min-width: 90px;
-    }
+  .profile-item strong {
+    min-width: 90px;
+  }
 
-    .modal-header-section {
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-    }
-    .student-photo-placeholder {
-        width: 100px;
-        height: 100px;
-        font-size: 2.5em;
-    }
+  .modal-header-section {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+  .student-photo-placeholder {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5em;
+  }
 }
 
 @media (max-width: 480px) {
-    .page-title.section-title {
-        font-size: 1.5em;
-    }
+  .page-title.section-title {
+    font-size: 1.5em;
+  }
 
-    .students-table th,
-    .students-table td {
-        font-size: 0.85em;
-    }
+  .students-table th,
+  .students-table td {
+    font-size: 0.85em;
+  }
 
-    .view-profile-button {
-        padding: 6px 12px;
-        font-size: 0.8em;
-    }
+  .view-profile-button {
+    padding: 6px 12px;
+    font-size: 0.8em;
+  }
 
-    .modal-content {
-        padding: 20px 15px;
-    }
+  .modal-content {
+    padding: 20px 15px;
+  }
 
-    #modalStudentName {
-        font-size: 1.3em;
-    }
+  #modalStudentName {
+    font-size: 1.3em;
+  }
 
-    .modal-body {
-        gap: 10px;
-        font-size: 0.95em;
-    }
+  .modal-body {
+    gap: 10px;
+    font-size: 0.95em;
+  }
 
-    .profile-item strong {
-        min-width: auto;
-        width: 100%;
-        margin-bottom: 5px;
-    }
+  .profile-item strong {
+    min-width: auto;
+    width: 100%;
+    margin-bottom: 5px;
+  }
 
-    .student-photo-placeholder {
-        width: 80px;
-        height: 80px;
-        font-size: 2em;
-    }
+  .student-photo-placeholder {
+    width: 80px;
+    height: 80px;
+    font-size: 2em;
+  }
 }
 
-/* For wider screens, make modal body two columns */
 @media (min-width: 600px) {
-    .modal-body {
-        grid-template-columns: 1fr 1fr;
-        gap: 20px 30px;
-    }
-    .profile-item {
-        border-bottom: none;
-    }
-    .profile-item:nth-child(odd) {
-        border-right: 1px dashed var(--org-border-light);
-        padding-right: 15px;
-    }
-    .profile-item:last-child {
-        border-right: none;
-    }
-    .profile-item strong {
-        min-width: 100px;
-    }
-    /* Specific adjustments for 2-column layout to align items */
-    .profile-item:nth-child(odd) {
-        border-right: 1px dashed var(--org-border-light);
-        padding-right: 15px;
-    }
-    .profile-item:nth-child(even) {
-        padding-left: 15px;
-    }
-    .modal-body > .profile-item:nth-last-child(1),
-    .modal-body > .profile-item:nth-last-child(2) {
-        border-bottom: none;
-    }
-    .modal-body > .profile-item:last-child:nth-child(odd) {
-        border-right: none;
-    }
+  .modal-body {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 30px;
+  }
+  .profile-item {
+    border-bottom: none;
+  }
+  .profile-item:nth-child(odd) {
+    border-right: 1px dashed var(--org-border-light);
+    padding-right: 15px;
+  }
+  .profile-item:last-child {
+    border-right: none;
+  }
+  .profile-item strong {
+    min-width: 100px;
+  }
+
+  .profile-item:nth-child(odd) {
+    border-right: 1px dashed var(--org-border-light);
+    padding-right: 15px;
+  }
+  .profile-item:nth-child(even) {
+    padding-left: 15px;
+  }
+  .modal-body > .profile-item:nth-last-child(1),
+  .modal-body > .profile-item:nth-last-child(2) {
+    border-bottom: none;
+  }
+  .modal-body > .profile-item:last-child:nth-child(odd) {
+    border-right: none;
+  }
 }
 
 #studentProfileModal {
-    display: none; /* This ensures the modal is hidden by default */
-    /* Other modal styling like position, z-index, background-color, etc. */
+  display: none;
 }
 
-/* Example of what your modal might look like when shown */
-#studentProfileModal.show-modal { /* You could use a class to show it dynamically */
-    display: flex; /* Or block, or grid, depending on how you want it to be displayed */
+#studentProfileModal.show-modal {
+  display: flex;
 }

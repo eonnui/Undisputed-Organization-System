@@ -1,46 +1,101 @@
-/* --- Layout & Sectioning --- */
+:root {
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+  --spacing-xl: 30px;
+  --spacing-2xl: 40px;
+
+  --card-shadow: var(--org-shadow-sm);
+  --button-shadow: var(--org-shadow-sm);
+}
+
 .content-section {
-    background-color: var(--org-card-bg); /* White background for main content blocks */
-    padding: 30px;
-    border-radius: var(--org-radius-lg);
-    box-shadow: var(--card-shadow);
-    margin-bottom: 30px; /* Space between sections */
+  background-color: var(--org-card-bg);
+  padding: var(--spacing-2xl);
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--card-shadow);
+  margin-bottom: var(--spacing-2xl);
 }
 
-.page-title, .modal-title {
-    font-size: 2.2em;
-    font-weight: 700;
-    color: var(--org-dashboard-title-color); /* Specific color for titles */
-    margin-top: 0;
-    margin-bottom: 25px;
-    text-align: center; /* Centered main titles */
+.page-title,
+.modal-title {
+  font-size: 2.2em;
+  font-weight: 700;
+  color: var(--org-dashboard-title-color);
+  margin-top: 0;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-sm);
+  text-align: center;
+  letter-spacing: -0.02em;
 }
 
-.section-title { /* For h2 within content sections */
-    font-size: 1.8em;
-    font-weight: 600;
-    color: var(--dark-text);
-    margin-top: 0;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
+.section-title {
+  font-size: 1.8em;
+  font-weight: 600;
+  color: var(--org-text-primary);
+  margin-top: 0;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--org-border-medium);
 }
 
 .modal-subtitle {
-    font-size: 1.4em;
-    font-weight: 600;
-    color: var(--dark-text);
-    margin-top: 0;
-    margin-bottom: 20px;
+  font-size: 1.4em;
+  font-weight: 600;
+  color: var(--org-text-primary);
+  margin-top: 0;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-xs);
 }
 
 .section-divider {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: 40px 0;
+  border: none;
+  height: 1px;
+  background-color: var(--org-border-medium);
+  margin: var(--spacing-2xl) 0;
 }
 
-/* --- Buttons --- */
+h3 {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: var(--org-text-primary);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  line-height: 1.3;
+}
+
+p {
+  font-size: 1em;
+  line-height: 1.6;
+  color: var(--org-text-primary);
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+}
+
+.campaign-description {
+  font-size: 0.95em;
+  color: var(--org-text-secondary);
+  margin-bottom: var(--spacing-md);
+  flex-grow: 1;
+  line-height: 1.5;
+}
+
+.message-text {
+  font-size: 1em;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+}
+
+.campaign-title {
+  font-size: 1.4em;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
+  color: var(--org-text-primary);
+  padding-bottom: var(--spacing-xs);
+}
+
 .button-primary,
 .button-secondary,
 .order-button,
@@ -48,464 +103,646 @@
 .pay-button,
 .view-details-button,
 .toggle-orders-button {
-    padding: 12px 25px;
-    border-radius: var(--org-radius-md);
-    font-size: 1em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
-    border: none; /* Remove default button border */
-    box-shadow: var(--button-shadow);
+  padding: 12px 25px;
+  border-radius: var(--org-radius-md);
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--org-transition);
+  border: none;
+  box-shadow: var(--button-shadow);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.button-primary, .order-button, .submit-order-button, .pay-button {
-    background-color: var(--org-sidebar-bg-color);
-    color: var(--org-button-text);
+.button-primary,
+.order-button,
+.submit-order-button,
+.pay-button {
+  background-color: var(--org-sidebar-bg-color);
+  color: var(--org-button-text);
 }
 
-.button-primary:hover, .order-button:hover, .submit-order-button:hover, .pay-button:hover {
-    background-color: var(--org-primary-hover);
-    transform: translateY(-1px); /* Subtle lift effect */
-    box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.3); /* Using org shadow base */
+.button-primary:hover,
+.order-button:hover,
+.submit-order-button:hover,
+.pay-button:hover {
+  background-color: var(--org-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--org-shadow-lg);
 }
 
-.button-secondary, .view-details-button, .toggle-orders-button {
-    background-color: var(--org-card-bg);
-    color: var(--secondary-color);
-    border: 1px solid var(--border-color);
-    box-shadow: none; /* Secondary buttons usually don't need heavy shadows */
+.button-secondary,
+.view-details-button,
+.toggle-orders-button {
+  background-color: var(--org-card-bg);
+  color: var(--org-text-secondary);
+  border: 1px solid var(--org-border-medium);
+  box-shadow: none;
 }
 
-.button-secondary:hover, .view-details-button:hover, .toggle-orders-button:hover {
-    background-color: var(--light-bg);
-    color: var(--dark-text);
-    transform: translateY(-1px);
-    box-shadow: var(--button-shadow); /* Re-using button shadow for hover */
+.button-secondary:hover,
+.view-details-button:hover,
+.toggle-orders-button:hover {
+  background-color: var(--org-secondary-color);
+  color: var(--org-text-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--button-shadow);
 }
 
 .button-disabled,
 .closed-button,
 .sold-out-button,
-.paid-button {
-    background-color: var(--org-full-button-bg); /* Light grey for disabled */
-    color: var(--org-button-disabled-text-darker);
-    cursor: not-allowed;
-    opacity: 0.8;
-    box-shadow: none;
+.edit-order-button,
+.remove-order-button {
+    padding: 12px 25px;
+    border-radius: var(--org-radius-md);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--org-transition);
+    border: none;
+    box-shadow: var(--button-shadow);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .button-disabled:hover,
 .closed-button:hover,
 .sold-out-button:hover,
-.paid-button:hover {
-    background-color: var(--org-full-button-bg); /* No change on hover for disabled */
-    transform: none;
-    box-shadow: none;
+.edit-order-button:hover,
+.remove-order-button:hover {
+  background-color: var(--org-full-button-bg) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-/* --- Shirt Campaigns Section --- */
+.paid-button {
+  background-color: var(--org-success) !important;
+  color: var(--org-text-inverse) !important;
+}
+
 .campaigns-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 320px)); /* Responsive grid */
-    gap: 25px; /* Spacing between cards */
-    justify-content: center; /* Center the grid items if they don't fill the row */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+  gap: var(--spacing-xl);
+  justify-content: center;
 }
 
 .campaign-card {
-    background-color: var(--org-card-bg);
-    border-radius: var(--org-radius-lg);
-    box-shadow: var(--card-shadow);
-    overflow: hidden; /* Ensures image corners are rounded */
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  background-color: var(--org-card-bg);
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: var(--org-transition);
+  border: 1px solid transparent;
 }
 
 .campaign-card:hover {
-    transform: translateY(-5px); /* Lift effect on hover */
-    box-shadow: var(--org-shadow-lg);
+  transform: translateY(-8px);
+  box-shadow: var(--org-shadow-lg);
+  border-color: var(--org-primary);
 }
 
 .campaign-image-container {
-    width: 100%;
-    height: 200px; /* Fixed height for images */
-    overflow: hidden;
-    background-color: var(--org-profile-image-bg); /* Placeholder background */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background-color: var(--org-profile-image-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--org-border-medium);
 }
 
 .campaign-image-container.no-image .campaign-image {
-    object-fit: contain; /* Contain placeholder text */
+  object-fit: contain;
+  padding: var(--spacing-md);
 }
 
 .campaign-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Cover container while maintaining aspect ratio */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .campaign-card-content {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1; /* Allows content to push actions to bottom */
-}
-
-.campaign-title {
-    font-size: 1.4em;
-    font-weight: 700;
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: var(--dark-text);
-}
-
-.campaign-description {
-    font-size: 0.9em;
-    color: var(--medium-text);
-    margin-bottom: 15px;
-    flex-grow: 1; /* Pushes details and actions down */
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .campaign-details {
-    border-top: 1px dashed var(--border-color);
-    padding-top: 15px;
-    margin-top: auto; /* Pushes details to the bottom */
+  border-top: 1px dashed var(--org-border-medium);
+  padding-top: var(--spacing-md);
+  margin-top: auto;
 }
 
 .campaign-details .detail-item {
-    font-size: 0.85em;
-    margin: 5px 0;
-    color: var(--medium-text);
+  font-size: 0.88em;
+  margin: var(--spacing-xs) 0;
+  padding: 0 var(--spacing-xs);
+  color: var(--org-text-secondary);
 }
 
 .campaign-details .detail-item strong {
-    color: var(--dark-text);
-    font-weight: 600;
+  color: var(--org-text-primary);
+  font-weight: 600;
 }
 
 .campaign-actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center; /* Center button in card */
+  margin-top: var(--spacing-lg);
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
 }
 
 .no-campaigns-message {
-    grid-column: 1 / -1; /* Span full width in grid */
-    text-align: center;
-    padding: 40px;
-    font-size: 1.1em;
-    color: var(--org-empty-state-color);
-    background-color: var(--org-empty-state-bg);
-    border-radius: var(--org-radius-md);
-    border: 1px dashed var(--border-color);
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--spacing-xl);
+  font-size: 1.1em;
+  color: var(--org-empty-state-color);
+  background-color: var(--org-empty-state-bg);
+  border-radius: var(--org-radius-md);
+  border: 1px dashed var(--org-border-medium);
+  box-shadow: none;
 }
 
-/* --- Modals --- */
 .modal {
-    display: none; /* This is crucial for hiding it by default */
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
-    align-items: center; /* For vertical centering of modal-content */
-    justify-content: center; /* For horizontal centering of modal-content */
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    background-color: var(--org-card-bg);
-    margin: auto;
-    padding: 40px;
-    border-radius: var(--org-radius-lg);
-    box-shadow: var(--org-shadow-lg); /* More pronounced, soft shadow */
-    width: 95%;
-    max-width: 700px; /* Slightly wider modal */
-    position: relative;
-    overflow-y: auto;
-    max-height: 90vh;
-    margin-top: 5em;
-    animation: fadeInScale 0.3s ease-out; /* Simple entry animation */
+  background-color: var(--org-card-bg);
+  margin: auto;
+  padding: var(--spacing-xl);
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--org-shadow-lg);
+  width: 95%;
+  max-width: 600px;
+  position: relative;
+  overflow-y: auto;
+  max-height: 90vh;
+  margin-top: 2.5em;
+  animation: fadeInScale 0.3s ease-out;
 }
 
 @keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.95) translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-
 .close-button {
-    color: var(--medium-text); /* Softer close button */
-    font-size: 28px;
-    font-weight: normal; /* Lighter weight */
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 5px;
-    transition: color 0.2s ease-in-out;
+  color: var(--org-text-secondary);
+  font-size: 24px;
+  font-weight: normal;
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-lg);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: var(--spacing-xs);
+  transition: var(--org-transition);
 }
 
 .close-button:hover,
 .close-button:focus {
-    color: var(--dark-text);
-    outline: none; /* Remove default outline */
+  color: var(--org-text-primary);
+  outline: none;
 }
 
-/* --- Form Styles within Modals --- */
 .order-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Spacing between form groups */
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
 .form-group {
-    margin-bottom: 10px;
+  margin-bottom: 0;
+  padding: var(--spacing-xs) 0;
 }
 
 .form-label {
-    display: block; /* Make label take full width */
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--org-form-group-label-color);
-    font-size: 0.95em;
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: 600;
+  color: var(--org-form-group-label-color);
+  font-size: 0.9em;
+  padding-left: 2px;
 }
 
 .form-input,
 .form-select {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid var(--org-form-group-input-border);
-    border-radius: var(--org-radius-md);
-    font-size: 1em;
-    color: var(--dark-text);
-    background-color: var(--org-settings-section-bg); /* Using a light bg from org theme */
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--org-form-group-input-border);
+  border-radius: var(--org-radius-md);
+  font-size: 0.95em;
+  color: var(--org-text-primary);
+  background-color: var(--org-settings-section-bg);
+  transition: var(--org-transition);
 }
 
 .form-input:focus,
 .form-select:focus {
-    border-color: var(--org-form-group-input-focus-border);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--org-primary), 0.2); /* Using primary color with transparency */
+  border-color: var(--org-form-group-input-focus-border);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--org-shadow-base-rgb), 0.2);
 }
 
 .form-input[readonly] {
-    background-color: var(--org-read-only-input-bg); /* Different background for readonly fields */
-    cursor: not-allowed;
-    color: var(--org-read-only-input-text);
+  background-color: var(--org-read-only-input-bg);
+  cursor: default;
+  color: var(--org-read-only-input-text);
 }
 
 .total-amount-display {
-    text-align: right;
-    font-size: 1.2em;
-    font-weight: 700;
-    margin-top: 20px;
-    color: var(--primary-color); /* Highlight total amount */
+  text-align: right;
+  font-size: 1.3em;
+  font-weight: 700;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--org-border-medium);
+  color: var(--org-primary);
 }
 
 .total-label {
-    color: var(--dark-text);
-    font-weight: 600;
+  color: var(--org-text-primary);
+  font-weight: 600;
+  padding-right: var(--spacing-xs);
 }
 
 .total-value {
-    color: var(--primary-color);
+  color: var(--org-primary);
 }
 
-/* --- My Shirt Orders Section --- */
 .orders-list-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid for orders */
-    gap: 20px;
-    margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
 }
 
 .order-card {
-    background-color: var(--org-card-bg);
-    border-radius: var(--org-radius-lg);
-    box-shadow: var(--card-shadow);
-    padding: 25px;
-    display: flex;
-    flex-direction: column;
+  background-color: var(--org-card-bg);
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--card-shadow);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  transition: var(--org-transition);
+}
+
+.order-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--org-shadow-lg);
+  border-color: var(--org-border-medium);
 }
 
 .order-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--org-border-medium);
 }
 
 .order-campaign-title {
-    font-size: 1.2em;
-    font-weight: 600;
-    color: var(--dark-text);
-    margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+  color: var(--org-text-primary);
+  margin: 0;
+  padding-right: var(--spacing-md);
 }
 
 .order-details {
-    flex-grow: 1; /* Push actions to the bottom */
-    margin-bottom: 20px;
+  flex-grow: 1;
+  margin-bottom: var(--spacing-lg);
+  padding-top: var(--spacing-sm);
 }
 
 .order-details .detail-item {
-    font-size: 0.9em;
-    margin: 8px 0;
-    color: var(--medium-text);
+  font-size: 0.9em;
+  margin: var(--spacing-xs) 0;
+  padding: 0 var(--spacing-xs);
+  color: var(--org-text-secondary);
 }
 
 .order-details .detail-item strong {
-    color: var(--dark-text);
-    font-weight: 600;
+  color: var(--org-text-primary);
+  font-weight: 600;
 }
 
 .order-actions {
-    display: flex;
-    flex-wrap: wrap; /* Allow buttons to wrap */
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: auto; /* Push actions to the bottom */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+  padding-top: var(--spacing-sm);
 }
 
 .no-orders-message {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 40px;
-    font-size: 1.1em;
-    color: var(--org-empty-state-color);
-    background-color: var(--org-empty-state-bg);
-    border-radius: var(--org-radius-md);
-    border: 1px dashed var(--border-color);
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--spacing-xl);
+  font-size: 1.1em;
+  color: var(--org-empty-state-color);
+  background-color: var(--org-empty-state-bg);
+  border-radius: var(--org-radius-md);
+  border: 1px dashed var(--org-border-medium);
+  box-shadow: none;
 }
 
 .cta-message {
-    grid-column: 1 / -1;
-    text-align: center;
-    margin-top: 15px;
-    font-size: 1em;
-    color: var(--medium-text);
+  grid-column: 1 / -1;
+  text-align: center;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  font-size: 0.95em;
+  color: var(--org-text-secondary);
 }
 
-/* --- Status Tags --- */
-.order-status-tag, .payment-status-tag {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px; /* Pill shape */
-    font-weight: 600;
-    font-size: 0.75em;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    box-shadow: var(--button-shadow); /* Subtle shadow for badge effect */
+.order-status-tag,
+.payment-status-tag {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  box-shadow: none;
+  border: 1px solid transparent;
 }
 
-/* Tag Specific Colors */
-.tag-pending, .tag-pending_payment {
-    background-color: var(--org-highlight); /* Light background for pending */
-    color: var(--org-accent-dark); /* Darker text for pending */
+.tag-pending,
+.tag-pending_payment {
+  background-color: var(--org-status-unpaid-bg);
+  color: var(--org-status-unpaid-text);
+  border-color: var(--org-highlight);
 }
 
-.tag-paid {
-    background-color: var(--org-success);
-    color: var(--org-text-inverse);
+.tag-paid,
+.tag-success {
+  background-color: var(--org-success);
+  color: var(--org-text-inverse);
+  border-color: #a5d6a7;
 }
 
 .tag-cancelled {
-    background-color: var(--org-error);
-    color: var(--org-text-inverse);
+  background-color: var(--org-error);
+  color: var(--org-text-inverse);
+  border-color: #e57373;
 }
 
 .tag-processing {
-    background-color: var(--org-info);
-    color: var(--org-text-inverse);
+  background-color: var(--org-info);
+  color: var(--org-text-inverse);
+  border-color: #90caf9;
 }
 
-/* --- General Message Styles --- */
-.message-text, .info-message, .loading-message, .error-message {
-    text-align: center;
-    padding: 15px;
-    border-radius: var(--org-radius-md);
-    margin-top: 15px;
-    font-size: 0.9em;
-    line-height: 1.5;
+.message-text,
+.info-message,
+.loading-message,
+.error-message {
+  text-align: center;
+  padding: var(--spacing-lg);
+  border-radius: var(--org-radius-md);
+  margin-top: var(--spacing-md);
+  font-size: 0.9em;
+  line-height: 1.5;
+  box-shadow: none;
 }
 
 .message-text {
-    color: var(--org-primary);
+  color: var(--org-primary);
 }
 
 .info-message {
-    background-color: var(--org-bg-secondary);
-    color: var(--medium-text);
-    border: 1px dashed var(--border-color);
+  background-color: var(--org-empty-state-bg);
+  color: var(--org-text-secondary);
+  border: 1px dashed var(--org-border-medium);
 }
 
 .loading-message {
-    background-color: var(--org-highlight);
-    color: var(--org-info);
-    border: 1px solid var(--org-info);
-    font-style: italic;
+  background-color: var(--org-highlight);
+  color: var(--org-info);
+  border: 1px solid var(--org-info);
+  font-style: italic;
 }
 
 .error-message {
-    background-color: var(--org-highlight); /* Using highlight for light error background */
-    color: var(--org-error);
-    border: 1px solid var(--org-error);
-    font-weight: 500;
+  background-color: var(--org-error);
+  color: var(--org-text-inverse);
+  border: 1px solid var(--org-error);
+  font-weight: 500;
 }
 
+.order-detail-card {
+  background-color: var(--org-card-bg);
+  padding: var(--spacing-lg);
+  border-radius: var(--org-radius-md);
+  border: 1px solid var(--org-border-medium);
+  margin-top: var(--spacing-lg);
+  box-shadow: var(--org-shadow-sm);
+}
 
-/* --- Responsive Adjustments --- */
+.order-detail-card .detail-item {
+  font-size: 1em;
+  margin-bottom: var(--spacing-sm);
+  color: var(--org-text-primary);
+  line-height: 1.6;
+  padding: var(--spacing-xs) 0;
+  border-bottom: 1px dashed var(--org-secondary-color);
+}
+
+.order-detail-card .detail-item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.order-detail-card .detail-item strong {
+  color: var(--org-dashboard-title-color);
+  min-width: 120px;
+  display: inline-block;
+  margin-right: var(--spacing-sm);
+}
+
+.order-detail-card .order-status-tag,
+.order-detail-card .payment-status-tag {
+  margin-left: var(--spacing-md);
+}
+
+.order-detail-card .detail-image-container {
+  width: 100%;
+  max-height: 250px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--org-radius-md);
+  background-color: var(--org-profile-image-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.order-detail-card .detail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.order-detail-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--org-border-medium);
+}
+
+.order-detail-buttons .button-primary,
+.order-detail-buttons .button-secondary {
+  padding: 10px 20px;
+  font-size: 0.9em;
+}
+
 @media (max-width: 768px) {
-    .dashboard-grid { /* If you have a dashboard grid in student_common_styles.css */
-        grid-template-columns: 1fr;
-    }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
 
-    .campaigns-grid, .orders-list-container {
-        grid-template-columns: 1fr; /* Stack cards on smaller screens */
-    }
+  .campaigns-grid,
+  .orders-list-container {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
 
-    .modal-content {
-        padding: 25px;
-    }
+  .modal-content {
+    padding: var(--spacing-lg);
+    margin-top: 2em;
+  }
 
-    .page-title, .modal-title {
-        font-size: 1.8em;
-        margin-bottom: 20px;
-    }
+  .page-title,
+  .modal-title {
+    font-size: 1.8em;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-sm);
+  }
 
-    .section-title {
-        font-size: 1.5em;
-    }
+  .section-title {
+    font-size: 1.5em;
+    padding-bottom: var(--spacing-xs);
+  }
 
-    .close-button {
-        font-size: 24px;
-        top: 10px;
-        right: 15px;
-    }
+  .close-button {
+    font-size: 22px;
+    top: var(--spacing-sm);
+    right: var(--spacing-md);
+    padding: var(--spacing-xs);
+  }
 
-    .button-primary, .button-secondary {
-        padding: 10px 20px;
-        font-size: 0.9em;
-    }
+  .button-primary,
+  .button-secondary,
+  .order-detail-buttons .button-primary,
+  .order-detail-buttons .button-secondary {
+    padding: 10px 20px;
+    font-size: 0.9em;
+  }
 
-    .campaign-actions, .order-actions {
-        flex-direction: column; /* Stack buttons vertically */
-        gap: 8px;
-    }
+  .campaign-actions,
+  .order-actions {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-sm);
+  }
+
+  .form-input,
+  .form-select {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  .campaign-card-content,
+  .order-card {
+    padding: var(--spacing-md);
+  }
+
+  .content-section {
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .no-campaigns-message,
+  .no-orders-message,
+  .message-text,
+  .info-message,
+  .loading-message,
+  .error-message {
+    padding: var(--spacing-md);
+  }
+
+  .order-status-tag,
+  .payment-status-tag {
+    padding: 4px 10px;
+    font-size: 0.65em;
+  }
+
+  .order-detail-card {
+    padding: var(--spacing-md);
+  }
+
+  .order-detail-card .detail-item {
+    font-size: 0.95em;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .order-detail-card .detail-item strong {
+    min-width: unset;
+    display: block;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .order-detail-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.hidden-order {
+  display: none !important;
 }

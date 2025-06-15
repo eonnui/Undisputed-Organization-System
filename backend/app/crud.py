@@ -829,6 +829,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
 
     if dark_mode:
         custom_palette["--org-bg-color"] = "#1E1E1E"
+        custom_palette["--org-settings-section-bg"] = "#1E1E1E"
         custom_palette["--org-student-info-section-bg"] = "#252525"
         custom_palette["--org-registration-form-section-bg"] = "#252525"
         custom_palette["--org-dashboard-bg-color"] = "#1E1E1E"
