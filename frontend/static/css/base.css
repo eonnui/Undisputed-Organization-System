@@ -30,7 +30,7 @@
   --org-dropdown-item-hover-bg: #404040;
   --org-border-light: #333;
   --org-border-medium: #666;
-  --org-bg-color: initial;
+  --org-bg-color: #1E1E1E;
   --org-top-bar-border-color: initial;
   --org-focus-border: initial;
   --org-error: initial;
@@ -545,7 +545,6 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 3px;
-  border-bottom: 1px solid #eee;
 }
 
 .notification-actions {

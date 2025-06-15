@@ -680,7 +680,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
     # This is your existing base palette. It remains exactly as defined.
     base_palette = {
         "--org-bg-color": "#fdf5f5", "--org-login-bg": "#5c1011", "--org-button-bg": "#9a1415",
-        "--org-button-text": "#FFFFFF", "--org-hover-effect": "#7a1012", "--org-accent-light": "#d32f2f",
+        "--org-button-text": "#FFFFFF","--org-button-chart-text": "#FFFFFF", "--org-hover-effect": "#7a1012", "--org-accent-light": "#d32f2f",
         "--org-accent-dark": "#5c0b0b", "--org-highlight": "#ffebee", "--org-text-primary": "#212121",
         "--org-text-secondary": "#757575", "--org-text-inverse": "#FFFFFF", "--org-hover-dark": "#424242",
         "--org-hover-accent": "#b71c1c", "--org-focus-border": "transparent", "--org-success": "#4CAF50",
@@ -794,6 +794,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
 
     custom_palette["--org-primary"] = theme_color_hex
     custom_palette["--org-button-bg"] = theme_color_hex
+    custom_palette["--org-button-chart-text"] = theme_color_hex
     custom_palette["--org-hover-effect"] = dark_theme_hex
     custom_palette["--org-accent-light"] = light_theme_hex
     custom_palette["--org-accent-dark"] = darker_theme_hex
@@ -854,10 +855,11 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         custom_palette["--org-highlight"] = "#1a1a1a"
         custom_palette["--org-button-bg"] = "#1a1a1a"
         custom_palette["--org-dashboard-accent-primary"] =  "#FFFFFF"
+        custom_palette["--org-button-chart-text"] =  "#b0b0b0"
         custom_palette["--org-accent-light"] = "#FFFFFF"
         custom_palette["--org-nav-item-selected-bg"] = "#1a1a1a"
         custom_palette["--org-accent-dark"] = "#FFFFFF"
-        custom_palette["--org-card-bg"] = "#252525"
+        custom_palette["--org-card-bg"] = "#1E1E1E"
         custom_palette["--org-announcement-card-bg"] = "#1E1E1E"
         custom_palette["--org-faq-item-bg"] = "#1E1E1E"
         custom_palette["--org-empty-state-bg"] = "#1E1E1E"

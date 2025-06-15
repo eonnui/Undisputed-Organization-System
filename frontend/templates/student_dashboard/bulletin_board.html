@@ -1,120 +1,125 @@
-{% extends 'base.html' %}
-
-{% block title %} Bulletin Board & Rules/Wiki {% endblock %}
-
-{% block head %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="/static/css/student_dashboard/bulletin_board.css">
-{% endblock %}
-
-{% block content_header %}
-    <div class="page-header-content">
-        <h1 class="dashboard-title">Bulletin Board</h1>
-    </div>
-{% endblock %}
-
-{% block content %}
-    <div class="main-content-flex-container">
-        <div class="bulletin-board-container">
-            <h2 class="existing-posts-title">Recent Posts</h2>
-            <div class="bulletin-container">
-                {# Whitespace control added here #}
-                {%- if posts -%}
-                    {%- for post in posts -%}
-                    <div class="post-card">
-                        <div class="post-header">
-                            <div class="profile-info">
-                                <div class="profile-image">
-                                    {%- if post.admin and post.admin.first_name -%}
-                                    <div class="initial-circle">
-                                        {{ post.admin.first_name[0]|upper }}
-                                    </div>
-                                    {%- else -%}
-                                    <div class="initial-circle">
-                                        ?
-                                    </div>
-                                    {%- endif -%}
-                                </div>
-                                <div class="post-meta">
-                                    <div class="post-title">{{ post.title }} {% if post.is_pinned %} <span
-                                                class="pinned">Pinned</span> {% endif %}</div>
-                                    <div class="post-details">
-                                        <div>by {% if post.admin and post.admin.first_name %} {{ post.admin.first_name }} {% else %}
-                                            Unknown Admin {% endif %}</div>
-                                        <div class="post-date">date posted: {{ post.created_at.strftime('%m/%d/%Y') }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {%- if post.image_path -%}
-                        <img src="{{ post.image_path }}" alt="{{ post.title }}" class="bulletin-post-image">
-                        {%- endif -%}
-                        <div class="post-content">{{ post.content | safe }}</div>
-                        <div class="post-actions">
-                            <button class="heart-button {% if post.post_id in hearted_posts %}hearted{% endif %}"
-                                data-post-id="{{ post.post_id }}">
-                                <svg viewBox="0 0 24 24">
-                                    <path
-                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
-                                    </path>
-                                </svg>
-                                <span class="heart-count">{{ post.heart_count }}</span>
-                            </button>
-                        </div>
-                    </div>
-                    {%- endfor -%}
-                {%- else -%}
-                <p>No bulletin board posts yet.</p>
-                {%- endif -%}
+{% extends 'base.html' %} {% block title %} Bulletin Board & Rules/Wiki {%
+endblock %} {% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link
+  rel="stylesheet"
+  href="/static/css/student_dashboard/bulletin_board.css"
+/>
+{% endblock %} {% block content_header %}
+<div class="page-header-content">
+  <h1 class="dashboard-title">Bulletin Board</h1>
+</div>
+{% endblock %} {% block content %}
+<div class="main-content-flex-container">
+  <div class="bulletin-board-container">
+    <div class="bulletin-container">
+      {# Whitespace control added here #} {%- if posts -%} {%- for post in posts
+      -%}
+      <div class="post-card">
+        <div class="post-header">
+          <div class="profile-info">
+            <div class="profile-image">
+              {%- if post.admin and post.admin.first_name -%}
+              <div class="initial-circle">
+                {{ post.admin.first_name[0]|upper }}
+              </div>
+              {%- else -%}
+              <div class="initial-circle">?</div>
+              {%- endif -%}
             </div>
-        </div>
-
-        <div class="rules-wiki-container">
-            <div class="org-chart-section">
-                <h2 class="org-chart-header">Organizational Chart</h2>
-                <button id="viewOrgChartButton" class="view-org-chart-button"
-                        data-modal-title="Organizational Chart"
-                        data-modal-content-id="organizationChartContent">
-                    View Chart
-                </button>
-                <div id="organizationChartContent" style="display: none;">
-                    <div class="organization-chart-display">
-                        <p class="loading-message">Loading organizational chart...</p>
-                    </div>
+            <div class="post-meta">
+              <div class="post-title">
+                {{ post.title }} {% if post.is_pinned %}
+                <span class="pinned">Pinned</span> {% endif %}
+              </div>
+              <div class="post-details">
+                <div>
+                  by {% if post.admin and post.admin.first_name %} {{
+                  post.admin.first_name }} {% else %} Unknown Admin {% endif %}
                 </div>
-            </div>
-
-            <hr class="section-divider">
-
-            <div class="existing-wiki-post-container">
-                <h3 class="existing-wiki-posts-title">Rules & Wiki Entries</h3>
-                <div class="wiki-posts-list">
-                    {# Whitespace control added here #}
-                    {%- if wiki_posts -%}
-                        {%- for post in wiki_posts -%}
-                        <div class="wiki-post-card">
-                            <div class="wiki-post-display-mode">
-                                <div class="wiki-post-header">
-                                    <h3 class="wiki-post-title">{{ post.title }} <span class="wiki-post-category">{{ post.category }}</span></h3>
-                                </div>
-                                {%- if post.image_path -%}
-                                <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
-                                {%- endif -%}
-                                <div class="wiki-post-content">
-                                    {{ post.content | safe }}
-                                </div>
-                            </div>
-                        </div>
-                        {%- endfor -%}
-                    {%- else -%}
-                    <p>No rules or wiki entries yet.</p>
-                    {%- endif -%}
+                <div class="post-date">
+                  date posted: {{ post.created_at.strftime('%m/%d/%Y') }}
                 </div>
+              </div>
             </div>
+          </div>
         </div>
+        {%- if post.image_path -%}
+        <img
+          src="{{ post.image_path }}"
+          alt="{{ post.title }}"
+          class="bulletin-post-image"
+        />
+        {%- endif -%}
+        <div class="post-content">{{ post.content | safe }}</div>
+        <div class="post-actions">
+          <button
+            class="heart-button {% if post.post_id in hearted_posts %}hearted{% endif %}"
+            data-post-id="{{ post.post_id }}"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              ></path>
+            </svg>
+            <span class="heart-count">{{ post.heart_count }}</span>
+          </button>
+        </div>
+      </div>
+      {%- endfor -%} {%- else -%}
+      <p>No bulletin board posts yet.</p>
+      {%- endif -%}
     </div>
-{% endblock %}
+  </div>
 
-{% block scripts %}
+  <div class="rules-wiki-container">
+    <div class="org-chart-section">
+      <h2 class="org-chart-header">Organizational Chart</h2>
+      <button
+        id="viewOrgChartButton"
+        class="view-org-chart-button"
+        data-modal-title="Organizational Chart"
+        data-modal-content-id="organizationChartContent"
+      >
+        View Chart
+      </button>
+      <div id="organizationChartContent" style="display: none">
+        <div class="organization-chart-display">
+          <p class="loading-message">Loading organizational chart...</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <div class="existing-wiki-post-container">
+      <h3 class="existing-wiki-posts-title">Rules & Wiki Entries</h3>
+      <div class="wiki-posts-list">
+        {# Whitespace control added here #} {%- if wiki_posts -%} {%- for post
+        in wiki_posts -%}
+        <div class="wiki-post-card">
+          <div class="wiki-post-display-mode">
+            <div class="wiki-post-header">
+              <span class="wiki-post-category">{{ post.category }}</span>
+            </div>            
+              <h3 class="wiki-post-title">{{ post.title }}</h3>
+            {%- if post.image_path -%}
+            <img
+              src="{{ post.image_path }}"
+              alt="{{ post.title }}"
+              class="wiki-post-image"
+            />
+            {%- endif -%}
+            <div class="wiki-post-content">{{ post.content | safe }}</div>
+          </div>
+        </div>
+        {%- endfor -%} {%- else -%}
+        <p>No rules or wiki entries yet.</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
 <script src="/static/js/student_dashboard/bulletin_board.js"></script>
 {% endblock %}
