@@ -9,10 +9,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    {# Favicons for consistency #}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='images/favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='images/apple-touch-icon.png') }}">
     {% block head %}
     {% endblock %}
 </head>
 <body>
+    {# Macro to get path from URL object (already existing) #}
     {% macro get_path_from_url_object(url_object) %}
         {{ url_object.path | trim }}
     {% endmacro %}
@@ -83,6 +87,7 @@
             </button>
         </div>
     </div>
+
     <div class="main-content">
         <div class="top-bar">
             <div class="menu-icon" id="menu-toggle">
@@ -123,14 +128,39 @@
                 </div>
             </div>
         </div>
-        <div class="content">
-            {% block content %}
+
+        {# Content header block #}
+        <div class="content-header">
+            {% block content_header %}
+            {# Default header content or leave empty for child templates to define #}
             {% endblock %}
         </div>
+
+        <div class="content">
+            {# Standard Content Wrapper for consistent padding/width within main content #}
+            <div class="content-wrapper">
+                {% block content %}
+                {# Main page content goes here, defined by child templates #}
+                {% endblock %}
+            </div>
+        </div>
+
         <footer>
             <p>&copy; {{ year }} Organization System</p>
         </footer>
     </div>
+
+    {# Global Modal Structure #}
+    <div id="global-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div id="modal-body">
+                {# Content can be pre-filled or dynamically updated if you later add JS #}
+            </div>
+        </div>
+    </div>
+
+    {# Existing base.js script link #}
     <script src="{{ url_for('static', path='js/base.js') }}"></script>
     {% block scripts %}
     {% endblock %}

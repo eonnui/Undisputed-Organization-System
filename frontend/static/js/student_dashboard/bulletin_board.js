@@ -1,4 +1,61 @@
 document.addEventListener('DOMContentLoaded', function() {
+
+    // --- Global Modal Logic (Copied from previous response) ---
+    const globalModal = document.getElementById('global-modal');
+    const modalBody = globalModal.querySelector('#modal-body');
+    // Assuming you've added an h3 for the title inside modal-content in base.html
+    const modalTitleElement = globalModal.querySelector('.modal-content h3'); 
+    const modalCloseBtn = globalModal.querySelector('.modal-close-btn');
+
+    function openGlobalModal(title, contentHtml) {
+        if (modalTitleElement) {
+            modalTitleElement.innerText = title;
+        } else {
+            console.warn("No h3 element found in modal-content for title. Appending title.");
+            const newTitle = document.createElement('h3');
+            newTitle.innerText = title;
+            // Prepend title to modalBody if no specific title element exists
+            // This might need CSS adjustment if you prepend it
+            modalBody.prepend(newTitle); 
+        }
+        modalBody.innerHTML = contentHtml;
+        globalModal.style.display = 'flex';
+        globalModal.classList.add('is-visible');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling background
+    }
+
+    function closeGlobalModal() {
+        globalModal.style.display = 'none';
+        globalModal.classList.remove('is-visible');
+        document.body.style.overflow = ''; // Restore scrolling
+        modalBody.innerHTML = ''; // Clear content
+        if (modalTitleElement) {
+            modalTitleElement.innerText = ''; // Clear title
+        }
+    }
+
+    // Event listener for the modal close button
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', closeGlobalModal);
+    }
+
+    // Close modal when clicking outside of the modal content
+    if (globalModal) { // Ensure globalModal exists
+        globalModal.addEventListener('click', function(event) {
+            if (event.target === globalModal) {
+                closeGlobalModal();
+            }
+        });
+    }
+
+    // Close modal when Escape key is pressed
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && globalModal && globalModal.classList.contains('is-visible')) {
+            closeGlobalModal();
+        }
+    });
+
+    // --- Heart Button Logic ---
     const heartButtons = document.querySelectorAll('.heart-button');
 
     heartButtons.forEach(button => {
@@ -41,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error hearting post:', error);
+                // Revert UI on error
                 if (action === 'heart') {
                     this.classList.remove('hearted');
                     heartCountSpan.textContent = currentCount;
@@ -52,13 +110,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- Fetch Rules/Wiki Logic ---
     function fetchRulesWiki() {
         const rulesWikiContainer = document.querySelector('.wiki-posts-list');
         if (!rulesWikiContainer) return; 
 
         rulesWikiContainer.innerHTML = '<p>Loading rules and wiki entries...</p>'; 
 
-        fetch('/BulletinBoard')
+        fetch('/BulletinBoard') // Ensure this endpoint returns the partial HTML for wiki posts
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -68,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(htmlString => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlString, 'text/html');
+                // Select the specific content you want from the full page HTML
                 const newRulesWikiContent = doc.querySelector('.wiki-posts-list');
 
                 if (newRulesWikiContent) {
@@ -85,11 +145,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call this after DOM is ready
     fetchRulesWiki();
 
+
     // --- Organizational Chart Logic ---
     const orgChartButton = document.getElementById('viewOrgChartButton');
-    const orgChartModal = document.getElementById('orgChartModal');
-    const closeButton = orgChartModal ? orgChartModal.querySelector('.close-button') : null; 
-    const organizationChartContainer = document.getElementById('organizationChartContainer');
+    const organizationChartContainerInHiddenDiv = document.getElementById('organizationChartContent');
+
 
     // Helper to create an admin node div with profile, position, and name
     const createAdminNodeDiv = (admin, positionOverride = null) => {
@@ -108,6 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (admin.profile_picture_url) {
             img.src = admin.profile_picture_url;
         } else {
+            // Default image if profile_picture_url is not available
             img.src = '/static/images/your_image_name.jpg'; 
         }
         profileDiv.appendChild(img);
@@ -251,6 +312,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const adviserSectionHeader = document.createElement('h4');
             adviserSectionHeader.textContent = 'ADVISERS';
+            // These inline styles are fine for specific, non-reusable elements if you prefer,
+            // but for consistency, they could also be classes in CSS.
             Object.assign(adviserSectionHeader.style, {
                 marginTop: '2rem',
                 color: 'var(--org-text-primary)',
@@ -281,13 +344,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchAndRenderOrgChart() {
-        if (!organizationChartContainer) {
-            console.error('Organizational chart container not found.');
-            return;
-        }
-
-        organizationChartContainer.innerHTML = '<p class="loading-message">Loading organizational chart...</p>';
-
+        // We're now rendering directly into the modalBody
+        const tempOrgChartContainer = document.createElement('div');
+        tempOrgChartContainer.innerHTML = '<p class="loading-message">Loading organizational chart...</p>';
+        
         try {
             const response = await fetch('/api/admin/org_chart_data');
             if (!response.ok) {
@@ -295,299 +355,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const admins = await response.json();
 
-            organizationChartContainer.innerHTML = '';
+            // Clear temporary container and append chart
+            tempOrgChartContainer.innerHTML = '';
             const chartElements = createOrgChartDisplayElements(admins);
-            organizationChartContainer.appendChild(chartElements);
+            tempOrgChartContainer.appendChild(chartElements);
+
+            // Now, open the global modal with the fetched content
+            openGlobalModal('Organizational Chart', tempOrgChartContainer.innerHTML);
 
         } catch (error) {
             console.error('Error fetching or rendering organizational chart:', error);
-            organizationChartContainer.innerHTML = '<p class="error-message">Failed to load organizational chart. Please try again later.</p>';
+            // Open modal with error message
+            openGlobalModal('Error Loading Chart', '<p class="error-message">Failed to load organizational chart. Please try again later.</p>');
         }
     }
 
-    // Ensure elements exist before attaching listeners
-    if (orgChartButton && orgChartModal && closeButton) {
+    // Event listener for the "View Chart" button
+    if (orgChartButton) {
         orgChartButton.addEventListener('click', function() {
-            orgChartModal.style.display = 'flex'; 
+            // Trigger fetch and render when button is clicked
             fetchAndRenderOrgChart();
         });
-
-        closeButton.addEventListener('click', function() {
-            orgChartModal.style.display = 'none'; 
-        });
-
-        window.addEventListener('click', function(event) {
-            if (event.target === orgChartModal) {
-                orgChartModal.style.display = 'none'; 
-            }
-        });
-    } else {
-        console.warn("Organizational chart elements not found. Modal functionality will not be available.");
     }
-
-    const style = document.createElement('style');
-    style.innerHTML = ` 
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background-color: var(--org-card-bg);
-            margin: auto;
-            padding: 30px;
-            border-radius: var(--org-radius-lg);
-            box-shadow: var(--org-shadow-md);
-            width: 90%;
-            max-width: 1200px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-close-button {
-            color: var(--org-text-secondary);
-            position: absolute;
-            top: 15px;
-            right: 25px;
-            font-size: 32px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        .modal-close-button:hover,
-        .modal-close-button:focus {
-            color: var(--org-text-primary);
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-
-        .modal-body table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            border-radius: var(--org-radius-md);
-            overflow: hidden;
-        }
-
-        .modal-body th,
-        .modal-body td {
-            border: 1px solid var(--org-border-medium);
-            padding: 12px 15px;
-            text-align: left;
-            font-size: 0.95em;
-        }
-
-        .modal-body th {
-            background-color: var(--org-table-header-bg-payments);
-            color: var(--org-table-header-text-payments);
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .modal-body tr:nth-child(even) {
-            background-color: var(--org-background-light-alt-darker);
-        }
-
-        .modal-body tr:hover {
-            background-color: var(--org-hover-effect);
-            transition: background-color 0.2s ease;
-        }
-
-        .organization-chart-display {
-            --org-node-bg: #e0f7fa; 
-            --org-node-border: #00bcd4; 
-            --org-root-bg: #80deea; 
-            --org-root-border: #0097a7; 
-            --org-line-color: #78909c; 
-            --org-text-primary: #263238; 
-            --org-text-secondary: #455a64; 
-            --org-border-medium: #b0bec5; 
-
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            color: var(--org-text-primary);
-        }
-
-        .org-node {
-            background-color: var(--org-node-bg);
-            border: 1px solid var(--org-node-border);
-            border-radius: 8px;
-            padding: 10px 15px;
-            margin: 10px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            min-width: 150px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .org-node.org-root {
-            background-color: var(--org-root-bg);
-            border: 2px solid var(--org-root-border);
-            padding: 15px 25px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        .profile-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #f0f0f0;
-            color: #555;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-            overflow: hidden;
-            border: 2px solid #ddd;
-        }
-
-        .profile-circle img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .position-text {
-            font-weight: bold;
-            font-size: 0.95rem;
-            color: var(--org-text-primary);
-        }
-
-        .name-text {
-            color: #444;
-            font-size: 0.85rem;
-            display: block;
-            margin-top: 4px;
-        }
-
-        .org-branch-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            margin-bottom: 20px;
-        }
-
-        .org-line {
-            background-color: var(--org-line-color);
-            flex-shrink: 0;
-        }
-
-        .org-vertical-to-branch {
-            width: 2px;
-            height: 30px;
-            margin: 0 auto;
-        }
-
-        .org-line-horizontal {
-            height: 2px;
-            width: 30px;
-            margin: 0 5px;
-            align-self: center;
-        }
-
-        .adviser-group {
-            margin-top: 30px;
-            border-top: 1px dashed #ccc;
-            padding-top: 20px;
-            text-align: center;
-            width: 100%;
-        }
-
-        .adviser-group h4 {
-            color: #666;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .org-node.adviser-node {
-            border: 1px dashed #b0b0b0;
-            background-color: #f9f9f9;
-        }
-
-        .loading-message, .error-message {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            font-style: italic;
-        }
-
-        .error-message {
-            color: #dc3545;
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            .modal-content {
-                width: 95%;
-                margin: 2.5vh auto;
-                padding: 15px;
-            }
-            .org-branch-container {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            .org-line.org-line-horizontal {
-                display: none;
-            }
-            .org-node {
-                min-width: unset;
-                width: 90%;
-                margin: 8px auto;
-            }
-            .org-node.org-root {
-                min-width: unset;
-                width: 90%;
-                margin-bottom: 15px;
-            }
-            
-            .profile-circle {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-            }
-            .position-text {
-                font-size: 0.85rem;
-            }
-            .name-text {
-                font-size: 0.75rem;
-            }
-        }
-    `;
-    document.head.appendChild(style);
 });

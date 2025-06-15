@@ -440,10 +440,10 @@
 .org-node {
     background-color: var(--org-card-bg); border: 1px solid var(--org-border-medium); border-radius: 25px;
     padding: 0.8rem 1.6rem; margin: 0.25rem 0; font-size: 1rem; font-weight: 600; color: var(--org-text-primary);
-    text-align: center; box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1); transition: transform 0.2s ease-in-out;
+    text-align: center; transition: transform 0.2s ease-in-out;
     white-space: nowrap; min-width: 160px; display: flex; justify-content: center; align-items: center;
 }
-.org-node:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.15); }
+.org-node:hover { transform: translateY(-3px);}
 .org-node.org-root { border-radius: 12px; font-size: 1.2rem; padding: 1rem 2.2rem; margin-bottom: 1.2rem; min-width: 220px; }
 .org-line { background-color: var(--org-primary); width: 2px; height: 1.5rem; margin: -0.25rem 0; position: relative; }
 .org-line.org-line-horizontal { height: 2px; width: 4rem; margin: 0 0.5rem; align-self: center; transform: none; }
@@ -454,7 +454,6 @@
 .org-line.org-vertical-to-branch { height: 2.5rem; margin-bottom: 0.5rem; }
 .org-line.org-vertical-from-branch-top { height: 1.5rem; position: absolute; top: -1.5rem; left: 50%; transform: translateX(-50%); }
 .org-line.org-vertical-to-branch-bottom { height: 1.5rem; position: absolute; bottom: -1.5rem; left: 50%; transform: translateX(-50%); }
-
 
 @media (max-width: 992px) { 
     .main-content-flex-container {

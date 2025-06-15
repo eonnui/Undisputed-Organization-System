@@ -301,3 +301,167 @@
         flex: none;
     }
 }
+
+
+/* --- Organizational Chart Specific Styles (Moved from JS inline style) --- */
+.organization-chart-display { /* This class seems to be for a container *around* the actual org chart elements, if you choose to use one */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: var(--org-text-primary);
+}
+
+.org-node {
+    background-color: var(--org-node-bg);
+    padding: 10px 15px;
+    margin: 10px;
+    text-align: center;
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+
+.profile-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    color: #555;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    overflow: hidden;
+    border: 2px solid #ddd;
+}
+
+.profile-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.position-text {
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: var(--org-text-primary);
+}
+
+.name-text {
+    color: #444;
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 4px;
+}
+
+.org-branch-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.org-line {
+    background-color: var(--org-text-primary);
+    flex-shrink: 0;
+}
+
+.org-vertical-to-branch {
+    width: 2px;
+    height: 30px;
+    margin: 0 auto;
+}
+
+.org-line-horizontal {
+    height: 2px;
+    width: 30px;
+    margin: 0 5px;
+    align-self: center;
+}
+
+.org-node.adviser-node {
+    border: 1px dashed #b0b0b0;
+    background-color: #f9f9f9;
+}
+
+.loading-message, .error-message {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.error-message {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInFromTop {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 10px; /* Smaller margin on mobile */
+    }
+
+    .modal-content h3 {
+        font-size: 1.5em;
+        margin-bottom: 15px;
+    }
+
+    .modal-close-btn {
+        font-size: 28px;
+        top: 10px;
+        right: 15px;
+    }
+
+    .org-branch-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .org-line.org-line-horizontal {
+        display: none; /* Hide horizontal lines for vertical stacking on small screens */
+    }
+    .org-node {
+        min-width: unset;
+        width: 90%;
+        margin: 8px auto;
+    }
+    .org-node.org-root {
+        min-width: unset;
+        width: 90%;
+        margin-bottom: 15px;
+    }
+    
+    .profile-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    .position-text {
+        font-size: 0.85rem;
+    }
+    .name-text {
+        font-size: 0.75rem;
+    }
+}

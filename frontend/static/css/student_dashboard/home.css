@@ -1,24 +1,11 @@
 /* HOME */
-.content {
-    padding: 24px;
-    flex-grow: 1;
-}
 
 .home-dashboard {
     background-color: var(--org-dashboard-bg-color);
     font-family: "DM Sans", Tahoma, Geneva, Verdana, sans-serif;
     padding: 20px;
-    animation: fadeIn 0.5s ease-out;
-}
+    animation: fadeIn 0.5s ease-out;}
 
-.dashboard-title {
-    font-size: 2.2em;
-    font-weight: bold;
-    color: var(--org-dashboard-title-color);
-    margin-bottom: 20px;
-    text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
-    animation: fadeIn 0.5s ease-out;
-}
 
 .dashboard-grid {
     display: grid;
