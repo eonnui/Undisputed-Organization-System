@@ -1,0 +1,303 @@
+/* BULLETIN BOARD */
+.bulletin-page {
+    flex-grow: 1;
+    padding: 20px;
+    animation: fadeIn 0.5s ease-out; 
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; 
+    justify-content: flex-start;
+    width: 100%; 
+}
+
+.bulletin-container {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-self: center; 
+}
+
+.bulletin-header {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: var(--org-text-primary);
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
+    animation: fadeIn 0.5s ease-out;   
+    width: 100%; 
+    text-align: left; 
+    max-width: 700px; 
+    margin-left: 0; 
+    margin-right: auto; 
+}
+
+.post-card {
+    background-color: var(--org-card-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(var(--org-shadow-base-rgb), 0.1);
+    padding: 20px;
+    border: 1px solid var(--org-post-card-border);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    animation: slideInUp 0.4s ease-out;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;       
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+
+.post-header {
+    display: flex;
+    align-items: center;   
+}
+
+.profile-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 15px;
+    background-color: var(--org-profile-image-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    color: var(--org-text-inverse);
+    transition: all 0.3s ease;
+    flex-shrink: 0; 
+}
+
+.profile-image:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+
+.post-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9em;
+    color: var(--org-post-info-color);
+    flex-grow: 1;
+    justify-content: center; 
+}
+
+.post-title {
+    font-weight: bold;
+    color: var(--org-text-primary);
+    margin-bottom: 5px;
+    font-size: 1.3em;
+    transition: color 0.2s ease;
+}
+
+.post-title:hover {
+    color: var(--org-dashboard-accent-primary);
+}
+
+.post-date {
+    color: var(--org-post-date-color);
+    font-style: italic;
+    margin-top: 3px;
+}
+
+.post-content {
+    color: var(--org-post-content-color);
+    line-height: 1.7;   
+    white-space: pre-line;
+    padding-left: 10px;
+    border-radius: 5px;
+    animation: fadeIn 0.3s ease-out;
+    flex-grow: 1; 
+}
+
+.post-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: var(--org-post-actions-color);
+    font-size: 1.1em;
+}
+
+.post-actions svg {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: color 0.3s ease;
+}
+
+.post-actions svg:hover {
+    stroke: var(--org-heart-hover-color);
+    transform: scale(1.2);
+}
+
+.heart-icon {
+    font-size: 1.4em;
+}
+
+.heart-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--org-heart-button-color);
+}
+
+.heart-button.hearted svg {
+    fill: var(--org-heart-hover-color);
+    stroke: var(--org-heart-hover-color);
+    animation: pulse 0.3s ease;
+}
+
+.heart-count {
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.pinned {
+    background-color: var(--org-pinned-bg);
+    color: var(--org-dashboard-title-color);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    margin-left: auto; 
+}
+
+.existing-wiki-posts-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--org-text-primary);
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 3px rgba(var(--org-shadow-base-rgb), 0.05);
+    animation: fadeIn 0.5s ease-out;
+    text-align: left;
+    width: 100%;
+}
+
+.wiki-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.wiki-post-card {
+    background-color: transparent;
+    border-radius: 0;
+    border-left: 1px solid var(--org-text-inverse);
+    border-right: 1px solid var(--org-text-inverse);
+    border-top: none;
+    border-bottom: 1px solid var(--org-text-inverse);
+    box-shadow: none;
+    padding: 15px 15px;
+    transition: none;
+    animation: none;
+}
+
+.wiki-posts-list .wiki-post-card:first-child {
+    border-top: 1px solid var(--org-text-inverse);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.wiki-posts-list .wiki-post-card:last-child {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-bottom: 1px solid var(--org-text-inverse);;
+}
+
+.wiki-post-card:hover {
+    background-color: var(--org-hover-bg);
+    transform: none;
+    box-shadow: none;
+}
+
+.existing-wiki-section{ 
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--org-text-inverse);
+    padding: 1rem;  
+    text-align: left;
+}
+
+/* Organizational Chart Button */
+.view-org-chart-button {
+    padding: .5rem .5rem;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--org-button-bg);
+    color: var(--org-button-text);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    font-family: "DM Sans", sans-serif;
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    width: auto; 
+    display: inline-block; 
+    margin-top: 1rem; 
+}
+
+.view-org-chart-button:hover {
+    background-color: var(--org-hover-effect);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.12);
+}
+
+.view-org-chart-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+
+.org-chart-section {
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--org-text-inverse);
+    padding: 1rem;  
+    text-align: left;
+}
+
+.org-chart-header {
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--org-text-primary);
+    font-weight: 600;
+    border-bottom: 2px solid var(--org-border-medium);
+    padding-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .main-content-flex-container {
+        flex-direction: column;
+        gap: 20px;
+        margin: 20px 15px;
+    }
+
+    .bulletin-header,
+    .existing-wiki-posts-title {
+        max-width: 100%;
+        text-align: center;
+        margin: 0 auto 20px auto;
+    }
+
+    .bulletin-board-container,
+    .rules-wiki-container {
+        flex: none;
+    }
+}

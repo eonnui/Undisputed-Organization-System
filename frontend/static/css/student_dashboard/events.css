@@ -1,0 +1,321 @@
+/* EVENTS */
+.events-page {  
+    flex-grow: 1;
+    padding: 20px; 
+    animation: fadeIn 0.5s ease-out;
+    display: flex;
+    flex-direction: column; 
+    align-items: flex-start; 
+}
+
+.events-title {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: var(--org-text-primary);
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
+    animation: fadeIn 0.5s ease-out;
+    text-align: left; 
+    width: 100%;
+    max-width: 800px; 
+}
+
+.events-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+    gap: 15px; 
+    padding-bottom: 20px;
+    justify-content: center; 
+    width: 100%; 
+    max-width: 1070px;
+    margin: 0 auto; 
+}
+
+.event-card {
+    background-color: var(--org-card-bg); 
+    border-radius: 8px; 
+    box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.08); 
+    border: 1px solid var(--org-border-medium); 
+    display: flex;
+    padding: 1px;
+    flex-direction: column;
+    overflow: hidden; 
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease; 
+    text-align: left; 
+    max-width: 250px; 
+    width: 100%; 
+    margin: 0 auto;
+}
+
+.event-card:hover {
+    transform: translateY(-5px); 
+    box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.15); 
+}
+
+.event-card-image-container {
+    width: 100%; 
+    height: 110px; 
+    overflow: hidden; 
+    border-top-left-radius: 8px; 
+    border-top-right-radius: 8px; 
+    background-color: var(--org-border-light); 
+}
+
+.event-card-image {
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    display: block; 
+}
+
+.event-card-content {
+    padding: 0.8rem; 
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.event-header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 0.4rem;
+    text-align: left; 
+}
+
+.event-title {
+    font-size: 1.2em; 
+    font-weight: 600; 
+    color: var(--org-text-primary); 
+    margin: 0;
+    flex-grow: 1; 
+    flex-shrink: 1;
+    min-width: 0; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+
+.event-tag {
+    padding: 0.25em 0.7em; 
+    border-radius: 4px; 
+    font-size: 0.7em; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    color: var(--org-event-tag-text); 
+    background-color: var(--org-event-tag-bg); 
+    flex-shrink: 0; 
+    margin-left: 0.5rem; 
+}
+
+.event-tag:hover {
+    transform: scale(1.08) translateY(-2px); 
+    box-shadow: 0 2px 8px rgba(var(--org-shadow-base-rgb), 0.12); 
+    cursor: pointer; 
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+
+.event-meta {
+    font-size: 0.8rem; 
+    color: var(--org-text-secondary); 
+    text-align: left; 
+    display: flex; 
+    flex-direction: column; 
+    margin-bottom: 0.6rem; 
+}
+
+.event-meta div {
+    margin-bottom: 0.2rem; 
+}
+
+.event-meta div:last-child {
+    margin-bottom: 0; 
+}
+
+.event-description {
+    font-size: 0.85rem; 
+    color: var(--org-event-description-color); 
+    line-height: 1.6; 
+    text-align: left; 
+    flex-grow: 1;
+    margin-bottom: 0.8rem;
+    word-break: break-all; 
+    overflow-wrap: break-word; 
+}
+
+.event-actions {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    margin-top: auto; 
+}
+
+.participants-count {
+    font-size: 0.75rem;
+    color: var(--org-participants-count-color);
+}
+
+.join-button,
+.leave-button,
+.full-button {
+    border: none; 
+    padding: 0.4rem 0.8rem; 
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 5px; 
+    cursor: pointer;
+    font-size: 0.8rem; 
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; 
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1); 
+}
+
+.join-button:hover,
+.leave-button:hover,
+.full-button:hover {
+    transform: translateY(-2px); 
+    box-shadow: 0 3px 7px rgba(var(--org-shadow-base-rgb), 0.15); 
+}
+
+.join-button {
+    background-color: var(--org-join-button-bg); 
+    color: var(--org-button-text); 
+}
+
+.join-button:hover {
+    background-color: var(--org-join-button-hover-bg); 
+}
+
+.leave-button {
+    background-color: var(--org-leave-button-bg); 
+    color: var(--org-button-text); 
+}
+
+.leave-button:hover {
+    background-color: var(--org-leave-button-hover-bg); 
+}
+
+.full-button {
+    background-color: var(--org-full-button-bg); 
+    color: var(--org-full-button-text); 
+    cursor: not-allowed; 
+}
+
+.full-button:hover {
+    transform: none; 
+    box-shadow: none; 
+}
+
+.tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); } 
+.tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); } 
+.tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); } 
+.tag-music { background-color: var(--org-music-tag-bg); color: var(--org-music-tag-text); } 
+.tag-esports { background-color: var(--org-esports-tag-bg); color: var(--org-esports-tag-text); } 
+.tag-cultural { background-color: var(--org-cultural-tag-bg); color: var(--org-cultural-tag-text); } 
+
+
+@media (max-width: 768px) {
+    .events-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+        gap: 10px; 
+    }
+    .events-page-container {
+        margin: 10px auto; 
+        padding: 0 10px; 
+    }
+    .event-card {
+        max-width: 280px; 
+    }
+    .event-card-image-container {
+        height: 90px; 
+    }
+    .event-title {
+        font-size: 1.1em; 
+    }
+    .event-description {
+        font-size: 0.8rem; 
+    }
+    .event-meta div { 
+        margin-bottom: 0.15rem; 
+    }
+    .join-button,
+    .leave-button,
+    .full-button {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+    }
+    .event-tag {
+        margin-left: 0.3rem; 
+    }
+}
+
+
+.event-item {
+    padding: 15px;
+    margin-bottom: 15px; 
+    border-radius: 12px;
+    background-color: var(--org-announcement-card-bg);
+    border-left: 4px solid var(--org-accent-light);
+    transition: all 0.3s ease;
+    position: relative; 
+    animation: slideInLeft 0.4s ease-out;
+    box-shadow: 0 2px 4px rgba(var(--org-shadow-base-rgb), 0.05);
+}
+
+.event-item:hover {
+    transform: translateX(5px) translateY(-5px);
+    background-color: var(--org-event-item-hover-bg);
+    box-shadow: 0 4px 8px rgba(var(--org-shadow-base-rgb), 0.08);
+}
+
+.event-title {
+    font-weight: bold;
+    color: var(--org-dashboard-title-color);
+    margin-bottom: 8px;
+    font-size: 1.2em;
+}
+
+.event-date,
+.event-location,
+.event-participants {
+    color: var(--org-event-meta-color);
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.event-date::before { content: "📅"; }
+.event-location::before { content: "📍"; }
+.event-participants::before { content: "👥 "; }
+
+.event-action {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.event-tag {
+    background-color: var(--org-event-tag-bg);
+    color: var(--org-event-tag-text);
+    padding: 1px 15px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: bold;
+    align-self: flex-start; 
+    margin-bottom: 15px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.event-tag:hover {
+    transform: scale(1.1);
+}
+
+.tag-academic { background-color: var(--org-academic-tag-bg); color: var(--org-academic-tag-text); }
+.tag-sports { background-color: var(--org-sports-tag-bg); color: var(--org-sports-tag-text); }
+.tag-arts { background-color: var(--org-arts-tag-bg); color: var(--org-arts-tag-text); }
+.tag-music { background-color: var(--org-music-tag-bg); color: var(--org-music-tag-text); }
+.tag-esports { background-color: var(--org-esports-tag-bg); color: var(--org-esports-tag-text); }
+.tag-cultural { background-color: var(--org-cultural-tag-bg); color: var(--org-cultural-tag-text); }

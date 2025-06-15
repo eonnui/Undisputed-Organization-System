@@ -1,0 +1,28 @@
+/* Failure Payment */
+.error-icon {
+  font-size: 3em;
+  color: var(--org-error);
+  margin-bottom: 20px;
+}
+
+.payment-info {
+  margin-bottom: 30px;
+  padding: 15px;
+  border: 1px solid var(--org-status-unpaid-bg);
+  background-color: var(--org-status-unpaid-bg);
+  border-radius: 6px;
+  text-align: left;
+}
+
+.payment-info p {
+  margin-bottom: 8px;
+  color: var(--org-status-unpaid-text);
+  text-align: left;
+}
+
+.payment-info strong {
+  font-weight: 600;
+  color: var(--org-status-unpaid-text);
+}
+
+.failure-payment h1 { color: var(--org-error); }

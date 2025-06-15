@@ -1,0 +1,95 @@
+
+/* Monthly Cash Flow Detailed */
+.monthly-cashflow-detailed {
+    margin-top: 20px;
+    background-color: var(--org-card-bg);
+    padding: 30px;
+    border-radius: var(--org-radius-md);
+    box-shadow: 0 4px 15px rgba(var(--org-shadow-base-rgb), 0.15);
+    transition: transform 0.3s ease-in-out;
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+.monthly-cashflow-detailed:hover {
+    transform: translateY(-5px);
+}
+
+.monthly-cashflow-detailed h2 {
+    font-size: 1.8em;
+    color: var(--org-text-primary);
+    margin-bottom: 8px;
+    border-bottom: 2px solid var(--org-border-medium);
+    padding-bottom: 10px;
+}
+
+.monthly-cashflow-detailed p {
+    color: var(--org-text-secondary);
+    font-size: 1em;
+    margin-bottom: 15px;
+}
+
+.monthly-cashflow-detailed table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-top: 20px;
+}
+
+.monthly-cashflow-detailed th, .monthly-cashflow-detailed td {
+    border: 1px solid var(--org-border-medium);
+    padding: 12px 15px;
+    text-align: left;
+    color: var(--org-table-data-text);
+    background-color: var(--org-card-bg);
+}
+
+.monthly-cashflow-detailed tbody tr {
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.05);
+    transition: all 0.2s ease-in-out;
+}
+
+.monthly-cashflow-detailed th {
+    background-color: var(--org-table-header-bg-payments);
+    font-weight: 700;
+    color: var(--org-table-header-text-payments);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 2px solid var(--org-accent-dark);
+}
+
+.monthly-cashflow-detailed .amount {
+    text-align: right;
+    font-weight: 500;
+}
+
+.monthly-cashflow-detailed .inflows-row td,
+.monthly-cashflow-detailed .outflows-row td {
+    background-color: var(--org-highlight);
+    font-weight: bold;
+    text-align: left;
+    padding: 12px 15px;
+}
+
+.monthly-cashflow-detailed tfoot th {
+    font-weight: 700;
+    text-align: left;
+    padding-top: 15px;
+    border-top: 3px solid var(--org-accent-dark);
+    color: var(--org-table-header-text-payments);
+    font-size: 1.1em;
+}
+
+.monthly-cashflow-detailed tfoot .amount {
+    font-weight: 700;
+    color: var(--org-table-header-text-payments);
+    font-size: 1.1em;
+}
+
+.report-type-label {
+    font-weight: bold; 
+    color: var(--org-text-primary); 
+    margin-right: 10px; 
+    font-size: 1.1em; 
+}

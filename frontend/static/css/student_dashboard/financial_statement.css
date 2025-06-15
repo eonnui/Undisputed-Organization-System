@@ -1,0 +1,276 @@
+/* FINANCIAL STATEMENT */
+.content h1 {
+    margin-bottom: 25px; 
+    color: var(--org-text-primary); 
+    font-size: 2.2em; 
+    font-weight: bold; 
+    text-shadow: 2px 2px 4px rgba(var(--org-shadow-base-rgb), 0.05); 
+    animation: fadeIn 0.5s ease-out; 
+    text-align: left; 
+}
+
+.content {
+    padding: 20px;
+    flex-grow: 1;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background-color: var(--org-card-bg);
+    border-radius: var(--org-radius-lg);
+    box-shadow: var(--org-shadow-md);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: var(--org-transition);
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--org-shadow-lg);
+}
+
+.stat-card h3 {
+    font-size: 1.1em;
+    color: var(--org-text-secondary);
+    margin-bottom: 14px;
+    font-weight: 500;
+}
+
+.stat-card p {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: var(--org-text-primary);
+}
+
+.stat-card.positive p { color: var(--org-success); }
+.stat-card.negative p { color: var(--org-error); }
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 100%;
+    background-color: var(--org-primary);
+    border-radius: 4px 0 0 4px;
+}
+
+.stat-card.positive::before { background-color: var(--org-success); }
+.stat-card.negative::before { background-color: var(--org-error); }
+
+.summary-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin-bottom: 30px;
+    background-color: var(--org-card-bg);
+    padding: 25px;
+    border-radius: var(--org-radius-lg);
+    box-shadow: var(--org-shadow-md);
+    animation: fadeIn 0.5s ease-out;
+}
+
+.summary-info p {
+    margin: 8px 0;
+    color: var(--org-text-secondary);
+    font-size: 1em;
+}
+
+.summary-info span {
+    font-weight: 600;
+    color: var(--org-text-primary);
+    margin-left: 5px;
+}
+
+.toggle-container {
+    margin-bottom: 30px;
+}
+
+.toggle-label {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--org-text-primary);
+    margin-bottom: 15px;
+    display: block;
+}
+
+.toggle-buttons {
+    display: flex;
+    background-color: var(--org-card-bg);
+    border-radius: var(--org-radius-lg);
+    padding: 6px;
+    width: fit-content;
+    box-shadow: var(--org-shadow-sm);
+    border: 1px solid var(--org-border-light);
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    padding: 12px 25px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--org-radius-md);
+    transition: var(--org-transition);
+    color: var(--org-text-secondary);
+}
+
+.toggle-btn:hover {
+    color: var(--org-text-primary);
+}
+
+.toggle-btn.active {
+    background-color: var(--org-primary);
+    color: var(--org-text-light);
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+
+.report-card {
+    background-color: var(--org-card-bg);
+    border-radius: var(--org-radius-lg);
+    box-shadow: var(--org-shadow-md);
+    margin-bottom: 24px;
+    overflow: hidden;
+    display: none;
+    animation: slideInUp 0.5s ease-out;
+}
+
+.report-card.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.report-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--org-border-light);
+}
+
+.report-header h2 {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--org-text-primary);
+    margin-bottom: 8px;
+}
+
+.report-header p {
+    color: var(--org-text-secondary);
+    font-size: 0.9em;
+}
+
+.report-body {
+    padding: 20px 24px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: var(--org-radius-md);
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.05);
+}
+
+th,
+td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--org-border-light);
+    font-size: 1em;
+}
+
+th {
+    font-weight: 600;
+    color: var(--org-text-primary);
+    background-color: var(--org-secondary-color);
+}
+
+td {
+    color: var(--org-text-secondary);
+}
+
+tfoot th,
+tfoot td {
+    border-top: 2px solid var(--org-border-medium);
+    font-weight: 600;
+    color: var(--org-text-primary);
+}
+
+.amount {
+    text-align: right;
+    font-family: monospace;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding-right: 5px; 
+}
+
+.inflows-row td,
+.outflows-row td {
+    background-color: var(--org-primary-light);
+    color: var(--org-text-light);
+    font-weight: 600;
+    padding: 12px 20px;
+}
+
+.view-detail-link {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 25px;
+    background-color: var(--org-primary);
+    color: var(--org-text-light);
+    padding: 12px 25px;
+    border-radius: var(--org-radius-md);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--org-transition);
+    box-shadow: var(--org-shadow-sm);
+    gap: 10px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.view-detail-link:hover {
+    background-color: var(--org-primary-hover);
+    box-shadow: var(--org-shadow-md);
+    transform: translateY(-2px);
+}
+
+.monthly-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.monthly-toggles button {
+    background-color: var(--org-card-bg);
+    border: 1px solid var(--org-border-light);
+    color: var(--org-text-secondary);
+    padding: 10px 20px;
+    border-radius: var(--org-radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--org-transition);
+}
+
+.monthly-toggles button:hover {
+    border-color: var(--org-primary-light);
+    color: var(--org-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
+}
+
+.monthly-toggles button.active {
+    background-color: var(--org-primary);
+    color: var(--org-text-light);
+    border-color: var(--org-primary);
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
+}

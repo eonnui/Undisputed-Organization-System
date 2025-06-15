@@ -1,0 +1,182 @@
+
+.payment-history-page {
+    padding: 30px;
+    background-color: var(--org-dashboard-bg-color);
+    min-height: calc(100vh - var(--header-height) - var(--footer-height));
+    color: var(--org-text-primary);
+}
+
+.page-title {
+    color: var(--org-dashboard-title-color);
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.5em;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
+    animation: fadeInDown 1s ease-out;
+}
+
+.history-container {
+    background-color: var(--org-card-bg);
+    border-radius: var(--org-radius-lg);
+    box-shadow: var(--org-shadow-lg);
+    padding: 30px;
+    overflow-x: auto;
+    animation: fadeInUp 1s ease-out;
+}
+
+.payments-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.payment-history-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    margin-top: 20px;
+}
+
+.payment-history-table thead th {
+    background-color: var(--org-table-header-bg-payments);
+    color: var(--org-table-header-text-payments);
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--org-border-medium);
+}
+
+.payment-history-table tbody tr {
+    background-color: var(--org-bg-secondary);
+    border-radius: var(--org-radius-md);
+    transition: all var(--org-transition);
+    box-shadow: var(--org-shadow-sm);
+}
+
+.payment-history-table tbody td {
+    padding: 15px;
+    color: var(--org-table-data-text);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--org-border-light);
+}
+
+.payment-history-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Consolidated Status Styles for Payments */
+.status {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85em;
+    text-transform: capitalize;
+    transition: all var(--org-transition);
+}
+
+.status i {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+.status.paid { background-color: var(--org-success); color: var(--org-text-inverse); }
+.status.unpaid { background-color: var(--org-status-unpaid-bg); color: var(--org-status-unpaid-text); border: 1px solid var(--org-error-border); }
+.status.past-due { background-color: var(--org-past-due-bg); color: var(--org-past-due-text); border: 1px solid var(--org-error); }
+.status.pending { background-color: var(--org-warning); color: var(--org-text-inverse); }
+.status.cancelled, .status.failure { background-color: var(--org-error); color: var(--org-text-inverse); }
+.status.not-responsible { background-color: var(--org-info); color: var(--org-text-inverse); }
+
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--org-empty-state-color);
+    background-color: var(--org-empty-state-bg);
+    border-radius: var(--org-radius-lg);
+    box-shadow: var(--org-shadow-sm);
+    animation: fadeIn 1s ease-out;
+}
+
+.empty-state i {
+    font-size: 5em;
+    margin-bottom: 20px;
+    color: var(--org-accent-light);
+    animation: bounceIn 1s ease-out;
+}
+
+.empty-state p {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .payment-history-page {
+        padding: 20px;
+    }
+
+    .page-title {
+        font-size: 2em;
+        margin-bottom: 30px;
+    }
+
+    .history-container {
+        padding: 20px 15px;
+    }
+
+    .payment-history-table thead th,
+    .payment-history-table tbody td {
+        padding: 10px;
+        font-size: 0.85em;
+    }
+
+    .status {
+        padding: 5px 10px;
+        font-size: 0.8em;
+    }
+
+    .status i {
+        margin-right: 5px;
+        font-size: 1em;
+    }
+
+    .empty-state {
+        padding: 30px 15px;
+    }
+
+    .empty-state i {
+        font-size: 4em;
+    }
+
+    .empty-state p {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 480px) {
+    .payment-history-page {
+        padding: 15px;
+    }
+
+    .page-title {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+
+    .history-container {
+        padding: 15px 10px;
+    }
+
+    .payment-history-table thead th,
+    .payment-history-table tbody td {
+        padding: 8px;
+        font-size: 0.75em;
+    }
+
+    .status {
+        font-size: 0.7em;
+    }
+}

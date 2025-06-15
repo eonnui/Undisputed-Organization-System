@@ -1,0 +1,37 @@
+/* Success Payment */
+.payment-details {
+  margin-bottom: 30px;
+  border: 1px solid var(--org-border-medium);
+  padding: 25px;
+  border-radius: 8px;
+  background-color: var(--org-payments-container-bg);
+  text-align: left;
+}
+
+.payment-details h2 {
+  color: var(--org-text-primary);
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 2px solid var(--org-border-medium);
+  padding-bottom: 10px;
+  text-align: left;
+}
+
+.payment-details p {
+  margin-bottom: 12px;
+  color: var(--org-text-secondary);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.payment-details strong {
+  font-weight: 600;
+  color: var(--org-text-primary);
+}
+
+.button-container {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.success-payment h1 { color: var(--org-success); }

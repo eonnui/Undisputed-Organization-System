@@ -472,7 +472,7 @@
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
-    .dashboard-grid { /* If you have a dashboard grid in student_dashboard.css */
+    .dashboard-grid { /* If you have a dashboard grid in student_common_styles.css */
         grid-template-columns: 1fr;
     }
 
