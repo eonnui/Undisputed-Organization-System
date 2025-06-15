@@ -3,13 +3,13 @@
 {% block title %}Home{% endblock %}
 
 {% block head %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/static/css/student_dashboard/home.css">
 {% endblock %}
 
 {% block content_header %}
     <div class="page-header-content">
-        <h1 class="dashboard-title">Home</h1>       
+        <h1 class="dashboard-title">Home</h1>
     </div>
 {% endblock %}
 
@@ -19,8 +19,8 @@
             <div class="dashboard-section announcements">
                 <h2 class="section-title">Announcements</h2>
                 <div id="announcements-container">
-                    {% if bulletin_posts %}
-                        {% for post in bulletin_posts %}
+                    {%- if bulletin_posts -%}
+                        {%- for post in bulletin_posts -%}
                         <div class="announcement-card" data-url="{{ url_for('bulletin_board') }}">
                             <p class="announcement-text">{{ post.title }}</p>
                             <p class="announcement-meta">
@@ -28,12 +28,12 @@
                                 <a href="{{ url_for('bulletin_board') }}" class="view-details">View Details</a>
                             </p>
                         </div>
-                        {% endfor %}
-                    {% else %}
+                        {%- endfor -%}
+                    {%- else -%}
                         <div class="announcement-card">
                             <p class="announcement-text">No announcements available.</p>
                         </div>
-                    {% endif %}
+                    {%- endif -%}
                 </div>
             </div>
             <div class="dashboard-section upcoming-events">
@@ -52,7 +52,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script> 
+<script>
     const GLOBAL_EVENTS_PAGE_URL = "{{ url_for('events') }}";
 </script>
 <script src="../../static/js/student_dashboard/home.js"></script>

@@ -575,7 +575,6 @@ body {
     flex-direction: column;
 }
 
-
 .main-content footer {
   text-align: center;
   padding: 1.04vw 0;
@@ -696,7 +695,7 @@ body {
     flex-grow: 1;
     width: 100%;
     box-sizing: border-box;
-    padding-left: 1.38vw; /* Apply horizontal padding here */
+    padding-left: 1.38vw; 
     padding-right: 1.38vw;
 }
 
@@ -860,6 +859,13 @@ body {
 #modal-body th {
   background-color: var(--background-color);
 }
+
+.modal-content::-webkit-scrollbar,
+#modal-body::-webkit-scrollbar {
+    width: 102px; /* Width of the vertical scrollbar */
+    height: 12px; /* Height of the horizontal scrollbar (if any) */
+}
+
 
 @keyframes fadeIn {
   from {

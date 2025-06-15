@@ -76,18 +76,18 @@
                         </tr>
                     </thead>
                     <tbody id="user-collected-data-table">
-                        {% if financial_data.user_financials.collected_fees_by_category %}
-                            {% for item in financial_data.user_financials.collected_fees_by_category %}
-                                <tr>
-                                    <td data-label="Fee Category">{{ item.category }}</td>
-                                    <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
-                                </tr>
-                            {% endfor %}
-                        {% else %}
+                        {%- if financial_data.user_financials.collected_fees_by_category -%}
+                            {%- for item in financial_data.user_financials.collected_fees_by_category -%}
+                            <tr>
+                                <td data-label="Fee Category">{{ item.category }}</td>
+                                <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                            </tr>
+                            {%- endfor -%}
+                        {%- else -%}
                             <tr>
                                 <td colspan="2" style="text-align: center;">No collected fees to display for you.</td>
                             </tr>
-                        {% endif %}
+                        {%- endif -%}
                     </tbody>
                     <tfoot>
                         <tr>
@@ -113,18 +113,18 @@
                         </tr>
                     </thead>
                     <tbody id="user-outstanding-data-table">
-                        {% if financial_data.user_financials.outstanding_fees_by_category %}
-                            {% for item in financial_data.user_financials.outstanding_fees_by_category %}
-                                <tr>
-                                    <td data-label="Fee Category">{{ item.category }}</td>
-                                    <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
-                                </tr>
-                            {% endfor %}
-                        {% else %}
+                        {%- if financial_data.user_financials.outstanding_fees_by_category -%}
+                            {%- for item in financial_data.user_financials.outstanding_fees_by_category -%}
+                            <tr>
+                                <td data-label="Fee Category">{{ item.category }}</td>
+                                <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                            </tr>
+                            {%- endfor -%}
+                        {%- else -%}
                             <tr>
                                 <td colspan="2" style="text-align: center;">No outstanding fees to display for you.</td>
                             </tr>
-                        {% endif %}
+                        {%- endif -%}
                     </tbody>
                     <tfoot>
                         <tr>
@@ -154,18 +154,18 @@
                         </tr>
                     </thead>
                     <tbody id="org-expenses-data-table">
-                        {% if financial_data.organization_financials.expenses_by_category_org %}
-                            {% for item in financial_data.organization_financials.expenses_by_category_org %}
-                                <tr>
-                                    <td data-label="Expense Category">{{ item.category }}</td>
-                                    <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
-                                </tr>
-                            {% endfor %}
-                        {% else %}
+                        {%- if financial_data.organization_financials.expenses_by_category_org -%}
+                            {%- for item in financial_data.organization_financials.expenses_by_category_org -%}
+                            <tr>
+                                <td data-label="Expense Category">{{ item.category }}</td>
+                                <td data-label="Amount" class="amount">₱{{ "%.2f"|format(item.amount) }}</td>
+                            </tr>
+                            {%- endfor -%}
+                        {%- else -%}
                             <tr>
                                 <td colspan="2" style="text-align: center;">No organization expenses to display.</td>
                             </tr>
-                        {% endif %}
+                        {%- endif -%}
                     </tbody>
                     <tfoot>
                         <tr>
@@ -193,25 +193,25 @@
                         </tr>
                     </thead>
                     <tbody id="combined-activity-data-table">
-                        {% if financial_data.financial_summary_items_combined %}
-                            {% for item in financial_data.financial_summary_items_combined %}
-                                <tr class="{% if 'Your Payment' in item.event_item %}user-payment{% else %}org-expense{% endif %}">
-                                    <td data-label="Date">{{ item.date }}</td>
-                                    <td data-label="Event/Item">
-                                        <span class="event-item-label">{{ item.event_item.split(' - ')[0] | default(item.event_item) }}</span>
-                                        {% if ' - ' in item.event_item %}
-                                            <br><span class="event-item-description">({{ item.event_item.split(' - ')[1] }})</span>
-                                        {% endif %}
-                                    </td>
-                                    <td data-label="Inflows" class="amount">₱{{ "%.2f"|format(item.inflows) }}</td>
-                                    <td data-label="Outflows" class="amount">₱{{ "%.2f"|format(item.outflows) }}</td>
-                                </tr>
-                            {% endfor %}
-                        {% else %}
+                        {%- if financial_data.financial_summary_items_combined -%}
+                            {%- for item in financial_data.financial_summary_items_combined -%}
+                            <tr class="{% if 'Your Payment' in item.event_item %}user-payment{% else %}org-expense{% endif %}">
+                                <td data-label="Date">{{ item.date }}</td>
+                                <td data-label="Event/Item">
+                                    <span class="event-item-label">{{ item.event_item.split(' - ')[0] | default(item.event_item) }}</span>
+                                    {%- if ' - ' in item.event_item -%}
+                                        <br><span class="event-item-description">({{ item.event_item.split(' - ')[1] }})</span>
+                                    {%- endif -%}
+                                </td>
+                                <td data-label="Inflows" class="amount">₱{{ "%.2f"|format(item.inflows) }}</td>
+                                <td data-label="Outflows" class="amount">₱{{ "%.2f"|format(item.outflows) }}</td>
+                            </tr>
+                            {%- endfor -%}
+                        {%- else -%}
                             <tr>
                                 <td colspan="4" style="text-align: center;">No combined activity to display.</td>
                             </tr>
-                        {% endif %}
+                        {%- endif -%}
                     </tbody>
                     <tfoot>
                         <tr>
@@ -261,7 +261,7 @@
                         </tr>
                     </thead>
                     <tbody id="monthly-data-table">
-                        
+                        {# This tbody content is expected to be populated by JavaScript #}
                     </tbody>
                 </table>
                 <a href="{{ url_for('static', path='html/student_dashboard/detailed_monthly_report.html') }}?month=january&type=organization" id="view-detailed-monthly-report-link" class="view-detail-link">

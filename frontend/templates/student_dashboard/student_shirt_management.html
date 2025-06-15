@@ -14,21 +14,21 @@
 
 {% block content %}
 
-<div class="card content-section" id="campaigns-section"> 
+<div class="card content-section" id="campaigns-section">
     <h2 class="section-title">Available Shirt Campaigns</h2>
     <div class="campaigns-grid">
-        {% if shirt_campaigns %}
-            {% for campaign in shirt_campaigns %}
+        {%- if shirt_campaigns -%}
+            {%- for campaign in shirt_campaigns -%}
                 <div class="campaign-card">
-                    {% if campaign.size_chart_image_path %}
+                    {%- if campaign.size_chart_image_path -%}
                     <div class="campaign-image-container">
                         <img src="{{ campaign.size_chart_image_path }}" alt="{{ campaign.title | e }} Size Chart" class="campaign-image">
                     </div>
-                    {% else %}
+                    {%- else -%}
                     <div class="campaign-image-container no-image">
                         <img src="https://placehold.co/600x400/A0A0A0/FFFFFF?text=No+Size+Chart" alt="Placeholder Image" class="campaign-image">
                     </div>
-                    {% endif %}
+                    {%- endif -%}
 
                     <div class="campaign-card-content">
                         <h3 class="campaign-title">{{ campaign.title }}</h3>
@@ -39,38 +39,38 @@
                             <p class="detail-item"><strong>Pre-order Deadline:</strong> {{ campaign.pre_order_deadline.strftime('%B %d, %Y') }}</p>
                         </div>
                         <div class="campaign-actions">
-                            {% set current_datetime = now() %} 
-                            {% if campaign.pre_order_deadline and campaign.pre_order_deadline.date() < current_datetime.date() %}
+                            {% set current_datetime = now() %}
+                            {%- if campaign.pre_order_deadline and campaign.pre_order_deadline.date() < current_datetime.date() -%}
                                 <button class="closed-button button-disabled" disabled>Pre-order Closed</button>
-                            {% elif campaign.available_stock <= 0 %}
+                            {%- elif campaign.available_stock <= 0 -%}
                                 <button class="sold-out-button button-disabled" disabled>Sold Out</button>
-                            {% else %}
+                            {%- else -%}
                                 <button class="order-button button-primary"
                                         data-campaign-id="{{ campaign.id }}"
                                         data-campaign-title="{{ campaign.title | e }}"
                                         data-price-per-shirt="{{ campaign.price_per_shirt }}">
                                     Pre-order Now
                                 </button>
-                            {% endif %}
+                            {%- endif -%}
                         </div>
                     </div>
                 </div>
-            {% endfor %}
-        {% else %}
+            {%- endfor -%}
+        {%- else -%}
             <p class="no-campaigns-message info-message">No active shirt campaigns at the moment.</p>
-        {% endif %}
+        {%- endif -%}
     </div>
 </div>
 
 <hr class="section-divider">
 
-<div class="card content-section" id="my-orders-section"> 
+<div class="card content-section" id="my-orders-section">
     <h2 class="section-title">My Shirt Orders</h2>
     <button id="toggleCompletedOrdersButton" class="toggle-orders-button button-secondary">Hide Completed Orders</button>
 
     <div class="orders-list-container">
-        {% if student_shirt_orders %}
-            {% for order in student_shirt_orders %}
+        {%- if student_shirt_orders -%}
+            {%- for order in student_shirt_orders -%}
                 <div class="order-card order-item"
                      data-order-id="{{ order.id }}"
                      data-payment-status="{{ order.payment.status if order.payment else 'pending' }}">
@@ -93,26 +93,26 @@
                     <div class="order-actions">
                         {% set is_payment_successful = order.payment and (order.payment.status == 'paid' or order.payment.status == 'success') %}
 
-                        {% if not is_payment_successful %}
+                        {%- if not is_payment_successful -%}
                             <button class="pay-button paymaya-pay-button button-primary"
                                     data-payment-item-id="{{ order.payment.payment_item.id if order.payment and order.payment.payment_item else '' }}"
                                     data-order-id="{{ order.id }}">
                                 Complete Payment
                             </button>
-                        {% else %}
+                        {%- else -%}
                             <button class="paid-button button-disabled" disabled>
                                 Payment Successful
                             </button>
-                        {% endif %}
+                        {%- endif -%}
 
                         <button class="view-details-button button-secondary" data-order-id="{{ order.id }}">View Details</button>
                     </div>
                 </div>
-            {% endfor %}
-        {% else %}
+            {%- endfor -%}
+        {%- else -%}
             <p class="no-orders-message info-message">You have not placed any shirt orders yet.</p>
             <p class="cta-message">Check out the <a href="#campaigns-section">available campaigns</a> to place your first order!</p>
-        {% endif %}
+        {%- endif -%}
     </div>
 </div>
 
@@ -123,7 +123,7 @@
         <span class="close-button">&times;</span>
         <h2 class="modal-title">Place Your Order</h2>
         <h3 id="modalCampaignTitle" class="modal-subtitle"></h3>
-        <form id="orderForm" class="form-container"> 
+        <form id="orderForm" class="form-container">
             <input type="hidden" id="modalCampaignId" name="campaign_id">
             <input type="hidden" id="modalOrderTotalAmount" name="order_total_amount">
 
@@ -174,7 +174,7 @@
         <span class="close-button" id="closeOrderDetailModal">&times;</span>
         <h2 class="modal-title">Order Details <span id="modalOrderDetailId"></span></h2>
         <div class="order-detail-card" id="orderDetailContent">
-            
+
             <p class="loading-message info-message">Loading order details...</p>
         </div>
     </div>
@@ -184,7 +184,7 @@
     <div class="modal-content">
         <span class="close-button">&times;</span>
         <h2 class="modal-title">Update Your Order</h2>
-        <form id="updateOrderForm" class="form-container"> 
+        <form id="updateOrderForm" class="form-container">
             <input type="hidden" id="updateOrderId" name="order_id">
 
             <div class="form-group">

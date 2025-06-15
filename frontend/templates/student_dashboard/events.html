@@ -14,54 +14,54 @@
 
 {% block content %}
 <div class="events-page">
-    <div class="events-cards-grid">
-        {% if events %}
-            {% for event in events %}
-                <div class="event-card">
-                    {% if event.classification_image_url %}
-                    <div class="event-card-image-container">
-                        <img src="{{ event.classification_image_url }}" alt="{{ event.classification }} Image" class="event-card-image">
-                    </div>
-                    {% else %}
-                    <div class="event-card-image-container">
-                        <img src="https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image" alt="Placeholder Image" class="event-card-image">
-                    </div>
-                    {% endif %}
+    <div class="events-cards-grid">
+        {%- if events -%}
+            {%- for event in events -%}
+                <div class="event-card">
+                    {%- if event.classification_image_url -%}
+                    <div class="event-card-image-container">
+                        <img src="{{ event.classification_image_url }}" alt="{{ event.classification }} Image" class="event-card-image">
+                    </div>
+                    {%- else -%}
+                    <div class="event-card-image-container">
+                        <img src="https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image" alt="Placeholder Image" class="event-card-image">
+                    </div>
+                    {%- endif -%}
 
-                    <div class="event-card-content">
-                        <div class="event-header">
-                            <h3 class="event-title">{{ event.title }}</h3>
-                            <span class="event-tag tag-{{ event.classification|lower }}">
-                                {{ event.classification }}
-                            </span>
-                        </div>
-                        <div class="event-meta">
-                            <div><span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') }}</span></div>
-                            <div><span><i>Time:</i> {{ event.date.strftime('%I:%M %p') }}</span></div>
-                            <div><span><i>Location:</i> {{ event.location }}</span></div>
-                        </div>
-                        <p class="event-description">{{ event.description }}</p>
-                        <div class="event-actions">
-                            {% if current_user_id in event.participants|map(attribute='id')|list %}
-                                <form action="{{ url_for('leave_event', event_id=event.event_id) }}" method="post">
-                                    <button class="leave-button" type="submit">Leave</button>
-                                </form>
-                            {% elif event.joined_count() >= event.max_participants %}
-                                <button class="full-button" disabled>Full</button>
-                            {% else %}
-                                <form action="{{ url_for('join_event', event_id=event.event_id) }}" method="post">
-                                    <button class="join-button" type="submit">Join</button>
-                                </form>
-                            {% endif %}
-                            <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No upcoming events at the moment.</p>
-        {% endif %}
-    </div>
+                    <div class="event-card-content">
+                        <div class="event-header">
+                            <h3 class="event-title">{{ event.title }}</h3>
+                            <span class="event-tag tag-{{ event.classification|lower }}">
+                                {{ event.classification }}
+                            </span>
+                        </div>
+                        <div class="event-meta">
+                            <div><span><i>Date:</i> {{ event.date.strftime('%B %d, %Y') }}</span></div>
+                            <div><span><i>Time:</i> {{ event.date.strftime('%I:%M %p') }}</span></div>
+                            <div><span><i>Location:</i> {{ event.location }}</span></div>
+                        </div>
+                        <p class="event-description">{{ event.description }}</p>
+                        <div class="event-actions">
+                            {%- if current_user_id in event.participants|map(attribute='id')|list -%}
+                                <form action="{{ url_for('leave_event', event_id=event.event_id) }}" method="post">
+                                    <button class="leave-button" type="submit">Leave</button>
+                                </form>
+                            {%- elif event.joined_count() >= event.max_participants -%}
+                                <button class="full-button" disabled>Full</button>
+                            {%- else -%}
+                                <form action="{{ url_for('join_event', event_id=event.event_id) }}" method="post">
+                                    <button class="join-button" type="submit">Join</button>
+                                </form>
+                            {%- endif -%}
+                            <span class="participants-count">{{ event.joined_count() }}/{{ event.max_participants }} Participants</span>
+                        </div>
+                    </div>
+                </div>
+            {%- endfor -%}
+        {%- else -%}
+            <p>No upcoming events at the moment.</p>
+        {%- endif -%}
+    </div>
 </div>
 {% endblock %}
 

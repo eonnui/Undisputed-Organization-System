@@ -13,12 +13,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="content-container"> 
+<div class="content-container">
 
     <div class="card content-section student-info-section">
         <h2 class="section-title">Student Information
             <span id="registrationStatus" class="status-tag {% if user.is_verified %}verified{% else %}unverified{% endif %}">
-                {% if user.is_verified %}Verified{% else %}Not Verified{% endif %}
+                {%- if user.is_verified -%}Verified{%- else -%}Not Verified{%- endif -%}
             </span>
         </h2>
         <form id="studentInfoForm" class="form-container">
@@ -41,15 +41,15 @@
                 <label for="email" class="form-label">Email</label>
                 <input type="text" id="email" name="email" value="{{ user.email }}" class="form-input read-only-input" readonly>
             </div>
-            <div class="form-group editable-field"> 
+            <div class="form-group editable-field">
                 <label class="form-label">Birth Date</label>
                 <div class="input-display-wrapper">
                     <span id="birthDateDisplay" class="display-value">
-                        {% if user.birthdate %}
+                        {%- if user.birthdate -%}
                             {{ user.birthdate.split(' ')[0] }}
-                        {% else %}
+                        {%- else -%}
                             -- / -- / ----
-                        {% endif %}
+                        {%- endif -%}
                     </span>
                     <span class="material-symbols-outlined edit-icon" id="editBirthDate">edit</span>
                     <input type="date" id="birthDate" name="birthdate" class="form-input edit-input hidden" value="{{ formatted_birthdate }}">
@@ -57,7 +57,7 @@
                 <small class="form-helper-text">Please enter your date of birth.</small>
                 <div class="error-message" id="birthDateError"></div>
             </div>
-            <div class="form-group editable-field"> 
+            <div class="form-group editable-field">
                 <label class="form-label">Gender</label>
                 <div class="input-display-wrapper">
                     <span id="genderDisplay" class="display-value">{{ user.sex if user.sex else '--' }}</span>
@@ -89,7 +89,7 @@
                     class="form-input read-only-input" readonly>
                 <div class="error-message" id="sectionError"></div>
             </div>
-            <div class="form-group editable-field"> 
+            <div class="form-group editable-field">
                 <label class="form-label">Guardian Name</label>
                 <div class="input-display-wrapper">
                     <span id="guardianNameDisplay" class="display-value">{{ user.guardian_name if user.guardian_name else '--' }}</span>
@@ -99,7 +99,7 @@
                     </div>
                 <div class="error-message" id="guardianNameError"></div>
             </div>
-            <div class="form-group editable-field"> 
+            <div class="form-group editable-field">
                 <label class="form-label">Guardian Contact</label>
                 <div class="input-display-wrapper">
                     <span id="guardianContactDisplay" class="display-value">{{ user.guardian_contact if user.guardian_contact else '--' }}</span>
@@ -114,7 +114,7 @@
                 <button type="button" class="button-secondary" id="clearStudentInfoForm">Clear</button>
                 <button type="submit" class="button-primary">Update Information</button>
             </div>
-             <p id="studentInfoMessage" class="message-text"></p> 
+            <p id="studentInfoMessage" class="message-text"></p>
         </form>
     </div>
 
@@ -127,11 +127,11 @@
                 <label for="registrationFormOnlyUpload" class="form-label">Upload Registration Form (PDF)</label>
                 <div class="current-file-display">
                     <span id="registrationFormDisplay" class="file-name-display">
-                        {% if user.registration_form %}
+                        {%- if user.registration_form -%}
                             <a href="{{ user.registration_form }}" target="_blank" class="file-link"><i class="fas fa-file-pdf"></i> View Current Form</a>
-                        {% else %}
+                        {%- else -%}
                             No form uploaded.
-                        {% endif %}
+                        {%- endif -%}
                     </span>
                     <input type="file" id="registrationFormOnlyUpload" name="registration_form" accept=".pdf" class="form-input file-input">
                 </div>
@@ -141,13 +141,13 @@
             <div class="button-group">
                 <button type="submit" class="button-primary">Update Registration Form</button>
             </div>
-            <p id="registrationFormMessage" class="message-text"></p> 
+            <p id="registrationFormMessage" class="message-text"></p>
         </form>
     </div>
 
     <hr class="section-divider">
 
-    <div class="settings-grid-container"> 
+    <div class="settings-grid-container">
         <div class="card settings-section profile-picture-section">
             <h2 class="section-title">Profile Picture</h2>
             <div class="profile-picture-preview-container">
@@ -163,7 +163,7 @@
                 <div class="button-group">
                     <button type="submit" class="button-primary">Change Profile Picture</button>
                 </div>
-                <p id="profilePictureMessage" class="message-text"></p> 
+                <p id="profilePictureMessage" class="message-text"></p>
             </form>
         </div>
 
@@ -192,15 +192,15 @@
                     <button type="button" class="button-secondary" id="clearSecurityForm">Clear</button>
                     <button type="submit" class="button-primary">Update Security</button>
                 </div>
-                <p id="securityMessage" class="message-text"></p> 
+                <p id="securityMessage" class="message-text"></p>
             </form>
         </div>
-    </div> 
+    </div>
 
-</div> 
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="/static/js/student_dashboard/settings.js"></script>
-<script src="/static/js/script.js"></script> 
+<script src="/static/js/script.js"></script>
 {% endblock %}
