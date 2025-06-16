@@ -124,7 +124,7 @@
         <h2 class="section-title">Registration Form</h2>
         <form id="registrationFormOnly" enctype="multipart/form-data" class="form-container">
             <div class="form-group">
-                <label for="registrationFormOnlyUpload" class="form-label">Upload Registration Form (PDF)</label>
+                <label for="registrationFormOnlyUpload" class="form-label upload-button-label">Upload Registration Form (PDF)</label>
                 <div class="current-file-display">
                     <span id="registrationFormDisplay" class="file-name-display">
                         {%- if user.registration_form -%}
@@ -155,7 +155,7 @@
             </div>
             <form id="profilePictureForm" enctype="multipart/form-data" class="form-container">
                 <div class="form-group">
-                    <label for="profilePicture" class="form-label">Upload New Picture</label>
+                    <label for="profilePicture" class="form-label upload-button-label">Upload New Picture</label>
                     <input type="file" id="profilePicture" name="profilePicture" accept="image/*" class="form-input file-input">
                     <small class="form-helper-text">Accepted formats: JPG, PNG, GIF. Max size: 2MB.</small>
                     <div class="error-message" id="profilePictureError"></div>
@@ -179,7 +179,7 @@
                 <div class="form-group">
                     <label for="newPassword" class="form-label">New Password</label>
                     <input type="password" id="newPassword" name="new_password" class="form-input">
-                    <small id="newPasswordSmallText" class="form-helper-text">Must be at least 8 characters long (leave blank to keep current).</small>
+                    <small id="newPasswordSmallText" class="form-helper-text"></small>
                     <div class="error-message" id="newPasswordError"></div>
                 </div>
                 <div class="form-group">

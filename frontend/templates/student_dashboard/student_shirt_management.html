@@ -72,8 +72,8 @@
         {%- if student_shirt_orders -%}
             {%- for order in student_shirt_orders -%}
                 <div class="order-card order-item"
-                     data-order-id="{{ order.id }}"
-                     data-payment-status="{{ order.payment.status if order.payment else 'pending' }}">
+                    data-order-id="{{ order.id }}"
+                    data-payment-status="{{ order.payment.status if order.payment else 'pending' }}">
                     <div class="order-header">
                         <h3 class="order-campaign-title">{{ order.campaign.title if order.campaign else 'N/A' }}</h3>
 
@@ -118,124 +118,23 @@
 
 <hr class="section-divider">
 
-<div id="orderModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2 class="modal-title">Place Your Order</h2>
-        <h3 id="modalCampaignTitle" class="modal-subtitle"></h3>
-        <form id="orderForm" class="form-container">
-            <input type="hidden" id="modalCampaignId" name="campaign_id">
-            <input type="hidden" id="modalOrderTotalAmount" name="order_total_amount">
-
-            <div class="form-group">
-                <label for="student_name" class="form-label">Your Name:</label>
-                <input type="text" id="student_name" name="student_name" value="{{ current_user.first_name }} {{ current_user.last_name }}" required readonly class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="student_year_section" class="form-label">Year & Section:</label>
-                <input type="text" id="student_year_section" name="student_year_section" value="{{ current_user.year_level }} - {{ current_user.section }}" required class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="student_email" class="form-label">Email (Optional):</label>
-                <input type="email" id="student_email" name="student_email" value="{{ current_user.email or '' }}" class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="student_phone" class="form-label">Phone (Optional):</label>
-                <input type="tel" id="student_phone" name="student_phone" value="{{ current_user.contact or '' }}" class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="shirt_size" class="form-label">Shirt Size:</label>
-                <select id="shirt_size" name="shirt_size" required class="form-input form-select">
-                    <option value="">Select Size</option>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="quantity" class="form-label">Quantity:</label>
-                <input type="number" id="quantity" name="quantity" min="1" value="1" required class="form-input form-number-input">
-            </div>
-            <div class="form-group total-amount-display">
-                <strong class="total-label">Total Amount:</strong> <span id="displayTotalAmount" class="total-value">&#8369;0.00</span>
-            </div>
-
-            <button type="submit" class="submit-order-button button-primary">Submit Order</button>
-            <p id="orderMessage" class="message-text"></p>
-        </form>
-    </div>
-</div>
-
-<div id="orderDetailModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button" id="closeOrderDetailModal">&times;</span>
-        <h2 class="modal-title">Order Details <span id="modalOrderDetailId"></span></h2>
-        <div class="order-detail-card" id="orderDetailContent">
-
-            <p class="loading-message info-message">Loading order details...</p>
-        </div>
-    </div>
-</div>
-
-<div id="updateOrderModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2 class="modal-title">Update Your Order</h2>
-        <form id="updateOrderForm" class="form-container">
-            <input type="hidden" id="updateOrderId" name="order_id">
-
-            <div class="form-group">
-                <label for="updateQuantity" class="form-label">Quantity:</label>
-                <input type="number" id="updateQuantity" name="quantity" min="1" required class="form-input form-number-input">
-            </div>
-
-            <div class="form-group">
-                <label for="updateShirtSize" class="form-label">Shirt Size:</label>
-                <select id="updateShirtSize" name="shirt_size" required class="form-input form-select">
-                    <option value="">Select Size</option>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Current Total:</label>
-                <span id="updateDisplayTotalAmount" class="total-amount-display total-value">₱0.00</span>
-                <input type="hidden" id="updateOrderTotalAmount" name="order_total_amount">
-            </div>
-
-            <button type="submit" class="button-primary">Update Order</button>
-            <p id="updateOrderMessage" class="message-text"></p>
-        </form>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Ensure these URLs are correctly defined by your Flask/Jinja2 app
     const CREATE_ORDER_URL = "{{ url_for('create_student_shirt_order_api') }}";
     const PAYMAYA_CREATE_PAYMENT_URL = "{{ url_for('paymaya_create_payment') }}";
     const GET_ORDER_DETAILS_URL_BASE = "{{ url_for('get_student_shirt_order_api', order_id='_PLACEHOLDER_') }}".replace('_PLACEHOLDER_', '');
-
-    // *** THE CRUCIAL CHANGE FOR DELETE URL ***
-    // Hardcode the base URL for the delete endpoint to match your FastAPI route.
-    // Your FastAPI route is `@router.delete("/orders/{order_id}")`
     const DELETE_ORDER_URL_BASE = "/orders/";
-    // If your FastAPI app is served under a prefix (e.g., /api), it would be:
-    // const DELETE_ORDER_URL_BASE = "/api/orders/";
-    // Double-check your app's main.py where you include the router.
-
-    // --- NEW: Define URL for updating an order ---
-    const UPDATE_ORDER_URL_BASE = "/orders/"; // Assumes PUT /orders/{order_id}
+    const UPDATE_ORDER_URL_BASE = "/orders/"; 
+    const CURRENT_USER = {
+        firstName: "{{ current_user.first_name | e }}",
+        lastName: "{{ current_user.last_name | e }}",
+        yearLevel: "{{ current_user.year_level | e }}",
+        section: "{{ current_user.section | e }}",
+        email: "{{ current_user.email | e if current_user.email else '' }}",
+        contact: "{{ current_user.contact | e if current_user.contact else '' }}"
+    };
 </script>
 <script src="/static/js/student_dashboard/student_shirt_management.js"></script>
 {% endblock %}

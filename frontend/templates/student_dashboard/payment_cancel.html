@@ -42,8 +42,7 @@
                 {% endif %}
                 <p class="info-item"><strong>Amount:</strong> <span class="info-value">₱{{ "{:,.2f}".format(payment_item.fee) if payment_item.fee is not none else 'N/A' }}</span></p>
                 {% endif %}
-            </div>
-            <p class="info-message">You can initiate the payment again from your dashboard or payment history.</p>
+            </div>            
         </div>
 
         <div class="button-group-center">

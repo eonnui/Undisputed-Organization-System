@@ -221,6 +221,7 @@
 
 .existing-wiki-posts-title {
   color: var(--org-text-primary);
+  margin-bottom: 10px;
 }
 
 .wiki-post-content {
@@ -334,10 +335,10 @@
 
 .view-org-chart-button {
   padding: 0.6rem 1rem;
-  border: 2px solid var(--org-button-bg);
+  border: 2px solid var(--org-button-chart-text);
   border-radius: 8px;
   background-color: transparent;
-  color: var(--org-button-bg);
+  color: var(--org-button-chart-text);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -363,42 +364,6 @@
   box-shadow: 0 1px 2px rgba(var(--org-shadow-base-rgb), 0.1);
   background-color: var(--org-hover-effect);
   color: var(--org-button-text);
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.6);
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: var(--org-card-bg);
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 8px 25px rgba(var(--org-shadow-base-rgb), 0.3);
-  width: 90%;
-  max-width: 900px;
-  position: relative;
-  box-sizing: border-box;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  font-size: 1.8rem;
-  color: var(--org-text-primary);
-  border-bottom: 2px solid var(--org-border-medium);
-  padding-bottom: 0.75rem;
-  margin-bottom: 1.5rem;
 }
 
 .close-button {
@@ -574,10 +539,6 @@
     border-bottom-right-radius: 8px;
   }
 
-  .modal-content {
-    width: 90%;
-    max-width: 700px;
-  }
 }
 
 @media (max-width: 768px) {
@@ -595,12 +556,6 @@
   .wiki-post-actions {
     flex-direction: column;
     gap: 0.5rem;
-  }
-
-  .modal-content {
-    width: 95%;
-    max-width: 500px;
-    padding: 1rem;
   }
 
   .organization-chart-display {

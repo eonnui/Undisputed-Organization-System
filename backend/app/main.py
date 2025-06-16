@@ -2904,12 +2904,34 @@ async def events(request: Request, db: Session = Depends(get_db)):
 async def payments(request: Request, db: Session = Depends(get_db)):
     user, _ = get_current_user_with_org(request, db)
 
-    payment_items = db.query(models.PaymentItem).filter(
-        models.PaymentItem.user_id == user.id, models.PaymentItem.is_not_responsible == False
+    print(f"DEBUG: Current User ID: {user.id}")
+
+    payment_items_from_db = db.query(models.PaymentItem).filter(
+        models.PaymentItem.user_id == user.id,
+        models.PaymentItem.is_not_responsible == False,
+        models.PaymentItem.student_shirt_order_id == None
     ).order_by(models.PaymentItem.academic_year).all()
 
-    past_due_items = [item for item in payment_items if not item.is_paid and item.is_past_due]
-    unpaid_upcoming_items = [item for item in payment_items if not item.is_paid and not item.is_past_due]
+    print(f"DEBUG: Initial DB query found {len(payment_items_from_db)} payment items with NO student_shirt_order_id.")
+
+    past_due_items = []
+    unpaid_upcoming_items = []
+
+    for item in payment_items_from_db: 
+        if not item.is_paid and item.is_past_due:
+            past_due_items.append(item)
+        elif not item.is_paid and not item.is_past_due:
+            unpaid_upcoming_items.append(item)
+
+    items_with_shirt_id_in_past_due = [
+        item for item in past_due_items if item.student_shirt_order_id is not None
+    ]
+    print(f"DEBUG: Found {len(items_with_shirt_id_in_past_due)} payment items WITH student_shirt_order_id in past_due_items (should be 0).")
+
+    items_with_shirt_id_in_unpaid_upcoming = [
+        item for item in unpaid_upcoming_items if item.student_shirt_order_id is not None
+    ]
+    print(f"DEBUG: Found {len(items_with_shirt_id_in_unpaid_upcoming)} payment items WITH student_shirt_order_id in unpaid_upcoming_items (should be 0).")
 
     context = await get_base_template_context(request, db)
     context.update({
@@ -3118,7 +3140,8 @@ async def get_detailed_monthly_report_json(
                 else:
                     category_name = "Miscellaneous Fee"
                 status_str = "Paid" if item.is_paid else ("Past Due" if not item.is_paid and item.due_date and item.due_date < date.today() else "Unpaid")
-                all_financial_events.append((relevant_date, f"Your Payment - {category_name}", item.fee if item.is_paid else 0.00, 0.00, status_str, item.fee, item))
+                
+                all_financial_events.append((relevant_date, f"You Paid - {category_name}", item.fee if item.is_paid else 0.00, 0.00, status_str, item.fee, item))
 
     org_id_for_query = user_org.id if user_org else None
     if report_type in ['organization', 'combined', None]:
@@ -3162,7 +3185,7 @@ async def get_detailed_monthly_report_json(
 
     for event_date, description, inflow, outflow, status_str, original_value, original_item_obj in all_financial_events:
         if start_date_of_month <= event_date <= end_date_of_month: 
-            is_user_payment_event = "Your Payment" in description
+            is_user_payment_event = "You Paid" in description 
             is_org_inflow_event = "Organization Inflows" in description
             is_org_expense_event = "Org Expense" in description
 

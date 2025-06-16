@@ -188,7 +188,7 @@
 }
 
 .join-button {
-  background-color: var(--org-button-bg);
+  background-color: var(--org-join-btn-bg);
   color: var(--org-button-text);
 }
 

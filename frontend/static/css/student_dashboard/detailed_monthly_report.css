@@ -1,0 +1,439 @@
+.back-button-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background-color: var(--org-button-secondary-bg);
+  color: var(--org-button-secondary-text);
+  border: 1px solid var(--org-button-secondary-border);
+  border-radius: var(--org-radius-md);
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.back-button-header:hover {
+  background-color: var(--org-button-secondary-hover-bg);
+  color: var(--org-button-secondary-hover-text);
+  border-color: var(--org-button-secondary-hover-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--org-shadow-xs);
+}
+
+.back-button-header i {
+  font-size: 1em;
+}
+
+.monthly-cashflow-detailed-content {
+  background-color: var(--org-card-bg);
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--org-shadow-md);
+  padding: 30px;
+  margin: 20px auto;
+  max-width: unset;
+  width: auto;
+  margin: 20px;
+  box-sizing: border-box;
+  animation: fadeInSlideUp 0.6s ease-out forwards;
+}
+
+.subtitle {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: var(--org-text-primary);
+  margin-bottom: 10px;
+}
+
+.date-info {
+  font-size: 1.1em;
+  color: var(--org-text-secondary);
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--org-border-light);
+}
+
+.report-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.report-type-label {
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--org-text-primary);
+}
+
+.report-type-select-dropdown {
+  padding: 10px 15px;
+  border: 1px solid var(--org-border-medium);
+  border-radius: var(--org-radius-md);
+  background-color: var(--org-card-bg);
+  color: var(--org-text-primary);
+  font-size: 1em;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 200px;
+}
+
+.report-type-select-dropdown:focus {
+  outline: none;
+  border-color: var(--org-primary);
+  box-shadow: 0 0 0 3px rgba(var(--org-primary-rgb), 0.2);
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--org-radius-md);
+  border: 1px solid var(--org-border-medium);
+  box-shadow: var(--org-shadow-sm);
+  max-height: 600px;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.table-container::-webkit-scrollbar {
+  display: none;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  color: var(--org-table-data-text);
+  min-width: 900px;
+}
+
+.table-container th,
+.table-container td {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--org-border-light);
+  font-size: 0.95em;
+  word-break: break-word;
+}
+
+.table-container thead {
+  background-color: var(--org-table-header-bg-payments);
+  border-bottom: 2px solid var(--org-border-medium);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.table-container th {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--org-table-header-text-payments);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.table-container tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-container tbody tr:hover {
+  background-color: var(--org-background-light-alt-darker);
+  transition: background-color 0.2s ease;
+}
+
+.table-container .amount {
+  text-align: right;
+  font-weight: 500;
+  color: var(--org-text-primary);
+  font-family: "Roboto Mono", monospace;
+}
+
+.table-container .status-paid {
+  color: var(--org-success);
+  font-weight: 600;
+}
+
+.table-container .status-outstanding {
+  color: var(--org-warning-text);
+  font-weight: 600;
+}
+
+.table-container .status-disbursed {
+  color: var(--org-error);
+  font-weight: 600;
+}
+
+.table-container .status-neutral {
+  color: var(--org-info-text);
+  font-weight: 600;
+}
+
+.table-container tfoot {
+  background-color: var(--org-card-bg);
+  border-top: 2px solid var(--org-border-medium);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+.table-container tfoot th,
+.table-container tfoot td {
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--org-text-primary);
+  padding: 15px 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: none;
+}
+
+.table-container tfoot .amount {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--org-text-primary);
+}
+
+.table-container tbody td:last-child {
+  font-weight: 600;
+}
+
+.table-container tbody tr.positive-balance td:last-child {
+  color: var(--org-success);
+}
+
+.table-container tbody tr.negative-balance td:last-child {
+  color: var(--org-error);
+}
+
+@media (max-width: 992px) {
+  .monthly-cashflow-detailed-content {
+    padding: 20px;
+    margin: 15px auto;
+  }
+
+  .dashboard-title {
+    font-size: 2em;
+    margin-bottom: 15px;
+  }
+
+  .back-button-header {
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+
+  .subtitle {
+    font-size: 1.3em;
+  }
+
+  .date-info {
+    font-size: 1em;
+    margin-bottom: 20px;
+  }
+
+  .report-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+
+  .report-type-select-dropdown {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .table-container {
+    max-height: 500px;
+  }
+
+  .table-container th,
+  .table-container td {
+    padding: 10px 15px;
+    font-size: 0.9em;
+  }
+
+  .table-container table {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .monthly-cashflow-detailed-content {
+    padding: 15px;
+    margin: 10px auto;
+  }
+
+  .content-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-title {
+    font-size: 1.8em;
+    margin-bottom: 0;
+  }
+
+  .back-button-header {
+    margin-left: 0;
+    width: auto;
+  }
+
+  .subtitle {
+    font-size: 1.2em;
+  }
+
+  .date-info {
+    font-size: 0.9em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  .table-container {
+    max-height: 450px;
+  }
+
+  .table-container table {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .table-container thead {
+    display: none;
+  }
+
+  .table-container tbody tr {
+    border-bottom: 2px solid var(--org-border-medium);
+    display: block;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  .table-container tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .table-container th,
+  .table-container td {
+    display: block;
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: none;
+  }
+
+  .table-container td[data-label]:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0.8rem;
+    width: 45%;
+    text-align: left;
+    font-weight: 600;
+    color: var(--org-text-primary);
+    font-size: 0.85em;
+  }
+
+  .table-container tfoot {
+    display: block;
+    border-top: none;
+  }
+  .table-container tfoot tr {
+    display: block;
+    margin-top: 10px;
+    border-bottom: 1px dashed var(--org-border-light);
+  }
+  .table-container tfoot tr:last-child {
+    border-bottom: none;
+  }
+  .table-container tfoot th {
+    font-size: 0.9em;
+    text-align: left;
+    padding: 0.5rem 0.8rem;
+    display: block;
+    width: 100%;
+  }
+  .table-container tfoot th.amount {
+    text-align: right;
+  }
+
+  .table-container tfoot #footer-running-balance {
+    text-align: right;
+  }
+}
+
+@media (max-width: 480px) {
+  .monthly-cashflow-detailed-content {
+    padding: 10px;
+    margin: 8px auto;
+  }
+
+  .dashboard-title {
+    font-size: 1.6em;
+  }
+
+  .back-button-header {
+    font-size: 0.8em;
+    padding: 6px 10px;
+  }
+
+  .subtitle {
+    font-size: 1.1em;
+  }
+
+  .date-info {
+    font-size: 0.85em;
+    margin-bottom: 10px;
+  }
+
+  .report-type-select-dropdown {
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+
+  .table-container {
+    max-height: 400px;
+  }
+
+  .table-container th,
+  .table-container td {
+    padding: 8px 10px;
+    font-size: 0.85em;
+  }
+
+  .table-container td[data-label]:before {
+    left: 0.6rem;
+    width: 40%;
+    font-size: 0.8em;
+  }
+
+  .table-container tfoot th,
+  .table-container tfoot td {
+    padding: 10px 10px;
+    font-size: 0.9em;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

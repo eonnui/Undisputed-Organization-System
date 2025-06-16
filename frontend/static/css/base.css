@@ -221,7 +221,6 @@ body {
   height: auto;
   min-height: 3vw;
   box-sizing: border-box;
-  background-color: var(--org-nav-item-selected-bg);
 }
 
 .sidebar.collapsed nav ul li.selected {
@@ -473,7 +472,6 @@ body {
   background-color: var(--org-bg-color);
   color: var(--org-text-primary);
   font-weight: 550;
-  border-left: 0.2vw solid var(--organization-theme-color);
 }
 
 .dropdown-content .notification-item.unread:hover {
@@ -586,7 +584,7 @@ body {
 .form-group input {
   width: 100%;
   padding: 0.83vw;
-  border: 0.069vw solid var(--org-border-medium);
+  border: 0.069vw solid var(--org-text-secondary);
   border-radius: 0.41vw;
   font-size: clamp(0.9rem, 1.11vw, 1.2rem);
 }
@@ -779,12 +777,12 @@ body {
 }
 
 .modal-content {
-  background-color: var(--card-background-color);
+  background-color: var(--org-card-bg);
   padding: 30px;
-  border-radius: var(--border-radius);
+  border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  width: 90%;
-  max-width: 800px;
+  width: 100%;
+  max-width: 900px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -794,9 +792,18 @@ body {
   margin: 20px;
 }
 
+.modal-content h2 {
+  font-size: 1.8em;
+  color: var(--org-form-group-label-color);
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
 .modal-content h3 {
   font-size: 1.8em;
-  color: var(--heading-color);
+  color: var(--org-form-group-label-color);
   margin-top: 0;
   margin-bottom: 20px;
   padding-bottom: 10px;
@@ -826,9 +833,10 @@ body {
 }
 
 #modal-body {
-  flex-grow: 1;
+  flex-grow: 1;  
+  background-color: var(--org-card-bg);
   overflow-y: auto;
-  padding-right: 5px;
+  padding: 10px;
 }
 
 #modal-body p {
@@ -861,8 +869,8 @@ body {
 
 .modal-content::-webkit-scrollbar,
 #modal-body::-webkit-scrollbar {
-    width: 102px; /* Width of the vertical scrollbar */
-    height: 12px; /* Height of the horizontal scrollbar (if any) */
+    width: 10px; 
+    height: 12px;
 }
 
 

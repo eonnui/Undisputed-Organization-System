@@ -719,7 +719,8 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         "--org-event-full-text": "#FFFFFF", "--org-join-button-bg": "#43a047",
         "--org-join-button-hover-bg": "#45a049", "--org-leave-button-bg": "#f44336",
         "--org-leave-button-hover-bg": "#d32f2f", "--org-full-button-bg": "#bdbdbd",
-        "--org-full-button-text": "#424242", "--org-participants-count-color": "#757575",
+        "--org-full-button-text": "#424242", "--org-participants-count-color": "#757575", 
+        "--org-pending-bg": "#FFC107", "--org-paid-bg": "#4CAF50", "--org-cancelled-bg": "#f44336",
         "--org-payments-container-bg": "#fdf5f5", "--org-border-light-darker": "transparent",
         "--org-text-primary-darker": "#000000", "--org-table-header-bg-payments": "#fbc4cb",
         "--org-table-header-text-payments": "#333333", "--org-table-data-text": "#333333",
@@ -733,7 +734,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         "--org-shadow-lg": "0 6px 15px rgba(0, 0, 0, 0.18)", "--org-primary": "#9a1415",
         "--org-radius-md": "8px", "--org-shadow-sm": "0 2px 5px rgba(0, 0, 0, 0.08)",
         "--org-text-light": "#FFFFFF", "--org-secondary-color": "#f5f5f5", "--org-primary-light": "#ffcdd2",
-        "--org-primary-hover": "#b71c1c", "--org-settings-section-bg": "#f5f5f5",
+        "--org-primary-hover": "#b71c1c", "--org-settings-section-bg": "#f5f5f5", "--org-remove-order": "#f44336",
         "--org-settings-title-color": "#212121", "--org-button-group-button-update-bg": "#a83232",
         "--org-button-group-button-update-hover-bg": "#862828", "--org-button-group-button-clear-bg": "#FFFFFF",
         "--org-button-group-button-clear-hover-bg": "transparent", "--org-profile-picture-border": "transparent",
@@ -830,6 +831,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
 
     if dark_mode:
         custom_palette["--org-bg-color"] = "#1E1E1E"
+        custom_palette["--org-dashboard-title-color"] = "#e0e0e0"
         custom_palette["--org-settings-section-bg"] = "#1E1E1E"
         custom_palette["--org-student-info-section-bg"] = "#252525"
         custom_palette["--org-registration-form-section-bg"] = "#252525"
@@ -853,7 +855,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         custom_palette["--org-faq-question-hover-bg"] = "#464646"
         custom_palette["--org-hover-effect"] = "#464646"
         custom_palette["--org-highlight"] = "#1a1a1a"
-        custom_palette["--org-button-bg"] = "#1a1a1a"
+        custom_palette["--org-button-bg"] = "#5E5E5E"
         custom_palette["--org-dashboard-accent-primary"] =  "#FFFFFF"
         custom_palette["--org-button-chart-text"] =  "#b0b0b0"
         custom_palette["--org-accent-light"] = "#FFFFFF"
@@ -894,6 +896,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         custom_palette["--org-post-card-border"] = "#444444"
         custom_palette["--org-event-item-border"] = "#FFFFFF"
         custom_palette["--org-error-border"] = "#EF5350"
+        custom_palette["--org-remove-order"] = "#6f2520"
         custom_palette["--org-profile-picture-border"] = "#444444"
         custom_palette["--org-form-group-input-border"] = "#444444"
         custom_palette["--org-form-group-input-focus-border"] = "#BBDEFB"
@@ -938,6 +941,10 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         custom_palette["--org-leave-btn-hover-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#d32f2f"), 0.8))
         custom_palette["--org-event-full-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#9e9e9e"), 0.8))
         custom_palette["--org-event-full-text"] = "#FFFFFF"
+
+        custom_palette["--org-pending-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#FFC107"), 0.8)) # Original: #FFC107 (Warning yellow)
+        custom_palette["--org-paid-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#4CAF50"), 0.8))   # Original: #4CAF50 (Success green)
+        custom_palette["--org-cancelled-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#f44336"), 0.8))
 
         custom_palette["--org-join-button-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#43a047"), 0.8))
         custom_palette["--org-join-button-hover-bg"] = rgb_to_hex(adjust_rgb_lightness(hex_to_rgb("#45a049"), 0.8))
