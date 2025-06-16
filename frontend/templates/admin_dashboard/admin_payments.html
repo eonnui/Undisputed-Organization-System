@@ -1,11 +1,14 @@
 {% extends 'admin_base.html' %}
 {% block title %}Admin Membership and Payments{% endblock %}
 {% block head %}
-    <link rel="stylesheet" href="/static/css/admin_dashboard/admin_common_styles.css">
     <link rel="stylesheet" href="/static/css/admin_dashboard/admin_payments.css">
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% endblock %}
+
+{% block content_header %}
+    <h1 class="dashboard-title">Membership & Payments</h1>
 {% endblock %}
 
 {% block content %}
@@ -17,65 +20,65 @@
 
     <div id="membership" class="tab-content active">
         <div class="payments-page-container">
-            <h2 class="payments-header">Membership</h2>
+            <h2 class="payments-header">Membership Overview</h2>
             <div class="header-actions">
+                <div class="filter-controls-group"> {# Group filters for better layout #}
+                    <div class="custom-select-wrapper" id="academic-year-filter-wrapper">
+                        <div class="custom-select-trigger" id="academic-year-filter-trigger">
+                            <span>Academic Year</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                        <div class="custom-options" id="academic-year-filter-options">
+                            <ul role="listbox" id="academic-year-dropdown">
+                                <li data-value="">All</li>
+                                <li data-value="2027-2028">2027-2028</li>
+                                <li data-value="2026-2027">2026-2027</li>
+                                <li data-value="2025-2026">2025-2026</li>
+                                <li data-value="2024-2025">2024-2025</li>
+                                <li data-value="2023-2024">2023-2024</li>
+                                <li data-value="2022-2023">2022-2023</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="custom-select-wrapper" id="semester-filter-wrapper">
+                        <div class="custom-select-trigger" id="semester-filter-trigger">
+                            <span>Semester</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                        <div class="custom-options" id="semester-filter-options">
+                            <ul role="listbox" id="semester-dropdown">
+                                <li data-value="">All</li>
+                                <li data-value="1st">1st</li>
+                                <li data-value="2nd">2nd</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="payments-table-container">
                 <table class="payments-table" id="membership-table">
                     <thead>
-                    <tr>
-                        <div class="custom-select-wrapper" id="academic-year-filter-wrapper">
-                            <div class="custom-select-trigger" id="academic-year-filter-trigger">
-                                <span>Academic Year</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                            <div class="custom-options" id="academic-year-filter-options">
-                                <ul role="listbox" id="academic-year-dropdown">
-                                    <li data-value="">All</li>
-                                    <li data-value="2027-2028">2027-2028</li>
-                                    <li data-value="2026-2027">2026-2027</li>
-                                    <li data-value="2025-2026">2025-2026</li>
-                                    <li data-value="2024-2025">2024-2025</li>
-                                    <li data-value="2023-2024">2023-2024</li>
-                                    <li data-value="2022-2023">2022-2023</li>
-                                </ul>
-                            </div>
-                        </div>
-                        </div>
-                        </div>
-                        <div class="custom-select-wrapper" id="semester-filter-wrapper">
-                            <div class="custom-select-trigger" id="semester-filter-trigger">
-                                <span>Semester</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                            <div class="custom-options" id="semester-filter-options">
-                                <ul role="listbox" id="semester-dropdown">
-                                    <li data-value="">All</li>
-                                    <li data-value="1st">1st</li>
-                                    <li data-value="2nd">2nd</li>
-                                </ul>
-                            </div>
-                        </div>
-                        </div>
-                        <th class="sortable" data-column="year_level">Year Level</th>
-                        <th class="sortable" data-column="section">Section</th>
-                        <th class="sortable" data-column="total_paid">Total Paid</th>
-                        <th class="sortable" data-column="total_amount">Total Amount</th>
-                        <th class="sortable" data-column="status">Status</th>
-                        <th>List</th>
-                    </tr>
+                        <tr>
+                            <th class="sortable" data-column="year_level">Year Level</th>
+                            <th class="sortable" data-column="section">Section</th>
+                            <th class="sortable" data-column="total_paid">Total Paid</th>
+                            <th class="sortable" data-column="total_amount">Total Amount</th>
+                            <th class="sortable" data-column="status">Status</th>
+                            <th>List</th>
+                        </tr>
                     </thead>
                     <tbody>
                     </tbody>
-                    <tfoot> <tr>
-                        <td colspan="2">Totals:</td>
-                        <td id="total-paid-sum">0</td>
-                        <td id="total-amount-sum">0</td>
-                        <td id="total-status-summary"></td>
-                        <td></td>
-                    </tr>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2">Totals:</td>
+                            <td id="total-paid-sum">0</td>
+                            <td id="total-amount-sum">0</td>
+                            <td id="total-status-summary"></td>
+                            <td></td>
+                        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -84,86 +87,86 @@
 
     <div id="payments" class="tab-content">
         <div class="payments-page-container">
-            <h2 class="payments-header">Payments</h2>
+            <h2 class="payments-header">Individual Payments</h2>
             <div class="header-actions">
-                    <button id="view-all-payments-button" class="action-button">View Payment History</button>
-                    <div class="filter-container">
-                        <label for="student-id-filter">Filter by Student ID:</label>
-                        <input type="text" id="student-id-filter" placeholder="Enter Student ID">
-                        <button onclick="filterPaymentsByStudentIdAndHistory()">Filter</button>
-                    </div>
+                <button id="view-all-payments-button" class="action-button">View Payment History</button>
+                <div class="filter-container">
+                    <label for="student-id-filter">Filter by Student ID:</label>
+                    <input type="text" id="student-id-filter" placeholder="Enter Student ID">
+                    <button onclick="filterPaymentsByStudentIdAndHistory()">Filter</button>
                 </div>
+            </div>
 
             <div class="payments-table-container">
+                {# This section will be populated by JavaScript or by a different data structure if it's based on dynamic fetching #}
+                {# For now, keep the original Jinja2 logic if it's meant to render initial data #}
+                {% set student_payments = {} %}
+                {% for item_with_status in payment_items %}
+                    {% set student_number = item_with_status.student_number %}
+                    {% if student_number not in student_payments %}
+                        {% set _ = student_payments.update({student_number: []}) %}
+                    {% endif %}
+                    {% set _ = student_payments[student_number].append(item_with_status) %}
+                {% endfor %}
 
-                    {% set student_payments = {} %}
-                    {% for item_with_status in payment_items %}
-                        {% set student_number = item_with_status.student_number %}
-                        {% if student_number not in student_payments %}
-                            {% set _ = student_payments.update({student_number: []}) %}
-                        {% endif %}
-                        {% set _ = student_payments[student_number].append(item_with_status) %}
-                    {% endfor %}
-
-                    {% for student_number, payments in student_payments.items() %}
-                        <table class="payments-table" data-student-id="{{ student_number }}">
-                            <thead>
+                {% for student_number, payments in student_payments.items() %}
+                    <table class="payments-table" data-student-id="{{ student_number }}">
+                        <thead>
+                            <tr>
+                                <th>Student Number</th>
+                                <th>Academic Year</th>
+                                <th>Semester</th>
+                                <th>Fee</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item_with_status in payments %}
                                 <tr>
-                                    <th>Student Number</th>
-                                    <th>Academic Year</th>
-                                    <th>Semester</th>
-                                    <th>Fee</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
+                                    <td>{{ item_with_status.student_number }}</td>
+                                    <td>{{ item_with_status.item.academic_year }}</td>
+                                    <td>{{ item_with_status.item.semester }}</td>
+                                    <td>{{ item_with_status.item.fee }}</td>
+                                    <td>{{ item_with_status.item.due_date.strftime('%Y-%m-%d') if item_with_status.item.due_date else 'Not Set' }}</td>
+                                    <td class="{% if item_with_status.item.is_not_responsible %}not-responsible{% else %}{{ item_with_status.status.lower() }}{% endif %}">
+                                        {% if item_with_status.item.is_not_responsible %}
+                                            NR
+                                        {% else %}
+                                            {{ item_with_status.status }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item_with_status.status == "Past Due" or item_with_status.status == "Unpaid" %} {# Only allow update for these statuses #}
+                                            <div class="action-button-container">
+                                                <form method="post" action="/admin/payment/{{ item_with_status.item.id }}/update_status">
+                                                    <select name="status" id="status-select-{{ item_with_status.item.id }}">
+                                                        <option value="Unpaid" {% if item_with_status.status == "Unpaid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
+                                                            Unpaid
+                                                        </option>
+                                                        <option value="Paid" {% if item_with_status.status == "Paid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
+                                                            Paid
+                                                        </option>
+                                                        <option value="NOT RESPONSIBLE" {% if item_with_status.item.is_not_responsible %}selected{% endif %}>
+                                                            Not Responsible
+                                                        </option>
+                                                    </select>
+                                                    <button type="submit" class="update-button" data-item-id="{{ item_with_status.item.id }}">Update
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {% for item_with_status in payments %}
-                                    <tr>
-                                        <td>{{ item_with_status.student_number }}</td>
-                                        <td>{{ item_with_status.item.academic_year }}</td>
-                                        <td>{{ item_with_status.item.semester }}</td>
-                                        <td>{{ item_with_status.item.fee }}</td>
-                                        <td>{{ item_with_status.item.due_date.strftime('%Y-%m-%d') if item_with_status.item.due_date else 'Not Set' }}</td>
-                                        <td class="{% if item_with_status.item.is_not_responsible %}not-responsible{% else %}{{ item_with_status.status.lower() }}{% endif %}">
-                                            {% if item_with_status.item.is_not_responsible %}
-                                                NR
-                                            {% else %}
-                                                {{ item_with_status.status }}
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if item_with_status.status == "Past Due" %}
-                                                <div class="action-button-container">
-                                                    <form method="post" action="/admin/payment/{{ item_with_status.item.id }}/update_status">
-                                                        <select name="status" id="status-select-{{ item_with_status.item.id }}">
-                                                            <option value="Unpaid" {% if item_with_status.status == "Unpaid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
-                                                                Unpaid
-                                                            </option>
-                                                            <option value="Paid" {% if item_with_status.status == "Paid" and not item_with_status.item.is_not_responsible %}selected{% endif %}>
-                                                                Paid
-                                                            </option>
-                                                            <option value="NOT RESPONSIBLE" {% if item_with_status.item.is_not_responsible %}selected{% endif %}>
-                                                                Not Responsible
-                                                            </option>
-                                                        </select>
-                                                        <button type="submit" class="update-button"  data-item-id="{{ item_with_status.item.id }}">Update
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div>No payment items found.</div>
-                    {% endfor %}
-
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div style="text-align: center; padding: 20px; color: #757575;">No payment items found.</div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -204,11 +207,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                    </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="1">Total Expenses:</td>
                             <td id="total-expenses-sum" colspan="2">0.00</td>
+                            <td colspan="2"></td> {# Align total expenses correctly #}
                         </tr>
                     </tfoot>
                 </table>
@@ -216,6 +220,8 @@
             </div>
         </div>
     </div>
+
+    {# The modal should remain outside the content-wrapper if it's a global modal #}
     <div id="allMembersPaymentHistoryModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -238,7 +244,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        </tbody>
+                    </tbody>
                 </table>
                 <p id="no-data-message" style="display: none; text-align: center; color: #9E9E9E;">No payment history found for any member.</p>
             </div>
@@ -247,5 +253,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/admin_dashboard/admin_payments.js"></script>
+<script src="/static/js/admin_dashboard/admin_payments.js"></script>
 {% endblock %}

@@ -1,98 +1,100 @@
 {% extends 'admin_base.html' %}
+
 {% block title %}Admin Home{% endblock %}
+
 {% block head %}
-<link rel="stylesheet" href="/static/css/admin_dashboard/admin_common_styles.css">
 <link rel="stylesheet" href="/static/css/admin_dashboard/home.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{# Using Font Awesome 6 for consistency with base.html if possible, otherwise 5.15.4 is fine if that's what you intend #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
+{% block content_header %}
+    <h1 class="dashboard-title">Welcome, Admin!</h1>
+{% endblock %}
+
 {% block content %}
-<div class="header">
-  <h2 class="header-title">Welcome, Admin!</h2>
-</div>
-
 <div class="stats-container">
-  <div class="stat-card">
-    <a href="/admin/payments/total_members" class="card-link"></a>
-    <div class="stat-icon">
-      <i class="fas fa-users"></i>
+    <div class="stat-card">
+        <a href="/admin/payments/total_members" class="card-link"></a>
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-title">Total Members</div>
+        <div class="stat-value"></div>
     </div>
-    <div class="stat-title">Total Members</div>
-    <div class="stat-value"></div>
-  </div>
 
-  <div class="stat-card">
-    <a href="/Admin/payments" class="card-link"></a>
-    <div class="stat-icon">
-      <i class="fas fa-dollar-sign"></i>
+    <div class="stat-card">
+        <a href="/Admin/payments" class="card-link"></a>
+        <div class="stat-icon">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-title">Total Membership Fees Collected</div>
+        <div class="stat-value"></div>
     </div>
-    <div class="stat-title">Total Membership Fees Collected</div>
-    <div class="stat-value"></div>
-  </div>
 
-  <div class="stat-card">
-    <div class="stat-icon">
-      <i class="fas fa-calendar-alt"></i>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-title">Academic Year</div>
+        <div class="stat-value"></div>
     </div>
-    <div class="stat-title">Academic Year</div>
-    <div class="stat-value"></div>
-  </div>
 
-  <div class="stat-card">
-    <div class="stat-icon">
-      <i class="fas fa-exclamation-triangle"></i>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-title">Outstanding Dues</div>
+        <div class="stat-value"></div>
     </div>
-    <div class="stat-title">Outstanding Dues</div>
-    <div class="stat-value"></div>
-  </div>
 </div>
 
 <div class="dashboard-content">
-  <div class="chart-section">
-    <div class="chart-title">Financial Overview</div>
-    <div class="chart-subtitle">Membership Fee Collection Trends</div>
-    <div class="chart-area">
-      <canvas id="trendChart"></canvas>
+    <div class="chart-section">
+        <div class="chart-title">Financial Overview</div>
+        <div class="chart-subtitle">Membership Fee Collection Trends</div>
+        <div class="chart-area">
+            <canvas id="trendChart"></canvas>
+        </div>
+
+        <div class="chart-row">
+            <div class="mini-chart">
+                <div class="chart-subtitle">Expenses by Category</div>
+                <canvas id="expensesChart"></canvas>
+            </div>
+            <div class="mini-chart">
+                <div class="chart-subtitle">Fund Distribution</div>
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
     </div>
 
-    <div class="chart-row">
-      <div class="mini-chart">
-        <div class="chart-subtitle">Expenses by Category</div>
-        <canvas id="expensesChart"></canvas>
-      </div>
-      <div class="mini-chart">
-        <div class="chart-subtitle">Fund Distribution</div>
-        <canvas id="distributionChart"></canvas>
-      </div>
-    </div>
-  </div>
+    <div class="tracker-section">
+        <div class="chart-title">Membership Fee Tracker</div>
+        <div class="filter-row">
+            <select class="filter-select" id="academic-year-filter">
+                <option>Academic Year ▼</option>
+            </select>
+            <select class="filter-select" id="semester-filter">
+                <option>Semester ▼</option>
+                <option value="1st">1st Semester</option>
+                <option value="2nd">2nd Semester</option>
+            </select>
+        </div>
 
-  <div class="tracker-section">
-    <div class="chart-title">Membership Fee Tracker</div>
-    <div class="filter-row">
-      <select class="filter-select" id="academic-year-filter">
-        <option>Academic Year ▼</option>
-      </select>
-      <select class="filter-select" id="semester-filter">
-        <option>Semester ▼</option>
-        <option value="1st">1st Semester</option>
-        <option value="2nd">2nd Semester</option>
-      </select>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Yr. & Sec</th>
+                    <th>Amount Paid</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Yr. & Sec</th>
-          <th>Amount Paid</th>
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
-  </div>
 </div>
 {% endblock %}
 

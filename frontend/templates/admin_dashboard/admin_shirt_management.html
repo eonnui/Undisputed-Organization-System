@@ -4,14 +4,15 @@
 
 {% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="/static/css/admin_dashboard/admin_common_styles.css">
 <link rel="stylesheet" href="/static/css/admin_dashboard/admin_shirt_management.css">
+{% endblock %}
+
+{% block content_header %}
+    <h1 class="dashboard-title">Shirt Campaign and Order Management</h1>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <h2 class="mb-4">Shirt Campaign and Order Management</h2>
-
     <div id="adminData"
          data-admin-id="{{ admin_id if admin_id is not none else '' }}"
          data-organization-id="{{ organization_id if organization_id is not none else '' }}"
@@ -30,7 +31,7 @@
                         <tr>
                             <th>Title</th>
                             <th>Description</th>
-                            <th>Price</th> 
+                            <th>Price</th>
                             <th>Pre-Order Deadline</th>
                             <th>Stock</th>
                             <th>Active</th>
@@ -51,13 +52,13 @@
         </div>
         <div class="card-body">
             <div class="row mb-3">
-                <div class="col-md-6"> 
+                <div class="col-md-6">
                     <label for="orderCampaignFilter" class="form-label">Filter by Campaign:</label>
                     <select class="form-select" id="orderCampaignFilter">
                         <option value="">All Campaigns</option>
                     </select>
                 </div>
-                <div class="col-md-6 d-flex align-items-end"> 
+                <div class="col-md-6 d-flex align-items-end">
                     <button class="btn btn-info w-100" id="applyOrderFilters">Apply Filters</button>
                 </div>
             </div>
@@ -80,121 +81,15 @@
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="createCampaignModal" tabindex="-1" aria-labelledby="createCampaignModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createCampaignModalLabel">Create New Shirt Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="createCampaignForm" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="campaignTitle" class="form-label">Campaign Title</label>
-                        <input type="text" class="form-control" id="campaignTitle" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="campaignDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="campaignDescription" name="description" rows="3"></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Prices per Size</label>
-                        <div id="createCampaignSizePricesContainer">
-                            <div class="row g-2 mb-2 align-items-center size-price-row">
-                                <div class="col-5">
-                                    <input type="text" class="form-control form-control-sm campaign-size" placeholder="Size (e.g., S, M, XL)" required>
-                                </div>
-                                <div class="col-5">
-                                    <input type="number" step="0.01" class="form-control form-control-sm campaign-price" placeholder="Price" required>
-                                </div>
-                                <div class="col-2">
-                                    <button type="button" class="btn btn-danger btn-sm remove-size-price-row">X</button>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="addCreateCampaignSizePrice">Add Another Size & Price</button>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="preOrderDeadline" class="form-label">Pre-Order Deadline</label>
-                        <input type="datetime-local" class="form-control" id="preOrderDeadline" name="pre_order_deadline" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="campaignStock" class="form-label">Available Stock</label>
-                        <input type="number" class="form-control" id="campaignStock" name="available_stock" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="campaignSizeChart" class="form-label">Size Chart Image</label>
-                        <input class="form-control" type="file" id="campaignSizeChart" name="size_chart_image" accept="image/*">
-                        <small class="form-text text-muted">Upload a new image for the size chart.</small>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="campaignIsActive" name="is_active">
-                        <label class="form-check-label" for="campaignIsActive">
-                            Is Active
-                        </label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create Campaign</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="editCampaignModal" tabindex="-1" aria-labelledby="editCampaignModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editCampaignModalLabel">Edit Shirt Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editCampaignForm" enctype="multipart/form-data">
-                    <input type="hidden" id="editCampaignId" name="campaign_id">
-                    <div class="mb-3">
-                        <label for="editCampaignTitle" class="form-label">Campaign Title</label>
-                        <input type="text" class="form-control" id="editCampaignTitle" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editCampaignDescription" name="description" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Prices per Size</label>
-                        <div id="editCampaignSizePricesContainer">
-                            </div>
-                        <button type="button" class="btn btn-secondary btn-sm mt-2" id="addEditCampaignSizePrice">Add Another Size & Price</button>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignPreOrderDeadline" class="form-label">Pre-Order Deadline</label>
-                        <input type="datetime-local" class="form-control" id="editCampaignPreOrderDeadline" name="pre_order_deadline" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignStock" class="form-label">Available Stock</label>
-                        <input type="number" class="form-control" id="editCampaignStock" name="available_stock" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCampaignSizeChart" class="form-label">Size Chart Image</label>
-                        <input class="form-control" type="file" id="editCampaignSizeChart" name="size_chart_image" accept="image/*">
-                        <small class="form-text text-muted">Upload a new image or leave blank to keep current. Select nothing and submit to remove.</small>
-                        <div id="currentSizeChartImage" class="mt-2"></div>
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="editCampaignIsActive" name="is_active">
-                        <label class="form-check-label" for="editCampaignIsActive">
-                            Is Active
-                        </label>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Update Campaign</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/admin_dashboard/shirt_management_modals.js"></script> {# New script for modals #}
 <script src="../../static/js/admin_dashboard/admin_shirt_management.js"></script>
+<script>
+    // Call the function to load modals when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        loadShirtManagementModals();
+    });
+</script>
 {% endblock %}

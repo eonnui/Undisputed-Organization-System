@@ -8,24 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Poppins:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" /> 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css" />
+    {# Favicons for consistency #}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='images/favicon.ico') }}">   
     {% block head %}
     {% endblock %}
 </head>
 <body>
-    {% macro get_normalized_path_segments(url_object) %}
-        {% set path_str = url_object.path | string | trim %}
-        {% set segments = path_str.split('/') | select('ne', '') | list %}
-        {% if segments %}
-            {{ '/' + segments | join('/') }}
-        {% else %}
-            /
-        {% endif %}
+    {# Macro to get path from URL object (already existing in base.html) #}
+    {% macro get_path_from_url_object(url_object) %}
+        {{ url_object.path | trim }}
     {% endmacro %}
 
     <div class="sidebar">
         <div class="logo">
-            <a href="{{ url_for('home') }}">
+            <a href="{{ url_for('home') }}"> {# Assuming 'home' is the main dashboard for admin too #}
                 <img src="{{ logo_url }}" alt="Organization Logo">
             </a>
         </div>
@@ -33,56 +30,55 @@
             <div class="sidebar-divider"></div>
             <div class="nav-container">
                 <ul>
-                    {% set current_normalized_path = get_normalized_path_segments(request) %}
-                    <li class="
-                        {% set home_link_url_obj = url_for('home') %}
-                        {% set home_link_normalized_path = get_normalized_path_segments(home_link_url_obj) %}
-                        {% if current_normalized_path == home_link_normalized_path %}selected{% endif %}">
-                        <a href="{{ home_link_url_obj }}">
-                            <i class="ph ph-house regular-icon"></i> 
-                            <i class="ph-fill ph-house filled-icon"></i> 
+                    {% set current_request_path_str = request.path | string | trim %}
+                    {# Home link for admin #}
+                    {% set admin_home_url_path_str = get_path_from_url_object(url_for('home')) | string | trim %} {# Adjust 'home' to your admin home route if different #}
+                    <li class="{% if current_request_path_str == admin_home_url_path_str %}selected{% endif %}">
+                        <a href="{{ url_for('home') }}"> {# Adjust 'home' to your admin home route if different #}
+                            <i class="ph ph-house regular-icon"></i>
+                            <i class="ph-fill ph-house filled-icon"></i>
                             <span class="nav-text">Home</span>
                         </a>
                     </li>
-                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_bulletin_board')) %}selected{% endif %}">
+                    <li class="{% if (request.path | string | trim) == (get_path_from_url_object(url_for('admin_bulletin_board')) | string | trim) %}selected{% endif %}">
                         <a href="{{ url_for('admin_bulletin_board') }}">
-                            <i class="ph ph-megaphone regular-icon"></i> 
-                            <i class="ph-fill ph-megaphone filled-icon"></i> 
+                            <i class="ph ph-megaphone regular-icon"></i>
+                            <i class="ph-fill ph-megaphone filled-icon"></i>
                             <span class="nav-text">Bulletin Board</span>
                         </a>
                     </li>
-                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_events')) %}selected{% endif %}">
+                    <li class="{% if (request.path | string | trim) == (get_path_from_url_object(url_for('admin_events')) | string | trim) %}selected{% endif %}">
                         <a href="{{ url_for('admin_events') }}">
-                            <i class="ph ph-calendar-check regular-icon"></i> 
-                            <i class="ph-fill ph-calendar-check filled-icon"></i> 
+                            <i class="ph ph-calendar-check regular-icon"></i>
+                            <i class="ph-fill ph-calendar-check filled-icon"></i>
                             <span class="nav-text">Events</span>
                         </a>
                     </li>
-                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_payments')) %}selected{% endif %}">
+                    <li class="{% if (request.path | string | trim) == (get_path_from_url_object(url_for('admin_payments')) | string | trim) %}selected{% endif %}">
                         <a href="{{ url_for('admin_payments') }}">
-                            <i class="ph ph-credit-card regular-icon"></i> 
-                            <i class="ph-fill ph-credit-card filled-icon"></i> 
+                            <i class="ph ph-credit-card regular-icon"></i>
+                            <i class="ph-fill ph-credit-card filled-icon"></i>
                             <span class="nav-text">Membership and Payments</span>
                         </a>
                     </li>
-                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_financial_statement')) %}selected{% endif %}">
+                    <li class="{% if (request.path | string | trim) == (get_path_from_url_object(url_for('admin_financial_statement')) | string | trim) %}selected{% endif %}">
                         <a href="{{ url_for('admin_financial_statement') }}">
-                            <i class="ph ph-receipt regular-icon"></i> 
-                            <i class="ph-fill ph-receipt filled-icon"></i> 
+                            <i class="ph ph-receipt regular-icon"></i>
+                            <i class="ph-fill ph-receipt filled-icon"></i>
                             <span class="nav-text">Financial Statement</span>
                         </a>
                     </li>
-                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_students_profile')) %}selected{% endif %}">
+                    <li class="{% if (request.path | string | trim) == (get_path_from_url_object(url_for('admin_students_profile')) | string | trim) %}selected{% endif %}">
                         <a href="{{ url_for('admin_students_profile') }}">
                             <i class="ph ph-users regular-icon"></i>
                             <i class="ph-fill ph-users filled-icon"></i>
                             <span class="nav-text">Students Profile</span>
                         </a>
                     </li>
-                    <li class="{% if current_normalized_path == get_normalized_path_segments(url_for('admin_shirt_management')) %}selected{% endif %}">
+                    <li class="{% if (request.path | string | trim) == (get_path_from_url_object(url_for('admin_shirt_management')) | string | trim) %}selected{% endif %}">
                         <a href="{{ url_for('admin_shirt_management') }}">
-                            <i class="ph ph-t-shirt regular-icon"></i> 
-                            <i class="ph-fill ph-t-shirt filled-icon"></i> 
+                            <i class="ph ph-t-shirt regular-icon"></i>
+                            <i class="ph-fill ph-t-shirt filled-icon"></i>
                             <span class="nav-text">Shirt Campaigns</span>
                         </a>
                     </li>
@@ -135,14 +131,38 @@
                 </div>
             </div>
         </div>
-        <div class="content">
-            {% block content %}
+
+        {# Content header block - New #}
+        <div class="content-header">
+            {% block content_header %}
+            {# Default header content or leave empty for child templates to define #}
             {% endblock %}
         </div>
+
+        <div class="content">
+            {# Standard Content Wrapper for consistent padding/width within main content - New #}
+            <div class="content-wrapper">
+                {% block content %}
+                {# Main page content goes here, defined by child templates #}
+                {% endblock %}
+            </div>
+        </div>
+
         <footer>
             <p>&copy; {{ year }} Organization System</p>
         </footer>
     </div>
+
+    {# Global Modal Structure - New #}
+    <div id="global-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div id="modal-body">
+                {# Content can be pre-filled or dynamically updated if you later add JS #}
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', path='js/base.js') }}"></script>
     {% block scripts %}
     {% endblock %}

@@ -4,15 +4,18 @@
 
 {% block head %}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="/static/css/admin_dashboard/admin_common_styles.css">
 <link rel="stylesheet" href="/static/css/admin_dashboard/admin_financial_statement.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 {% endblock %}
 
+{% block content_header %}
+<h1 class="dashboard-title">Financial Statement Dashboard</h1>
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-container">
-    <h2 class="dashboard-header">Admin Financial Statement Dashboard - Year <span id="current-year"></span></h2>
+    <h2 class="dashboard-header">Financial Summary - Year <span id="current-year"></span></h2>
 
     <div class="quick-stats-container">
         <div class="stat-card">
@@ -28,8 +31,7 @@
             <p id="total-expenses-ytd">₱0.00</p>
         </div>
         <div class="stat-card">
-            <h3>Net Income
-(YTD)</h3>
+            <h3>Net Income (YTD)</h3>
             <p id="net-income-ytd" class="positive">₱0.00</p>
         </div>
     </div>
@@ -94,16 +96,16 @@
                 <thead>
                     <tr>
                         <th>Source</th>
-                        <th>Amount (₱)</th>                   
+                        <th>Amount (₱)</th>
                         <th>% of Total</th>
                     </tr>
                 </thead>
                 <tbody id="revenues-breakdown-body">
-                    </tbody>
+                </tbody>
                 <tfoot>
                     <tr>
                         <th>Total Revenue:</th>
-                        <th class="amount" id="total-revenue-footer">₱0.00</th>                      
+                        <th class="amount" id="total-revenue-footer">₱0.00</th>
                         <th>100%</th>
                     </tr>
                 </tfoot>
@@ -114,24 +116,23 @@
     <div id="expenses" class="report-card">
         <div class="report-header">
             <h2>Expense Breakdown</h2>
-            <p>Detailed
-Expenditures</p>
+            <p>Detailed Expenditures</p>
         </div>
         <div class="report-body">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>Category</th>
-                        <th>Amount (₱)</th>                      
+                        <th>Amount (₱)</th>
                         <th>% of Total</th>
                     </tr>
                 </thead>
                 <tbody id="expenses-breakdown-body">
-                    </tbody>
+                </tbody>
                 <tfoot>
                     <tr>
                         <th>Total Expenses:</th>
-                        <th class="amount" id="total-expenses-footer">₱0.00</th>                      
+                        <th class="amount" id="total-expenses-footer">₱0.00</th>
                         <th>100%</th>
                     </tr>
                 </tfoot>
@@ -156,7 +157,7 @@ Expenditures</p>
                         </tr>
                     </thead>
                     <tbody id="monthly-summary-body">
-                        </tbody>
+                    </tbody>
                     <tfoot>
                         <tr>
                             <th>Year Total:</th>
@@ -186,7 +187,7 @@ Expenditures</p>
                     </tr>
                 </thead>
                 <tbody id="accounts-balances-body">
-                    </tbody>
+                </tbody>
                 <tfoot>
                     <tr>
                         <th>Total Balance:</th>
@@ -202,5 +203,5 @@ Expenditures</p>
 {% endblock %}
 
 {% block scripts %}
-<script src="../../static/js/admin_dashboard/admin_financial_statement.js"></script>
+<script src="/static/js/admin_dashboard/admin_financial_statement.js"></script>
 {% endblock %}

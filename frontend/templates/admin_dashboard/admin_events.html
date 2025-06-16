@@ -3,21 +3,25 @@
 {% block title %}Admin Events{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="/static/css/admin_dashboard/admin_common_styles.css">
 <link rel="stylesheet" href="/static/css/admin_dashboard/admin_events.css">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
+{% block content_header %}
+<h1 class="dashboard-title">Events</h1>
+{% endblock %}
+
 {% block content %}
 <div class="events-page-container">
-    <h2 class="events-header">Events</h2>
+    <h2 class="events-header">Create New Event</h2>
     <div class="create-event-container">
         <div class="create-event-header">
+            {# This input is initially visible, clicking it reveals the form #}
             <input type="text" class="create-event-input" placeholder="What's the event about?"
                 onclick="this.style.display='none'; document.querySelector('.create-event-form-fields').style.display='block'; document.querySelector('.back-to-events').style.display='block';">
         </div>
 
-        <form action="{{ url_for('admin_create_event') }}" method="post" class="create-event-form-fields" enctype="multipart/form-data">
+        <form action="{{ url_for('admin_create_event') }}" method="post" class="create-event-form-fields" enctype="multipart/form-data" style="display: none;"> {# Initially hidden #}
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" required><br>
 
@@ -56,7 +60,7 @@
         </form>
     </div>
 
-    <a href="{{ url_for('admin_events') }}" class="back-to-events">Back to Events</a>
+    <a href="{{ url_for('admin_events') }}" class="back-to-events" style="display: none;">Back to Events</a> {# Initially hidden #}
 
     <h2 class="existing-events-title">Current Events</h2>
     {% if events %}
@@ -73,7 +77,6 @@
             data-max-participants="{{ event.max_participants }}"
             data-joined-count="{{ event.joined_count() }}"
             data-image-url="{{ event.classification_image_url if event.classification_image_url else 'https://placehold.co/600x400/CCCCCC/FFFFFF?text=No+Image' }}"
-            {# REMOVED: data-participants-json="..." #}
             role="button" tabindex="0"
         >
             {% if event.classification_image_url %}
@@ -114,7 +117,6 @@
     {% endif %}
 </div>
 
-<!-- Event Details Modal Structure -->
 <div id="eventDetailsModal" class="modal-overlay">
     <div class="modal-content">
         <span class="modal-close-button">&times;</span>
@@ -131,8 +133,7 @@
             <div class="modal-right-column">
                 <h4 class="participants-header">Participants List <span id="modalEventParticipantsCount" class="participants-header-count"></span></h4>
                 <ul id="modalParticipantsList" class="participants-list">
-                    <!-- Temporary loading message will be added/removed by JS -->
-                </ul>
+                    </ul>
             </div>
         </div>
     </div>
