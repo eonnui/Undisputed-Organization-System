@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict 
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, date
 
@@ -13,12 +13,14 @@ class ParticipantResponse(BaseModel):
 
 class OrganizationCreate(OrganizationBase):
     pass
+
 class Organization(OrganizationBase):
     id: int
     custom_palette: Optional[str] = None
     logo_url: Optional[str] = None
     class Config:
         from_attributes = True
+
 class OrganizationDisplay(BaseModel):
     id: int
     name: str
@@ -28,24 +30,30 @@ class OrganizationDisplay(BaseModel):
     primary_course_code: Optional[str] = None
     class Config:
         from_attributes = True
+
 class UserDataResponse(BaseModel):
     first_name: Optional[str] = None
     profile_picture: Optional[str] = None
     organization: Optional[Organization] = None
     is_verified: Optional[bool] = None
+    role: Optional[str] = None
     class Config:
         from_attributes = True
+
 class UserBase(BaseModel):
     student_number: str
     email: EmailStr
+
 class UserCreate(UserBase):
     organization: str
     first_name: str
     last_name: str
     password: str
+
 class UserLogin(BaseModel):
     identifier: str
     password: str
+
 class User(UserBase):
     id: int
     organization: Optional[Organization] = None
@@ -72,6 +80,7 @@ class User(UserBase):
     verification_date: Optional[datetime]
     class Config:
         from_attributes = True
+
 class ForgotPasswordRequest(BaseModel):
     identifier: str
 
@@ -79,6 +88,7 @@ class ResetPasswordRequest(BaseModel):
     identifier: str
     code: str
     new_password: str
+
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None 
     last_name: Optional[str] = None 
@@ -97,6 +107,7 @@ class UserUpdate(BaseModel):
     guardian_contact: Optional[str] = None
     registration_form: Optional[str] = None
     profile_picture: Optional[str] = None
+
 class AdminCreate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -104,6 +115,7 @@ class AdminCreate(BaseModel):
     password: str
     position: str
     organization_id: Optional[int] = None
+
 class Admin(BaseModel):
     admin_id: int
     first_name: Optional[str]
@@ -113,8 +125,10 @@ class Admin(BaseModel):
     position: str
     class Config:
         from_attributes = True
+
 class OrganizationThemeUpdate(BaseModel):
     new_theme_color: str
+
 class ExpenseBase(BaseModel):
     description: str
     amount: float
@@ -122,8 +136,10 @@ class ExpenseBase(BaseModel):
     incurred_at: Optional[date] = None
     admin_id: Optional[int] = None
     organization_id: Optional[int] = None
+
 class ExpenseCreate(ExpenseBase):
     pass
+
 class Expense(ExpenseBase):
     id: int
     created_at: datetime
@@ -131,26 +147,33 @@ class Expense(ExpenseBase):
     organization: Optional[Organization] = None
     class Config:
         from_attributes = True
+
 class NotificationBase(BaseModel):
     message: str
     url: Optional[str] = None
     is_read: bool = False
+
 class NotificationCreate(NotificationBase):
     pass
+
 class Notification(NotificationBase):
     id: int
     created_at: datetime
     class Config:
         from_attributes = True
+
 class RuleWikiEntryBase(BaseModel):
     title: str
     category: str
     content: str
     image_path: Optional[str] = None
+
 class RuleWikiEntryCreate(RuleWikiEntryBase):
     pass
+
 class RuleWikiEntryUpdate(RuleWikiEntryBase):
     pass
+
 class RuleWikiEntry(RuleWikiEntryBase):
     id: int
     admin_id: int
@@ -159,6 +182,7 @@ class RuleWikiEntry(RuleWikiEntryBase):
     updated_at: datetime
     class Config:
         from_attributes = True
+
 class AdminLogBase(BaseModel):
     action_type: str
     description: str
@@ -167,8 +191,10 @@ class AdminLogBase(BaseModel):
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
     organization_id: Optional[int] = None
+
 class AdminLogCreate(AdminLogBase):
     pass
+
 class AdminLog(AdminLogBase):
     id: int
     timestamp: datetime
@@ -177,6 +203,7 @@ class AdminLog(AdminLogBase):
     organization_name: Optional[str] = None
     class Config:
         from_attributes = True
+
 class ShirtCampaignBase(BaseModel):
     title: str
     description: Optional[str] = None    
@@ -186,9 +213,10 @@ class ShirtCampaignBase(BaseModel):
     available_stock: int
     is_active: bool = True
     size_chart_image_path: Optional[str] = None
-class ShirtCampaignCreate(ShirtCampaignBase):   
-    
+
+class ShirtCampaignCreate(ShirtCampaignBase):    
     prices_by_size: Dict[str, float] = Field(..., description="Dictionary of sizes to prices")
+
 class ShirtCampaignUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None    
@@ -198,6 +226,7 @@ class ShirtCampaignUpdate(BaseModel):
     available_stock: Optional[int] = None 
     is_active: Optional[bool] = None
     size_chart_image_path: Optional[str] = None
+
 class ShirtCampaign(ShirtCampaignBase):
     id: int
     admin_id: Optional[int] = None 
@@ -206,9 +235,6 @@ class ShirtCampaign(ShirtCampaignBase):
     updated_at: datetime
     class Config:
         from_attributes = True
-
-
-
 
 class PaymentItemBase(BaseModel):
     id: int
@@ -229,7 +255,6 @@ class PaymentItemBase(BaseModel):
     class Config:
         from_attributes = True
 
-
 class PaymentSchema(BaseModel):
     id: int
     paymaya_payment_id: Optional[str] = None
@@ -239,7 +264,6 @@ class PaymentSchema(BaseModel):
     updated_at: Optional[datetime] = None 
     user_id: Optional[int] = None 
     payment_item_id: Optional[int] = None 
-
     
     payment_item: Optional[PaymentItemBase] = None
 
@@ -282,4 +306,28 @@ class StudentShirtOrder(StudentShirtOrderBase):
 
     class Config:
         from_attributes = True
+class OrgChartNodeDisplay(BaseModel):
+    id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    position: Optional[str] = None
+    chart_picture_url: Optional[str] = None
+    organization_name: Optional[str] = None
 
+    class Config:
+        from_attributes = True 
+class UpdateOrgChartNodeTextRequest(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    position: Optional[str] = None
+
+class OrgChartNodeUpdateResponse(BaseModel):
+    message: str
+    id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    position: Optional[str] = None
+    chart_picture_url: Optional[str] = None 

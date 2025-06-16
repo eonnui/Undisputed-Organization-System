@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 from datetime import datetime
+from sqlalchemy import UniqueConstraint 
 
 event_participants = Table(
     'event_participants',
@@ -33,7 +34,6 @@ organization_admins = Table(
     Column('organization_id', Integer, ForeignKey('organizations.id'), primary_key=True),
     Column('admin_id', Integer, ForeignKey('admins.admin_id'), primary_key=True)
 )
-
 class Event(Base):
     __tablename__ = "events"
 
@@ -57,9 +57,7 @@ class Event(Base):
     @property
     def participants_list_json(self):
         """Returns a list of participant names and sections for JSON serialization."""
-
         return [{'name': p.name, 'section': p.section if hasattr(p, 'section') else None} for p in self.participants]
-
 class User(Base):
     __tablename__ = "users"
 
@@ -96,7 +94,6 @@ class User(Base):
     notifications = relationship("Notification", back_populates="user", foreign_keys="[Notification.user_id]")
     liked_posts = relationship("UserLike", back_populates="user")
     student_shirt_orders = relationship("StudentShirtOrder", back_populates="student")
-
 class Admin(Base):
     __tablename__ = "admins"
     admin_id = Column(Integer, primary_key=True, index=True)
@@ -106,6 +103,7 @@ class Admin(Base):
     password = Column(String)
     role = Column(String)
     position = Column(String, nullable=True)
+    profile_picture = Column(String, nullable=True)
     bulletin_board_posts = relationship("BulletinBoard", back_populates="admin")
     events = relationship("Event", back_populates="admin")
     organizations = relationship("Organization", secondary="organization_admins", back_populates="admins")
@@ -113,7 +111,6 @@ class Admin(Base):
     rule_wiki_entries = relationship("RuleWikiEntry", back_populates="admin")
     admin_logs = relationship("AdminLog", back_populates="admin")
     shirt_campaigns = relationship("ShirtCampaign", back_populates="admin")
-
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
@@ -122,7 +119,6 @@ class PasswordResetToken(Base):
     token = Column(String, unique=True, index=True, nullable=False)
     expiration_time = Column(DateTime, nullable=False)
     user = relationship("User")
-
 class BulletinBoard(Base):
     __tablename__ = "bulletin_board"
     post_id = Column(Integer, primary_key=True, index=True)
@@ -137,7 +133,6 @@ class BulletinBoard(Base):
     admin = relationship("Admin", back_populates="bulletin_board_posts")
     likes = relationship("UserLike", back_populates="bulletin_post")
     notifications = relationship("Notification", back_populates="bulletin_post")
-
 class Payment(Base):
     __tablename__ = "payments"
     id = Column(Integer, primary_key=True, index=True)
@@ -152,7 +147,6 @@ class Payment(Base):
     user = relationship("User", back_populates="payments")
     notifications = relationship("Notification", back_populates="payment")
     shirt_orders = relationship("StudentShirtOrder", back_populates="payment")
-
 class PaymentItem(Base):
     __tablename__ = "payment_items"
     id = Column(Integer, primary_key=True, index=True)
@@ -238,7 +232,6 @@ class UserLike(Base):
     post_id = Column(Integer, ForeignKey("bulletin_board.post_id"))
     user = relationship("User", back_populates="liked_posts")
     bulletin_post = relationship("BulletinBoard", back_populates="likes")
-
 class RuleWikiEntry(Base):
     __tablename__ = "rule_wiki_entries"
 
@@ -311,3 +304,22 @@ class StudentShirtOrder(Base):
     payment = relationship("Payment", back_populates="shirt_orders")
     status = Column(String, default="pending", nullable=False)
     payment_item = relationship("PaymentItem", back_populates="student_shirt_order", uselist=False)
+class OrgChartNode(Base):
+
+    __tablename__ = "org_chart_nodes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)    
+    
+    admin_id = Column(Integer, ForeignKey("admins.admin_id"), nullable=True) 
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    position = Column(String, nullable=True) 
+    chart_picture_url = Column(String, nullable=True) 
+    
+    organization = relationship("Organization", foreign_keys=[organization_id])
+    admin = relationship("Admin", foreign_keys=[admin_id])
+
+    def __repr__(self):
+        return f"<OrgChartNode(id={self.id}, org_id={self.organization_id}, admin_id={self.admin_id}, position='{self.position}')>"

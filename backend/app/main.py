@@ -25,6 +25,13 @@ import calendar
 from dateutil.relativedelta import relativedelta
 import logging
 import json
+import uuid
+
+# Import IntegrityError for database exception handling
+from sqlalchemy.exc import IntegrityError
+
+# Import run_in_threadpool for async threadpool execution
+from starlette.concurrency import run_in_threadpool
 
 # Configure logger
 logger = logging.getLogger("uvicorn.error")
@@ -41,25 +48,27 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
-# Define base directories
+# File Directories
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STATIC_DIR = BASE_DIR / "frontend" / "static" 
 
-# Define the subdirectory relative to STATIC_DIR for wiki images
 WIKI_IMAGES_SUBDIRECTORY = "images/wiki_images"
-# Define the full path where wiki images will be saved
 FULL_WIKI_UPLOAD_PATH = STATIC_DIR / WIKI_IMAGES_SUBDIRECTORY
-# Ensure the directory exists
 FULL_WIKI_UPLOAD_PATH.mkdir(parents=True, exist_ok=True)
 
-# Define the subdirectory for event classification images
 EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY = "images/event_classifications"
-# Ensure the directory exists for event classification images
 (STATIC_DIR / EVENT_CLASSIFICATION_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
 
-# Define subdirectory for shirt campaign images
 CAMPAIGN_IMAGES_SUBDIRECTORY = "images/campaigns"
 (STATIC_DIR / CAMPAIGN_IMAGES_SUBDIRECTORY).mkdir(parents=True, exist_ok=True)
+
+PROFILE_PICS_SUBDIRECTORY = "images/profile_pictures"
+FULL_PROFILE_UPLOAD_PATH = STATIC_DIR / PROFILE_PICS_SUBDIRECTORY
+FULL_PROFILE_UPLOAD_PATH.mkdir(parents=True, exist_ok=True)
+
+ORG_CHART_PICTURE_FOLDER_NAME = "images/org_chart_pictures"
+FULL_ORG_CHART_UPLOAD_PATH = STATIC_DIR / ORG_CHART_PICTURE_FOLDER_NAME
+FULL_ORG_CHART_UPLOAD_PATH.mkdir(parents=True, exist_ok=True) 
 
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -288,49 +297,406 @@ async def clear_single_notification_route(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # Fetching Organization Admin Postition
-@router.get("/api/admin/org_chart_data", response_model=List[Dict[str, str]])
+DEFAULT_ORG_OFFICERS = [
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "President",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Vice President-Internal",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Vice President-External",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Secretary",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Treasurer",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Auditor",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Public Relation Officer",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Adviser",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
+   
+]
+
+# Routes for Organization Chart
+@router.get("/api/admin/org_chart_data", response_model=List[schemas.OrgChartNodeDisplay])
 async def get_organizational_chart_data(
     request: Request,
     db: Session = Depends(get_db)
-):  
+):
     authenticated_entity = None
     organization = None
 
     try:
         authenticated_entity, organization = get_current_admin_with_org(request, db)
     except HTTPException as e:
-
         if e.status_code == status.HTTP_401_UNAUTHORIZED or e.status_code == status.HTTP_403_FORBIDDEN:
             try:
                 authenticated_entity, organization = get_current_user_with_org(request, db)
             except HTTPException:
-                
                 raise e
         else:
-
             raise
 
     if not organization:
-
         return []
 
-    admins = db.query(models.Admin).join(models.organization_admins).filter(
+    org_name = organization.name if organization and organization.name else "N/A"
+    org_chart_data_nodes = []
+
+    admins_in_org = db.query(models.Admin).join(models.organization_admins).filter(
         models.organization_admins.c.organization_id == organization.id
     ).all()
 
-    org_chart_data = []
-    for admin in admins:
-        admin_data = {
-            "first_name": admin.first_name if admin.first_name else "",
-            "last_name": admin.last_name if admin.last_name else "",
-            "email": admin.email if admin.email else "",
-            "position": admin.position if admin.position else "", 
-            "organization_name": organization.name if organization and organization.name else "N/A",
+    org_chart_node_overrides = db.query(models.OrgChartNode).options(joinedload(models.OrgChartNode.admin)).filter(
+        models.OrgChartNode.organization_id == organization.id
+    ).all()
+
+    admin_map = {admin.admin_id: admin for admin in admins_in_org}
+    org_chart_node_map_by_admin_id = {node.admin_id: node for node in org_chart_node_overrides if node.admin_id is not None}
+    org_chart_node_map_by_position = {node.position: node for node in org_chart_node_overrides if node.admin_id is None and node.position}
+
+    processed_admin_ids = set()
+
+    for i, default_officer_template in enumerate(DEFAULT_ORG_OFFICERS):
+        position_name = default_officer_template["position"]
+        current_node_data = {}
+        source_id = None
+
+        chart_node_override_for_position = org_chart_node_map_by_position.get(position_name)
+
+        admin_matching_position = None
+        for admin_id, admin_obj in admin_map.items():
+            if admin_obj.position == position_name and admin_id not in processed_admin_ids:
+                admin_matching_position = admin_obj
+                break
+
+        if chart_node_override_for_position:
+            current_node_data = {
+                "first_name": chart_node_override_for_position.first_name,
+                "last_name": chart_node_override_for_position.last_name,
+                "position": chart_node_override_for_position.position,
+                "chart_picture_url": chart_node_override_for_position.chart_picture_url or "/static/images/your_image_name.jpg"
+            }
+            source_id = f"chart_node_{chart_node_override_for_position.id}"
+            org_chart_node_map_by_position.pop(position_name, None)
+            if admin_matching_position:
+                processed_admin_ids.add(admin_matching_position.admin_id)
+                org_chart_node_map_by_admin_id.pop(admin_matching_position.admin_id, None)
+
+        elif admin_matching_position:
+            processed_admin_ids.add(admin_matching_position.admin_id)
+            chart_node_override_for_admin = org_chart_node_map_by_admin_id.get(admin_matching_position.admin_id)
+
+            if chart_node_override_for_admin:
+                current_node_data = {
+                    "first_name": chart_node_override_for_admin.first_name or admin_matching_position.first_name,
+                    "last_name": chart_node_override_for_admin.last_name or admin_matching_position.last_name,
+                    "position": chart_node_override_for_admin.position or admin_matching_position.position,
+                    "chart_picture_url": chart_node_override_for_admin.chart_picture_url or admin_matching_position.profile_picture or "/static/images/your_image_name.jpg"
+                }
+                org_chart_node_map_by_admin_id.pop(admin_matching_position.admin_id, None)
+            else:
+                current_node_data = {
+                    "first_name": admin_matching_position.first_name,
+                    "last_name": admin_matching_position.last_name,
+                    "position": admin_matching_position.position,
+                    "chart_picture_url": admin_matching_position.profile_picture or "/static/images/your_image_name.jpg"
+                }
+            source_id = str(admin_matching_position.admin_id)
+
+        else:
+            current_node_data = {
+                "first_name": default_officer_template.get("first_name", ""),
+                "last_name": default_officer_template.get("last_name", ""),
+                "position": default_officer_template["position"],
+                "chart_picture_url": default_officer_template.get("chart_picture_url", "/static/images/your_image_name.jpg")
+            }
+            source_id = f"new_placeholder_{position_name.lower().replace(' ', '_')}_{i}"
+
+        chart_node_entry = schemas.OrgChartNodeDisplay(
+            id=source_id,
+            first_name=current_node_data.get("first_name", ""),
+            last_name=current_node_data.get("last_name", ""),
+            position=current_node_data.get("position", ""),
+            chart_picture_url=current_node_data.get("chart_picture_url", "/static/images/your_image_name.jpg"),
+            organization_name=org_name
+        )
+        org_chart_data_nodes.append(chart_node_entry)
+
+    for chart_node_override in org_chart_node_overrides:
+        if chart_node_override.admin_id is None and chart_node_override.position in org_chart_node_map_by_position:
+            org_chart_data_nodes.append(schemas.OrgChartNodeDisplay(
+                id=f"chart_node_{chart_node_override.id}",
+                first_name=chart_node_override.first_name,
+                last_name=chart_node_override.last_name,
+                position=chart_node_override.position,
+                chart_picture_url=chart_node_override.chart_picture_url or "/static/images/your_image_name.jpg",
+                organization_name=org_name
+            ))
+            org_chart_node_map_by_position.pop(chart_node_override.position, None)
+
+        elif chart_node_override.admin_id is not None and chart_node_override.admin_id in org_chart_node_map_by_admin_id:
+            admin_obj = chart_node_override.admin
+            node_display_data = {
+                "first_name": chart_node_override.first_name,
+                "last_name": chart_node_override.last_name,
+                "position": chart_node_override.position,
+                "chart_picture_url": chart_node_override.chart_picture_url
+            }
+            if admin_obj:
+                node_display_data["first_name"] = node_display_data["first_name"] or admin_obj.first_name
+                node_display_data["last_name"] = node_display_data["last_name"] or admin_obj.last_name
+                node_display_data["position"] = node_display_data["position"] or admin_obj.position
+                node_display_data["chart_picture_url"] = node_display_data["chart_picture_url"] or admin_obj.profile_picture
+
+            org_chart_data_nodes.append(schemas.OrgChartNodeDisplay(
+                id=str(chart_node_override.admin_id),
+                first_name=node_display_data["first_name"],
+                last_name=node_display_data["last_name"],
+                position=node_display_data["position"],
+                chart_picture_url=node_display_data["chart_picture_url"] or "/static/images/your_image_name.jpg",
+                organization_name=org_name
+            ))
+            processed_admin_ids.add(chart_node_override.admin_id)
+            org_chart_node_map_by_admin_id.pop(chart_node_override.admin_id, None)
+
+    for admin_id, admin_obj in admin_map.items():
+        if admin_id not in processed_admin_ids:
+            org_chart_data_nodes.append(schemas.OrgChartNodeDisplay(
+                id=str(admin_obj.admin_id),
+                first_name=admin_obj.first_name,
+                last_name=admin_obj.last_name,
+                position=admin_obj.position,
+                chart_picture_url=admin_obj.profile_picture or "/static/images/your_image_name.jpg",
+                organization_name=org_name
+            ))
+
+    return org_chart_data_nodes
+
+@router.put("/api/admin/org_chart_node/{node_id}", response_model=schemas.OrgChartNodeUpdateResponse)
+async def update_org_chart_node_text(
+    node_id: str,
+    update_data: schemas.UpdateOrgChartNodeTextRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    authenticated_entity, organization = get_current_admin_with_org(request, db)
+
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this organization."
+        )
+
+    chart_node_to_update = None
+    admin_id_for_node = None
+    is_newly_created_chart_node = False
+
+    if node_id.startswith("chart_node_"):
+        try:
+            chart_node_db_id = int(node_id.split("_")[2])
+            chart_node_to_update = db.query(models.OrgChartNode).filter(
+                models.OrgChartNode.id == chart_node_db_id,
+                models.OrgChartNode.organization_id == organization.id,
+                models.OrgChartNode.admin_id.is_(None)
+            ).first()
+            if not chart_node_to_update:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chart-only node not found or not in your organization.")
+        except (ValueError, IndexError):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid chart node ID format.")
+
+    elif node_id.startswith("new_placeholder_"):
+        is_newly_created_chart_node = True
+        chart_node_to_update = models.OrgChartNode(organization_id=organization.id, admin_id=None)
+
+    else:
+        try:
+            admin_id_for_node = int(node_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid node ID format. Must be an integer admin ID or a chart node string.")
+
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_node).first()
+        if not admin:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found.")
+
+        is_org_admin_check = db.query(models.organization_admins).filter(
+            models.organization_admins.c.organization_id == organization.id,
+            models.organization_admins.c.admin_id == admin_id_for_node
+        ).first()
+        if not is_org_admin_check:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin does not belong to your organization or you are not authorized.")
+
+        chart_node_to_update = db.query(models.OrgChartNode).filter(
+            models.OrgChartNode.organization_id == organization.id,
+            models.OrgChartNode.admin_id == admin_id_for_node
+        ).first()
+
+        if not chart_node_to_update:
+            is_newly_created_chart_node = True
+            chart_node_to_update = models.OrgChartNode(
+                organization_id=organization.id,
+                admin_id=admin_id_for_node,
+                first_name=admin.first_name,
+                last_name=admin.last_name,
+                position=admin.position,
+                chart_picture_url=admin.profile_picture
+            )
+
+    if update_data.first_name is not None:
+        chart_node_to_update.first_name = update_data.first_name
+    if update_data.last_name is not None:
+        chart_node_to_update.last_name = update_data.last_name
+    if update_data.position is not None:
+        chart_node_to_update.position = update_data.position
+
+    try:
+        if is_newly_created_chart_node:
+            db.add(chart_node_to_update)
+        db.commit()
+        db.refresh(chart_node_to_update)
+
+        response_id_for_return = str(admin_id_for_node) if admin_id_for_node else f"chart_node_{chart_node_to_update.id}"
+
+        return schemas.OrgChartNodeUpdateResponse(
+            message="Organizational chart node text data updated successfully.",
+            id=response_id_for_return,
+            first_name=chart_node_to_update.first_name,
+            last_name=chart_node_to_update.last_name,
+            position=chart_node_to_update.position,
+            chart_picture_url=chart_node_to_update.chart_picture_url
+        )
+
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Database integrity error: {e}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update chart node text data: {e}")
+
+@router.put("/api/admin/org_chart_node/{node_id}/profile_picture", response_model=Dict[str, str])
+async def update_org_chart_node_profile_picture(
+    node_id: str,
+    chart_picture: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin_org_data: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org)
+):
+    authenticated_entity, organization = admin_org_data
+
+    chart_node_to_update = None
+    admin_id_for_node = None
+    is_newly_created_chart_node = False
+
+    if node_id.startswith("chart_node_"):
+        try:
+            chart_node_db_id = int(node_id.split("_")[2])
+            chart_node_to_update = db.query(models.OrgChartNode).filter(
+                models.OrgChartNode.id == chart_node_db_id,
+                models.OrgChartNode.organization_id == organization.id,
+                models.OrgChartNode.admin_id.is_(None)
+            ).first()
+            if not chart_node_to_update:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chart-only node not found or not in your organization.")
+        except (ValueError, IndexError):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid chart node ID format.")
+
+    elif node_id.startswith("new_placeholder_"):
+        is_newly_created_chart_node = True
+        chart_node_to_update = models.OrgChartNode(organization_id=organization.id, admin_id=None)
+
+    else:
+        try:
+            admin_id_for_node = int(node_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid node ID format. Must be an integer admin ID or a chart node string.")
+
+        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_node).first()
+        if not admin:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found.")
+
+        is_org_admin_check = db.query(models.organization_admins).filter(
+            models.organization_admins.c.organization_id == organization.id,
+            models.organization_admins.c.admin_id == admin_id_for_node
+        ).first()
+        if not is_org_admin_check:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin does not belong to your organization or you are not authorized.")
+
+        chart_node_to_update = db.query(models.OrgChartNode).filter(
+            models.OrgChartNode.organization_id == organization.id,
+            models.OrgChartNode.admin_id == admin_id_for_node
+        ).first()
+
+        if not chart_node_to_update:
+            is_newly_created_chart_node = True
+            chart_node_to_update = models.OrgChartNode(
+                organization_id=organization.id,
+                admin_id=admin_id_for_node,
+                first_name=admin.first_name,
+                last_name=admin.last_name,
+                position=admin.position,
+            )
+
+    file_extension = Path(chart_picture.filename).suffix
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = FULL_ORG_CHART_UPLOAD_PATH / unique_filename
+    relative_url = f"/static/images/org_chart_pictures/{unique_filename}"
+
+    try:
+        contents = await chart_picture.read()
+        with open(file_path, "wb") as buffer:
+            buffer.write(contents)
+
+        chart_node_to_update.chart_picture_url = relative_url
+
+        if is_newly_created_chart_node:
+            db.add(chart_node_to_update)
+        db.commit()
+        db.refresh(chart_node_to_update)
+
+        return {
+            "message": "Chart picture updated successfully in org chart.",
+            "chart_picture_url": relative_url
         }
-        org_chart_data.append(admin_data)
 
-    return org_chart_data
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Database integrity error: {e}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to upload chart picture: {e}")
 
+# Route for Organization Positions
 @router.get("/api/admin/organizations/{organization_id}/taken_positions", response_model=List[str])
 async def get_taken_positions(organization_id: int, db: Session = Depends(get_db)):
     taken_positions_query = db.query(models.Admin.position).join(models.Admin.organizations).filter(
@@ -3299,7 +3665,7 @@ async def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
 async def get_user_data(
     request: Request,
     db: Session = Depends(get_db),
-    dark_mode: bool = Query(False, description="Request dark mode custom palette") 
+    dark_mode: bool = Query(False, description="Request dark mode custom palette")
 ):
     user_id = request.session.get("user_id")
     admin_id = request.session.get("admin_id")
@@ -3310,6 +3676,7 @@ async def get_user_data(
     profile_picture = None
     is_verified_status = None
     organization_theme_color = None
+    user_role = None 
 
     if user_id:
         current_entity = db.query(models.User).filter(models.User.id == user_id).first()
@@ -3317,16 +3684,20 @@ async def get_user_data(
             first_name = current_entity.first_name
             profile_picture = current_entity.profile_picture
             is_verified_status = current_entity.is_verified
+            user_role = "user" 
             if current_entity.organization:
                 organization_data = schemas.Organization.model_validate(current_entity.organization)
-                organization_theme_color = current_entity.organization.theme_color 
+                organization_theme_color = current_entity.organization.theme_color
     elif admin_id:
         current_entity = db.query(models.Admin).options(joinedload(models.Admin.organizations)).filter(models.Admin.admin_id == admin_id).first()
         if current_entity:
-            first_name = current_entity.first_name 
+            first_name = current_entity.first_name
+            profile_picture = current_entity.profile_picture 
+            print(f"DEBUG: Backend fetched admin profile_picture for admin_id {admin_id}: {profile_picture}") 
+            user_role = "admin"
             if current_entity.organizations:
                 organization_data = schemas.Organization.model_validate(current_entity.organizations[0])
-                organization_theme_color = current_entity.organizations[0].theme_color 
+                organization_theme_color = current_entity.organizations[0].theme_color
 
     if not current_entity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Authenticated user/admin not found in database for provided session ID.")
@@ -3335,15 +3706,19 @@ async def get_user_data(
 
     if organization_data and organization_theme_color:
         generated_palette_json = crud.generate_custom_palette(organization_theme_color, dark_mode)
-        
+
         organization_data.custom_palette = generated_palette_json
     else:
-       
         if organization_data:
             organization_data.custom_palette = None
 
-
-    return schemas.UserDataResponse(first_name=first_name, profile_picture=profile_picture, organization=organization_data, is_verified=is_verified_status)
+    return schemas.UserDataResponse(
+        first_name=first_name,
+        profile_picture=profile_picture,
+        organization=organization_data,
+        is_verified=is_verified_status,
+        role=user_role 
+    )
 
 # User and Admin Login
 @app.post("/api/login/")
