@@ -28,7 +28,7 @@
   border-radius: var(--org-radius-md);
   font-size: 1.1em;
   color: var(--org-text-secondary);
-  background-color: var(--org-bg-color);
+  background-color: var(--org-card-bg);
   box-sizing: border-box;
   transition: all 0.3s ease;
   cursor: pointer;

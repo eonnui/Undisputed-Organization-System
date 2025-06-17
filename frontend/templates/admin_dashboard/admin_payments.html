@@ -220,36 +220,6 @@
             </div>
         </div>
     </div>
-
-    {# The modal should remain outside the content-wrapper if it's a global modal #}
-    <div id="allMembersPaymentHistoryModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>All Members' Payment History</h3>
-                <span class="modal-close-button" onclick="closeAdminPaymentHistoryModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p id="loading-message" style="text-align: center; font-style: italic; color: #757575;">Loading payment history...</p>
-                <table id="all-members-payments-table" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Student Name</th>
-                            <th>Student Number</th>
-                            <th>Academic Year</th>
-                            <th>Semester</th>
-                            <th>Fee</th>
-                            <th>Due Date</th>
-                            <th>Status</th>
-                            <th>Payment Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-                <p id="no-data-message" style="display: none; text-align: center; color: #9E9E9E;">No payment history found for any member.</p>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block scripts %}

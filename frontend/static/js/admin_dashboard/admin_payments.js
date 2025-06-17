@@ -1,3 +1,48 @@
+// --- Global Modal Elements from admin_base.html ---
+// These elements are now part of the base template and will be controlled globally.
+const globalModal = document.getElementById('global-modal');
+const globalModalBody = document.getElementById('modal-body');
+const globalModalCloseBtn = globalModal ? globalModal.querySelector('.modal-close-btn') : null; // Check if globalModal exists
+
+// Function to open the global modal with specific content
+function openGlobalModalWithContent(title, contentHtml) {
+    if (globalModal && globalModalBody) {
+        // Clear previous content and set new content
+        globalModalBody.innerHTML = `<h3>${title}</h3>` + contentHtml; // Use h3 for modal title
+        globalModal.classList.add('is-visible'); // Show the modal
+    }
+}
+
+// Function to close the global modal
+function closeGlobalModal() {
+    if (globalModal) {
+        globalModal.classList.remove('is-visible'); // Hide the modal
+        globalModalBody.innerHTML = ''; // Clear content when closing
+    }
+}
+
+// Event listener for the global modal's close button
+if (globalModalCloseBtn) {
+    globalModalCloseBtn.addEventListener('click', closeGlobalModal);
+}
+
+// Close global modal on escape key
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && globalModal && globalModal.classList.contains('is-visible')) {
+        closeGlobalModal();
+    }
+});
+
+// Close global modal when clicking outside its content
+window.addEventListener('click', function(event) {
+    if (globalModal && event.target === globalModal) {
+        closeGlobalModal();
+    }
+});
+
+
+// --- Original functions (with minor adjustments where necessary) ---
+
 function openTab(tabName) {
     const tabs = document.querySelectorAll('.tab-content');
     const buttons = document.querySelectorAll('.tab-button');
@@ -189,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Modified to use the new openGlobalModalWithContent function
     document.getElementById('view-all-payments-button').addEventListener('click', () => openAdminPaymentHistoryModal());
 
     document.getElementById('add-expense-form').addEventListener('submit', async function(event) {
@@ -291,9 +337,9 @@ function filterPaymentsByStudentIdAndHistory() {
         }
     });
 
-    const modal = document.getElementById('allMembersPaymentHistoryModal');
-    if (modal.style.display === 'flex') { 
-        openAdminPaymentHistoryModal(studentId); 
+    // Check if the global modal is open and then update its content if a student ID is present
+    if (globalModal && globalModal.classList.contains('is-visible')) {
+        openAdminPaymentHistoryModal(studentId);
     }
 }
 
@@ -313,18 +359,45 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// This function is now responsible for populating the *global* modal
 async function openAdminPaymentHistoryModal(studentIdFromFilter = '') {
-    const modal = document.getElementById('allMembersPaymentHistoryModal');
-    const loadingMessage = document.getElementById('loading-message');
-    const noDataMessage = document.getElementById('no-data-message');
-    const paymentsTable = document.getElementById('all-members-payments-table');
-    const tableBody = paymentsTable.querySelector('tbody');
+    // We no longer need to get the modal, loading message, no data message, and paymentsTable directly from the DOM here
+    // because we're using the globally defined `globalModal` and `globalModalBody`.
 
-    modal.style.display = 'flex';
-    loadingMessage.style.display = 'block';
-    paymentsTable.style.display = 'none';
-    noDataMessage.style.display = 'none';
-    tableBody.innerHTML = ''; 
+    // Content for the modal's body
+    let modalContentHtml = `
+        <p id="loading-message" style="text-align: center; font-style: italic; color: #757575;">Loading payment history...</p>
+        <table id="all-members-payments-table" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Student Number</th>
+                    <th>Academic Year</th>
+                    <th>Semester</th>
+                    <th>Fee</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Payment Date</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <p id="no-data-message" style="display: none; text-align: center; color: #9E9E9E;">No payment history found for any member.</p>
+    `;
+
+    // Open the global modal with the initial loading content
+    openGlobalModalWithContent("All Members' Payment History", modalContentHtml);
+
+    // Get references to elements *within the global modal's body* after it's populated
+    const loadingMessage = globalModalBody.querySelector('#loading-message');
+    const noDataMessage = globalModalBody.querySelector('#no-data-message');
+    const paymentsTable = globalModalBody.querySelector('#all-members-payments-table');
+    const tableBody = paymentsTable ? paymentsTable.querySelector('tbody') : null;
+
+    if (tableBody) {
+        tableBody.innerHTML = ''; // Clear existing table body content
+    }
 
     let url = '/admin/Payments/History';
     const studentNumber = studentIdFromFilter || document.getElementById('student-id-filter').value.trim();
@@ -339,47 +412,43 @@ async function openAdminPaymentHistoryModal(studentIdFromFilter = '') {
         }
         const data = await response.json();
 
-        loadingMessage.style.display = 'none';
+        if (loadingMessage) loadingMessage.style.display = 'none';
 
         if (data.payment_history && data.payment_history.length > 0) {
-            data.payment_history.forEach(item => {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = item.user_name;
-                row.insertCell().textContent = item.student_number;
-                row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.academic_year : 'N/A';
-                row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.semester : 'N/A';
-                row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.fee : 'N/A';
-                row.insertCell().textContent = item.item.payment_item && item.item.payment_item.due_date ? item.item.payment_item.due_date : 'Not Set';
-                const statusCell = row.insertCell();
-                statusCell.textContent = item.status;
-                statusCell.className = item.status.toLowerCase().replace(' ', '-');
-                row.insertCell().textContent = item.payment_date ? item.payment_date.substring(0, 10) : 'N/A'; 
-            });
-            paymentsTable.style.display = 'table';
+            if (tableBody) {
+                data.payment_history.forEach(item => {
+                    const row = tableBody.insertRow();
+                    row.insertCell().textContent = item.user_name;
+                    row.insertCell().textContent = item.student_number;
+                    row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.academic_year : 'N/A';
+                    row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.semester : 'N/A';
+                    row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.fee : 'N/A';
+                    row.insertCell().textContent = item.item.payment_item && item.item.payment_item.due_date ? item.item.payment_item.due_date : 'Not Set';
+                    const statusCell = row.insertCell();
+                    statusCell.textContent = item.status;
+                    statusCell.className = item.status.toLowerCase().replace(' ', '-');
+                    row.insertCell().textContent = item.payment_date ? item.payment_date.substring(0, 10) : 'N/A';
+                });
+                paymentsTable.style.display = 'table';
+            }
         } else {
-            noDataMessage.style.display = 'block';
+            if (noDataMessage) noDataMessage.style.display = 'block';
+            if (paymentsTable) paymentsTable.style.display = 'none'; // Hide the table if no data
         }
     } catch (error) {
         console.error("Failed to fetch all members' payment history:", error);
-        loadingMessage.style.display = 'none';
+        if (loadingMessage) loadingMessage.style.display = 'none';
         displayMessageBox('Error loading payment history. Please try again later.', 'error');
-        noDataMessage.textContent = 'Error loading payment history.';
-        noDataMessage.style.display = 'block';
+        if (noDataMessage) {
+            noDataMessage.textContent = 'Error loading payment history.';
+            noDataMessage.style.display = 'block';
+        }
+        if (paymentsTable) paymentsTable.style.display = 'none';
     }
 }
 
-
-function closeAdminPaymentHistoryModal() {
-    const modal = document.getElementById('allMembersPaymentHistoryModal');
-    modal.style.display = 'none';
-}
-
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('allMembersPaymentHistoryModal');
-    if (event.target == modal) {
-        closeAdminPaymentHistoryModal();
-    }
-});
+// Removed the old closeAdminPaymentHistoryModal and window.addEventListener('click')
+// as they are now handled by the global closeGlobalModal and the global event listener
 
 function displayMessageBox(message, type = 'info') {
     const msgBox = document.createElement('div');
@@ -460,7 +529,6 @@ async function loadExpensesTable() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('expenses').classList.contains('active')) {
-        loadExpensesTable();
-    }
+    // No need to check if 'expenses' tab is active here, as openTab already handles loadExpensesTable
+    // openTab('membership'); // Optional: Call this if you want to explicitly set the initial tab
 });

@@ -859,12 +859,16 @@ body {
 #modal-body th,
 #modal-body td {
   border: 1px solid var(--border-color);
+  color: var(--org-text-primary);
   padding: 10px;
   text-align: left;
 }
 
 #modal-body th {
-  background-color: var(--background-color);
+    background-color: var(--org-table-header-bg-payments);
+    color: var(--org-table-header-text-payments);
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .modal-content::-webkit-scrollbar,

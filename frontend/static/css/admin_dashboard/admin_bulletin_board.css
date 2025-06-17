@@ -38,7 +38,7 @@
   border-radius: 50px;
   font-size: 1rem;
   color: var(--org-text-primary);
-  background-color: var(--org-input-bg);
+  background-color: var(--org-card-bg);
   box-sizing: border-box;
   cursor: pointer;
   transition: all 0.3s ease;
