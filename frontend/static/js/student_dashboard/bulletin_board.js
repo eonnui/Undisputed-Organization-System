@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const modalTitleElement = globalModal.querySelector(".modal-content h3");
   const modalCloseBtn = globalModal.querySelector(".modal-close-btn");
 
-  function openGlobalModal(title, contentHtml) {
+  function openGlobalModal(title) {
     if (modalTitleElement) {
       modalTitleElement.innerText = title;
     } else {
@@ -15,9 +15,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const newTitle = document.createElement("h3");
       newTitle.innerText = title;
 
+      modalBody.innerHTML = "";
       modalBody.prepend(newTitle);
     }
-    modalBody.innerHTML = contentHtml;
+
     globalModal.style.display = "flex";
     globalModal.classList.add("is-visible");
     document.body.style.overflow = "hidden";
@@ -145,55 +146,53 @@ document.addEventListener("DOMContentLoaded", function () {
   fetchRulesWiki();
 
   const orgChartButton = document.getElementById("viewOrgChartButton");
-  const organizationChartContainerInHiddenDiv = document.getElementById(
-    "organizationChartContent"
-  );
 
   const createAdminNodeDiv = (admin, positionOverride = null) => {
-    const adminNode = document.createElement("div");
-    adminNode.className = "org-node admin-node";
-    adminNode.style.display = "flex";
-    adminNode.style.flexDirection = "column";
-    adminNode.style.alignItems = "center";
+    const adminNodeWrapper = document.createElement("div");
+    adminNodeWrapper.className = "org-node-wrapper";
+
+    const displayMode = document.createElement("div");
+    displayMode.className = "org-node org-node-display-mode";
 
     const profileDiv = document.createElement("div");
     profileDiv.className = "profile-circle";
-
     const img = document.createElement("img");
     img.alt = `${admin.first_name}'s Profile`;
 
-    if (admin.profile_picture_url) {
-      img.src = admin.profile_picture_url;
-    } else {
-      img.src = "/static/images/your_image_name.jpg";
-    }
+    img.src = admin.chart_picture_url || "/static/images/your_image_name.jpg";
+
+    img.onerror = function () {
+      this.onerror = null;
+      this.src = "/static/images/your_image_name.jpg";
+    };
     profileDiv.appendChild(img);
-    adminNode.appendChild(profileDiv);
+    displayMode.appendChild(profileDiv);
 
     const textContainer = document.createElement("div");
-    textContainer.style.textAlign = "center";
+    textContainer.className = "text-container";
 
     const positionSpan = document.createElement("span");
     positionSpan.className = "position-text";
     positionSpan.textContent = (
-      positionOverride || admin.position
+      positionOverride ||
+      admin.position ||
+      "POSITION"
     ).toUpperCase();
     textContainer.appendChild(positionSpan);
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "name-text";
-    nameSpan.textContent = ` - ${admin.first_name} ${admin.last_name}`;
+    nameSpan.textContent = ` - ${admin.first_name || ""} ${
+      admin.last_name || ""
+    }`;
     textContainer.appendChild(nameSpan);
 
-    adminNode.appendChild(textContainer);
-    return adminNode;
+    displayMode.appendChild(textContainer);
+    adminNodeWrapper.appendChild(displayMode);
+
+    return adminNodeWrapper;
   };
 
-  /**
-   * Creates the complete HTML structure for the organizational chart.
-   * @param {Array<Object>} admins - An array of admin objects fetched from the backend.
-   * @returns {DocumentFragment} A document fragment containing the full HTML chart structure.
-   */
   function createOrgChartDisplayElements(admins) {
     const fragment = document.createDocumentFragment();
 
@@ -207,132 +206,148 @@ document.addEventListener("DOMContentLoaded", function () {
     organizationNameNode.textContent = organizationName;
     fragment.appendChild(organizationNameNode);
 
-    const positions = {
-      President: [],
-      "Vice President-Internal": [],
-      "Vice President-External": [],
-      Secretary: [],
-      Treasurer: [],
-      Auditor: [],
-      "Public Relation Officer": [],
-      Adviser: [],
-    };
-    admins.forEach((admin) => {
-      if (positions[admin.position]) {
-        positions[admin.position].push(admin);
+    const getDisplayAdminsForPosition = (positionKey) => {
+      const filteredAdmins = admins.filter(
+        (admin) => admin.position === positionKey
+      );
+
+      if (filteredAdmins.length > 0) {
+        return filteredAdmins;
+      } else if (DEFAULT_JS_ORG_OFFICERS[positionKey]) {
+        const defaultOfficer = DEFAULT_JS_ORG_OFFICERS[positionKey];
+        return [{ ...defaultOfficer, organization_name: organizationName }];
       }
-    });
+      return [];
+    };
 
-    let previousGroupAdded = false;
+    const createBranchStructure = (parentFragment, adminsForBranch) => {
+      if (adminsForBranch.length === 0) return;
 
-    if (positions["President"].length > 0) {
-      const lineToPresident = document.createElement("div");
-      lineToPresident.classList.add("org-line", "org-vertical-to-branch");
-      fragment.appendChild(lineToPresident);
+      if (adminsForBranch.length > 1) {
+        const horizontalBranchWrapper = document.createElement("div");
+        horizontalBranchWrapper.classList.add("org-branch-wrapper");
 
-      const presidentBranchContainer = document.createElement("div");
-      presidentBranchContainer.classList.add("org-branch-container");
+        const nodesContainer = document.createElement("div");
+        nodesContainer.classList.add("org-branch-container");
 
-      positions["President"].forEach((admin, index) => {
-        const presidentNode = createAdminNodeDiv(admin);
-        presidentBranchContainer.appendChild(presidentNode);
-        if (index < positions["President"].length - 1) {
-          const horizontalLine = document.createElement("div");
-          horizontalLine.classList.add("org-line", "org-line-horizontal");
-          presidentBranchContainer.appendChild(horizontalLine);
-        }
-      });
-      fragment.appendChild(presidentBranchContainer);
-      previousGroupAdded = true;
+        adminsForBranch.forEach((admin) => {
+          const nodeWrapper = document.createElement("div");
+          nodeWrapper.classList.add("org-node-vertical-connection");
+
+          const dropLine = document.createElement("div");
+          dropLine.classList.add("org-line", "org-vertical-from-branch-top");
+          nodeWrapper.appendChild(dropLine);
+
+          nodeWrapper.appendChild(createAdminNodeDiv(admin));
+          const verticalLineBelowNode = document.createElement("div");
+          verticalLineBelowNode.classList.add(
+            "org-line",
+            "org-vertical-to-sub-branch"
+          );
+          nodeWrapper.appendChild(verticalLineBelowNode);
+          nodesContainer.appendChild(nodeWrapper);
+        });
+
+        horizontalBranchWrapper.appendChild(nodesContainer);
+        parentFragment.appendChild(horizontalBranchWrapper);
+      } else {
+        parentFragment.appendChild(createAdminNodeDiv(adminsForBranch[0]));
+      }
+    };
+
+    const presidentData = getDisplayAdminsForPosition("President");
+    if (presidentData.length > 0) {
+      const presidentNode = createAdminNodeDiv(presidentData[0]);
+      presidentNode.classList.add("org-root-wrapper");
+
+      const verticalLine = document.createElement("div");
+      verticalLine.classList.add("org-line", "org-vertical");
+
+      const rootNodeAndLineContainer = document.createElement("div");
+      rootNodeAndLineContainer.classList.add("root-node-and-line-container");
+      rootNodeAndLineContainer.appendChild(presidentNode);
+      rootNodeAndLineContainer.appendChild(verticalLine);
+      fragment.appendChild(rootNodeAndLineContainer);
+
+      const connectionLineContainer = document.createElement("div");
+      connectionLineContainer.classList.add("org-connection-line-container");
+
+      const verticalStub = document.createElement("div");
+      verticalStub.classList.add("org-line", "org-vertical-stub");
+      connectionLineContainer.appendChild(verticalStub);
+
+      const horizontalConnectionLine = document.createElement("div");
+      horizontalConnectionLine.classList.add(
+        "org-line",
+        "org-line-horizontal-connection"
+      );
+      connectionLineContainer.appendChild(horizontalConnectionLine);
+
+      fragment.appendChild(connectionLineContainer);
     }
 
     const vps = [
-      ...positions["Vice President-Internal"],
-      ...positions["Vice President-External"],
+      ...getDisplayAdminsForPosition("Vice President-Internal"),
+      ...getDisplayAdminsForPosition("Vice President-External"),
     ];
     if (vps.length > 0) {
-      const lineToVPs = document.createElement("div");
-      lineToVPs.classList.add("org-line", "org-vertical-to-branch");
-      fragment.appendChild(lineToVPs);
-
-      const vpBranchContainer = document.createElement("div");
-      vpBranchContainer.classList.add("org-branch-container");
-
-      vps.forEach((admin, index) => {
-        const vpNode = createAdminNodeDiv(admin);
-        vpBranchContainer.appendChild(vpNode);
-        if (index < vps.length - 1) {
-          const horizontalLine = document.createElement("div");
-          horizontalLine.classList.add("org-line", "org-line-horizontal");
-          vpBranchContainer.appendChild(horizontalLine);
-        }
-      });
-      fragment.appendChild(vpBranchContainer);
-      previousGroupAdded = true;
+      createBranchStructure(fragment, vps);
     }
 
     const otherCorePositions = [
-      ...positions["Secretary"],
-      ...positions["Treasurer"],
-      ...positions["Auditor"],
-      ...positions["Public Relation Officer"],
+      ...getDisplayAdminsForPosition("Secretary"),
+      ...getDisplayAdminsForPosition("Treasurer"),
+      ...getDisplayAdminsForPosition("Auditor"),
+      ...getDisplayAdminsForPosition("Public Relation Officer"),
     ];
 
     if (otherCorePositions.length > 0) {
-      if (previousGroupAdded) {
-        const lineToOthers = document.createElement("div");
-        lineToOthers.classList.add("org-line", "org-vertical-to-branch");
-        fragment.appendChild(lineToOthers);
-      }
+      const subBranchConnectionContainer = document.createElement("div");
+      subBranchConnectionContainer.classList.add(
+        "org-sub-branch-connection-container"
+      );
 
-      const otherPositionsBranchContainer = document.createElement("div");
-      otherPositionsBranchContainer.classList.add("org-branch-container");
+      const horizontalSubBranchLine = document.createElement("div");
+      horizontalSubBranchLine.classList.add(
+        "org-line",
+        "org-line-horizontal-sub-branch"
+      );
+      subBranchConnectionContainer.appendChild(horizontalSubBranchLine);
 
-      otherCorePositions.forEach((admin, index) => {
-        const adminNode = createAdminNodeDiv(admin);
-        otherPositionsBranchContainer.appendChild(adminNode);
-        if (index < otherCorePositions.length - 1) {
-          const horizontalLine = document.createElement("div");
-          horizontalLine.classList.add("org-line", "org-line-horizontal");
-          otherPositionsBranchContainer.appendChild(horizontalLine);
-        }
+      const subNodesContainer = document.createElement("div");
+      subNodesContainer.classList.add("org-branch-container");
+
+      otherCorePositions.forEach((admin) => {
+        const nodeWrapper = document.createElement("div");
+        nodeWrapper.classList.add("org-node-vertical-connection");
+
+        const dropLine = document.createElement("div");
+        dropLine.classList.add("org-line", "org-vertical-from-branch-top");
+        nodeWrapper.appendChild(dropLine);
+
+        nodeWrapper.appendChild(createAdminNodeDiv(admin));
+        subNodesContainer.appendChild(nodeWrapper);
       });
-      fragment.appendChild(otherPositionsBranchContainer);
-      previousGroupAdded = true;
+
+      subBranchConnectionContainer.appendChild(subNodesContainer);
+      fragment.appendChild(subBranchConnectionContainer);
     }
 
-    if (positions["Adviser"].length > 0) {
-      if (previousGroupAdded) {
-        const lineToAdvisers = document.createElement("div");
-        lineToAdvisers.classList.add("org-line", "org-vertical-to-branch");
-        fragment.appendChild(lineToAdvisers);
-      }
-
+    const adviserData = getDisplayAdminsForPosition("Adviser");
+    if (adviserData.length > 0) {
       const adviserSectionHeader = document.createElement("h4");
       adviserSectionHeader.textContent = "ADVISERS";
-
-      Object.assign(adviserSectionHeader.style, {
-        marginTop: "2rem",
-        color: "var(--org-text-primary)",
-        fontWeight: "600",
-        width: "100%",
-        textAlign: "center",
-        paddingBottom: "0.5rem",
-        borderBottom: "2px solid var(--org-border-medium)",
-      });
+      adviserSectionHeader.classList.add("adviser-section-header");
       fragment.appendChild(adviserSectionHeader);
 
       const adviserGroupContainer = document.createElement("div");
-      adviserGroupContainer.classList.add("org-branch-container");
+      adviserGroupContainer.classList.add(
+        "org-branch-container",
+        "adviser-group-container"
+      );
 
-      positions["Adviser"].forEach((admin, index) => {
-        const adviserNode = createAdminNodeDiv(admin, "Adviser");
-        adviserGroupContainer.appendChild(adviserNode);
-        if (index < positions["Adviser"].length - 1) {
-          const horizontalLine = document.createElement("div");
-          horizontalLine.classList.add("org-line", "org-line-horizontal");
-          adviserGroupContainer.appendChild(horizontalLine);
-        }
+      adviserData.forEach((admin) => {
+        adviserGroupContainer.appendChild(createAdminNodeDiv(admin, "Adviser"));
       });
       fragment.appendChild(adviserGroupContainer);
     }
@@ -341,8 +356,10 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function fetchAndRenderOrgChart() {
-    const tempOrgChartContainer = document.createElement("div");
-    tempOrgChartContainer.innerHTML =
+    if (!modalBody) return;
+
+    openGlobalModal("Organizational Chart");
+    modalBody.innerHTML =
       '<p class="loading-message">Loading organizational chart...</p>';
 
     try {
@@ -352,18 +369,15 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       const admins = await response.json();
 
-      tempOrgChartContainer.innerHTML = "";
-      const chartElements = createOrgChartDisplayElements(admins);
-      tempOrgChartContainer.appendChild(chartElements);
+      modalBody.innerHTML = "";
 
-      openGlobalModal("Organizational Chart", tempOrgChartContainer.innerHTML);
+      const chartElements = createOrgChartDisplayElements(admins);
+      modalBody.appendChild(chartElements);
     } catch (error) {
       console.error("Error fetching or rendering organizational chart:", error);
 
-      openGlobalModal(
-        "Error Loading Chart",
-        '<p class="error-message">Failed to load organizational chart. Please try again later.</p>'
-      );
+      modalBody.innerHTML =
+        '<p class="error-message">Failed to load organizational chart. Please try again later.</p>';
     }
   }
 

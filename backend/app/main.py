@@ -346,7 +346,12 @@ DEFAULT_ORG_OFFICERS = [
         "position": "Adviser",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
-   
+    {
+        "first_name": "Vacant",
+        "last_name": "",
+        "position": "Adviser",
+        "profile_picture_url": "/static/images/your_image_name.jpg"
+    },
 ]
 
 # Routes for Organization Chart

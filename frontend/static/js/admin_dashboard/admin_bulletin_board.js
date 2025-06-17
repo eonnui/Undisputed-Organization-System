@@ -362,12 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const displayMode = document.createElement("div");
     displayMode.className = "org-node org-node-display-mode";
-    Object.assign(displayMode.style, {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      cursor: "pointer",
-    });
+
     displayMode.addEventListener("click", () =>
       toggleOrgChartEditMode(adminId, true)
     );
@@ -381,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
     displayMode.appendChild(profileDiv);
 
     const textContainer = document.createElement("div");
-    textContainer.style.textAlign = "center";
+    textContainer.className = "text-container";
 
     const positionSpan = document.createElement("span");
     positionSpan.className = "position-text";
@@ -406,19 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
     editForm.className = "org-node org-node-edit-mode";
     editForm.style.display = "none";
 
-    Object.assign(editForm.style, {
-      flexDirection: "column",
-      alignItems: "center",
-      padding: "10px",
-      border: "1px solid var(--org-border-medium)",
-      borderRadius: "8px",
-      backgroundColor: "var(--org-bg-light)",
-      boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-      position: "relative",
-      minWidth: "200px",
-      gap: "10px",
-    });
-
     const editProfileDiv = document.createElement("div");
     editProfileDiv.className = "profile-circle-edit";
     const editImg = document.createElement("img");
@@ -432,7 +414,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fileInput.type = "file";
     fileInput.name = "chart_picture";
     fileInput.accept = "image/*";
-    fileInput.style.marginBottom = "10px";
+    fileInput.classList.add("chart-picture-input");
+
     fileInput.addEventListener("change", (event) => {
       const file = event.target.files[0];
       if (file) {
@@ -451,13 +434,8 @@ document.addEventListener("DOMContentLoaded", () => {
       input.name = name;
       input.value = value;
       input.placeholder = placeholder;
-      Object.assign(input.style, {
-        width: "90%",
-        padding: "8px",
-        marginBottom: "5px",
-        border: "1px solid #ccc",
-        borderRadius: "4px",
-      });
+      input.classList.add("org-node-input-field");
+
       return input;
     };
 
@@ -482,13 +460,7 @@ document.addEventListener("DOMContentLoaded", () => {
     editForm.appendChild(positionInput);
 
     const buttonsContainer = document.createElement("div");
-    Object.assign(buttonsContainer.style, {
-      display: "flex",
-      gap: "10px",
-      marginTop: "10px",
-      width: "100%",
-      justifyContent: "center",
-    });
+    buttonsContainer.classList.add("org-node-buttons-container");
 
     const saveButton = document.createElement("button");
     saveButton.textContent = "Save";
@@ -512,73 +484,6 @@ document.addEventListener("DOMContentLoaded", () => {
     adminNodeWrapper.appendChild(editForm);
 
     return adminNodeWrapper;
-  };
-
-  const DEFAULT_JS_ORG_OFFICERS = {
-    President: {
-      first_name: "Vacant",
-      last_name: "President",
-      email: "president@example.com",
-      position: "President",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_president_0",
-    },
-    "Vice President-Internal": {
-      first_name: "Vacant",
-      last_name: "VP-Internal",
-      email: "vpi@example.com",
-      position: "Vice President-Internal",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_vp_internal_0",
-    },
-    "Vice President-External": {
-      first_name: "Vacant",
-      last_name: "VP-External",
-      email: "vpe@example.com",
-      position: "Vice President-External",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_vp_external_0",
-    },
-    Secretary: {
-      first_name: "Vacant",
-      last_name: "Secretary",
-      email: "secretary@example.com",
-      position: "Secretary",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_secretary_0",
-    },
-    Treasurer: {
-      first_name: "Vacant",
-      last_name: "Treasurer",
-      email: "treasurer@example.com",
-      position: "Treasurer",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_treasurer_0",
-    },
-    Auditor: {
-      first_name: "Vacant",
-      last_name: "Auditor",
-      email: "auditor@example.com",
-      position: "Auditor",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_auditor_0",
-    },
-    "Public Relation Officer": {
-      first_name: "Vacant",
-      last_name: "PRO",
-      email: "pro@example.com",
-      position: "Public Relation Officer",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_pro_0",
-    },
-    Adviser: {
-      first_name: "Vacant",
-      last_name: "Adviser",
-      email: "adviser@example.com",
-      position: "Adviser",
-      chart_picture_url: "/static/images/your_image_name.jpg",
-      id: "default_adviser_0",
-    },
   };
 
   function createOrgChartDisplayElements(admins) {
@@ -611,61 +516,28 @@ document.addEventListener("DOMContentLoaded", () => {
     const createBranchStructure = (parentFragment, adminsForBranch) => {
       if (adminsForBranch.length === 0) return;
 
-      const verticalLine = document.createElement("div");
-      verticalLine.classList.add("org-line", "org-vertical");
-      parentFragment.appendChild(verticalLine);
-
       if (adminsForBranch.length > 1) {
         const horizontalBranchWrapper = document.createElement("div");
-        Object.assign(horizontalBranchWrapper.style, {
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "flex-start",
-          width: "100%",
-          position: "relative",
-          marginBottom: "1.5rem",
-          paddingTop: "1rem",
-        });
-
-        const horizontalLine = document.createElement("div");
-        horizontalLine.classList.add("org-line", "org-line-horizontal");
-        Object.assign(horizontalLine.style, {
-          width: `calc(${adminsForBranch.length * 180}px + ${
-            (adminsForBranch.length - 1) * 30
-          }px - 60px)`,
-          maxWidth: "90%",
-          height: "2px",
-          backgroundColor: "var(--org-primary)",
-          position: "absolute",
-          top: "0",
-          transform: "translateX(-50%)",
-        });
-        horizontalBranchWrapper.appendChild(horizontalLine);
+        horizontalBranchWrapper.classList.add("org-branch-wrapper");
 
         const nodesContainer = document.createElement("div");
         nodesContainer.classList.add("org-branch-container");
-        Object.assign(nodesContainer.style, {
-          marginTop: "1.5rem",
-          position: "relative",
-          zIndex: "1",
-          alignItems: "flex-start",
-        });
 
         adminsForBranch.forEach((admin, index) => {
           const nodeWrapper = document.createElement("div");
-          Object.assign(nodeWrapper.style, {
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            position: "relative",
-            paddingTop: "10px",
-          });
+          nodeWrapper.classList.add("org-node-vertical-connection");
 
           const dropLine = document.createElement("div");
           dropLine.classList.add("org-line", "org-vertical-from-branch-top");
           nodeWrapper.appendChild(dropLine);
 
           nodeWrapper.appendChild(createAdminNodeDiv(admin));
+          const verticalLineBelowNode = document.createElement("div");
+          verticalLineBelowNode.classList.add(
+            "org-line",
+            "org-vertical-to-sub-branch"
+          );
+          nodeWrapper.appendChild(verticalLineBelowNode);
           nodesContainer.appendChild(nodeWrapper);
         });
 
@@ -680,11 +552,31 @@ document.addEventListener("DOMContentLoaded", () => {
     if (presidentData.length > 0) {
       const presidentNode = createAdminNodeDiv(presidentData[0]);
       presidentNode.classList.add("org-root-wrapper");
-      fragment.appendChild(presidentNode);
 
       const verticalLine = document.createElement("div");
       verticalLine.classList.add("org-line", "org-vertical");
-      fragment.appendChild(verticalLine);
+
+      const rootNodeAndLineContainer = document.createElement("div");
+      rootNodeAndLineContainer.classList.add("root-node-and-line-container");
+      rootNodeAndLineContainer.appendChild(presidentNode);
+      rootNodeAndLineContainer.appendChild(verticalLine);
+      fragment.appendChild(rootNodeAndLineContainer);
+
+      const connectionLineContainer = document.createElement("div");
+      connectionLineContainer.classList.add("org-connection-line-container");
+
+      const verticalStub = document.createElement("div");
+      verticalStub.classList.add("org-line", "org-vertical-stub");
+      connectionLineContainer.appendChild(verticalStub);
+
+      const horizontalConnectionLine = document.createElement("div");
+      horizontalConnectionLine.classList.add(
+        "org-line",
+        "org-line-horizontal-connection"
+      );
+      connectionLineContainer.appendChild(horizontalConnectionLine);
+
+      fragment.appendChild(connectionLineContainer);
     }
 
     const vps = [
@@ -703,7 +595,35 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
 
     if (otherCorePositions.length > 0) {
-      createBranchStructure(fragment, otherCorePositions);
+      const subBranchConnectionContainer = document.createElement("div");
+      subBranchConnectionContainer.classList.add(
+        "org-sub-branch-connection-container"
+      );
+
+      const horizontalSubBranchLine = document.createElement("div");
+      horizontalSubBranchLine.classList.add(
+        "org-line",
+        "org-line-horizontal-sub-branch"
+      );
+      subBranchConnectionContainer.appendChild(horizontalSubBranchLine);
+
+      const subNodesContainer = document.createElement("div");
+      subNodesContainer.classList.add("org-branch-container");
+
+      otherCorePositions.forEach((admin) => {
+        const nodeWrapper = document.createElement("div");
+        nodeWrapper.classList.add("org-node-vertical-connection");
+
+        const dropLine = document.createElement("div");
+        dropLine.classList.add("org-line", "org-vertical-from-branch-top");
+        nodeWrapper.appendChild(dropLine);
+
+        nodeWrapper.appendChild(createAdminNodeDiv(admin));
+        subNodesContainer.appendChild(nodeWrapper);
+      });
+
+      subBranchConnectionContainer.appendChild(subNodesContainer);
+      fragment.appendChild(subBranchConnectionContainer);
     }
 
     const adviserData = getDisplayAdminsForPosition("Adviser");
@@ -711,36 +631,19 @@ document.addEventListener("DOMContentLoaded", () => {
       if (fragment.children.length > 1) {
         const hr = document.createElement("hr");
         hr.classList.add("section-divider");
-        Object.assign(hr.style, {
-          margin: "2rem auto",
-          width: "80%",
-          borderTop: "1px dashed var(--org-border-medium)",
-          opacity: "0.5",
-        });
-        fragment.appendChild(hr);
       }
 
       const adviserSectionHeader = document.createElement("h4");
       adviserSectionHeader.textContent = "ADVISERS";
-      Object.assign(adviserSectionHeader.style, {
-        marginTop: "2rem",
-        color: "var(--org-text-primary)",
-        fontWeight: "600",
-        width: "100%",
-        textAlign: "center",
-        paddingBottom: "0.5rem",
-        borderBottom: "2px solid var(--org-border-medium)",
-        marginBottom: "1.5rem",
-      });
+      adviserSectionHeader.classList.add("adviser-section-header");
+
       fragment.appendChild(adviserSectionHeader);
 
       const adviserGroupContainer = document.createElement("div");
-      adviserGroupContainer.classList.add("org-branch-container");
-      Object.assign(adviserGroupContainer.style, {
-        gap: "1.5rem",
-        flexWrap: "wrap",
-        alignItems: "flex-start",
-      });
+      adviserGroupContainer.classList.add(
+        "org-branch-container",
+        "adviser-group-container"
+      );
 
       adviserData.forEach((admin) => {
         adviserGroupContainer.appendChild(createAdminNodeDiv(admin, "Adviser"));
