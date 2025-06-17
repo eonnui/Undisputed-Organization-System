@@ -26,10 +26,6 @@
   margin-left: auto;
 }
 
-.mt-4 {
-  margin-top: 1.5rem !important;
-}
-
 .mb-3 {
   margin-bottom: 1rem !important;
 }
@@ -194,19 +190,15 @@
 }
 
 .btn-danger {
-  color: var(--org-button-text);
-  background-color: var(--org-error);
-  border-color: var(--org-error);
+  color: var(--org-error); /* Text color becomes the error color */
+  background-color: transparent; /* Makes the background transparent */
+  border: 1px solid var(--org-error); /* Adds a border with the error color */
 }
 
 .btn-danger:hover {
-  color: var(--org-button-text);
-  background-color: color-mix(
-    in srgb,
-    var(--org-error) 85%,
-    black
-  );
-  border-color: color-mix(in srgb, var(--org-error) 85%, black);
+  color: var(--org-error); /* Text color becomes the error color */
+  background-color: transparent; /* Makes the background transparent */
+  border: 1.3px solid var(--org-error); /* Adds a border with the error color */
 }
 
 .btn-info {
@@ -222,6 +214,19 @@
   padding: 0.3rem 0.6rem;
   font-size: 0.85rem;
   border-radius: 0.25rem;
+  margin: 8px;
+}
+
+.form-text {
+  display: block; /* Ensures the text takes up its own line */
+  margin-top: 0.25rem; /* Adds a small space above the text */
+  font-size: 0.875em; /* Makes the font size slightly smaller than the parent */
+  color: #6c757d; /* A common muted gray color */
+}
+
+.text-muted {
+  margin-bottom: 8px;
+  color: #6c757d !important; /* Forces the color to be muted, overriding other styles */
 }
 
 .form-label {
@@ -240,7 +245,9 @@
   color: var(--org-text-primary);
   background-color: var(--org-bg-secondary);
   background-clip: padding-box;
-  border: 1px solid var(--org-form-group-input-border);
+  border: 1px solid var(--org-text-secondary);
+  margin-bottom: 8px;
+  margin-top: 8px;
   appearance: none;
   border-radius: var(--org-radius-md);
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -303,6 +310,7 @@
 }
 
 .form-check-input[type="checkbox"] {
+  border: 1px solid var(--org-text-secondary);
   border-radius: 0.25em;
 }
 
@@ -396,15 +404,15 @@
 
 .custom-alert-success {
   color: var(
-    --org-success-text
+    --org-text-primary
   );
   background-color: var(--org-success-bg);
-  border-color: var(--org-success-border);
+  border-color: var(--org-text-primary);
 }
 
 .custom-alert-danger {
   color: var(
-    --org-error-text
+    --org-text-primary
   );
   background-color: var(--org-error-bg);
   border-color: var(--org-error-border);

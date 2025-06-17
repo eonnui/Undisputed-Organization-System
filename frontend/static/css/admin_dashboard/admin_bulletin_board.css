@@ -463,7 +463,7 @@
 .org-line.org-line-horizontal-connection {
   height: 2px;
   background-color: var(--org-primary);
-  width: 50%;
+  width: 40%;
   position: relative;
   z-index: 0;
 
@@ -508,11 +508,11 @@
 .org-line.org-line-horizontal-sub-branch {
   height: 2px;
   background-color: var(--org-primary);
-  width: 100%;
+  width: 70%;
   position: relative;
   z-index: 0;
-
   margin-top: -3px;
+  margin-left: 120px;
 }
 
 .org-vertical-from-branch-top {

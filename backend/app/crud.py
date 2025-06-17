@@ -1461,28 +1461,52 @@ def update_student_shirt_order(db: Session, order_id: int, order_update: schemas
 
 def delete_student_shirt_order(db: Session, order_id: int) -> bool:
     """
-    Deletes a student shirt order by its ID, and returns the ordered quantity
-    back to the associated shirt campaign's available stock.
+    Deletes a student shirt order by its ID, returns the ordered quantity
+    back to the associated shirt campaign's available stock, and deletes
+    the associated PaymentItem.
     Returns True if the order was found and deleted, False otherwise.
     """
+    # Eagerly load related objects to avoid N+1 queries and ensure they are available
     db_order = db.query(models.StudentShirtOrder).filter(models.StudentShirtOrder.id == order_id).first()
-    
-    if db_order:
-        # Before deleting the order, get the associated campaign and return stock
-        campaign = db.query(models.ShirtCampaign).filter(models.ShirtCampaign.id == db_order.campaign_id).first()
 
+    if db_order:
+        # 1. Handle stock reversion for the associated campaign
+        campaign = db_order.campaign  # Access the campaign via the relationship
         if campaign:
             returned_quantity = db_order.quantity
             campaign.available_stock += returned_quantity
-            campaign.updated_at = datetime.now(philippine_timezone) # Update timestamp for the campaign
-            db.add(campaign) # Mark campaign for update
+            campaign.updated_at = datetime.now(philippine_timezone)
+            db.add(campaign)  # Mark campaign for update
             logging.info(f"CRUD: Returned {returned_quantity} units to campaign '{campaign.title}' (ID: {campaign.id}). New stock: {campaign.available_stock}")
         else:
-            logging.warning(f"Campaign with ID {db_order.campaign_id} not found for order {order_id}. Cannot return stock.")
+            logging.warning(f"Campaign not found for order {order_id}. Cannot return stock.")
 
-        db.delete(db_order) # Mark order for deletion
-        db.commit() # Commit all pending changes (campaign update and order deletion)
-        
+        # 2. Delete the associated PaymentItem
+        # Access the payment_item via the relationship
+        db_payment_item = db_order.payment_item
+
+        if db_payment_item:
+            # OPTION 1: Delete the payment item
+            db.delete(db_payment_item)
+            logging.info(f"CRUD: Deleted associated PaymentItem for order {order_id} (PaymentItem ID: {db_payment_item.id}).")
+            
+            # OPTION 2 (Alternative for PaymentItem): Consider marking as 'canceled' or 'refunded'
+            # If you prefer to keep a record of the payment attempt, but indicate it's no longer valid for the order.
+            # This would require a 'status' or 'is_canceled' column in PaymentItem model.
+            # db_payment_item.is_paid = False
+            # db_payment_item.status = "canceled" # Assuming a 'status' column exists
+            # db.add(db_payment_item)
+            # logging.info(f"CRUD: Marked PaymentItem for order {order_id} as canceled (PaymentItem ID: {db_payment_item.id}).")
+
+        else:
+            logging.warning(f"No PaymentItem found linked via relationship for order {order_id}. This might indicate an inconsistency.")
+
+        # 3. Delete the StudentShirtOrder itself
+        db.delete(db_order)
+
+        # 4. Commit all changes in one transaction
+        db.commit()
+
         logging.info(f"Deleted student shirt order with id: {order_id}")
         return True
     else:

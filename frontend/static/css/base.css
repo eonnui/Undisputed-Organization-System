@@ -811,7 +811,7 @@ body {
 }
 
 .modal-close-btn {
-  color: var(--secondary-text-color);
+  color: var(--org-text-primary);
   position: absolute;
   top: 15px;
   right: 25px;
