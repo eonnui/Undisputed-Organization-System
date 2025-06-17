@@ -144,7 +144,6 @@
   border-radius: 8px;
   box-shadow: var(--org-shadow-md);
   overflow-x: auto;
-  padding: 8px;
   max-height: 600px;
   overflow-y: scroll;
   border: 1px solid var(--org-border-medium);

@@ -26,7 +26,6 @@
 
 .member-info-section {
   background-color: var(--org-card-bg);
-  padding: 8px;
   border-radius: var(--org-radius-lg);
   box-shadow: var(--org-shadow-md);
   overflow: hidden;
