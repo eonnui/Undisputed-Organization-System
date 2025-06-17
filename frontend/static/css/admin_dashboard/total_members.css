@@ -1,197 +1,183 @@
-/* total_members.css - Refined for a softer, less blocky look */
-
-/* Overall Page Layout within content block */
 .membership-hub {
-    padding: 30px; /* Increased padding for more breathing room */
-    background-color: var(--org-dashboard-bg-color);
-    min-height: calc(100vh - var(--header-height, 80px) - var(--content-header-height, 100px) - 60px); /* Adjust based on your header/footer and new padding */
-    display: flex;
-    flex-direction: column;
-    gap: 40px; /* Increased space between sections */
+  padding: 30px;
+  background-color: var(--org-dashboard-bg-color);
+  min-height: calc(
+    100vh - var(--header-height, 80px) - var(--content-header-height, 100px) -
+      60px
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
 }
 
-/* Dashboard Title and Description */
 .dashboard-title {
-    color: var(--org-dashboard-title-color);
-    font-size: 2.5em; /* Slightly larger for prominence */
-    margin-bottom: 10px;
-    font-weight: 700;
+  color: var(--org-dashboard-title-color);
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  font-weight: 700;
 }
 
 .section-description {
-    color: var(--org-text-secondary);
-    font-size: 1.1em;
-    margin-bottom: 20px;
-    line-height: 1.6;
+  color: var(--org-text-secondary);
+  font-size: 1.1em;
+  margin-bottom: 20px;
+  line-height: 1.6;
 }
 
-/* Member Info Section Styling - Make it more like a soft card */
 .member-info-section {
-    background-color: var(--org-card-bg); /* White background for the card */
-    padding: 8px; /* More generous padding inside the card */
-    border-radius: var(--org-radius-lg); /* Larger border-radius for softer corners */
-    box-shadow: var(--org-shadow-md); /* More noticeable but still subtle shadow for depth */
-    overflow: hidden; /* Ensures rounded corners apply to content, and helps with table overflow */
-    border: 1px solid var(--org-border-light); /* Very subtle border to define the card */
+  background-color: var(--org-card-bg);
+  padding: 8px;
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--org-shadow-md);
+  overflow: hidden;
+  border: 1px solid var(--org-border-light);
 }
 
-/* Member Listing Table Styling */
 .member-listing-table {
-    width: 100%;
-    border-collapse: collapse;
-    color: var(--org-table-data-text);
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--org-table-data-text);
 }
 
 .member-listing-table thead {
-    background-color: var(--org-primary); /* Red header background */
-    color: var(--org-text-light); /* White text */
-    /* Add border-radius to the top of the header if possible, needs overflow: hidden on a wrapper */
+  background-color: var(--org-primary);
+  color: var(--org-text-light);
 }
 
 .member-listing-table th {
-    padding: 15px 20px; /* More padding in headers */
-    text-align: left;
-    font-weight: bold;
-    border-bottom: none; /* Removed hard border, rely on row borders or shadows */
-    white-space: nowrap;
-    position: sticky; /* Keep headers visible on scroll */
-    top: 0;
-    z-index: 1; /* Ensure headers are above scrolling content */
-    background-color: var(--org-primary); /* Re-apply background for sticky header */
+  padding: 15px 20px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: none;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--org-primary);
 }
 
-/* Apply rounded corners to the first and last header cells */
 .member-listing-table th:first-child {
-    border-top-left-radius: var(--org-radius-md); /* Match container radius */
+  border-top-left-radius: var(--org-radius-md);
 }
 .member-listing-table th:last-child {
-    border-top-right-radius: var(--org-radius-md); /* Match container radius */
+  border-top-right-radius: var(--org-radius-md);
 }
 
-
 .member-listing-table tbody tr {
-    border-bottom: none; /* Removed hard border between rows */
-    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth hover effect */
+  border-bottom: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .member-listing-table tbody tr:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
-/* Alternating row colors for better readability */
 .member-listing-table tbody tr:nth-child(even) {
-    background-color: var(--org-background-light-alt-darker); /* A very light tint */
+  background-color: var(--org-background-light-alt-darker);
 }
 .member-listing-table tbody tr:nth-child(odd) {
-    background-color: var(--org-card-bg); /* Use card background for odd rows */
+  background-color: var(--org-card-bg);
 }
 
-/* Hover effect for table rows */
 .member-listing-table tbody tr:hover {
-    background-color: var(--org-highlight); /* Light red highlight on hover */
-    transform: translateY(-2px); /* Subtle lift */
-    box-shadow: var(--org-shadow-sm); /* Gentle shadow on hover */
-    z-index: 0; /* Ensure it stays behind sticky header */
+  background-color: var(--org-highlight);
+  transform: translateY(-2px);
+  box-shadow: var(--org-shadow-sm);
+  z-index: 0;
 }
-
 
 .member-listing-table td {
-    padding: 12px 20px; /* More padding in cells */
-    vertical-align: middle;
-    /* Add a subtle bottom border for internal cell separation if needed, or rely on row bg */
-    /* border-bottom: 1px dashed rgba(var(--org-shadow-base-rgb), 0.05); */
+  padding: 12px 20px;
+  vertical-align: middle;
 }
 
-/* Action Button Style (View button) */
 .action-button-style {
-    display: inline-flex; /* Use flex for easy centering of text if needed */
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px; /* More generous padding */
-    background-color: var(--org-button-bg);
-    color: var(--org-button-text);
-    text-decoration: none;
-    border-radius: 12px ; /* Keep small radius for buttons */
-    transition: background-color var(--org-transition), transform 0.2s ease, box-shadow var(--org-transition);
-    font-weight: 600; /* Slightly less bold */
-    white-space: nowrap;
-    min-width: 80px; /* Ensure a minimum width for consistency */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: var(--org-button-bg);
+  color: var(--org-button-text);
+  text-decoration: none;
+  border-radius: 28px;
+  transition: background-color var(--org-transition), transform 0.2s ease,
+    box-shadow var(--org-transition);
+
+  white-space: nowrap;
+  min-width: 80px;
 }
 
 .action-button-style:hover {
-    background-color: var(--org-hover-effect);
-    transform: translateY(-2px); /* More noticeable lift */
-    box-shadow: var(--org-shadow-md); /* Stronger shadow on hover */
+  background-color: var(--org-hover-effect);
+  transform: translateY(-2px);
+  box-shadow: var(--org-shadow-md);
 }
 
-/* Empty State Message */
 .empty-state-message {
-    text-align: center;
-    padding: 40px; /* More padding */
-    color: var(--org-empty-state-color);
-    font-style: italic;
-    background-color: var(--org-empty-state-bg);
-    border-radius: var(--org-radius-md); /* Consistent radius */
-    box-shadow: var(--org-shadow-sm); /* Subtle shadow for the empty state card */
-    margin-top: 20px; /* Space from top if no table is rendered */
+  text-align: center;
+  padding: 40px;
+  color: var(--org-empty-state-color);
+  font-style: italic;
+  background-color: var(--org-empty-state-bg);
+  border-radius: var(--org-radius-md);
+  box-shadow: var(--org-shadow-sm);
+  margin-top: 20px;
 }
 
-/* Responsive Table */
 @media (max-width: 768px) {
-    .member-listing-table,
-    .member-listing-table thead,
-    .member-listing-table tbody,
-    .member-listing-table th,
-    .member-listing-table td,
-    .member-listing-table tr {
-        display: block;
-    }
+  .member-listing-table,
+  .member-listing-table thead,
+  .member-listing-table tbody,
+  .member-listing-table th,
+  .member-listing-table td,
+  .member-listing-table tr {
+    display: block;
+  }
 
-    .member-listing-table thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }
+  .member-listing-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
 
-    .member-listing-table tr {
-        margin-bottom: 20px; /* More space between stacked rows */
-        border: 1px solid var(--org-border-light); /* Lighter border for stacked rows */
-        border-radius: var(--org-radius-md); /* Softer corners for individual rows */
-        box-shadow: var(--org-shadow-sm); /* Each row becomes a soft card */
-        background-color: var(--org-card-bg); /* Consistent background */
-        padding: 15px; /* Padding inside each stacked row card */
-    }
+  .member-listing-table tr {
+    margin-bottom: 20px;
+    border: 1px solid var(--org-border-light);
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-sm);
+    background-color: var(--org-card-bg);
+    padding: 15px;
+  }
 
-    .member-listing-table td {
-        border: none;
-        position: relative;
-        padding-left: 55%; /* Adjusted padding for labels */
-        text-align: right;
-        white-space: normal;
-        padding-bottom: 8px; /* Space between data items */
-        padding-top: 8px;
-    }
+  .member-listing-table td {
+    border: none;
+    position: relative;
+    padding-left: 55%;
+    text-align: right;
+    white-space: normal;
+    padding-bottom: 8px;
+    padding-top: 8px;
+  }
 
-    .member-listing-table td:last-child {
-        padding-bottom: 0; /* No extra padding for the last item in a row */
-    }
+  .member-listing-table td:last-child {
+    padding-bottom: 0;
+  }
 
-    .member-listing-table td:before {
-        content: attr(data-label);
-        position: absolute;
-        left: 15px;
-        width: calc(55% - 30px); /* Adjust width */
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: bold;
-        color: var(--org-text-secondary);
-    }
+  .member-listing-table td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 15px;
+    width: calc(55% - 30px);
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+    color: var(--org-text-secondary);
+  }
 
-    /* Adjust button within responsive cells */
-    .member-listing-table td .action-button-style {
-        width: auto; /* Allow button to size naturally */
-        margin-top: 10px; /* Space from label */
-        display: inline-block; /* Revert to inline block for better placement */
-    }
+  .member-listing-table td .action-button-style {
+    width: auto;
+    margin-top: 10px;
+    display: inline-block;
+  }
 }
