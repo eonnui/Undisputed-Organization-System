@@ -30,28 +30,69 @@ document.addEventListener("DOMContentLoaded", () => {
     const displayElement = document.getElementById(displayElementId);
     const inputElement = document.getElementById(inputElementId);
 
-    if (displayElement && inputElement) {
-      displayElement.style.display = "none";
-      inputElement.style.display = "block";
-      inputElement.focus();
+    // Corrected: Extract the base name and then apply proper casing for the edit icon ID
+    // Example: "birthDateDisplay" -> "birthDate" -> "editBirthDate"
+    const baseName = displayElementId.replace("Display", "");
+    const editIconId = "edit" + baseName.charAt(0).toUpperCase() + baseName.slice(1); // Capitalize first letter of baseName
+    const editIcon = document.getElementById(editIconId);
 
-      inputElement.addEventListener("blur", () => {
-        let displayValue = inputElement.value;
-        if (inputElement.type === "date" && inputElement.value) {
-          try {
-            displayValue = new Date(inputElement.value).toLocaleDateString(
-              "en-US",
-              { year: "numeric", month: "2-digit", day: "2-digit" }
-            );
-          } catch (e) {
-            displayValue = inputElement.value;
-          }
-        }
-        displayElement.textContent = displayValue;
-        displayElement.style.display = "block";
-        inputElement.style.display = "none";
-      });
+    // Check if all necessary elements are found before proceeding
+    if (!displayElement) {
+      console.error(`Error: Display element with ID '${displayElementId}' not found.`);
+      return;
     }
+    if (!inputElement) {
+      console.error(`Error: Input element with ID '${inputElementId}' not found.`);
+      return;
+    }
+    if (!editIcon) {
+      // This is the error you were seeing!
+      console.error(`Error: Edit icon element with ID '${editIconId}' not found.`);
+      return;
+    }
+
+    // --- Rest of your makeFieldEditable function (from previous solution) ---
+    // Hide the display element and show the input element
+    displayElement.classList.add("hidden");
+    inputElement.classList.remove("hidden");
+    inputElement.focus();
+
+    // Optionally hide the edit icon while in edit mode
+    editIcon.classList.add("hidden");
+
+    // Add a blur event listener to revert back when the input loses focus
+    function handleBlur() {
+      let displayValue = inputElement.value;
+
+      // Handle date formatting if applicable
+      if (inputElement.type === "date" && inputElement.value) {
+        try {
+          displayValue = new Date(inputElement.value).toLocaleDateString(
+            "en-US",
+            { year: "numeric", month: "2-digit", day: "2-digit" }
+          );
+        } catch (e) {
+          displayValue = inputElement.value;
+        }
+      } else if (inputElement.tagName === "SELECT") {
+          displayValue = inputElement.options[inputElement.selectedIndex].textContent;
+          if (displayValue === "Select Gender" || displayValue.trim() === "") {
+              displayValue = "--";
+          }
+      } else if (displayValue.trim() === "") {
+          displayValue = "--";
+      }
+
+      displayElement.textContent = displayValue;
+
+      displayElement.classList.remove("hidden");
+      inputElement.classList.add("hidden");
+      editIcon.classList.remove("hidden");
+
+      inputElement.removeEventListener("blur", handleBlur);
+    }
+
+    inputElement.addEventListener("blur", handleBlur);
   }
 
   function showError(inputElementId, message) {
