@@ -261,8 +261,6 @@
 }
 
 .button-secondary:hover {
-  background-color: var(--org-primary-light);
-  color: var(--org-primary);
   transform: translateY(-2px);
 }
 
