@@ -1,0 +1,510 @@
+.events-header,
+.existing-events-title {
+  font-size: 2em;
+  color: var(--org-text-primary);
+  margin-top: 40px;
+}
+
+.events-page-container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.create-event-container {
+  background-color: var(--org-card-bg);
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--org-shadow-md);
+  padding: 30px;
+  margin-bottom: 40px;
+  border: 1px solid var(--org-border-light);
+}
+
+.create-event-input {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid var(--org-border-medium);
+  border-radius: var(--org-radius-md);
+  font-size: 1.1em;
+  color: var(--org-text-secondary);
+  background-color: var(--org-bg-color);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.create-event-input:focus {
+  outline: none;
+  border-color: var(--org-primary);
+  box-shadow: 0 0 0 2px var(--org-primary-light);
+}
+
+.create-event-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.create-event-form-fields label {
+  font-weight: 600;
+  color: var(--org-text-primary);
+  margin-bottom: 5px;
+  display: block;
+}
+
+.create-event-form-fields input[type="text"],
+.create-event-form-fields input[type="datetime-local"],
+.create-event-form-fields input[type="number"],
+.create-event-form-fields input[type="file"],
+.create-event-form-fields select,
+.create-event-form-fields textarea {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid var(--org-border-medium);
+  border-radius: var(--org-radius-md);
+  font-size: 1em;
+  color: var(--org-text-primary);
+  background-color: var(--org-bg-secondary);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.create-event-form-fields input[type="file"] {
+  padding: 8px 10px;
+}
+
+.create-event-form-fields input:focus,
+.create-event-form-fields select:focus,
+.create-event-form-fields textarea:focus {
+  outline: none;
+  border-color: var(--org-primary);
+  box-shadow: 0 0 0 2px var(--org-primary-light);
+}
+
+.create-event-form-fields textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-row > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.create-event-submit-button {
+  background-color: var(--org-button-bg);
+  color: var(--org-button-text);
+  padding: 12px 25px;
+  border: none;
+  border-radius: var(--org-radius-md);
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--org-transition);
+  align-self: flex-end;
+  margin-top: 20px;
+}
+
+.create-event-submit-button:hover {
+  background-color: var(--org-hover-effect);
+  box-shadow: var(--org-shadow-sm);
+}
+
+.back-to-events {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: var(--org-button-chart-text);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.back-to-events:hover {
+  color: var(--org-hover-effect);
+  text-decoration: underline;
+}
+
+.event-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  padding-top: 20px;
+}
+
+.event-card {
+  background-color: var(--org-card-bg);
+  border-radius: var(--org-radius-lg);
+  box-shadow: var(--org-shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: var(--org-transition);
+  border: 1px solid var(--org-border-light);
+}
+
+.event-card:hover {
+  box-shadow: var(--org-shadow-md);
+  transform: translateY(-3px);
+}
+
+.event-card-image-container {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background-color: var(--org-bg-secondary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.event-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.event-card:hover .event-card-image {
+  transform: scale(1.3);
+}
+
+.event-card-content {
+  padding: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.event-title {
+  font-size: 1.5em;
+  color: var(--org-dashboard-title-color);
+  margin: 0;
+  line-height: 1.3;
+  flex-grow: 1;
+  margin-right: 15px;
+}
+
+.event-tag {
+  font-size: 0.85em;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--org-radius-md);
+  white-space: nowrap;
+  color: var(--org-event-tag-text);
+  background-color: var(--org-event-tag-bg);
+}
+
+.tag-academic {
+  background-color: var(--org-academic-tag-bg);
+  color: var(--org-academic-tag-text);
+}
+.tag-sports {
+  background-color: var(--org-sports-tag-bg);
+  color: var(--org-sports-tag-text);
+}
+.tag-arts {
+  background-color: var(--org-arts-tag-bg);
+  color: var(--org-arts-tag-text);
+}
+.tag-music {
+  background-color: var(--org-music-tag-bg);
+  color: var(--org-music-tag-text);
+}
+.tag-esports {
+  background-color: var(--org-esports-tag-bg);
+  color: var(--org-esports-tag-text);
+}
+.tag-cultural {
+  background-color: var(--org-cultural-tag-bg);
+  color: var(--org-cultural-tag-text);
+}
+
+.event-meta {
+  font-size: 0.9em;
+  color: var(--org-text-secondary);
+  margin-bottom: 15px;
+}
+
+.event-meta div {
+  margin-bottom: 5px;
+}
+
+.event-meta i {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--org-text-primary);
+}
+
+.event-description {
+  font-size: 1em;
+  color: var(--org-text-primary);
+  margin-bottom: 20px;
+  flex-grow: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+.event-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.participants-count {
+  font-size: 0.95em;
+  color: var(--org-text-secondary);
+  font-weight: 500;
+}
+
+.delete-form {
+  display: inline-block;
+}
+
+.delete-button {
+  background-color: var(--org-error);
+  color: var(--org-button-text);
+  padding: 8px 15px;
+  border: none;
+  border-radius: var(--org-radius-md);
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--org-transition);
+}
+
+.delete-button:hover {
+  background-color: var(--org-accent-dark);
+  box-shadow: var(--org-shadow-sm);
+}
+
+.modal-two-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+
+  padding: 0;
+}
+
+.modal-left-column,
+.modal-right-column {
+  flex: 1;
+  min-width: 300px;
+}
+
+.modal-image {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: var(--org-radius-md);
+  margin-bottom: 20px;
+  border: 1px solid var(--org-border-light);
+}
+
+#modalEventTitle {
+  font-size: 2em;
+  color: var(--org-dashboard-title-color);
+  margin-bottom: 10px;
+}
+
+.modal-classification {
+  margin-bottom: 15px;
+}
+
+.modal-classification span {
+  font-size: 0.95em;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: var(--org-radius-md);
+}
+
+#modalEventClassification.tag-academic {
+  background-color: var(--org-academic-tag-bg);
+  color: var(--org-academic-tag-text);
+}
+#modalEventClassification.tag-sports {
+  background-color: var(--org-sports-tag-bg);
+  color: var(--org-sports-tag-text);
+}
+#modalEventClassification.tag-arts {
+  background-color: var(--org-arts-tag-bg);
+  color: var(--org-arts-tag-text);
+}
+#modalEventClassification.tag-music {
+  background-color: var(--org-music-tag-bg);
+  color: var(--org-music-tag-text);
+}
+#modalEventClassification.tag-esports {
+  background-color: var(--org-esports-tag-bg);
+  color: var(--org-esports-tag-text);
+}
+#modalEventClassification.tag-cultural {
+  background-color: var(--org-cultural-tag-bg);
+  color: var(--org-cultural-tag-text);
+}
+
+#modalEventDescription {
+  color: var(--org-text-primary);
+  margin-bottom: 20px;
+}
+
+.modal-left-column p {
+  color: var(--org-text-secondary);
+  margin-bottom: 8px;
+  font-size: 1em;
+}
+
+.modal-left-column p strong {
+  color: var(--org-text-primary);
+  font-weight: 600;
+}
+
+.modal-left-column p span {
+  color: var(--org-text-primary);
+}
+
+.participants-header {
+  font-size: 1.6em;
+  color: var(--org-dashboard-title-color);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.participants-header-count {
+  color: var(--org-text-primary);
+  font-size: 0.8em;
+  padding: 4px 10px;
+  border-radius: var(--org-radius-md);
+  font-weight: 600;
+}
+
+.participants-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--org-border-light);
+  border-radius: var(--org-radius-md);
+  background-color: var(--org-bg-secondary);
+}
+
+.participants-list li {
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--org-border-light);
+  color: var(--org-text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95em;
+}
+
+.participants-list li:last-child {
+  border-bottom: none;
+}
+
+.participants-list li:nth-child(even) {
+  background-color: var(--org-highlight);
+}
+
+.participants-list li span {
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .dashboard-title {
+    font-size: 2em;
+  }
+  .events-header,
+  .existing-events-title {
+    font-size: 1.8em;
+  }
+  .modal-two-columns {
+    flex-direction: column;
+  }
+  .modal-left-column,
+  .modal-right-column {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .modal-image {
+    height: 200px;
+  }
+  .participants-list {
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .events-page-container {
+    padding: 0 15px;
+  }
+  .create-event-container {
+    padding: 20px;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .event-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .event-card-content {
+    padding: 15px;
+  }
+  .event-title {
+    font-size: 1.3em;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-title {
+    font-size: 1.8em;
+  }
+  .events-header,
+  .existing-events-title {
+    font-size: 1.5em;
+  }
+  .create-event-input,
+  .create-event-form-fields input,
+  .create-event-form-fields select,
+  .create-event-form-fields textarea {
+    font-size: 0.95em;
+    padding: 10px 12px;
+  }
+  .create-event-submit-button {
+    padding: 10px 20px;
+    font-size: 1em;
+  }
+  .event-card-image-container {
+    height: 180px;
+  }
+  .event-card-content {
+    padding: 10px;
+  }
+  .participants-list {
+    max-height: 200px;
+  }
+}

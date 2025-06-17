@@ -114,8 +114,8 @@
 .back-to-bulletin {
   display: block;
   text-align: center;
-  margin-top: 1rem;
-  color: var(--org-primary);
+  margin-bottom: 1rem;
+  color: var(--org-button-chart-text);
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s ease;
