@@ -1,5 +1,3 @@
-const studentProfileModal = document.getElementById("studentProfileModal");
-
 const studentSearchFilter = document.getElementById("student-search-filter");
 const searchButton = document.querySelector(".search-button");
 const yearLevelFilterWrapper = document.getElementById(
@@ -132,29 +130,18 @@ async function updateStudentsTable() {
 }
 
 /**
- * Fetches a specific student's profile data and displays it in the modal.
+ * Fetches a specific student's profile data and displays it in the global modal.
  * @param {string} studentNumber - The student ID to fetch.
  */
 async function fetchStudentProfileAndShowModal(studentNumber) {
-  const modal = document.getElementById("studentProfileModal");
+  const globalModal = document.getElementById("global-modal");
+  const modalBody = document.getElementById("modal-body");
 
-  const photoPlaceholder = document.querySelector(".student-photo-placeholder");
-
-  const modalElements = {
-    modalStudentName: document.getElementById("modalStudentName"),
-    modalStudentNumber: document.getElementById("modalStudentNumber"),
-    modalEmail: document.getElementById("modalEmail"),
-    modalYearLevel: document.getElementById("modalYearLevel"),
-    modalSection: document.getElementById("modalSection"),
-    modalCampus: document.getElementById("modalCampus"),
-    modalCourse: document.getElementById("modalCourse"),
-    modalSchoolYear: document.getElementById("modalSchoolYear"),
-    modalAddress: document.getElementById("modalAddress"),
-    modalBirthdate: document.getElementById("modalBirthdate"),
-    modalSex: document.getElementById("modalSex"),
-    modalGuardianName: document.getElementById("modalGuardianName"),
-    modalGuardianContact: document.getElementById("modalGuardianContact"),
-  };
+  if (!globalModal || !modalBody) {
+    console.error("Global modal or modal body not found in parent template.");
+    displayMessageBox("Error: Global modal not available.", "error");
+    return;
+  }
 
   try {
     const response = await fetch(`/admin/students/profile/${studentNumber}`);
@@ -163,40 +150,86 @@ async function fetchStudentProfileAndShowModal(studentNumber) {
     }
     const student = await response.json();
 
-    modalElements.modalStudentName.textContent = `${student.first_name || ""} ${
+    const contentHTML = `
+        <h3 id="modalStudentName">${student.first_name || ""} ${
       student.last_name || ""
-    }`;
-    modalElements.modalStudentNumber.textContent =
-      student.student_number || "N/A";
-    modalElements.modalEmail.textContent = student.email || "N/A";
-    modalElements.modalYearLevel.textContent = student.year_level || "N/A";
-    modalElements.modalSection.textContent = student.section || "N/A";
-    modalElements.modalCampus.textContent = student.campus || "N/A";
-    modalElements.modalCourse.textContent = student.course || "N/A";
-    modalElements.modalSchoolYear.textContent = student.school_year || "N/A";
-    modalElements.modalAddress.textContent = student.address || "N/A";
-    modalElements.modalBirthdate.textContent = student.birthdate || "N/A";
-    modalElements.modalSex.textContent = student.sex || "N/A";
-    modalElements.modalGuardianName.textContent =
-      student.guardian_name || "N/A";
-    modalElements.modalGuardianContact.textContent =
-      student.guardian_contact || "N/A";
+    }</h3>
+        <div class="modal-profile-details">
+            <div class="profile-item">
+                <strong>Student ID:</strong> <span id="modalStudentNumber">${
+                  student.student_number || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Email:</strong> <span id="modalEmail">${
+                  student.email || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Year Level:</strong> <span id="modalYearLevel">${
+                  student.year_level || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Section:</strong> <span id="modalSection">${
+                  student.section || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Campus:</strong> <span id="modalCampus">${
+                  student.campus || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Course:</strong> <span id="modalCourse">${
+                  student.course || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>School Year:</strong> <span id="modalSchoolYear">${
+                  student.school_year || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Address:</strong> <span id="modalAddress">${
+                  student.address || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Birthdate:</strong> <span id="modalBirthdate">${
+                  student.birthdate || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Sex:</strong> <span id="modalSex">${
+                  student.sex || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Guardian Name:</strong> <span id="modalGuardianName">${
+                  student.guardian_name || "N/A"
+                }</span>
+            </div>
+            <div class="profile-item">
+                <strong>Guardian Contact:</strong> <span id="modalGuardianContact">${
+                  student.guardian_contact || "N/A"
+                }</span>
+            </div>
+            ${
+              student.photo
+                ? `<div class="profile-item student-photo-container"><img src="${student.photo}" alt="Student Photo" class="student-profile-photo"></div>`
+                : '<div class="profile-item student-photo-container student-photo-placeholder">👤</div>'
+            }
+        </div>
+    `;
 
-    if (photoPlaceholder) {
-      photoPlaceholder.innerHTML = "";
-      if (student.photo) {
-        const img = document.createElement("img");
-        img.src = student.photo;
-        img.alt = `${student.first_name || ""} ${
-          student.last_name || ""
-        } Photo`;
-        photoPlaceholder.appendChild(img);
-      } else {
-        photoPlaceholder.textContent = "👤";
-      }
+    modalBody.innerHTML = contentHTML;
+
+    if (typeof showGlobalModal === "function") {
+      showGlobalModal();
+    } else {
+      globalModal.style.display = "flex";
     }
-
-    modal.style.display = "flex";
   } catch (error) {
     console.error("Failed to fetch student profile:", error);
     displayMessageBox(
@@ -224,8 +257,10 @@ function updateSortArrows(column, direction) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  const modal = document.getElementById("studentProfileModal");
-  const closeButton = modal.querySelector(".close-button");
+  const globalModal = document.getElementById("global-modal");
+  const globalCloseButton = globalModal
+    ? globalModal.querySelector(".modal-close-btn")
+    : null;
 
   document.querySelectorAll(".custom-select-wrapper").forEach((wrapper) => {
     const trigger = wrapper.querySelector(".custom-select-trigger");
@@ -297,13 +332,23 @@ document.addEventListener("DOMContentLoaded", function () {
       updateStudentsTable();
     });
 
-  closeButton.addEventListener("click", () => {
-    modal.style.display = "none";
-  });
+  if (globalCloseButton) {
+    globalCloseButton.addEventListener("click", () => {
+      if (typeof hideGlobalModal === "function") {
+        hideGlobalModal();
+      } else {
+        globalModal.style.display = "none";
+      }
+    });
+  }
 
   window.addEventListener("click", (event) => {
-    if (event.target === modal) {
-      modal.style.display = "none";
+    if (event.target === globalModal) {
+      if (typeof hideGlobalModal === "function") {
+        hideGlobalModal();
+      } else {
+        globalModal.style.display = "none";
+      }
     }
   });
 });

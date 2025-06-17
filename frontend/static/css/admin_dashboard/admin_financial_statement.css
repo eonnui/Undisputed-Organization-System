@@ -278,12 +278,15 @@
 
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+
+  border-collapse: separate;
+
+  border-spacing: 0;
   background-color: var(--org-bg-secondary);
 }
 
 .data-table thead {
-  background-color: var(--org-button-bg);
+  background-color: var(--org-table-header-bg-payments);
   color: var(--org-button-text);
   position: sticky;
   top: 0;
@@ -296,6 +299,16 @@
   font-weight: 600;
   font-size: 0.95em;
   text-transform: uppercase;
+
+  background-clip: padding-box;
+}
+
+.data-table thead th:first-child {
+  border-top-left-radius: var(--org-radius-md);
+}
+
+.data-table thead th:last-child {
+  border-top-right-radius: var(--org-radius-md);
 }
 
 .data-table tbody tr {
@@ -319,12 +332,20 @@
 }
 
 .data-table tfoot {
-  background-color: var(--org-primary);
-  font-weight: 600;
-  color: var(--org-text-inverse);
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
+    background-color: var(--org-table-header-bg-payments);
+    font-weight: 600;
+    color: var(--org-text-inverse);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.data-table tfoot th:first-child {
+    border-bottom-left-radius: var(--org-radius-md);
+}
+
+.data-table tfoot th:last-child {
+    border-bottom-right-radius: var(--org-radius-md);
 }
 
 .data-table tfoot th {
@@ -339,16 +360,6 @@
 .data-table .amount {
   text-align: right;
   font-weight: 500;
-}
-
-.data-table .positive {
-  color: var(--org-success);
-  font-weight: 600;
-}
-
-.data-table .negative {
-  color: var(--org-error);
-  font-weight: 600;
 }
 
 @media (max-width: 768px) {
@@ -460,9 +471,11 @@
   #revenues-breakdown-body td:nth-of-type(1):before {
     content: "Source:";
   }
+
   #revenues-breakdown-body td:nth-of-type(2):before {
     content: "Amount (₱):";
   }
+
   #revenues-breakdown-body td:nth-of-type(3):before {
     content: "% of Total:";
   }
@@ -470,9 +483,11 @@
   #expenses-breakdown-body td:nth-of-type(1):before {
     content: "Category:";
   }
+
   #expenses-breakdown-body td:nth-of-type(2):before {
     content: "Amount (₱):";
   }
+
   #expenses-breakdown-body td:nth-of-type(3):before {
     content: "% of Total:";
   }
@@ -480,12 +495,15 @@
   #monthly-summary-body td:nth-of-type(1):before {
     content: "Month:";
   }
+
   #monthly-summary-body td:nth-of-type(2):before {
     content: "Revenue (₱):";
   }
+
   #monthly-summary-body td:nth-of-type(3):before {
     content: "Expenses (₱):";
   }
+
   #monthly-summary-body td:nth-of-type(4):before {
     content: "Net Income (₱):";
   }
@@ -493,12 +511,15 @@
   #accounts-balances-body td:nth-of-type(1):before {
     content: "Account:";
   }
+
   #accounts-balances-body td:nth-of-type(2):before {
     content: "Balance (₱):";
   }
+
   #accounts-balances-body td:nth-of-type(3):before {
     content: "Last Transaction:";
   }
+
   #accounts-balances-body td:nth-of-type(4):before {
     content: "Status:";
   }
@@ -514,9 +535,11 @@
   .stat-card h3 {
     font-size: 0.9em;
   }
+
   .stat-card p {
     font-size: 1.5em;
   }
+
   .report-toggle-button {
     font-size: 0.85em;
     padding: 8px 15px;

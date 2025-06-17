@@ -79,6 +79,7 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
 .chart-section::-webkit-scrollbar,
 .tracker-section::-webkit-scrollbar {
   display: none;
@@ -149,7 +150,10 @@
 
 .tracker-section table {
   width: 100%;
-  border-collapse: collapse;
+
+  border-collapse: separate;
+
+  border-spacing: 0;
   margin-top: 20px;
 }
 
@@ -166,6 +170,16 @@
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.9em;
+
+  background-clip: padding-box;
+}
+
+.tracker-section thead th:first-child {
+  border-top-left-radius: var(--org-radius-md);
+}
+
+.tracker-section thead th:last-child {
+  border-top-right-radius: var(--org-radius-md);
 }
 
 .tracker-section tbody tr:nth-child(even) {

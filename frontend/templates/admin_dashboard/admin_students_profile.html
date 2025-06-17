@@ -20,43 +20,6 @@
             <input type="text" id="student-search-filter" placeholder="Search by Name or Student ID" class="search-input">
             <button onclick="updateStudentsTable()" class="search-button">Search</button>
         </div>
-
-        <div class="custom-select-wrapper" id="year-level-filter-wrapper">
-            <div class="custom-select-trigger" id="year-level-filter-trigger">
-                <span>Year Level</span>
-                <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                </svg>
-            </div>
-            <div class="custom-options" id="year-level-filter-options">
-                <ul role="listbox" id="year-level-dropdown">
-                    <li data-value="">All</li>
-                    <li data-value="1">1st Year</li>
-                    <li data-value="2">2nd Year</li>
-                    <li data-value="3">3rd Year</li>
-                    <li data-value="4">4th Year</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="custom-select-wrapper" id="section-filter-wrapper">
-            <div class="custom-select-trigger" id="section-filter-trigger">
-                <span>Section</span>
-                <svg class="dropdown-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                </svg>
-            </div>
-            <div class="custom-options" id="section-filter-options">
-                <ul role="listbox" id="section-dropdown">
-                    <li data-value="">All</li>
-                    <li data-value="A">A</li>
-                    <li data-value="B">B</li>
-                    <li data-value="C">C</li>
-                    <li data-value="D">D</li>
-                    <li data-value="E">E</li>
-                </ul>
-            </div>
-        </div>
     </div>
 
     <div class="students-table-container">
@@ -75,51 +38,6 @@
             <tbody>
             </tbody>
         </table>
-    </div>
-</div>
-
-<div id="studentProfileModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h3 id="modalStudentName"></h3>
-        <div class="modal-body">
-            <div class="profile-item">
-                <strong>Student ID:</strong> <span id="modalStudentNumber"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Email:</strong> <span id="modalEmail"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Year Level:</strong> <span id="modalYearLevel"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Section:</strong> <span id="modalSection"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Campus:</strong> <span id="modalCampus"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Course:</strong> <span id="modalCourse"></span>
-            </div>
-            <div class="profile-item">
-                <strong>School Year:</strong> <span id="modalSchoolYear"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Address:</strong> <span id="modalAddress"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Birthdate:</strong> <span id="modalBirthdate"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Sex:</strong> <span id="modalSex"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Guardian Name:</strong> <span id="modalGuardianName"></span>
-            </div>
-            <div class="profile-item">
-                <strong>Guardian Contact:</strong> <span id="modalGuardianContact"></span>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}
