@@ -8,17 +8,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% endblock %}
 
-{% block content %}
+{% block content_header %}
+<h1 class="dashboard-title">
+    {% if section %} {{ section|upper }} Membership{% else %} TOTAL MEMBERS {% endif %}
+</h1>
+{% endblock %}
 
+{% block content %}
 <div class="membership-hub">
     <div class="member-info-section">
-        <h1 class="section-headline">
-            {% if section %} {{ section|upper }}{% endif %}
-        </h1>
-        <p class="section-description">
-            {% if section %} {% else %} TOTAL MEMBERS {% endif %}
-        </p>
-
         <table class="member-listing-table">
             <thead>
                 <tr>

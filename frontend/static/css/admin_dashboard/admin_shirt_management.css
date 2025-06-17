@@ -42,15 +42,7 @@
   color: var(--org-text-primary);
   padding: 8px;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  border: 1px solid var(--org-border-medium);
-  max-height: 600px; /* Fixed height for the card */
-  overflow: auto; /* Enable scrolling if content exceeds height */
-  -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
-  scrollbar-width: none; /* Hide scrollbar for Firefox */
-}
-
-.card::-webkit-scrollbar {
-  display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
+  border: 1px solid var(--org-border-medium);  
 }
 
 .card-header {
@@ -83,6 +75,14 @@
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  max-height: 600px; 
+  overflow: auto; 
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+
+.table-responsive::-webkit-scrollbar {
+  display: none; 
 }
 
 .table {

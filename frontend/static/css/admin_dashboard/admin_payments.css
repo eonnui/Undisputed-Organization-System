@@ -99,6 +99,17 @@
   box-shadow: 0 1px 3px rgba(var(--org-shadow-base-rgb), 0.05);
   width: 100%;
   box-sizing: border-box;
+
+  height: 400px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.payments-table-container::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .payments-table {
