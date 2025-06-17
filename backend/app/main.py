@@ -594,6 +594,19 @@ async def update_org_chart_node_text(
 
         response_id_for_return = str(admin_id_for_node) if admin_id_for_node else f"chart_node_{chart_node_to_update.id}"
 
+        description = f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' updated org chart node text for ID '{node_id}'."
+        await crud.create_admin_log(
+            db=db,
+            admin_id=authenticated_entity.admin_id,
+            organization_id=organization.id,
+            action_type="Org Chart Node Text Updated",
+            description=description,
+            request=request,
+            target_entity_type="OrgChartNode",
+            target_entity_id=chart_node_to_update.id
+        )
+        db.commit()
+
         return schemas.OrgChartNodeUpdateResponse(
             message="Organizational chart node text data updated successfully.",
             id=response_id_for_return,
@@ -610,9 +623,11 @@ async def update_org_chart_node_text(
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update chart node text data: {e}")
 
+
 @router.put("/api/admin/org_chart_node/{node_id}/profile_picture", response_model=Dict[str, str])
 async def update_org_chart_node_profile_picture(
     node_id: str,
+    request: Request,
     chart_picture: UploadFile = File(...),
     db: Session = Depends(get_db),
     admin_org_data: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org)
@@ -688,6 +703,19 @@ async def update_org_chart_node_profile_picture(
             db.add(chart_node_to_update)
         db.commit()
         db.refresh(chart_node_to_update)
+
+        description = f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' updated org chart node picture for ID '{node_id}'."
+        await crud.create_admin_log(
+            db=db,
+            admin_id=authenticated_entity.admin_id,
+            organization_id=organization.id,
+            action_type="Org Chart Node Picture Updated",
+            description=description,
+            request=request,
+            target_entity_type="OrgChartNode",
+            target_entity_id=chart_node_to_update.id
+        )
+        db.commit()
 
         return {
             "message": "Chart picture updated successfully in org chart.",
