@@ -6,10 +6,10 @@
 }
 
 .events-page-container {
-  max-width: 1200px;
-  margin: 40px auto;
+  margin: 40px 0;
   padding: 0 20px;
   box-sizing: border-box;
+  width: 100%;
 }
 
 .create-event-container {
