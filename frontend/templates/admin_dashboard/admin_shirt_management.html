@@ -22,7 +22,8 @@
     <div class="card mb-5">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4>Shirt Campaigns</h4>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createCampaignModal">Add New Campaign</button>
+            {# Modified Button: Removed data-bs-toggle and data-bs-target, added a custom ID #}
+            <button class="btn btn-primary btn-sm" id="openCreateCampaignModalBtn">Add New Campaign</button>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -84,12 +85,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/admin_dashboard/shirt_management_modals.js"></script> {# New script for modals #}
 <script src="../../static/js/admin_dashboard/admin_shirt_management.js"></script>
-<script>
-    // Call the function to load modals when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-        loadShirtManagementModals();
-    });
-</script>
-{% endblock %}
+{% endblock %}  

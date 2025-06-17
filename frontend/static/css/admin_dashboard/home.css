@@ -166,7 +166,7 @@
 
 .tracker-section thead th {
   background-color: var(--org-table-header-bg-payments);
-  color: var(--org-table-header-text-payments);
+  color: var(--org-button-text);
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.9em;

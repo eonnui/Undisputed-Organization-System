@@ -8,7 +8,7 @@
 
 .events-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 20px;
   padding-bottom: 20px;
   justify-content: center;
@@ -24,7 +24,7 @@
   overflow: visible;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
   text-align: left;
-
+  min-height: 350px;
   margin: 0;
   position: relative;
   z-index: 1;
@@ -38,7 +38,7 @@
 
 .event-card-image-container {
   width: 100%;
-  height: 110px;
+  height: 210px;
   overflow: hidden;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;

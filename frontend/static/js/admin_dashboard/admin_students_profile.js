@@ -111,7 +111,7 @@ async function updateStudentsTable() {
       row.insertCell().textContent = student.email;
 
       const actionCell = row.insertCell();
-      actionCell.innerHTML = `<button class="view-profile-button" data-student-number="${student.student_number}">View Profile</button>`;
+      actionCell.innerHTML = `<button class="view-profile-button" data-student-number="${student.student_number}">View</button>`;
     });
 
     document.querySelectorAll(".view-profile-button").forEach((button) => {
