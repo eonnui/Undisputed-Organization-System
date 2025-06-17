@@ -723,7 +723,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         "--org-pending-bg": "#FFC107", "--org-paid-bg": "#4CAF50", "--org-cancelled-bg": "#f44336",
         "--org-payments-container-bg": "#fdf5f5", "--org-border-light-darker": "transparent",
         "--org-text-primary-darker": "#000000", "--org-table-header-bg-payments": "#fbc4cb",
-        "--org-table-header-text-payments": "#333333", "--org-table-data-text": "#333333",
+        "--org-table-header-text-payments": "#FFFFFF", "--org-table-data-text": "#333333",
         "--org-background-light-alt-darker": "#fefafa", "--org-status-unpaid-bg": "#ffebee",
         "--org-status-unpaid-text": "#b71c1c", "--org-error-border": "transparent",
         "--org-pay-button-bg-payments": "#e53935", "--org-pay-button-hover-bg-payments": "#d32f2f",
@@ -811,8 +811,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
     custom_palette["--org-dashboard-title-color"] = darker_theme_hex
     custom_palette["--org-event-tag-bg"] = lighter_theme_hex
     custom_palette["--org-event-tag-text"] = dark_theme_hex
-    custom_palette["--org-table-header-bg-payments"] = lighter_theme_hex
-    custom_palette["--org-table-header-text-payments"] = get_contrast_text_color(lighter_theme_hex)
+    custom_palette["--org-table-header-bg-payments"] = theme_color_hex
     custom_palette["--org-settings-title-color"] = darker_theme_hex
     custom_palette["--org-button-group-button-update-bg"] = theme_color_hex
     custom_palette["--org-button-group-button-update-hover-bg"] = darker_theme_hex

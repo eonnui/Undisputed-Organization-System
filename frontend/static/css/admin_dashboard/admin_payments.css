@@ -64,6 +64,7 @@
 .payments-page-container {
   width: 100%;
   background-color: var(--org-card-bg);
+  border: 1px solid var(--org-border-medium);
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb), 0.15);

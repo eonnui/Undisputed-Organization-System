@@ -41,14 +41,13 @@
 .card {
   background-color: var(--org-card-bg);
   border: none;
-  border-radius: var(
-    --org-radius-lg
-  );
+  border-radius: 8px;
   box-shadow: var(--org-shadow-md);
   color: var(--org-text-primary);
   padding: 8px;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  height: 400px; /* Fixed height for the card */
+  border: 1px solid var(--org-border-medium);
+  max-height: 600px; /* Fixed height for the card */
   overflow: auto; /* Enable scrolling if content exceeds height */
   -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
   scrollbar-width: none; /* Hide scrollbar for Firefox */
@@ -56,11 +55,6 @@
 
 .card::-webkit-scrollbar {
   display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--org-shadow-lg);
 }
 
 .card-header {
@@ -351,11 +345,17 @@
 }
 
 .custom-button-info {
-  background-color: var(--org-table-header-bg-payments);
+  background-color: transparent;
+  border: 1px solid var(--org-button-chart-text);
+  font-weight: 700;
+  color: var(--org-button-chart-text);
 }
 
 .custom-button-danger {
-  background-color: var(--org-pay-button-bg-payments);
+  background-color: transparent;
+  border: 1px solid var(--org-leave-button-bg);
+  font-weight: 700;
+  color: var(--org-leave-button-bg);
 }
 
 .custom-alert {

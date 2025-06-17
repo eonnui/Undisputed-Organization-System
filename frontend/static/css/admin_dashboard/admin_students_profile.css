@@ -2,7 +2,6 @@
   padding: 5px;
   background-color: var(--org-dashboard-bg-color);
   color: var(--org-text-primary);
-  font-family: "Roboto", sans-serif;
   min-height: calc(100vh - 60px);
 }
 
@@ -142,13 +141,13 @@
 
 .students-table-container {
   background-color: var(--org-card-bg);
-  border-radius: var(--org-radius-lg);
+  border-radius: 8px;
   box-shadow: var(--org-shadow-md);
   overflow-x: auto;
   padding: 8px;
-
-  max-height: 400px;
+  max-height: 600px;
   overflow-y: scroll;
+  border: 1px solid var(--org-border-medium);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
