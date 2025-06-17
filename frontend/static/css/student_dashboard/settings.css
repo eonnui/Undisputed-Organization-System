@@ -121,7 +121,7 @@
 
 .edit-icon {
   font-size: 1.2em;
-  color: var(--org-button-group-button-update-bg);
+  color: var(--org-text-primary);
   cursor: pointer;
   margin-left: 10px;
   transition: color 0.2s ease;
