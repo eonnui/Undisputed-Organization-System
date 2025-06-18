@@ -685,7 +685,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         "--org-text-secondary": "#757575", "--org-text-inverse": "#FFFFFF", "--org-hover-dark": "#424242",
         "--org-hover-accent": "#b71c1c", "--org-focus-border": "transparent", "--org-success": "#4CAF50",
         "--org-error": "#F44336", "--org-warning": "#FFC107", "--org-info": "#2196F3",
-        "--org-bg-secondary": "#FFFFFF", "--org-bg-dark": "#1a1a1a", "--org-border-light": "transparent",
+        "--org-bg-secondary": "#FFFFFF", "--org-bg-dark": "#1a1a1a", "--org-border-light": "#00000059",
         "--org-border-medium": "transparent", "--org-nav-item-bg": "transparent",
         "--org-nav-item-hover-bg": "rgba(154, 20, 21, 0.05)", "--org-nav-item-selected-bg":"#a83232", "--org-nav-selected-border-color": "#a83232",
         "--org-sidebar-bg-color": "#a83232", "--org-sidebar-border-color": "transparent",
@@ -773,7 +773,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
         target_bg_component = 255 
         button_text_color_to_use = get_contrast_text_color(theme_color_hex)
         nav_hover_bg_opacity = 0.05
-
+        
     mid_dark_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, mid_dark_factor))
     dark_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, dark_factor))
     darker_theme_hex = rgb_to_hex(adjust_rgb_lightness(theme_rgb, darker_factor))
@@ -792,6 +792,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
     )
     very_bg_hex = rgb_to_hex(very_bg_rgb)
 
+    border_rgb = hex_to_rgb(mid_dark_theme_hex)
 
     custom_palette["--org-primary"] = theme_color_hex
     custom_palette["--org-button-bg"] = theme_color_hex
@@ -802,6 +803,7 @@ def generate_custom_palette(theme_color_hex: str, dark_mode: bool = False) -> st
     custom_palette["--org-hover-accent"] = dark_theme_hex
     custom_palette["--org-primary-hover"] = dark_theme_hex
     custom_palette["--org-primary-light"] = lighter_theme_hex
+    custom_palette["--org-border-light"] = f"rgba({border_rgb[0]}, {border_rgb[1]}, {border_rgb[2]}, 0.7)"
     custom_palette["--org-dashboard-accent-primary"] = light_theme_hex
     custom_palette["--org-login-bg"] = darker_theme_hex 
     custom_palette["--org-sidebar-bg-color"] = theme_color_hex 
