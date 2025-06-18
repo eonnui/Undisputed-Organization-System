@@ -430,7 +430,6 @@
 }
 
 .org-node.org-root {
-  border: 1px solid var(--org-border-medium);
   border-radius: 12px;
   font-size: 1.2rem;
   padding: 1rem 2.2rem;

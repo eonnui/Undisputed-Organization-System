@@ -27,6 +27,7 @@
   padding: 30px;
   border-radius: var(--org-radius-md);
   box-shadow: var(--org-shadow-sm);
+  border: 1px solid var(--org-border-medium);
   color: var(--org-text-primary);
 }
 

@@ -92,7 +92,7 @@
 }
 
 .read-only-input {
-  background-color: var(--org-full-button-bg);
+  background-color: var(--org-card-bg);
   color: var(--org-button-disabled-text-darker);
   cursor: not-allowed;
 }
@@ -100,7 +100,7 @@
 .editable-field .input-display-wrapper {
   display: flex;
   align-items: center;
-  border: 1px solid var(--org-text-secondary);
+  border: 1px solid var(--org-border-medium);
   border-radius: 8px;
   background-color: var(--org-bg-secondary);
   padding: 12px 15px;

@@ -584,7 +584,7 @@ body {
 .form-group input {
   width: 100%;
   padding: 0.83vw;
-  border: 0.069vw solid var(--org-text-secondary);
+  border: 0.069vw solid var(--org-border-medium);
   border-radius: 0.41vw;
   font-size: clamp(0.9rem, 1.11vw, 1.2rem);
 }

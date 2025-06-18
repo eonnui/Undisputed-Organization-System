@@ -38,7 +38,6 @@
 
 .search-input:focus {
   border-color: var(--org-primary);
-  box-shadow: 0 0 0 2px var(--org-primary-light);
   outline: none;
 }
 
@@ -187,7 +186,7 @@
 
 .students-table tbody td {
   padding: 12px 15px;
-  border-bottom: 1px solid var(--org-secondary-color);
+  border-bottom: 1px solid var(--org-border-medium);
   color: var(--org-table-data-text);
   vertical-align: middle;
 }
@@ -269,7 +268,7 @@
 
 .profile-item {
   padding: 8px 0;
-  border-bottom: 1px dashed var(--org-secondary-color);
+  border-bottom: 1px dashed var(--org-border-medium);
   display: flex;
   align-items: center;
 }

@@ -29,6 +29,7 @@
   background-color: var(--org-card-bg);
   border-radius: var(--org-radius-lg);
   box-shadow: var(--org-shadow-md);
+  border: 1px solid var(--org-border-medium);
   padding: 30px;
   margin: 20px auto;
   max-width: unset;
@@ -208,7 +209,7 @@
 
 @media (max-width: 992px) {
   .monthly-cashflow-detailed-content {
-    padding: 20px;
+    padding: 10px;
     margin: 15px auto;
   }
 

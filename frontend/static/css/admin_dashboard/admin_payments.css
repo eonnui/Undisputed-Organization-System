@@ -614,8 +614,9 @@ th.sortable.desc::after {
 #add-expense-form input[type="number"],
 #add-expense-form input[type="date"] {
   padding: 12px;
-  border: 1px solid var(--org-form-group-input-border);
+  border: 1px solid var(--org-border-medium);
   border-radius: 6px;
+  background-color: var(--org-card-bg);
   font-size: 1em;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   width: 100%;

@@ -1,7 +1,16 @@
+.content-container{
+  width: 100%;
+  margin: 20px auto;
+  padding: 0 20px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
 .content-section {
   background-color: var(--org-card-bg);
   padding: 30px;
   border-radius: var(--org-radius-md);
+  border: 1px solid var(--org-border-medium);
   box-shadow: var(--org-shadow-sm);
   margin-bottom: 40px;
   transition: var(--org-transition);
@@ -347,8 +356,8 @@
 .order-form input[type="number"],
 .order-form select {
   padding: 12px 15px;
-  border: 1px solid var(--org-form-group-input-border);
-  border-radius: var(--org-radius-sm);
+  border: 1px solid var(--org-border-medium);;
+  border-radius: 8px;
   font-size: 1em;
   color: var(--org-text-primary);
   background-color: var(--org-bg-secondary);
@@ -372,6 +381,7 @@
   text-align: right;
   font-size: 1.1em;
   color: var(--org-text-primary);
+  border: 1px solid var(--org-border-medium);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -451,6 +461,9 @@
 
 .detail-section p {
   color: var(--org-text-primary);
+  border: 1px solid var(--org-border-medium);
+  padding: 8px;
+  border-radius: 8px;
   font-size: 1em;
   line-height: 1.6;
   margin-bottom: 8px;
@@ -549,7 +562,7 @@
 .form-group select {
   width: calc(100% - 20px);
   padding: 10px;
-  border: 1px solid var(--org-form-group-input-border);
+  border: 1px solid var(--org-border-medium);
   border-radius: var(--org-radius-md);
   font-size: 1em;
   color: var(--org-text-primary);
@@ -569,6 +582,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border: 1px solid var(--org-border-medium);
   margin-top: 25px;
   margin-bottom: 25px;
   padding: 15px;

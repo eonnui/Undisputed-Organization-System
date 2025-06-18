@@ -13,6 +13,7 @@
 
 .stat-card {
   background-color: var(--org-card-bg);
+  border: 1px solid var(--org-border-medium);
   border-radius: var(--org-radius-lg);
   box-shadow: var(--org-shadow-md);
   padding: 20px;
@@ -68,6 +69,7 @@
 .summary-info {
   display: flex;
   flex-wrap: wrap;
+  border: 1px solid var(--org-border-medium);
   gap: 25px;
   margin-bottom: 30px;
   background-color: var(--org-card-bg);
@@ -135,6 +137,7 @@
 
 .report-card {
   background-color: var(--org-card-bg);
+  border: 1px solid var(--org-border-medium);
   border-radius: var(--org-radius-lg);
   box-shadow: var(--org-shadow-md);
   margin-bottom: 24px;
