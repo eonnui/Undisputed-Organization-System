@@ -1,17 +1,23 @@
-{% extends 'base.html' %} {% block title %} Bulletin Board & Rules/Wiki {%
-endblock %} {% block head %}
+{% extends 'base.html' %} {% block title %} Bulletin Board & Rules/Wiki {% endblock %}
+
+{% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link rel="stylesheet"  href="/static/css/student_dashboard/bulletin_board.css"/>
-{% endblock %} {% block content_header %}
+<link rel="stylesheet" href="/static/css/student_dashboard/bulletin_board.css"/>
+{% endblock %}
+
+{% block content_header %}
 <div class="page-header-content">
   <h1 class="dashboard-title">Bulletin Board</h1>
 </div>
-{% endblock %} {% block content %}
+{% endblock %}
+
+{% block content %}
 <div class="main-content-flex-container">
   <div class="bulletin-board-container">
     <div class="bulletin-container">
-      {# Whitespace control added here #} {%- if posts -%} {%- for post in posts
-      -%}
+      {# Whitespace control added here #}
+      {%- if posts -%}
+      {%- for post in posts -%}
       <div class="post-card">
         <div class="post-header">
           <div class="profile-info">
@@ -48,6 +54,18 @@ endblock %} {% block head %}
           class="bulletin-post-image"
         />
         {%- endif -%}
+        
+        {%- if post.video_path -%}
+        <video controls
+               class="bulletin-post-video" {# Add a class for CSS styling #}
+               preload="metadata" {# Loads only video metadata (fast) #}
+               poster="/static/images/video_placeholder.png" {# Path to a generic video thumbnail/placeholder #}
+               >
+            <source src="{{ post.video_path }}" type="video/mp4"> {# Assumes MP4. Adjust 'type' if you support other formats #}
+            Your browser does not support the video tag.
+        </video>
+        {%- endif -%}
+
         <div class="post-content">{{ post.content | safe }}</div>
         <div class="post-actions">
           <button
@@ -63,7 +81,8 @@ endblock %} {% block head %}
           </button>
         </div>
       </div>
-      {%- endfor -%} {%- else -%}
+      {%- endfor -%}
+      {%- else -%}
       <p>No bulletin board posts yet.</p>
       {%- endif -%}
     </div>
@@ -92,8 +111,9 @@ endblock %} {% block head %}
     <div class="existing-wiki-post-container">
       <h3 class="existing-wiki-posts-title">Rules & Wiki Entries</h3>
       <div class="wiki-posts-list">
-        {# Whitespace control added here #} {%- if wiki_posts -%} {%- for post
-        in wiki_posts -%}
+        {# Whitespace control added here #}
+        {%- if wiki_posts -%}
+        {%- for post in wiki_posts -%}
         <div class="wiki-post-card">
           <div class="wiki-post-display-mode">
             <div class="wiki-post-header">
@@ -110,13 +130,16 @@ endblock %} {% block head %}
             <div class="wiki-post-content">{{ post.content | safe }}</div>
           </div>
         </div>
-        {%- endfor -%} {%- else -%}
+        {%- endfor -%}
+        {%- else -%}
         <p>No rules or wiki entries yet.</p>
         {%- endif -%}
       </div>
     </div>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script src="/static/js/student_dashboard/bulletin_board.js"></script>
 {% endblock %}

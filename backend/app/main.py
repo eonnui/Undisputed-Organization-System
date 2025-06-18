@@ -748,19 +748,47 @@ async def admin_post_bulletin(
     content: str = Form(...),
     category: str = Form(...),
     is_pinned: Optional[bool] = Form(False),
-    image: Optional[UploadFile] = File(None),
+    image: Optional[UploadFile] = File(None), 
+    video: Optional[UploadFile] = File(None), 
     db: Session = Depends(get_db),
 ):
     admin, admin_org = get_current_admin_with_org(request, db)
 
     image_path = None
     if image and image.filename:
-        image_path = await handle_file_upload(
-            image,
-            "images/bulletin_board",
-            ["image/jpeg", "image/png", "image/gif", "image/svg+xml"],
-            max_size_bytes=5 * 1024 * 1024 
-        )
+        allowed_image_types = ["image/jpeg", "image/png", "image/gif", "image/svg+xml"]
+        try:
+            image_path = await handle_file_upload(
+                upload_file=image,
+                subdirectory="images/bulletin_board", 
+                allowed_types=allowed_image_types,
+                max_size_bytes=5 * 1024 * 1024 
+            )
+        except HTTPException as e:
+            print(f"Image upload failed: {e.detail}")
+            pass 
+
+    video_path = None
+
+    if video and video.filename: 
+        allowed_video_types = [
+            "video/mp4", 
+            "video/mpeg", 
+            "video/quicktime", 
+            "video/webm", 
+            "video/x-msvideo", 
+            "video/x-flv"      
+        ]
+        try:
+            video_path = await handle_file_upload(
+                upload_file=video,
+                subdirectory="videos/bulletin_board", 
+                allowed_types=allowed_video_types,
+                max_size_bytes=100 * 1024 * 1024 * 1024, 
+            )
+        except HTTPException as e:
+            print(f"Video upload failed: {e.detail}")
+            pass 
 
     db_post = models.BulletinBoard(
         title=title,
@@ -768,13 +796,14 @@ async def admin_post_bulletin(
         category=category,
         is_pinned=is_pinned,
         admin_id=admin.admin_id,
-        image_path=image_path,
+        image_path=image_path, 
+        video_path=video_path, #
     )
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
     
-    users_in_org = db.query(models.User).filter(models.User.organization_id == admin_org.id).all()    
+    users_in_org = db.query(models.User).filter(models.User.organization_id == admin_org.id).all()     
     for user in users_in_org:
         if user.organization_id == admin_org.id:
             crud.create_notification(
@@ -788,7 +817,6 @@ async def admin_post_bulletin(
             event_identifier=f"bulletin_post_user_{user.id}_post_{db_post.post_id}"
             )
 
-    # Log the action
     description = f"Admin '{admin.first_name} {admin.last_name}' created bulletin board post: '{db_post.title}'."
     await crud.create_admin_log(
         db=db,

@@ -40,8 +40,11 @@
                     <input type="checkbox" id="is_pinned" name="is_pinned"> Pin Post
                 </label>
 
-                <label for="image">Upload Image (Optional):</label>
-                <input type="file" id="image" name="image" class="custom-file-input">
+                <label for="image">Upload Image:</label>
+                <input type="file" id="image" name="image" accept="image/*" class="custom-file-input">
+
+                <label for="video">Upload Video:</label>
+                <input type="file" id="video" name="video" accept="video/*" class="custom-file-input">
                 <button type="submit" class="create-post-submit-button">Post</button>
             </form>
         </div>
@@ -85,6 +88,12 @@
             {% if post.image_path %}
             <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
             {% endif %}
+            {% if post.video_path %}
+            <video controls class="bulletin-post-video">
+                <source src="{{ post.video_path }}" type="video/mp4"> 
+                Your browser does not support the video tag.
+            </video>
+            {% endif %}
             <div class="post-content">{{ post.content | safe }}</div>
             <div class="post-actions">
                 <span class="heart-count">❤️ {{ post.heart_count }}</span>
@@ -99,7 +108,7 @@
     <div class="rules-wiki-container">
         <div class="org-chart-section">
             <h2 class="org-chart-header">Organizational Chart</h2>
-            <button id="viewOrgChartButton" class="view-org-chart-button">View Chart</button>            
+            <button id="viewOrgChartButton" class="view-org-chart-button">View Chart</button>
         </div>
 
         <div class="create-wiki-post-container">

@@ -130,9 +130,11 @@ class BulletinBoard(Base):
     heart_count = Column(Integer, default=0)
     admin_id = Column(Integer, ForeignKey("admins.admin_id"))
     image_path = Column(String(255), nullable=True)
+    video_path = Column(String(255), nullable=True) 
     admin = relationship("Admin", back_populates="bulletin_board_posts")
     likes = relationship("UserLike", back_populates="bulletin_post")
     notifications = relationship("Notification", back_populates="bulletin_post")
+
 class Payment(Base):
     __tablename__ = "payments"
     id = Column(Integer, primary_key=True, index=True)
