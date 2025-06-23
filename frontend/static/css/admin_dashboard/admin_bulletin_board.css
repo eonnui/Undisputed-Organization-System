@@ -959,14 +959,31 @@
 }
 
 .chart-picture-input {
-  display: block;
-  width: 100%;
-  margin-bottom: 15px;
-  padding: 8px;
-  border: 1px solid var(--org-border-light);
-  border-radius: var(--org-radius-sm);
-  background-color: var(--org-bg-secondary);
-  color: var(--org-text-primary);
+    display: none;
+}
+
+.custom-file-upload {
+    display: inline-block;
+    padding: 6px 10px;
+    background-color: transparent;
+    font-weight: 200 ;
+    color: var(--org-dashboard-title-color); 
+    border: 2px solid var(--org-dashboard-title-color);
+    border-radius: var(--org-radius-md); 
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+    margin-top: 10px;
+    width: fit-content;
+    box-sizing: border-box;
+}
+
+.custom-file-upload:hover {
+    background-color: transparent;
+    border: 2px solid var(--org-hover-effect); 
+    color: var(--org-button-chart-text); 
+    transform: translateY(-2px);
 }
 
 .org-node-input-field {

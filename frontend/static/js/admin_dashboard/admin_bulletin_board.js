@@ -410,11 +410,20 @@ document.addEventListener("DOMContentLoaded", () => {
     editProfileDiv.appendChild(editImg);
     editForm.appendChild(editProfileDiv);
 
+    const fileInputId = `chart_picture_input_${adminId}`;
+
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.name = "chart_picture";
+    fileInput.id = fileInputId; 
     fileInput.accept = "image/*";
     fileInput.classList.add("chart-picture-input");
+    fileInput.style.display = "none"; 
+
+    const fileInputLabel = document.createElement("label");
+    fileInputLabel.htmlFor = fileInputId;
+    fileInputLabel.classList.add("custom-file-upload"); 
+    fileInputLabel.textContent = "Change Picture"; 
 
     fileInput.addEventListener("change", (event) => {
       const file = event.target.files[0];
@@ -426,7 +435,9 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.readAsDataURL(file);
       }
     });
-    editForm.appendChild(fileInput);
+
+    editForm.appendChild(fileInputLabel); 
+    editForm.appendChild(fileInput); 
 
     const createInputField = (name, value, placeholder) => {
       const input = document.createElement("input");
