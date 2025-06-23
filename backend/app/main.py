@@ -26,6 +26,7 @@ from dateutil.relativedelta import relativedelta
 import logging
 import json
 import uuid
+import aiofiles
 
 # Import IntegrityError for database exception handling
 from sqlalchemy.exc import IntegrityError
@@ -70,6 +71,10 @@ ORG_CHART_PICTURE_FOLDER_NAME = "images/org_chart_pictures"
 FULL_ORG_CHART_UPLOAD_PATH = STATIC_DIR / ORG_CHART_PICTURE_FOLDER_NAME
 FULL_ORG_CHART_UPLOAD_PATH.mkdir(parents=True, exist_ok=True) 
 
+# Define your temporary upload directory relative to STATIC_DIR
+TEMP_UPLOAD_DIR = STATIC_DIR / "temp_uploads"
+TEMP_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -104,40 +109,74 @@ def delete_file_from_path(file_path: Optional[str]):
 # Helper to handle file uploads
 async def handle_file_upload(
     upload_file: UploadFile,
-    subdirectory: str, 
+    subdirectory: str,
     allowed_types: List[str],
     max_size_bytes: Optional[int] = None,
-    old_file_path: Optional[str] = None 
+    old_file_path: Optional[str] = None,
+    is_video_upload: bool = False # New flag to handle videos differently
 ) -> str:
+    """
+    Handles file uploads, saving to a temporary directory for large files (like videos)
+    or directly to the final subdirectory for smaller files (like images).
+    Returns the *relative* path to the saved file (e.g., /static/...).
+    """
     if upload_file.content_type not in allowed_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid file type. Only {', '.join(allowed_types)} are allowed for {subdirectory}.",
         )
 
+    # If an old file path is provided, delete it first
     if old_file_path:
+        # Assuming delete_file_from_path works with relative paths like '/static/...'
         delete_file_from_path(old_file_path)
 
-    file_content = await upload_file.read()
-    if max_size_bytes and len(file_content) > max_size_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File size too large. Maximum allowed size is {max_size_bytes} bytes.",
-        )
+    # Determine the target directory: temporary for videos, final for others
+    if is_video_upload:
+        # Generate a unique filename for the temporary file
+        file_extension = os.path.splitext(upload_file.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        target_save_path = TEMP_UPLOAD_DIR / unique_filename
+    else:
+        filename = generate_secure_filename(upload_file.filename)
+        target_save_path = STATIC_DIR / subdirectory / filename
+        target_save_path.parent.mkdir(parents=True, exist_ok=True) # Ensure final subdirectory exists
 
-    filename = generate_secure_filename(upload_file.filename)
-    save_path = STATIC_DIR / subdirectory / filename
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-
+    file_size = 0
     try:
-        with open(save_path, "wb") as f:
-            f.write(file_content)
-        return f"/static/{subdirectory}/{filename}"
+        async with aiofiles.open(target_save_path, "wb") as out_file:
+            while True:
+                chunk = await upload_file.read(8192)  # Read in chunks (e.g., 8KB)
+                if not chunk:
+                    break
+                file_size += len(chunk)
+                if max_size_bytes and file_size > max_size_bytes:
+                    await out_file.close() # Close file before raising
+                    # Clean up partial file if it's too large
+                    if target_save_path.exists():
+                        os.remove(target_save_path)
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail=f"File size too large. Maximum allowed size is {max_size_bytes / (1024 * 1024):.2f} MB.",
+                    )
+                await out_file.write(chunk)
+
+        # Return the path appropriate for the caller
+        if is_video_upload:
+            # For videos, return the absolute temporary file path,
+            # which the RQ worker will use to move it later.
+            return str(target_save_path.resolve())
+        else:
+            # For images, return the relative path as before
+            return f"/static/{subdirectory}/{filename}"
+
     except Exception as e:
-        logger.error(f"Failed to save file to {save_path}: {e}")
+        # Ensure partial files are cleaned up on error
+        if target_save_path.exists():
+            os.remove(target_save_path)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save file: {e}",
+            detail=f"Failed to save file: {e}"
         )
 
 # Helper to get current admin and their organization

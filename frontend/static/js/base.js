@@ -3,6 +3,44 @@ let lastSeenUnreadNotificationIds = new Set();
 let notificationPollingTimer = null;
 const POLLING_INTERVAL_MS = 30000;
 
+
+function applyTheme(isDark) {
+    const body = document.body;
+    const themeIcon = document.querySelector('#theme-toggle .theme-icon'); 
+
+    if (isDark) {
+        body.classList.add('dark-theme');
+        if (themeIcon) {
+            themeIcon.classList.remove('ph-sun'); 
+            themeIcon.classList.add('ph-moon'); 
+        }
+        localStorage.setItem('theme', 'dark'); 
+    } else {
+        body.classList.remove('dark-theme');
+        if (themeIcon) {
+            themeIcon.classList.remove('ph-moon'); 
+            themeIcon.classList.add('ph-sun'); 
+        }
+        localStorage.setItem('theme', 'light'); 
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    applyUserTheme(); 
+}
+
+
+function toggleTheme() {
+    const isCurrentlyDarkMode = localStorage.getItem('theme') === 'dark';
+    applyTheme(!isCurrentlyDarkMode); 
+}
+
+
 function applyUserTheme() {
     const isDarkMode = localStorage.getItem('theme') === 'dark'; 
     const themeQueryParam = isDarkMode ? '?dark_mode=true' : '';
@@ -394,16 +432,18 @@ function initializeSidebarToggle() {
     });
 }
 
-function setTheme(dark) {
-    localStorage.setItem('theme', dark ? 'dark' : 'light'); 
-    applyUserTheme(); 
-}
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (localStorage.getItem('theme') === null) {
-        localStorage.setItem('theme', 'light'); 
+    
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    
+    if (savedTheme === null) {
+        applyTheme(prefersDark); 
+    } else {
+        applyTheme(savedTheme === 'dark'); 
     }
-    applyUserTheme(); 
 
     setupDropdown('.profile-btn', 'profile-dropdown');
     setupDropdown('.notification-btn', 'notifications-dropdown');
@@ -443,15 +483,8 @@ document.addEventListener('DOMContentLoaded', function() {
         todayDateElement.textContent = formattedDate;
     }
 
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    const mainContent = document.querySelector('.main-content');
-
     const themeToggleButton = document.getElementById('theme-toggle');
     if (themeToggleButton) {
-        themeToggleButton.addEventListener('click', () => {
-            const isCurrentlyDarkMode = localStorage.getItem('theme') === 'dark';
-            setTheme(!isCurrentlyDarkMode); 
-        });
+        themeToggleButton.addEventListener('click', toggleTheme); 
     }
 });
