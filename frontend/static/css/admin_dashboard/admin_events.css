@@ -324,7 +324,7 @@ label[for="classification_image"]:hover {
 }
 
 .delete-button:hover {
-  background-color: var(--org-accent-dark);
+  background-color: #c82333;
   box-shadow: var(--org-shadow-sm);
 }
 
