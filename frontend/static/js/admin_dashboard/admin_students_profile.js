@@ -155,6 +155,11 @@ async function fetchStudentProfileAndShowModal(studentNumber) {
       student.last_name || ""
     }</h3>
         <div class="modal-profile-details">
+            ${
+              student.profile_picture
+                ? `<div class="profile-item student-photo-container"><img src="${student.profile_picture}" alt="Student Photo" class="student-profile-photo"></div>`
+                : '<div class="profile-item student-photo-container student-photo-placeholder">👤</div>'
+            }
             <div class="profile-item">
                 <strong>Student ID:</strong> <span id="modalStudentNumber">${
                   student.student_number || "N/A"
@@ -214,12 +219,7 @@ async function fetchStudentProfileAndShowModal(studentNumber) {
                 <strong>Guardian Contact:</strong> <span id="modalGuardianContact">${
                   student.guardian_contact || "N/A"
                 }</span>
-            </div>
-            ${
-              student.photo
-                ? `<div class="profile-item student-photo-container"><img src="${student.photo}" alt="Student Photo" class="student-profile-photo"></div>`
-                : '<div class="profile-item student-photo-container student-photo-placeholder">👤</div>'
-            }
+            </div>            
         </div>
     `;
 

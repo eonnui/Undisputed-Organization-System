@@ -344,20 +344,30 @@ function filterPaymentsByStudentIdAndHistory() {
 }
 
 
+// MODIFIED BLOCK STARTS HERE
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if the URL hash indicates the payments tab
     if (window.location.hash.startsWith('#payments')) {
+        // Activate the 'payments' tab on the page
         openTab('payments');
-        const urlParams = new URLSearchParams(window.location.hash.substring(1));
-        const studentIdFromHash = urlParams.get('student_id');
-        if (studentIdFromHash) {
+
+        // Get parameters from the URL's query string (e.g., ?student_number=123)
+        const urlParams = new URLSearchParams(window.location.search);
+        // Extract the value of the 'student_number' parameter
+        const studentIdFromUrl = urlParams.get('student_number');
+
+        // If a student_number is found in the URL
+        if (studentIdFromUrl) {
+            // Find the student ID filter input field on the page
             const filterInput = document.getElementById('student-id-filter');
             if (filterInput) {
-                filterInput.value = studentIdFromHash;
-                setTimeout(() => filterPaymentsByStudentIdAndHistory(), 150);
+                // Pre-fill the input field with the student ID from the URL
+                filterInput.value = studentIdFromUrl;
             }
         }
     }
 });
+// MODIFIED BLOCK ENDS HERE
 
 // This function is now responsible for populating the *global* modal
 async function openAdminPaymentHistoryModal(studentIdFromFilter = '') {
@@ -528,6 +538,7 @@ async function loadExpensesTable() {
     }
 }
 
+// The following DOMContentLoaded listener was empty and can remain so, or be removed if not used.
 document.addEventListener('DOMContentLoaded', function() {
     // No need to check if 'expenses' tab is active here, as openTab already handles loadExpensesTable
     // openTab('membership'); // Optional: Call this if you want to explicitly set the initial tab

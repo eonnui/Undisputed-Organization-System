@@ -260,7 +260,6 @@
 
 .modal-profile-details {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 15px 30px;
   color: var(--org-text-primary);
   font-size: 1em;
@@ -294,7 +293,6 @@
   grid-column: 1 / -1;
   display: flex;
   justify-content: center;
-  padding: 20px 0;
   border-bottom: none;
 }
 
