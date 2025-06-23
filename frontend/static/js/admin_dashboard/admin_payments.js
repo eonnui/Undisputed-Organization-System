@@ -1,381 +1,392 @@
-// --- Global Modal Elements from admin_base.html ---
-// These elements are now part of the base template and will be controlled globally.
-const globalModal = document.getElementById('global-modal');
-const globalModalBody = document.getElementById('modal-body');
-const globalModalCloseBtn = globalModal ? globalModal.querySelector('.modal-close-btn') : null; // Check if globalModal exists
+const globalModal = document.getElementById("global-modal");
+const globalModalBody = document.getElementById("modal-body");
+const globalModalCloseBtn = globalModal
+  ? globalModal.querySelector(".modal-close-btn")
+  : null;
 
-// Function to open the global modal with specific content
 function openGlobalModalWithContent(title, contentHtml) {
-    if (globalModal && globalModalBody) {
-        // Clear previous content and set new content
-        globalModalBody.innerHTML = `<h3>${title}</h3>` + contentHtml; // Use h3 for modal title
-        globalModal.classList.add('is-visible'); // Show the modal
-    }
+  if (globalModal && globalModalBody) {
+    globalModalBody.innerHTML = `<h3>${title}</h3>` + contentHtml;
+    globalModal.classList.add("is-visible");
+  }
 }
 
-// Function to close the global modal
 function closeGlobalModal() {
-    if (globalModal) {
-        globalModal.classList.remove('is-visible'); // Hide the modal
-        globalModalBody.innerHTML = ''; // Clear content when closing
-    }
+  if (globalModal) {
+    globalModal.classList.remove("is-visible");
+    globalModalBody.innerHTML = "";
+  }
 }
 
-// Event listener for the global modal's close button
 if (globalModalCloseBtn) {
-    globalModalCloseBtn.addEventListener('click', closeGlobalModal);
+  globalModalCloseBtn.addEventListener("click", closeGlobalModal);
 }
 
-// Close global modal on escape key
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && globalModal && globalModal.classList.contains('is-visible')) {
-        closeGlobalModal();
-    }
+document.addEventListener("keydown", (event) => {
+  if (
+    event.key === "Escape" &&
+    globalModal &&
+    globalModal.classList.contains("is-visible")
+  ) {
+    closeGlobalModal();
+  }
 });
 
-// Close global modal when clicking outside its content
-window.addEventListener('click', function(event) {
-    if (globalModal && event.target === globalModal) {
-        closeGlobalModal();
-    }
+window.addEventListener("click", function (event) {
+  if (globalModal && event.target === globalModal) {
+    closeGlobalModal();
+  }
 });
-
-
-// --- Original functions (with minor adjustments where necessary) ---
 
 function openTab(tabName) {
-    const tabs = document.querySelectorAll('.tab-content');
-    const buttons = document.querySelectorAll('.tab-button');
-    for (let i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove('active');
+  const tabs = document.querySelectorAll(".tab-content");
+  const buttons = document.querySelectorAll(".tab-button");
+  for (let i = 0; i < tabs.length; i++) {
+    tabs[i].classList.remove("active");
+  }
+  for (let i = 0; i < buttons.length; i++) {
+    buttons[i].classList.remove("active");
+  }
+  const targetTab = document.getElementById(tabName);
+  const targetButton = Array.from(buttons).find(
+    (button) => button.textContent.toLowerCase() === tabName.toLowerCase()
+  );
+  if (targetTab) {
+    targetTab.classList.add("active");
+    if (tabName === "expenses") {
+      loadExpensesTable();
     }
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].classList.remove('active');
-    }
-    const targetTab = document.getElementById(tabName);
-    const targetButton = Array.from(buttons).find(button => button.textContent.toLowerCase() === tabName.toLowerCase());
-    if (targetTab) {
-        targetTab.classList.add('active');
-        if (tabName === 'expenses') {
-            loadExpensesTable();
-        }
-    }
-    if (targetButton) {
-        targetButton.classList.add('active');
-    }
+  }
+  if (targetButton) {
+    targetButton.classList.add("active");
+  }
 }
 
-document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
-    const trigger = wrapper.querySelector('.custom-select-trigger');
-    const options = wrapper.querySelector('.custom-options');
-    const listItems = options.querySelectorAll('li');
+document.querySelectorAll(".custom-select-wrapper").forEach((wrapper) => {
+  const trigger = wrapper.querySelector(".custom-select-trigger");
+  const options = wrapper.querySelector(".custom-options");
+  const listItems = options.querySelectorAll("li");
 
-    trigger.addEventListener('click', () => {
-        document.querySelectorAll('.custom-select-wrapper.open').forEach(openWrapper => {
-            if (openWrapper !== wrapper) {
-                openWrapper.classList.remove('open');
-                openWrapper.querySelector('.custom-options').style.display = 'none';
-            }
-        });
+  trigger.addEventListener("click", () => {
+    document
+      .querySelectorAll(".custom-select-wrapper.open")
+      .forEach((openWrapper) => {
+        if (openWrapper !== wrapper) {
+          openWrapper.classList.remove("open");
+          openWrapper.querySelector(".custom-options").style.display = "none";
+        }
+      });
 
-        wrapper.classList.toggle('open');
-        options.style.display = wrapper.classList.contains('open') ? "block" : "none";
+    wrapper.classList.toggle("open");
+    options.style.display = wrapper.classList.contains("open")
+      ? "block"
+      : "none";
+  });
+
+  listItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const value = item.dataset.value;
+      trigger.querySelector("span").textContent = item.textContent;
+      wrapper.classList.remove("open");
+      options.style.display = "none";
+      if (wrapper.id === "academic-year-filter-wrapper") {
+        selectedAcademicYear = value;
+      } else if (wrapper.id === "semester-filter-wrapper") {
+        selectedSemester = value;
+      }
+      updateMembershipTable();
     });
-
-    listItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const value = item.dataset.value;
-            trigger.querySelector('span').textContent = item.textContent;
-            wrapper.classList.remove('open');
-            options.style.display = "none";
-            if (wrapper.id === 'academic-year-filter-wrapper') {
-                selectedAcademicYear = value;
-            } else if (wrapper.id === 'semester-filter-wrapper') {
-                selectedSemester = value;
-            }
-            updateMembershipTable();
-        });
-    });
+  });
 });
 
-document.addEventListener('click', (event) => {
-    if (!event.target.closest('.custom-select-wrapper')) {
-        document.querySelectorAll('.custom-select-wrapper.open').forEach(openWrapper => {
-            openWrapper.classList.remove('open');
-            openWrapper.querySelector('.custom-options').style.display = 'none';
-        });
-    }
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".custom-select-wrapper")) {
+    document
+      .querySelectorAll(".custom-select-wrapper.open")
+      .forEach((openWrapper) => {
+        openWrapper.classList.remove("open");
+        openWrapper.querySelector(".custom-options").style.display = "none";
+      });
+  }
 });
 
 let selectedAcademicYear = "";
 let selectedSemester = "";
 let sortColumn = "year_level";
-let sortDirection = 'desc';
+let sortDirection = "desc";
 
 async function updateMembershipTable() {
-    const table = document.getElementById("membership-table").getElementsByTagName('tbody')[0];
-    table.innerHTML = "";
+  const table = document
+    .getElementById("membership-table")
+    .getElementsByTagName("tbody")[0];
+  table.innerHTML = "";
 
-    let url = "/admin/membership/";
-    let queryParams = [];
+  let url = "/admin/membership/";
+  let queryParams = [];
 
-    if (selectedAcademicYear) {
-        queryParams.push(`academic_year=${selectedAcademicYear}`);
+  if (selectedAcademicYear) {
+    queryParams.push(`academic_year=${selectedAcademicYear}`);
+  }
+  if (selectedSemester) {
+    queryParams.push(`semester=${selectedSemester}`);
+  }
+
+  if (queryParams.length > 0) {
+    url += "?" + queryParams.join("&");
+  }
+
+  let totalPaidSum = 0;
+  let totalAmountSum = 0;
+  let totalPaidMembers = 0;
+  let totalMembersCount = 0;
+  let overallStatus = "";
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    if (selectedSemester) {
-        queryParams.push(`semester=${selectedSemester}`);
-    }
+    let data = await response.json();
 
-    if (queryParams.length > 0) {
-        url += "?" + queryParams.join("&");
-    }
+    if (sortColumn) {
+      data.sort((a, b) => {
+        const valA = a[sortColumn];
+        const valB = b[sortColumn];
 
-    let totalPaidSum = 0;
-    let totalAmountSum = 0;
-    let totalPaidMembers = 0;
-    let totalMembersCount = 0;
-    let overallStatus = "";
-
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        let data = await response.json();
-
-        if (sortColumn) {
-            data.sort((a, b) => {
-                const valA = a[sortColumn];
-                const valB = b[sortColumn];
-
-                if (sortColumn === 'total_paid' || sortColumn === 'total_amount') {
-                    return (sortDirection === 'asc' ? valA - valB : valB - valA);
-                } else {
-                    return (sortDirection === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA)));
-                }
-            });
-        }
-
-        data.forEach(item => {
-            let row = table.insertRow();
-            let yearCell = row.insertCell();
-            let sectionCell = row.insertCell();
-            let totalPaidCell = row.insertCell();
-            let totalAmountCell = row.insertCell();
-            let statusCell = row.insertCell();
-            let listCell = row.insertCell();
-
-            yearCell.textContent = item.year_level;
-            sectionCell.textContent = item.section;
-            totalPaidCell.textContent = item.total_paid;
-            totalAmountCell.textContent = item.total_amount;
-            statusCell.textContent = item.status;
-            listCell.innerHTML = `<a href="/admin/payments/total_members?year_level=${item.year_level}&section=${item.section}" class="view-history-link">View</a>`;
-
-            totalPaidSum += item.total_paid;
-            totalAmountSum += item.total_amount;
-
-            const [paidCountStr, totalCountStr] = item.status.split('/');
-            if (paidCountStr && totalCountStr) {
-                totalPaidMembers += parseInt(paidCountStr);
-                totalMembersCount += parseInt(totalCountStr);
-            } else if (item.status) {
-                totalMembersCount += parseInt(item.status);
-            }
-        });
-
-        if (selectedAcademicYear && selectedSemester) {
-            overallStatus = `${totalPaidMembers}/${totalMembersCount}`;
+        if (sortColumn === "total_paid" || sortColumn === "total_amount") {
+          return sortDirection === "asc" ? valA - valB : valB - valA;
         } else {
-            overallStatus = `${totalMembersCount}`;
+          return sortDirection === "asc"
+            ? String(valA).localeCompare(String(valB))
+            : String(valB).localeCompare(String(valA));
         }
-
-        document.getElementById('total-paid-sum').textContent = totalPaidSum;
-        document.getElementById('total-amount-sum').textContent = totalAmountSum;
-        document.getElementById('total-status-summary').textContent = overallStatus;
-
-    } catch (error) {
-        console.error("Failed to fetch membership data:", error);
-        table.innerHTML = `<tr><td colspan="9">Error loading data. Please check console.</td></tr>`;
+      });
     }
+
+    data.forEach((item) => {
+      let row = table.insertRow();
+      let yearCell = row.insertCell();
+      let sectionCell = row.insertCell();
+      let totalPaidCell = row.insertCell();
+      let totalAmountCell = row.insertCell();
+      let statusCell = row.insertCell();
+      let listCell = row.insertCell();
+
+      yearCell.textContent = item.year_level;
+      sectionCell.textContent = item.section;
+      totalPaidCell.textContent = item.total_paid;
+      totalAmountCell.textContent = item.total_amount;
+      statusCell.textContent = item.status;
+      listCell.innerHTML = `<a href="/admin/payments/total_members?year_level=${item.year_level}&section=${item.section}" class="view-history-link">View</a>`;
+
+      totalPaidSum += item.total_paid;
+      totalAmountSum += item.total_amount;
+
+      const [paidCountStr, totalCountStr] = item.status.split("/");
+      if (paidCountStr && totalCountStr) {
+        totalPaidMembers += parseInt(paidCountStr);
+        totalMembersCount += parseInt(totalCountStr);
+      } else if (item.status) {
+        totalMembersCount += parseInt(item.status);
+      }
+    });
+
+    if (selectedAcademicYear && selectedSemester) {
+      overallStatus = `${totalPaidMembers}/${totalMembersCount}`;
+    } else {
+      overallStatus = `${totalMembersCount}`;
+    }
+
+    document.getElementById("total-paid-sum").textContent = totalPaidSum;
+    document.getElementById("total-amount-sum").textContent = totalAmountSum;
+    document.getElementById("total-status-summary").textContent = overallStatus;
+  } catch (error) {
+    console.error("Failed to fetch membership data:", error);
+    table.innerHTML = `<tr><td colspan="9">Error loading data. Please check console.</td></tr>`;
+  }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const yearLevelHeader = document.querySelector('#membership-table th[data-column="year_level"]');
-    if (yearLevelHeader) {
-        yearLevelHeader.classList.add('desc');
-    }
+document.addEventListener("DOMContentLoaded", function () {
+  const yearLevelHeader = document.querySelector(
+    '#membership-table th[data-column="year_level"]'
+  );
+  if (yearLevelHeader) {
+    yearLevelHeader.classList.add("desc");
+  }
 
-    updateMembershipTable();
-    document.querySelectorAll('.update-button').forEach(button => {
-        button.addEventListener('click', function (event) {
-            const itemId = this.dataset.itemId;
-            updatePaymentStatus(event, itemId);
-        });
+  updateMembershipTable();
+  document.querySelectorAll(".update-button").forEach((button) => {
+    button.addEventListener("click", function (event) {
+      const itemId = this.dataset.itemId;
+      updatePaymentStatus(event, itemId);
     });
+  });
 
-    document.querySelectorAll('#membership-table th.sortable').forEach(header => {
-        header.addEventListener('click', function () {
-            const clickedColumn = this.dataset.column;
-            if (sortColumn === clickedColumn) {
-                sortDirection = (sortDirection === 'asc') ? 'desc' : 'asc';
-            } else {
-                sortColumn = clickedColumn;
-                sortDirection = 'asc';
-            }
-
-            document.querySelectorAll('#membership-table th.sortable').forEach(th => {
-                th.classList.remove('asc', 'desc');
-            });
-
-            this.classList.add(sortDirection);
-
-            updateMembershipTable();
-        });
-    });
-
-    // Modified to use the new openGlobalModalWithContent function
-    document.getElementById('view-all-payments-button').addEventListener('click', () => openAdminPaymentHistoryModal());
-
-    document.getElementById('add-expense-form').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const form = event.target;
-        const formData = new FormData(form);
-        const expenseData = {};
-        formData.forEach((value, key) => {
-            if (key === 'amount') {
-                expenseData[key] = value ? parseFloat(value) : null;
-            } else if (key === 'incurred_at') {
-                expenseData[key] = value ? value : null;
-            } else {
-                expenseData[key] = value;
-            }
-        });
-
-        if (expenseData.incurred_at === "") delete expenseData.incurred_at;
-
-        try {
-            const response = await fetch('/expenses/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(expenseData),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                displayMessageBox('Expense added successfully!', 'info');
-                form.reset();
-                loadExpensesTable();
-            } else {
-                const errorData = await response.json();
-                displayMessageBox(`Error: ${errorData.detail || 'Failed to add expense.'}`, 'error');
-                console.error('Failed to add expense:', errorData);
-            }
-        } catch (error) {
-            displayMessageBox('An error occurred while adding the expense.', 'error');
-            console.error('Network error or unexpected issue:', error);
+  document
+    .querySelectorAll("#membership-table th.sortable")
+    .forEach((header) => {
+      header.addEventListener("click", function () {
+        const clickedColumn = this.dataset.column;
+        if (sortColumn === clickedColumn) {
+          sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        } else {
+          sortColumn = clickedColumn;
+          sortDirection = "asc";
         }
+
+        document
+          .querySelectorAll("#membership-table th.sortable")
+          .forEach((th) => {
+            th.classList.remove("asc", "desc");
+          });
+
+        this.classList.add(sortDirection);
+
+        updateMembershipTable();
+      });
+    });
+
+  document
+    .getElementById("view-all-payments-button")
+    .addEventListener("click", () => openAdminPaymentHistoryModal());
+
+  document
+    .getElementById("add-expense-form")
+    .addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+      const expenseData = {};
+      formData.forEach((value, key) => {
+        if (key === "amount") {
+          expenseData[key] = value ? parseFloat(value) : null;
+        } else if (key === "incurred_at") {
+          expenseData[key] = value ? value : null;
+        } else {
+          expenseData[key] = value;
+        }
+      });
+
+      if (expenseData.incurred_at === "") delete expenseData.incurred_at;
+
+      try {
+        const response = await fetch("/expenses/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(expenseData),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          displayMessageBox("Expense added successfully!", "info");
+          form.reset();
+          loadExpensesTable();
+        } else {
+          const errorData = await response.json();
+          displayMessageBox(
+            `Error: ${errorData.detail || "Failed to add expense."}`,
+            "error"
+          );
+          console.error("Failed to add expense:", errorData);
+        }
+      } catch (error) {
+        displayMessageBox(
+          "An error occurred while adding the expense.",
+          "error"
+        );
+        console.error("Network error or unexpected issue:", error);
+      }
     });
 });
 
 async function updatePaymentStatus(event, itemId) {
-    event.preventDefault();
+  event.preventDefault();
 
-    const statusSelect = document.getElementById(`status-select-${itemId}`);
-    const selectedStatus = statusSelect.value;
+  const statusSelect = document.getElementById(`status-select-${itemId}`);
+  const selectedStatus = statusSelect.value;
 
-    try {
-        const response = await fetch(`/admin/payment/${itemId}/update_status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `status=${encodeURIComponent(selectedStatus)}`,
-        });
+  try {
+    const response = await fetch(`/admin/payment/${itemId}/update_status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `status=${encodeURIComponent(selectedStatus)}`,
+    });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const statusCell = event.target.closest('tr').querySelector('td:nth-child(6)');
-        statusCell.textContent = selectedStatus;
-        statusCell.className = selectedStatus.toLowerCase();
-    } catch (error) {
-        console.error("Failed to update payment status:", error);
-        displayMessageBox('Failed to update status. Please check the console for more details.', 'error');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const statusCell = event.target
+      .closest("tr")
+      .querySelector("td:nth-child(6)");
+    statusCell.textContent = selectedStatus;
+    statusCell.className = selectedStatus.toLowerCase();
+  } catch (error) {
+    console.error("Failed to update payment status:", error);
+    displayMessageBox(
+      "Failed to update status. Please check the console for more details.",
+      "error"
+    );
+  }
 }
 
 function filterPaymentsByStudentId() {
-    const filterInput = document.getElementById('student-id-filter');
-    const studentId = filterInput.value.trim();
-    const paymentTables = document.querySelectorAll('#payments .payments-table');
+  const filterInput = document.getElementById("student-id-filter");
+  const studentId = filterInput.value.trim();
+  const paymentTables = document.querySelectorAll("#payments .payments-table");
 
-    paymentTables.forEach(table => {
-        const tableStudentId = table.dataset.studentId;
-        if (studentId === "" || tableStudentId === studentId) {
-            table.style.display = "";
-        } else {
-            table.style.display = "none";
-        }
-    });
+  paymentTables.forEach((table) => {
+    const tableStudentId = table.dataset.studentId;
+    if (studentId === "" || tableStudentId === studentId) {
+      table.style.display = "";
+    } else {
+      table.style.display = "none";
+    }
+  });
 }
 
 function filterPaymentsByStudentIdAndHistory() {
-    const studentId = document.getElementById('student-id-filter').value.trim();
+  const studentId = document.getElementById("student-id-filter").value.trim();
 
-    const paymentTables = document.querySelectorAll('#payments .payments-table');
-    paymentTables.forEach(table => {
-        const tableStudentId = table.dataset.studentId;
-        if (studentId === "" || tableStudentId === studentId) {
-            table.style.display = "";
-        } else {
-            table.style.display = "none";
-        }
-    });
-
-    // Check if the global modal is open and then update its content if a student ID is present
-    if (globalModal && globalModal.classList.contains('is-visible')) {
-        openAdminPaymentHistoryModal(studentId);
+  const paymentTables = document.querySelectorAll("#payments .payments-table");
+  paymentTables.forEach((table) => {
+    const tableStudentId = table.dataset.studentId;
+    if (studentId === "" || tableStudentId === studentId) {
+      table.style.display = "";
+    } else {
+      table.style.display = "none";
     }
+  });
+
+  if (globalModal && globalModal.classList.contains("is-visible")) {
+    openAdminPaymentHistoryModal(studentId);
+  }
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.location.hash.startsWith("#payments")) {
+    openTab("payments");
 
-// MODIFIED BLOCK STARTS HERE
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if the URL hash indicates the payments tab
-    if (window.location.hash.startsWith('#payments')) {
-        // Activate the 'payments' tab on the page
-        openTab('payments');
+    const urlParams = new URLSearchParams(window.location.search);
 
-        // Get parameters from the URL's query string (e.g., ?student_number=123)
-        const urlParams = new URLSearchParams(window.location.search);
-        // Extract the value of the 'student_number' parameter
-        const studentIdFromUrl = urlParams.get('student_number');
+    const studentIdFromUrl = urlParams.get("student_number");
 
-        // If a student_number is found in the URL
-        if (studentIdFromUrl) {
-            // Find the student ID filter input field on the page
-            const filterInput = document.getElementById('student-id-filter');
-            if (filterInput) {
-                // Pre-fill the input field with the student ID from the URL
-                filterInput.value = studentIdFromUrl;
-            }
-        }
+    if (studentIdFromUrl) {
+      const filterInput = document.getElementById("student-id-filter");
+      if (filterInput) {
+        filterInput.value = studentIdFromUrl;
+      }
     }
+  }
 });
-// MODIFIED BLOCK ENDS HERE
 
-// This function is now responsible for populating the *global* modal
-async function openAdminPaymentHistoryModal(studentIdFromFilter = '') {
-    // We no longer need to get the modal, loading message, no data message, and paymentsTable directly from the DOM here
-    // because we're using the globally defined `globalModal` and `globalModalBody`.
-
-    // Content for the modal's body
-    let modalContentHtml = `
+async function openAdminPaymentHistoryModal(studentIdFromFilter = "") {
+  let modalContentHtml = `
         <p id="loading-message" style="text-align: center; font-style: italic; color: #757575;">Loading payment history...</p>
         <table id="all-members-payments-table" style="display: none;">
             <thead>
@@ -396,80 +407,93 @@ async function openAdminPaymentHistoryModal(studentIdFromFilter = '') {
         <p id="no-data-message" style="display: none; text-align: center; color: #9E9E9E;">No payment history found for any member.</p>
     `;
 
-    // Open the global modal with the initial loading content
-    openGlobalModalWithContent("All Members' Payment History", modalContentHtml);
+  openGlobalModalWithContent("All Members' Payment History", modalContentHtml);
 
-    // Get references to elements *within the global modal's body* after it's populated
-    const loadingMessage = globalModalBody.querySelector('#loading-message');
-    const noDataMessage = globalModalBody.querySelector('#no-data-message');
-    const paymentsTable = globalModalBody.querySelector('#all-members-payments-table');
-    const tableBody = paymentsTable ? paymentsTable.querySelector('tbody') : null;
+  const loadingMessage = globalModalBody.querySelector("#loading-message");
+  const noDataMessage = globalModalBody.querySelector("#no-data-message");
+  const paymentsTable = globalModalBody.querySelector(
+    "#all-members-payments-table"
+  );
+  const tableBody = paymentsTable ? paymentsTable.querySelector("tbody") : null;
 
-    if (tableBody) {
-        tableBody.innerHTML = ''; // Clear existing table body content
+  if (tableBody) {
+    tableBody.innerHTML = "";
+  }
+
+  let url = "/admin/Payments/History";
+  const studentNumber =
+    studentIdFromFilter ||
+    document.getElementById("student-id-filter").value.trim();
+  if (studentNumber) {
+    url += `?student_number=${encodeURIComponent(studentNumber)}`;
+  }
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    const data = await response.json();
 
-    let url = '/admin/Payments/History';
-    const studentNumber = studentIdFromFilter || document.getElementById('student-id-filter').value.trim();
-    if (studentNumber) {
-        url += `?student_number=${encodeURIComponent(studentNumber)}`;
+    if (loadingMessage) loadingMessage.style.display = "none";
+
+    if (data.payment_history && data.payment_history.length > 0) {
+      if (tableBody) {
+        data.payment_history.forEach((item) => {
+          const row = tableBody.insertRow();
+          row.insertCell().textContent = item.user_name;
+          row.insertCell().textContent = item.student_number;
+          row.insertCell().textContent = item.item.payment_item
+            ? item.item.payment_item.academic_year
+            : "N/A";
+          row.insertCell().textContent = item.item.payment_item
+            ? item.item.payment_item.semester
+            : "N/A";
+          row.insertCell().textContent = item.item.payment_item
+            ? item.item.payment_item.fee
+            : "N/A";
+          row.insertCell().textContent =
+            item.item.payment_item && item.item.payment_item.due_date
+              ? item.item.payment_item.due_date
+              : "Not Set";
+          const statusCell = row.insertCell();
+          statusCell.textContent = item.status;
+          statusCell.className = item.status.toLowerCase().replace(" ", "-");
+          row.insertCell().textContent = item.payment_date
+            ? item.payment_date.substring(0, 10)
+            : "N/A";
+        });
+        paymentsTable.style.display = "table";
+      }
+    } else {
+      if (noDataMessage) noDataMessage.style.display = "block";
+      if (paymentsTable) paymentsTable.style.display = "none";
     }
-
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        if (loadingMessage) loadingMessage.style.display = 'none';
-
-        if (data.payment_history && data.payment_history.length > 0) {
-            if (tableBody) {
-                data.payment_history.forEach(item => {
-                    const row = tableBody.insertRow();
-                    row.insertCell().textContent = item.user_name;
-                    row.insertCell().textContent = item.student_number;
-                    row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.academic_year : 'N/A';
-                    row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.semester : 'N/A';
-                    row.insertCell().textContent = item.item.payment_item ? item.item.payment_item.fee : 'N/A';
-                    row.insertCell().textContent = item.item.payment_item && item.item.payment_item.due_date ? item.item.payment_item.due_date : 'Not Set';
-                    const statusCell = row.insertCell();
-                    statusCell.textContent = item.status;
-                    statusCell.className = item.status.toLowerCase().replace(' ', '-');
-                    row.insertCell().textContent = item.payment_date ? item.payment_date.substring(0, 10) : 'N/A';
-                });
-                paymentsTable.style.display = 'table';
-            }
-        } else {
-            if (noDataMessage) noDataMessage.style.display = 'block';
-            if (paymentsTable) paymentsTable.style.display = 'none'; // Hide the table if no data
-        }
-    } catch (error) {
-        console.error("Failed to fetch all members' payment history:", error);
-        if (loadingMessage) loadingMessage.style.display = 'none';
-        displayMessageBox('Error loading payment history. Please try again later.', 'error');
-        if (noDataMessage) {
-            noDataMessage.textContent = 'Error loading payment history.';
-            noDataMessage.style.display = 'block';
-        }
-        if (paymentsTable) paymentsTable.style.display = 'none';
+  } catch (error) {
+    console.error("Failed to fetch all members' payment history:", error);
+    if (loadingMessage) loadingMessage.style.display = "none";
+    displayMessageBox(
+      "Error loading payment history. Please try again later.",
+      "error"
+    );
+    if (noDataMessage) {
+      noDataMessage.textContent = "Error loading payment history.";
+      noDataMessage.style.display = "block";
     }
+    if (paymentsTable) paymentsTable.style.display = "none";
+  }
 }
 
-// Removed the old closeAdminPaymentHistoryModal and window.addEventListener('click')
-// as they are now handled by the global closeGlobalModal and the global event listener
-
-function displayMessageBox(message, type = 'info') {
-    const msgBox = document.createElement('div');
-    msgBox.textContent = message;
-    msgBox.style.cssText = `
+function displayMessageBox(message, type = "info") {
+  const msgBox = document.createElement("div");
+  msgBox.textContent = message;
+  msgBox.style.cssText = `
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         padding: 20px;
-        background-color: ${type === 'error' ? '#f44336' : '#4CAF50'};
+        background-color: ${type === "error" ? "#f44336" : "#4CAF50"};
         color: white;
         border-radius: 8px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -478,68 +502,68 @@ function displayMessageBox(message, type = 'info') {
         text-align: center;
         animation: fadeOut 3s forwards;
     `;
-    document.body.appendChild(msgBox);
+  document.body.appendChild(msgBox);
 
-    const styleSheet = document.createElement('style');
-    styleSheet.innerHTML = `
+  const styleSheet = document.createElement("style");
+  styleSheet.innerHTML = `
         @keyframes fadeOut {
             0% { opacity: 1; }
             80% { opacity: 1; }
             100% { opacity: 0; display: none; }
         }
     `;
-    document.head.appendChild(styleSheet);
+  document.head.appendChild(styleSheet);
 
-    setTimeout(() => {
-        if (msgBox.parentNode) {
-            msgBox.parentNode.removeChild(msgBox);
-        }
-        if (styleSheet.parentNode) {
-            styleSheet.parentNode.removeChild(styleSheet);
-        }
-    }, 3000);
+  setTimeout(() => {
+    if (msgBox.parentNode) {
+      msgBox.parentNode.removeChild(msgBox);
+    }
+    if (styleSheet.parentNode) {
+      styleSheet.parentNode.removeChild(styleSheet);
+    }
+  }, 3000);
 }
 
 async function loadExpensesTable() {
-    const tableBody = document.querySelector('#expenses-table tbody');
-    const totalExpensesSumElement = document.getElementById('total-expenses-sum');
-    const noExpensesMessage = document.getElementById('no-expenses-message');
-    tableBody.innerHTML = '';
-    totalExpensesSumElement.textContent = '0.00';
+  const tableBody = document.querySelector("#expenses-table tbody");
+  const totalExpensesSumElement = document.getElementById("total-expenses-sum");
+  const noExpensesMessage = document.getElementById("no-expenses-message");
+  tableBody.innerHTML = "";
+  totalExpensesSumElement.textContent = "0.00";
 
-    try {
-        const response = await fetch('/expenses/');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const expenses = await response.json();
-
-        let totalExpenses = 0;
-
-        if (expenses.length > 0) {
-            noExpensesMessage.style.display = 'none';
-            expenses.forEach(expense => {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = expense.description;
-                row.insertCell().textContent = `₱${expense.amount.toFixed(2)}`;
-                row.insertCell().textContent = expense.category || 'N/A';
-                row.insertCell().textContent = expense.incurred_at;
-                row.insertCell().textContent = expense.admin ? `${expense.admin.first_name} ${expense.admin.last_name} (${expense.admin.position || 'Admin'})` : 'Unknown Admin';
-                totalExpenses += expense.amount;
-            });
-            totalExpensesSumElement.textContent = `₱${totalExpenses.toFixed(2)}`;
-        } else {
-            noExpensesMessage.style.display = 'block';
-        }
-    } catch (error) {
-        console.error("Failed to fetch expenses:", error);
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading expenses. Please try again.</td></tr>`;
-        noExpensesMessage.style.display = 'none';
+  try {
+    const response = await fetch("/expenses/");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    const expenses = await response.json();
+
+    let totalExpenses = 0;
+
+    if (expenses.length > 0) {
+      noExpensesMessage.style.display = "none";
+      expenses.forEach((expense) => {
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = expense.description;
+        row.insertCell().textContent = `₱${expense.amount.toFixed(2)}`;
+        row.insertCell().textContent = expense.category || "N/A";
+        row.insertCell().textContent = expense.incurred_at;
+        row.insertCell().textContent = expense.admin
+          ? `${expense.admin.first_name} ${expense.admin.last_name} (${
+              expense.admin.position || "Admin"
+            })`
+          : "Unknown Admin";
+        totalExpenses += expense.amount;
+      });
+      totalExpensesSumElement.textContent = `₱${totalExpenses.toFixed(2)}`;
+    } else {
+      noExpensesMessage.style.display = "block";
+    }
+  } catch (error) {
+    console.error("Failed to fetch expenses:", error);
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Error loading expenses. Please try again.</td></tr>`;
+    noExpensesMessage.style.display = "none";
+  }
 }
 
-// The following DOMContentLoaded listener was empty and can remain so, or be removed if not used.
-document.addEventListener('DOMContentLoaded', function() {
-    // No need to check if 'expenses' tab is active here, as openTab already handles loadExpensesTable
-    // openTab('membership'); // Optional: Call this if you want to explicitly set the initial tab
-});
+document.addEventListener("DOMContentLoaded", function () {});

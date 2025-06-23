@@ -93,7 +93,7 @@
 
 .read-only-input {
   background-color: var(--org-card-bg);
-  color: var(--org-button-disabled-text-darker);
+  color: var(--org-post-info-color);
   cursor: not-allowed;
 }
 
