@@ -16,7 +16,7 @@
 }
 
 #current-year {
-  color: var(--org-primary);
+  color: var(--org-dashboard-accent-primary);
   font-weight: 600;
 }
 
