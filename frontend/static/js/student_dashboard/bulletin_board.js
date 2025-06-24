@@ -330,7 +330,6 @@ document.addEventListener("DOMContentLoaded", function () {
       if (fragment.children.length > 1) {
         const hr = document.createElement("hr");
         hr.classList.add("section-divider");
-        fragment.appendChild(hr);
       }
 
       const adviserSectionHeader = document.createElement("h4");
