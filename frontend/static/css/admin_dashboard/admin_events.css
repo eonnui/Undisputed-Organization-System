@@ -185,6 +185,7 @@ label[for="classification_image"]:hover {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  max-width: 350px;
   cursor: pointer;
   transition: var(--org-transition);
   border: 1px solid var(--org-border-light);

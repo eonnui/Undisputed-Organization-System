@@ -25,6 +25,7 @@
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease;
   text-align: left;
   min-height: 350px;
+  max-width: 350px;
   margin: 0;
   position: relative;
   z-index: 1;
