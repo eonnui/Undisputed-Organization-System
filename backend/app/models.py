@@ -111,6 +111,7 @@ class Admin(Base):
     rule_wiki_entries = relationship("RuleWikiEntry", back_populates="admin")
     admin_logs = relationship("AdminLog", back_populates="admin")
     shirt_campaigns = relationship("ShirtCampaign", back_populates="admin")
+    
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 

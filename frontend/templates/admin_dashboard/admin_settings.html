@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block content %}
+<input type="hidden" id="adminId" value="{{ admin_id }}"> 
 <div class="settings-grid">
     <div class="settings-section organization-settings-section">
         <h2>Organization Theme Settings</h2>
@@ -71,6 +72,40 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    <div class="settings-section existing-admins-list-section">
+        <h2>Existing Administrators</h2>
+        <div class="log-table-container" style="max-height: 400px; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Picture</th>
+                        <th>Name</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="existingAdminsTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="settings-section update-profile-picture">
+    <div class="card-header">
+        <h3>Update Profile Picture</h3>
+    </div>
+    <div class="card-body">
+        <div class="form-group">            
+            <input type="file" id="profilePictureInput" accept="image/png, image/jpeg, image/gif, image/svg+xml" style="display: none;">
+            <p id="profilePictureError" class="error-message"></p>
+        </div>
+        <div class="image-preview-container">
+            <img id="currentProfilePicturePreview" src="/static/images/default_profile.jpg" alt="Profile Picture Preview" style="max-width: 150px; max-height: 150px; border-radius: 50%; object-fit: cover; margin-top: 10px; display: block;">
+            <p id="noProfilePictureMessage" style="display: none; color: #555;">No profile picture uploaded yet.</p>
+        </div>
+        <label for="profilePictureInput" class="custom-file-upload-label">Choose Profile Picture</label>
+        <button id="uploadProfilePictureButton" class="btn btn-primary" disabled>Upload Profile Picture</button>
     </div>
 </div>
 {% endblock %}

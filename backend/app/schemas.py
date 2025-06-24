@@ -331,3 +331,15 @@ class OrgChartNodeUpdateResponse(BaseModel):
     email: Optional[EmailStr] = None
     position: Optional[str] = None
     chart_picture_url: Optional[str] = None 
+
+class AdminDisplay(BaseModel):
+    id: int = Field(alias="admin_id") 
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = None
+    position: Optional[str] = None
+    profile_picture: Optional[str] = None 
+
+    class Config:
+        orm_mode = True 
+        populate_by_name = True 

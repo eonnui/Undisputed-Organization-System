@@ -335,6 +335,102 @@ async def clear_single_notification_route(
       
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+# Fetching Existing Admin
+@router.get("/api/admin/existing_admins", response_model=List[schemas.AdminDisplay])
+async def get_existing_admins(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    authenticated_admin, organization = None, None
+
+    try:
+        authenticated_admin, organization = get_current_admin_with_org(request, db)
+    except HTTPException as e:
+        raise e
+
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organization not found for the authenticated admin."
+        )
+    
+    existing_admins = db.query(models.Admin).join(models.organization_admins).filter(
+        models.organization_admins.c.organization_id == organization.id,
+        models.Admin.first_name.isnot(None),
+        models.Admin.first_name != "",        
+        models.Admin.first_name.ilike('%Vacant%') == False 
+    ).all()
+
+    return existing_admins
+
+# Update Profile Picture of Admin
+@router.put("/api/admin/me/profile_picture")
+async def update_profile_picture(
+    profile_picture_file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin_data: tuple = Depends(get_current_admin_with_org) 
+):
+    current_admin, _ = admin_data 
+    
+
+    db_admin = db.query(models.Admin).filter(models.Admin.admin_id == current_admin.admin_id).first()
+    if not db_admin:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Authenticated admin not found in database."
+        )
+
+    allowed_types = ["image/png", "image/jpeg", "image/gif", "image/svg+xml"]
+    if profile_picture_file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type. Only PNG, JPG, JPEG, GIF, SVG are allowed."
+        )
+
+    FULL_PROFILE_UPLOAD_PATH.mkdir(parents=True, exist_ok=True)
+    file_extension = profile_picture_file.filename.split(".")[-1]
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    file_path = FULL_PROFILE_UPLOAD_PATH / unique_filename
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(profile_picture_file.file, buffer)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not upload profile picture: {e}"
+        )
+
+    db_admin.profile_picture = f"/static/{PROFILE_PICS_SUBDIRECTORY}/{unique_filename}" 
+    
+    db.add(db_admin)
+    db.commit()
+    db.refresh(db_admin)
+
+    return {
+        "message": "Profile picture updated successfully!",
+        "profile_picture_url": db_admin.profile_picture
+    }
+
+@router.get("/api/admin/me/profile", response_model=None) 
+async def get_my_profile(
+    db: Session = Depends(get_db),
+    admin_data: tuple = Depends(get_current_admin_with_org) 
+):
+    current_admin, _ = admin_data 
+
+    db_admin = db.query(models.Admin).filter(models.Admin.admin_id == current_admin.admin_id).first()
+    if not db_admin:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found.")
+
+    return {
+        "admin_id": db_admin.admin_id,
+        "first_name": db_admin.first_name,
+        "last_name": db_admin.last_name,
+        "email": db_admin.email,
+        "profile_picture": db_admin.profile_picture 
+    }
+
 # Fetching Organization Admin Postition
 DEFAULT_ORG_OFFICERS = [
     {
