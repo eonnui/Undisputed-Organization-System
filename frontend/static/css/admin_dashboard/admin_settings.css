@@ -198,6 +198,8 @@ button {
 
 .current-logo-preview img {
   max-width: 150px;
+  display: block; 
+  margin: 0 auto;
   max-height: 150px;
   height: auto;
   border: 1px solid var(--org-logo-border-color);

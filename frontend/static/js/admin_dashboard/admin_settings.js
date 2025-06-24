@@ -157,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     try {
-      const response = await fetch(`/api/admin/organizations/${orgId}/theme`, {
+      const response = await fetch(`/admin/organizations/${orgId}/theme`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ new_theme_color: newThemeColor }),
@@ -183,11 +183,11 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   if (customLogoUploadLabel) {
-    customLogoUploadLabel.addEventListener("click", () => {
-      logoFileInput.click();
-    });
+      customLogoUploadLabel.addEventListener("click", (event) => {
+          event.preventDefault(); 
+          logoFileInput.click(); 
+      });
   }
-
   logoFileInput.addEventListener("change", function () {
     if (this.files && this.files[0]) {
       const file = this.files[0];
@@ -213,7 +213,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const reader = new FileReader();
         reader.onload = function (e) {
           currentLogoPreview.src = e.target.result;
-          currentLogoPreview.style.display = "block";
           const noLogoMessage = currentLogoPreview.previousElementSibling;
           if (
             noLogoMessage &&
@@ -284,7 +283,7 @@ document.addEventListener("DOMContentLoaded", function () {
     formData.append("logo_file", file);
 
     try {
-      const response = await fetch(`/api/admin/organizations/${orgId}/logo`, {
+      const response = await fetch(`/admin/organizations/${orgId}/logo`, {
         method: "PUT",
         body: formData,
       });
