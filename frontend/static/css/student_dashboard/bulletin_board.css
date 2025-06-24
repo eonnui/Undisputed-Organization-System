@@ -10,6 +10,24 @@
   box-sizing: border-box;
 }
 
+.bulletin-board-container p {
+  color: var(--org-text-secondary);
+  font-size: 1.1em;
+  text-align: center;
+  width: 100%;
+  grid-column: 1 / -1;
+  margin-top: 20px;
+}
+
+.existing-wiki-post-container p {
+  color: var(--org-text-secondary);
+  font-size: 1.1em;
+  text-align: center;
+  width: 100%;
+  grid-column: 1 / -1;
+  margin-top: 20px;
+}
+
 .profile-image img {
     width: 50px; 
     height: 50px;

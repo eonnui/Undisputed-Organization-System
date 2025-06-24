@@ -16,6 +16,15 @@
     display: none;
 }
 
+.events-page-container p {
+  color: var(--org-text-secondary);
+  font-size: 1.1em;
+  text-align: center;
+  width: 100%;
+  grid-column: 1 / -1;
+  margin-top: 20px;
+}
+
 label[for="classification_image"] {
     display: inline-block;
     padding: 6px 10px;

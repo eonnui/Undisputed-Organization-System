@@ -306,16 +306,13 @@
 }
 
 .student-photo-placeholder {
-  width: 150px;
   height: 150px;
   border-radius: 50%;
-  background-color: var(--org-profile-image-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 5em;
   color: var(--org-text-secondary);
-  border: 3px solid var(--org-text-secondary);
   box-shadow: var(--org-shadow-sm);
 }
 

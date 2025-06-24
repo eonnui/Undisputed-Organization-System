@@ -185,90 +185,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function saveOrgChartNode(adminId, formElement) {
-    const isDefaultNode =
-      adminId.startsWith("default_") || adminId.startsWith("new_placeholder_");
+    const isNewOrgChartNode = adminId.startsWith("new_placeholder_");
+    const isExistingOrgChartNode = adminId.startsWith("chart_node_");
+    const isDefaultNode = isNewOrgChartNode || isExistingOrgChartNode;
+
     console.log(`Saving node: ${adminId}, isDefaultNode: ${isDefaultNode}`);
-
-    if (isDefaultNode) {
-      const formData = new FormData(formElement);
-      const profilePictureFile = formData.get("chart_picture");
-
-      const textData = {};
-      for (const [key, value] of formData.entries()) {
-        if (key !== "chart_picture") {
-          textData[key] = value;
-        }
-      }
-
-      let newChartNodeId = adminId;
-
-      try {
-        const textResponse = await fetch(
-          `/api/admin/org_chart_node/${adminId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(textData),
-          }
-        );
-
-        if (!textResponse.ok) {
-          const errorText = await textResponse.text();
-          throw new Error(`Text data save failed: ${errorText}`);
-        }
-
-        const responseData = await textResponse.json();
-
-        newChartNodeId = responseData.id;
-
-        let pictureUpdateSuccess = true;
-        if (profilePictureFile && profilePictureFile.size > 0) {
-          const pictureFormData = new FormData();
-          pictureFormData.append("chart_picture", profilePictureFile);
-
-          const pictureResponse = await fetch(
-            `/api/admin/org_chart_node/${newChartNodeId}/profile_picture`,
-            {
-              method: "PUT",
-              body: pictureFormData,
-            }
-          );
-
-          if (!pictureResponse.ok) {
-            const errorText = await pictureResponse.text();
-            console.error("Profile picture upload failed:", errorText);
-            pictureUpdateSuccess = false;
-            const messageBox = document.createElement("div");
-            messageBox.className = "message-box error";
-            messageBox.textContent = `Profile picture update failed: ${errorText}. Text data saved.`;
-            document.body.appendChild(messageBox);
-            setTimeout(() => messageBox.remove(), 5000);
-          }
-        }
-
-        const messageBox = document.createElement("div");
-        messageBox.className = "message-box success";
-        messageBox.textContent = `New officer added successfully!${
-          pictureUpdateSuccess ? "" : " (Picture had issues)"
-        }`;
-        document.body.appendChild(messageBox);
-        setTimeout(() => messageBox.remove(), 3000);
-
-        await fetchAndRenderOrgChart();
-        toggleOrgChartEditMode(newChartNodeId, false);
-        return;
-      } catch (error) {
-        console.error("Error creating new org chart node:", error);
-        const messageBox = document.createElement("div");
-        messageBox.className = "message-box error";
-        messageBox.textContent = `An error occurred during new officer creation: ${error.message}`;
-        document.body.appendChild(messageBox);
-        setTimeout(() => messageBox.remove(), 5000);
-        return;
-      }
-    }
 
     const formData = new FormData(formElement);
     const profilePictureFile = formData.get("chart_picture");
@@ -280,9 +201,28 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    let newChartNodeId = adminId;
+
     try {
-      const textResponse = await fetch(`/api/admin/org_chart_node/${adminId}`, {
-        method: "PUT",
+      let apiUrl = "";
+      let httpMethod = "PUT";
+
+      if (isNewOrgChartNode) {
+        apiUrl = "/api/admin/org_chart_node";
+        httpMethod = "POST";
+
+        delete textData.id;
+      } else if (isExistingOrgChartNode) {
+        apiUrl = `/api/admin/org_chart_node/${adminId.replace(
+          "chart_node_",
+          ""
+        )}`;
+      } else {
+        apiUrl = `/api/admin/org_chart_node/${adminId}`;
+      }
+
+      const textResponse = await fetch(apiUrl, {
+        method: httpMethod,
         headers: {
           "Content-Type": "application/json",
         },
@@ -291,22 +231,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!textResponse.ok) {
         const errorText = await textResponse.text();
-        throw new Error(`Text update failed: ${errorText}`);
+        throw new Error(`Text data save failed: ${errorText}`);
+      }
+
+      const responseData = await textResponse.json();
+
+      if (isNewOrgChartNode) {
+        newChartNodeId = `chart_node_${responseData.id}`;
+      } else {
+        newChartNodeId = adminId;
       }
 
       let pictureUpdateSuccess = true;
       if (profilePictureFile && profilePictureFile.size > 0) {
+        const pictureUrl =
+          isNewOrgChartNode || isExistingOrgChartNode
+            ? `/api/admin/org_chart_node/${newChartNodeId.replace(
+                "chart_node_",
+                ""
+              )}/profile_picture`
+            : `/api/admin/org_chart_node/${newChartNodeId}/profile_picture`;
+
         const pictureFormData = new FormData();
         pictureFormData.append("chart_picture", profilePictureFile);
 
-        const pictureResponse = await fetch(
-          `/api/admin/org_chart_node/${adminId}/profile_picture`,
-          {
-            method: "PUT",
-
-            body: pictureFormData,
-          }
-        );
+        const pictureResponse = await fetch(pictureUrl, {
+          method: "PUT",
+          body: pictureFormData,
+        });
 
         if (!pictureResponse.ok) {
           const errorText = await pictureResponse.text();
@@ -317,32 +269,20 @@ document.addEventListener("DOMContentLoaded", () => {
           messageBox.textContent = `Profile picture update failed: ${errorText}. Text data saved.`;
           document.body.appendChild(messageBox);
           setTimeout(() => messageBox.remove(), 5000);
-        } else {
-          const responseData = await pictureResponse.json();
-          const adminNodeWrapper = globalModalBody.querySelector(
-            `.org-node-wrapper[data-admin-id="${adminId}"]`
-          );
-          if (adminNodeWrapper) {
-            const imgElement = adminNodeWrapper.querySelector(
-              ".org-node-display-mode .profile-circle img"
-            );
-            if (imgElement && responseData.chart_picture_url) {
-              imgElement.src = responseData.chart_picture_url;
-            }
-          }
         }
       }
 
       const messageBox = document.createElement("div");
       messageBox.className = "message-box success";
-      messageBox.textContent = `Admin data updated successfully!${
+      messageBox.textContent = `Officer data updated successfully!${
         pictureUpdateSuccess ? "" : " (Picture had issues)"
       }`;
       document.body.appendChild(messageBox);
       setTimeout(() => messageBox.remove(), 3000);
 
       await fetchAndRenderOrgChart();
-      toggleOrgChartEditMode(adminId, false);
+
+      toggleOrgChartEditMode(newChartNodeId, false);
     } catch (error) {
       console.error("Error saving org chart node:", error);
       const messageBox = document.createElement("div");
@@ -353,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  const createAdminNodeDiv = (admin, positionOverride = null) => {
+  const createAdminNodeDiv = (admin) => {
     const adminId = admin.id;
 
     const adminNodeWrapper = document.createElement("div");
@@ -380,11 +320,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const positionSpan = document.createElement("span");
     positionSpan.className = "position-text";
-    positionSpan.textContent = (
-      positionOverride ||
-      admin.position ||
-      "POSITION"
-    ).toUpperCase();
+
+    positionSpan.textContent = (admin.position || "POSITION").toUpperCase();
     textContainer.appendChild(positionSpan);
 
     const nameSpan = document.createElement("span");
@@ -401,6 +338,20 @@ document.addEventListener("DOMContentLoaded", () => {
     editForm.className = "org-node org-node-edit-mode";
     editForm.style.display = "none";
 
+    const hiddenIdInput = document.createElement("input");
+    hiddenIdInput.type = "hidden";
+    hiddenIdInput.name = "id";
+    hiddenIdInput.value = admin.id.startsWith("chart_node_")
+      ? admin.id.replace("chart_node_", "")
+      : admin.id;
+    editForm.appendChild(hiddenIdInput);
+
+    const hiddenPositionInput = document.createElement("input");
+    hiddenPositionInput.type = "hidden";
+    hiddenPositionInput.name = "position";
+    hiddenPositionInput.value = admin.position || "";
+    editForm.appendChild(hiddenPositionInput);
+
     const editProfileDiv = document.createElement("div");
     editProfileDiv.className = "profile-circle-edit";
     const editImg = document.createElement("img");
@@ -415,15 +366,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.name = "chart_picture";
-    fileInput.id = fileInputId; 
+    fileInput.id = fileInputId;
     fileInput.accept = "image/*";
     fileInput.classList.add("chart-picture-input");
-    fileInput.style.display = "none"; 
+    fileInput.style.display = "none";
 
     const fileInputLabel = document.createElement("label");
     fileInputLabel.htmlFor = fileInputId;
-    fileInputLabel.classList.add("custom-file-upload"); 
-    fileInputLabel.textContent = "Change Picture"; 
+    fileInputLabel.classList.add("custom-file-upload");
+    fileInputLabel.textContent = "Change Picture";
 
     fileInput.addEventListener("change", (event) => {
       const file = event.target.files[0];
@@ -436,17 +387,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    editForm.appendChild(fileInputLabel); 
-    editForm.appendChild(fileInput); 
+    editForm.appendChild(fileInputLabel);
+    editForm.appendChild(fileInput);
 
-    const createInputField = (name, value, placeholder) => {
+    const createInputField = (name, value, placeholder, isEditable = true) => {
       const input = document.createElement("input");
       input.type = "text";
       input.name = name;
       input.value = value;
       input.placeholder = placeholder;
       input.classList.add("org-node-input-field");
-
+      input.readOnly = !isEditable;
+      if (!isEditable) {
+        input.classList.add("read-only-input");
+      }
       return input;
     };
 
@@ -460,10 +414,15 @@ document.addEventListener("DOMContentLoaded", () => {
       admin.last_name || "",
       "Last Name"
     );
+
     const positionInput = createInputField(
       "position",
-      positionOverride || admin.position || "",
-      "Position"
+      admin.position || "",
+      "Position",
+      !(
+        adminId.startsWith("new_placeholder_") ||
+        adminId.startsWith("chart_node_")
+      )
     );
 
     editForm.appendChild(firstNameInput);
@@ -511,17 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fragment.appendChild(organizationNameNode);
 
     const getDisplayAdminsForPosition = (positionKey) => {
-      const filteredAdmins = admins.filter(
-        (admin) => admin.position === positionKey
-      );
-
-      if (filteredAdmins.length > 0) {
-        return filteredAdmins;
-      } else if (DEFAULT_JS_ORG_OFFICERS[positionKey]) {
-        const defaultOfficer = DEFAULT_JS_ORG_OFFICERS[positionKey];
-        return [{ ...defaultOfficer, organization_name: organizationName }];
-      }
-      return [];
+      return admins.filter((admin) => admin.position === positionKey);
     };
 
     const createBranchStructure = (parentFragment, adminsForBranch) => {
@@ -637,11 +586,16 @@ document.addEventListener("DOMContentLoaded", () => {
       fragment.appendChild(subBranchConnectionContainer);
     }
 
-    const adviserData = getDisplayAdminsForPosition("Adviser");
+    const adviserData = [
+      ...getDisplayAdminsForPosition("Adviser 1"),
+      ...getDisplayAdminsForPosition("Adviser 2"),
+    ];
+
     if (adviserData.length > 0) {
       if (fragment.children.length > 1) {
         const hr = document.createElement("hr");
         hr.classList.add("section-divider");
+        fragment.appendChild(hr);
       }
 
       const adviserSectionHeader = document.createElement("h4");
@@ -657,7 +611,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       adviserData.forEach((admin) => {
-        adviserGroupContainer.appendChild(createAdminNodeDiv(admin, "Adviser"));
+        adviserGroupContainer.appendChild(createAdminNodeDiv(admin));
       });
       fragment.appendChild(adviserGroupContainer);
     }
