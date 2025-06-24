@@ -147,9 +147,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const orgChartButton = document.getElementById("viewOrgChartButton");
 
-  const createAdminNodeDiv = (admin, positionOverride = null) => {
+  const createAdminNodeDiv = (admin) => {
     const adminNodeWrapper = document.createElement("div");
     adminNodeWrapper.className = "org-node-wrapper";
+
+    adminNodeWrapper.setAttribute("data-admin-id", admin.id);
 
     const displayMode = document.createElement("div");
     displayMode.className = "org-node org-node-display-mode";
@@ -173,11 +175,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const positionSpan = document.createElement("span");
     positionSpan.className = "position-text";
-    positionSpan.textContent = (
-      positionOverride ||
-      admin.position ||
-      "POSITION"
-    ).toUpperCase();
+
+    positionSpan.textContent = (admin.position || "POSITION").toUpperCase();
     textContainer.appendChild(positionSpan);
 
     const nameSpan = document.createElement("span");
@@ -207,17 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
     fragment.appendChild(organizationNameNode);
 
     const getDisplayAdminsForPosition = (positionKey) => {
-      const filteredAdmins = admins.filter(
-        (admin) => admin.position === positionKey
-      );
-
-      if (filteredAdmins.length > 0) {
-        return filteredAdmins;
-      } else if (DEFAULT_JS_ORG_OFFICERS[positionKey]) {
-        const defaultOfficer = DEFAULT_JS_ORG_OFFICERS[positionKey];
-        return [{ ...defaultOfficer, organization_name: organizationName }];
-      }
-      return [];
+      return admins.filter((admin) => admin.position === positionKey);
     };
 
     const createBranchStructure = (parentFragment, adminsForBranch) => {
@@ -333,8 +322,17 @@ document.addEventListener("DOMContentLoaded", function () {
       fragment.appendChild(subBranchConnectionContainer);
     }
 
-    const adviserData = getDisplayAdminsForPosition("Adviser");
+    const adviserData = [
+      ...getDisplayAdminsForPosition("Adviser 1"),
+      ...getDisplayAdminsForPosition("Adviser 2"),
+    ];
     if (adviserData.length > 0) {
+      if (fragment.children.length > 1) {
+        const hr = document.createElement("hr");
+        hr.classList.add("section-divider");
+        fragment.appendChild(hr);
+      }
+
       const adviserSectionHeader = document.createElement("h4");
       adviserSectionHeader.textContent = "ADVISERS";
       adviserSectionHeader.classList.add("adviser-section-header");
@@ -347,7 +345,7 @@ document.addEventListener("DOMContentLoaded", function () {
       );
 
       adviserData.forEach((admin) => {
-        adviserGroupContainer.appendChild(createAdminNodeDiv(admin, "Adviser"));
+        adviserGroupContainer.appendChild(createAdminNodeDiv(admin));
       });
       fragment.appendChild(adviserGroupContainer);
     }
