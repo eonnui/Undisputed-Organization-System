@@ -478,13 +478,13 @@ DEFAULT_ORG_OFFICERS = [
     {
         "first_name": "Vacant",
         "last_name": "",
-        "position": "Adviser",
+        "position": "Adviser 1",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
         "last_name": "",
-        "position": "Adviser",
+        "position": "Adviser 2",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
 ]
