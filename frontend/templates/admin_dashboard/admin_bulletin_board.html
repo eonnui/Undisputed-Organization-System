@@ -57,7 +57,11 @@
             <div class="post-header">
                 <div class="profile-info">
                     <div class="profile-image">
-                        {% if post.admin and post.admin.first_name %}
+                        {# Display the profile picture if available, otherwise fallback to initials or a default image #}
+                        {% if post.admin and post.admin.profile_picture %}
+                        <img src="{{ post.admin.profile_picture }}"
+                             alt="{{ post.admin.first_name }} {{ post.admin.last_name }} Profile Picture">
+                        {% elif post.admin and post.admin.first_name %}
                         <div class="initial-circle">
                             {{ post.admin.first_name[0]|upper }}
                         </div>
@@ -69,7 +73,7 @@
                     </div>
                     <div class="post-meta">
                         <div class="post-title">{{ post.title }} {% if post.is_pinned %}
-                            <span class="pinned">Pinned</span>
+                                <span class="pinned">Pinned</span>
                             {% endif %}
                         </div>
                         <div class="post-details">
@@ -90,7 +94,7 @@
             {% endif %}
             {% if post.video_path %}
             <video controls class="bulletin-post-video">
-                <source src="{{ post.video_path }}" type="video/mp4"> 
+                <source src="{{ post.video_path }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             {% endif %}

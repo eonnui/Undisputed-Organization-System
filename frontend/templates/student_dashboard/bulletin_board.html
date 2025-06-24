@@ -22,13 +22,19 @@
         <div class="post-header">
           <div class="profile-info">
             <div class="profile-image">
-              {%- if post.admin and post.admin.first_name -%}
+              {# Display the profile picture if available, otherwise fallback to initials or a default image #}
+              {% if post.admin and post.admin.profile_picture %}
+              <img src="{{ post.admin.profile_picture }}"
+                   alt="{{ post.admin.first_name }} {{ post.admin.last_name }} Profile Picture">
+              {% elif post.admin and post.admin.first_name %}
               <div class="initial-circle">
                 {{ post.admin.first_name[0]|upper }}
               </div>
-              {%- else -%}
-              <div class="initial-circle">?</div>
-              {%- endif -%}
+              {% else %}
+              <div class="initial-circle">
+                ?
+              </div>
+              {% endif %}
             </div>
             <div class="post-meta">
               <div class="post-title">
@@ -118,7 +124,7 @@
           <div class="wiki-post-display-mode">
             <div class="wiki-post-header">
               <span class="wiki-post-category">{{ post.category }}</span>
-            </div>            
+            </div>          
               <h3 class="wiki-post-title">{{ post.title }}</h3>
             {%- if post.image_path -%}
             <img
