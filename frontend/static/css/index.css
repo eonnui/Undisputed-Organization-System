@@ -12,7 +12,7 @@
     --error-color: #dc2626;
     --success-color: #16a34a;
     --info-color: #0ea5e9;
-    --animation-duration: 0.3s; 
+    --animation-duration: 0.3s;
 }
 
 body {
@@ -24,7 +24,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;   
+    min-height: 100vh;
     background-image: linear-gradient(to bottom, #f3f4f6, #d9dee7);
     background-size: 200% 200%;
     animation: gradientAnimation 3s ease infinite;
@@ -79,7 +79,7 @@ h1 {
     }
 
     to {
-        transform: scale(1.04); 
+        transform: scale(1.04);
     }
 }
 
@@ -158,7 +158,7 @@ input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
-    transform: scale(1.02); 
+    transform: scale(1.02);
 }
 
 .password-input-wrapper {
@@ -187,9 +187,8 @@ input:focus {
 
 .view-password-button:hover {
     color: var(--primary-color);
-    opacity: 0.7; 
+    opacity: 0.7;
 }
-
 
 select {
     padding: 0.8rem;
@@ -198,7 +197,7 @@ select {
     font-size: 1rem;
     color: var(--text-primary);
     background-color: #ffffff;
-    transition: border-color 0.2s ease; 
+    transition: border-color 0.2s ease;
     font-family: "DM Sans", sans-serif;
     width: 100%;
     appearance: none;
@@ -214,7 +213,7 @@ select {
 select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);    
+    box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
 }
 
 .select-wrapper {
@@ -236,20 +235,16 @@ button {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: transform var(--animation-duration) ease, box-shadow 0.2s ease; 
+    transition: transform var(--animation-duration) ease, box-shadow 0.2s ease;
     font-family: "DM Sans", sans-serif;
     position: relative;
     overflow: hidden;
 }
 
-
-
 button:hover {
-    transform: translateY(-2px) scale(1.04); 
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
-
 
 .forgot-password {
     background: none;
@@ -263,13 +258,13 @@ button:hover {
     margin-top: 0.5rem;
     text-align: right;
     display: inline-block;
-    transition: color var(--animation-duration) ease, opacity var(--animation-duration) ease; 
+    transition: color var(--animation-duration) ease, opacity var(--animation-duration) ease;
 }
 
 .forgot-password:hover {
     color: var(--primary-color);
     text-decoration: none;
-    opacity: 0.7; 
+    opacity: 0.7;
 }
 
 .link-button {
@@ -281,13 +276,13 @@ button:hover {
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0;
-    transition: color var(--animation-duration) ease, opacity 0.3s ease; 
+    transition: color var(--animation-duration) ease, opacity 0.3s ease;
 }
 
 .link-button:hover {
     color: var(--primary-color);
     text-decoration: none;
-    opacity: 0.7; 
+    opacity: 0.7;
 }
 
 .error-message {
@@ -305,23 +300,23 @@ button:hover {
 
 .registration-options {
     display: flex;
-    justify-content: center; 
-    align-items: center; 
-    gap: 0.5rem; 
-    margin-top: 0.5rem; 
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 .registration-options .divider {
-    display: flex; 
+    display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 0.25rem; 
+    padding: 0 0.25rem;
 }
 
 .registration-options .divider p {
-    margin: 0; 
-    color: var(--text-secondary); 
-    font-size: 0.9rem; 
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 .form-switch {
@@ -340,4 +335,19 @@ button:hover {
     font-weight: 500;
     padding: 0;
     transition: color var(--animation-duration) ease, opacity 0.3s ease;
+}
+
+#background-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1;
+}
+
+#app {
+    position: relative;
+    z-index: 1;
 }
