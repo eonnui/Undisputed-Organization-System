@@ -15,7 +15,7 @@
 
 {% block content %}
 <div class="dashboard-container">
-    <h2 class="dashboard-header">Financial Summary - Year <span id="current-year"></span></h2>
+    <h2 class="dashboard-header">Financial Summary - As of Year <span id="current-year"></span></h2>
 
     <div class="quick-stats-container">
         <div class="stat-card">
@@ -45,11 +45,12 @@
     <div class="report-toggle-container">
         <span class="report-toggle-label">Quick View:</span>
         <div class="report-toggle-buttons">
-            <button class="report-toggle-button active" onclick="toggleView('overview')">Overview</button>
-            <button class="report-toggle-button" onclick="toggleView('revenues')">Revenues</button>
-            <button class="report-toggle-button" onclick="toggleView('expenses')">Expenses</button>
-            <button class="report-toggle-button" onclick="toggleView('monthly')">Monthly</button>
-            <button class="report-toggle-button" onclick="toggleView('accounts')">Accounts</button>
+            <button class="report-toggle-button active" data-view-id="overview" onclick="toggleView('overview')">Overview</button>
+            <button class="report-toggle-button" data-view-id="revenues" onclick="toggleView('revenues')">Revenues</button>
+            <button class="report-toggle-button" data-view-id="expenses" onclick="toggleView('expenses')">Expenses</button>
+            <button class="report-toggle-button" data-view-id="monthly" onclick="toggleView('monthly')">Monthly</button>
+            <button class="report-toggle-button" data-view-id="accounts" onclick="toggleView('accounts')">Accounts</button>
+            <button class="report-toggle-button" data-view-id="membership-tracker-view" onclick="toggleView('membership-tracker-view')">Membership</button>
         </div>
     </div>
 
@@ -196,6 +197,51 @@
                         <th></th>
                     </tr>
                 </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div id="membership-tracker-view" class="report-card">
+        <div class="report-header">
+            <h2>Membership Fee Tracker</h2>
+            <p>Track member payment status by academic year and semester.</p>
+        </div>
+        <div class="report-body">
+            <div class="filters-container">
+                <select id="academicYearSelect">
+                    <option value="">Academic Year</option> 
+                </select>
+                <select id="semesterSelect">
+                    <option value="">Semester</option>
+                </select>
+            </div>
+
+            <div class="membership-summary-cards">
+                <div class="stat-card">
+                    <h3>Total Paid Members</h3>
+                    <p id="total-paid-members">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Unpaid Members</h3>
+                    <p id="total-unpaid-members">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Members</h3>
+                    <p id="total-members-count">0</p>
+                </div>
+            </div>
+
+            <table class="data-table membership-table">
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>YR. & SEC</th>
+                        <th>AMOUNT PAID</th>
+                        <th>STATUS</th> </tr>
+                </thead>
+                <tbody id="membershipTableBody">
+                    <tr><td colspan="4" style="text-align: center; padding: 20px;">Loading membership data...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
