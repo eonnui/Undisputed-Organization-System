@@ -708,8 +708,7 @@
 
 .cancel-create-wiki-button,
 .cancel-edit-button {
-  background-color: var(--org-secondary);
-  margin-left: 10px;
+  background-color: #54595c;
 }
 
 .cancel-create-wiki-button:hover,
