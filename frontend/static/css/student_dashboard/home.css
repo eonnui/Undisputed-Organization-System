@@ -488,3 +488,8 @@
     transform: translateY(0);
   }
 }
+
+.announcement-card.no-announcements-card {
+  pointer-events: none; 
+  cursor: default; 
+}

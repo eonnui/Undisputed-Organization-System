@@ -30,7 +30,8 @@
                         </div>
                         {%- endfor -%}
                     {%- else -%}
-                        <div class="announcement-card">
+                        {# Added the 'no-announcements-card' class here #}
+                        <div class="announcement-card no-announcements-card">
                             <p class="announcement-text">No announcements available.</p>
                         </div>
                     {%- endif -%}

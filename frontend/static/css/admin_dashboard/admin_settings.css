@@ -52,9 +52,11 @@
     border-color 0.3s ease;
   text-align: center;
   margin-top: 10px;
-  width: fit-content;
+  max-width: 150px;
   box-sizing: border-box;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .custom-logo-upload-label:hover {

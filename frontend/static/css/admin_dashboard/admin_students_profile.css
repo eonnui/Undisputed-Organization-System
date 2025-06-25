@@ -313,7 +313,6 @@
   justify-content: center;
   font-size: 5em;
   color: var(--org-text-secondary);
-  box-shadow: var(--org-shadow-sm);
 }
 
 #message-box {
