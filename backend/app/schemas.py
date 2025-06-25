@@ -355,3 +355,6 @@ class LikedUsersResponse(BaseModel):
     post_id: int
     title: str
     likers: List[UserLikedPost] 
+
+class OrgChartNodeOverwriteRequest(BaseModel):
+    existing_admin_id: int 

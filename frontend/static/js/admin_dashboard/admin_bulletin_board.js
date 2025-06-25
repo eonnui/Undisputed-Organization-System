@@ -358,10 +358,17 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", function (event) {
     if (
       !event.target.closest(".three-dots-button") &&
-      !event.target.closest(".wiki-post-actions")
+      !event.target.closest(".wiki-post-actions") &&
+      !event.target.closest(".org-node-actions-menu")
     ) {
       document
         .querySelectorAll(".wiki-post-actions:not(.hidden)")
+        .forEach((openMenu) => {
+          openMenu.classList.add("hidden");
+        });
+
+      document
+        .querySelectorAll(".org-node-actions-menu:not(.hidden)")
         .forEach((openMenu) => {
           openMenu.classList.add("hidden");
         });
@@ -495,20 +502,244 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
+   * Overwrites an organizational chart node with data from an existing admin.
+   * @param {string} nodeId - The ID of the organizational chart node to overwrite.
+   * @param {number} existingAdminId - The ID of the existing admin to use for overwriting.
+   */
+  async function overwriteNodeWithExistingAdmin(nodeId, existingAdminId) {
+    console.log("Attempting to overwrite node...");
+    console.log("Node ID to overwrite (from URL path):", nodeId);
+    console.log(
+      "Existing Admin ID to use (to be sent in body):",
+      existingAdminId
+    );
+
+    const payloadExistingAdminId = parseInt(existingAdminId);
+    if (isNaN(payloadExistingAdminId)) {
+      console.error("existingAdminId is not a valid number:", existingAdminId);
+      const messageBox = document.createElement("div");
+      messageBox.className = "message-box error";
+      messageBox.textContent =
+        "Error: Invalid admin ID provided for overwrite.";
+      document.body.appendChild(messageBox);
+      setTimeout(() => messageBox.remove(), 3000);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/admin/org_chart_node/${nodeId}/overwrite`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ existing_admin_id: payloadExistingAdminId }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to overwrite node: ${errorText}`);
+      }
+
+      const messageBox = document.createElement("div");
+      messageBox.className = "message-box success";
+      messageBox.textContent = "Node overwritten successfully!";
+      document.body.appendChild(messageBox);
+      setTimeout(() => messageBox.remove(), 3000);
+
+      await fetchAndRenderOrgChart();
+    } catch (error) {
+      console.error("Error overwriting org chart node:", error);
+      const messageBox = document.createElement("div");
+      messageBox.className = "message-box error";
+      messageBox.textContent = `Error overwriting node: ${error.message}`;
+      document.body.appendChild(messageBox);
+      setTimeout(() => messageBox.remove(), 3000);
+    }
+  }
+
+  /**
+   * Displays the overwrite menu for an organizational chart node.
+   * Renders the "Link Admin" button if a suitable existing admin is found.
+   * @param {string} nodeId - The ID of the organizational chart node.
+   * @param {string} nodePosition - The position of the current chart node.
+   * @param {HTMLElement} threeDotsButton - The button that was clicked to open the menu.
+   * @param {Object} adminNodeData - The full admin data object for the current node.
+   * @param {Array<Object>} existingAdmins - The full list of existing admins from the database.
+   * @param {Array<Object>} currentChartAdmins - The admins currently rendered in the org chart.
+   */
+  async function displayOverwriteMenu(
+    nodeId,
+    nodePosition,
+    threeDotsButton,
+    adminNodeData,
+    existingAdmins,
+    currentChartAdmins
+  ) {
+    document
+      .querySelectorAll(".org-node-actions-menu:not(.hidden)")
+      .forEach((openMenu) => {
+        if (openMenu !== threeDotsButton.nextElementSibling) {
+          openMenu.classList.add("hidden");
+        }
+      });
+
+    const existingMenu = threeDotsButton.nextElementSibling;
+    if (
+      existingMenu &&
+      existingMenu.classList.contains("org-node-actions-menu")
+    ) {
+      existingMenu.classList.toggle("hidden");
+      if (!existingMenu.classList.contains("hidden")) {
+        renderOverwriteMenuContent(
+          nodeId,
+          nodePosition,
+          existingMenu,
+          adminNodeData,
+          existingAdmins,
+          currentChartAdmins
+        );
+      }
+      return;
+    }
+
+    const menu = document.createElement("div");
+    menu.classList.add("org-node-actions-menu", "hidden");
+    threeDotsButton.parentNode.insertBefore(menu, threeDotsButton.nextSibling);
+
+    menu.innerHTML =
+      '<div class="menu-item loading-message">Loading options...</div>';
+    menu.classList.remove("hidden");
+
+    await renderOverwriteMenuContent(
+      nodeId,
+      nodePosition,
+      menu,
+      adminNodeData,
+      existingAdmins,
+      currentChartAdmins
+    );
+  }
+
+  async function renderOverwriteMenuContent(
+    nodeId,
+    nodePosition,
+    menuElement,
+    adminNodeData,
+    existingAdmins,
+    currentChartAdmins
+  ) {
+    menuElement.innerHTML = "";
+
+    try {
+      const isNodeUnedited =
+        (!adminNodeData.first_name || adminNodeData.first_name.trim() === "") &&
+        (!adminNodeData.last_name || adminNodeData.last_name.trim() === "");
+
+      if (isNodeUnedited) {
+        const messageItem = document.createElement("div");
+        messageItem.classList.add("menu-item", "disabled-message");
+        messageItem.style.color = "grey";
+        messageItem.style.cursor = "default";
+        messageItem.textContent =
+          "This is a placeholder node. Edit it directly.";
+        menuElement.appendChild(messageItem);
+
+        const learnMoreLink = document.createElement("a");
+        learnMoreLink.href = "#";
+        learnMoreLink.textContent = "Learn more";
+        learnMoreLink.classList.add("menu-item", "learn-more-link");
+        learnMoreLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          alert(
+            "This node is currently an unassigned placeholder. To fill it, click on the node itself to enter edit mode and manually input the details. The 'Link Admin' option is for replacing an existing, filled node with another admin."
+          );
+          menuElement.classList.add("hidden");
+        });
+        menuElement.appendChild(learnMoreLink);
+      } else {
+        const availableMatchingAdmins = existingAdmins.filter(
+          (admin) =>
+            admin.position === nodePosition &&
+            !currentChartAdmins.some(
+              (chartAdmin) => chartAdmin.id === admin.admin_id
+            )
+        );
+
+        if (availableMatchingAdmins.length > 0) {
+          availableMatchingAdmins.forEach((matchingAdmin) => {
+            const overwriteButton = document.createElement("button");
+            overwriteButton.classList.add("menu-item", "overwrite-button");
+            overwriteButton.textContent = `Link Admin: ${matchingAdmin.first_name} ${matchingAdmin.last_name}`;
+            overwriteButton.title = `Click to link this node with ${matchingAdmin.first_name} ${matchingAdmin.last_name}`;
+            overwriteButton.addEventListener("click", () => {
+              overwriteNodeWithExistingAdmin(nodeId, matchingAdmin.admin_id);
+              menuElement.classList.add("hidden");
+            });
+            menuElement.appendChild(overwriteButton);
+          });
+        } else {
+          const noMatchMessage = document.createElement("div");
+          noMatchMessage.classList.add("menu-item", "no-match-message");
+          noMatchMessage.textContent = `No available admins for "${nodePosition}"`;
+          menuElement.appendChild(noMatchMessage);
+        }
+      }
+    } catch (error) {
+      console.error("Error displaying overwrite menu:", error);
+      const errorMessage = document.createElement("div");
+      errorMessage.classList.add("menu-item", "error-message");
+      errorMessage.textContent = "Failed to load options.";
+      menuElement.appendChild(errorMessage);
+    }
+  }
+
+  /**
    * Creates a DOM element for an individual admin node in the organizational chart.
    * Includes both display and editable modes.
    * @param {object} admin - The admin data object.
+   * @param {Array<Object>} existingAdmins - The full list of existing admins to check for matches.
+   * @param {Array<Object>} currentChartAdmins - The admins currently rendered in the org chart.
    * @returns {HTMLElement} The created div element for the admin node.
    */
-  const createAdminNodeDiv = (admin) => {
+  const createAdminNodeDiv = (admin, existingAdmins, currentChartAdmins) => {
     const adminId = admin.id;
+    const nodePosition = admin.position || "";
 
     const adminNodeWrapper = document.createElement("div");
     adminNodeWrapper.className = "org-node-wrapper";
     adminNodeWrapper.setAttribute("data-admin-id", adminId);
+    adminNodeWrapper.setAttribute("data-node-position", nodePosition);
+    adminNodeWrapper.setAttribute("data-first-name", admin.first_name || "");
+    adminNodeWrapper.setAttribute("data-last-name", admin.last_name || "");
 
     const displayMode = document.createElement("div");
     displayMode.className = "org-node org-node-display-mode";
+
+    const actionsWrapper = document.createElement("div");
+    actionsWrapper.classList.add("org-node-actions-wrapper");
+
+    const threeDotsButton = document.createElement("button");
+    threeDotsButton.classList.add("three-dots-button", "org-chart-three-dots");
+    threeDotsButton.innerHTML = "&#x22EF;";
+    threeDotsButton.title = "More options";
+    threeDotsButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+
+      displayOverwriteMenu(
+        adminId,
+        nodePosition,
+        threeDotsButton,
+        admin,
+        existingAdmins,
+        currentChartAdmins
+      );
+    });
+
+    actionsWrapper.appendChild(threeDotsButton);
+    displayMode.appendChild(actionsWrapper);
 
     displayMode.addEventListener("click", () =>
       toggleOrgChartEditMode(adminId, true)
@@ -517,7 +748,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileDiv = document.createElement("div");
     profileDiv.className = "profile-circle";
     const img = document.createElement("img");
-    img.alt = `${admin.first_name}'s Profile`;
+    img.alt = `${admin.first_name || "Placeholder"}'s Profile`;
     img.src = admin.chart_picture_url || "/static/images/your_image_name.jpg";
 
     img.onerror = function () {
@@ -537,8 +768,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const nameSpan = document.createElement("span");
     nameSpan.className = "name-text";
-    nameSpan.textContent = ` - ${admin.first_name || ""} ${
-      admin.last_name || ""
+
+    nameSpan.textContent = ` - ${
+      (admin.first_name || "").trim() === "" &&
+      (admin.last_name || "").trim() === ""
+        ? "UNASSIGNED"
+        : `${admin.first_name || ""} ${admin.last_name || ""}`
     }`;
     textContainer.appendChild(nameSpan);
 
@@ -676,10 +911,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * Creates and returns a document fragment containing the organizational chart display elements.
-   * @param {Array<Object>} admins - An array of admin data objects.
+   * @param {Array<Object>} admins - An array of admin data objects representing the current chart.
+   * @param {Array<Object>} existingAdmins - The full list of existing admins from the database.
    * @returns {DocumentFragment} The document fragment with the org chart.
    */
-  function createOrgChartDisplayElements(admins) {
+  function createOrgChartDisplayElements(admins, existingAdmins) {
     const fragment = document.createDocumentFragment();
 
     const organizationName =
@@ -706,8 +942,15 @@ document.addEventListener("DOMContentLoaded", () => {
      * Handles both single nodes and horizontal branches for multiple nodes.
      * @param {DocumentFragment} parentFragment - The fragment to append the branch to.
      * @param {Array<Object>} adminsForBranch - The array of admin objects for this branch.
+     * @param {Array<Object>} existingAdmins - The full list of existing admins.
+     * @param {Array<Object>} currentChartAdmins - The admins currently rendered in the org chart.
      */
-    const createBranchStructure = (parentFragment, adminsForBranch) => {
+    const createBranchStructure = (
+      parentFragment,
+      adminsForBranch,
+      existingAdmins,
+      currentChartAdmins
+    ) => {
       if (adminsForBranch.length === 0) return;
 
       if (adminsForBranch.length > 1) {
@@ -725,7 +968,9 @@ document.addEventListener("DOMContentLoaded", () => {
           dropLine.classList.add("org-line", "org-vertical-from-branch-top");
           nodeWrapper.appendChild(dropLine);
 
-          nodeWrapper.appendChild(createAdminNodeDiv(admin));
+          nodeWrapper.appendChild(
+            createAdminNodeDiv(admin, existingAdmins, currentChartAdmins)
+          );
           const verticalLineBelowNode = document.createElement("div");
           verticalLineBelowNode.classList.add(
             "org-line",
@@ -738,13 +983,23 @@ document.addEventListener("DOMContentLoaded", () => {
         horizontalBranchWrapper.appendChild(nodesContainer);
         parentFragment.appendChild(horizontalBranchWrapper);
       } else {
-        parentFragment.appendChild(createAdminNodeDiv(adminsForBranch[0]));
+        parentFragment.appendChild(
+          createAdminNodeDiv(
+            adminsForBranch[0],
+            existingAdmins,
+            currentChartAdmins
+          )
+        );
       }
     };
 
     const presidentData = getDisplayAdminsForPosition("President");
     if (presidentData.length > 0) {
-      const presidentNode = createAdminNodeDiv(presidentData[0]);
+      const presidentNode = createAdminNodeDiv(
+        presidentData[0],
+        existingAdmins,
+        admins
+      );
       presidentNode.classList.add("org-root-wrapper");
 
       const verticalLine = document.createElement("div");
@@ -778,7 +1033,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ...getDisplayAdminsForPosition("Vice President-External"),
     ];
     if (vps.length > 0) {
-      createBranchStructure(fragment, vps);
+      createBranchStructure(fragment, vps, existingAdmins, admins);
     }
 
     const otherCorePositions = [
@@ -812,7 +1067,9 @@ document.addEventListener("DOMContentLoaded", () => {
         dropLine.classList.add("org-line", "org-vertical-from-branch-top");
         nodeWrapper.appendChild(dropLine);
 
-        nodeWrapper.appendChild(createAdminNodeDiv(admin));
+        nodeWrapper.appendChild(
+          createAdminNodeDiv(admin, existingAdmins, admins)
+        );
         subNodesContainer.appendChild(nodeWrapper);
       });
 
@@ -845,7 +1102,9 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       adviserData.forEach((admin) => {
-        adviserGroupContainer.appendChild(createAdminNodeDiv(admin));
+        adviserGroupContainer.appendChild(
+          createAdminNodeDiv(admin, existingAdmins, admins)
+        );
       });
       fragment.appendChild(adviserGroupContainer);
     }
@@ -864,16 +1123,47 @@ document.addEventListener("DOMContentLoaded", () => {
       '<p class="loading-message">Loading organizational chart...</p>';
 
     try {
-      const response = await fetch("/api/admin/org_chart_data");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const [orgChartResponse, existingAdminsResponse] = await Promise.all([
+        fetch("/api/admin/org_chart_data"),
+        fetch("/api/admin/existing_admins"),
+      ]);
+
+      if (!orgChartResponse.ok) {
+        throw new Error(`HTTP error! status: ${orgChartResponse.status}`);
       }
-      const admins = await response.json();
+      if (!existingAdminsResponse.ok) {
+        throw new Error(`HTTP error! status: ${existingAdminsResponse.status}`);
+      }
+
+      const currentChartAdmins = await orgChartResponse.json();
+      const existingAdmins = await existingAdminsResponse.json();
 
       modalBody.innerHTML = "";
 
-      const chartElements = createOrgChartDisplayElements(admins);
+      const chartElements = createOrgChartDisplayElements(
+        currentChartAdmins,
+        existingAdmins
+      );
       modalBody.appendChild(chartElements);
+
+      document.addEventListener("click", function (event) {
+        if (
+          !event.target.closest(".three-dots-button") &&
+          !event.target.closest(".wiki-post-actions") &&
+          !event.target.closest(".org-node-actions-menu")
+        ) {
+          document
+            .querySelectorAll(".wiki-post-actions:not(.hidden)")
+            .forEach((openMenu) => {
+              openMenu.classList.add("hidden");
+            });
+          document
+            .querySelectorAll(".org-node-actions-menu:not(.hidden)")
+            .forEach((openMenu) => {
+              openMenu.classList.add("hidden");
+            });
+        }
+      });
     } catch (error) {
       console.error("Error fetching or rendering organizational chart:", error);
       modalBody.innerHTML =

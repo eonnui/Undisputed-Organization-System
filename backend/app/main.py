@@ -662,42 +662,38 @@ async def update_org_chart_node_text(
 
     chart_node_to_update = None
     admin_id_for_node = None
-    is_newly_created_chart_node = False
-
+    is_newly_created_chart_node = False 
     if node_id.startswith("chart_node_"):
         try:
             chart_node_db_id = int(node_id.split("_")[2])
             chart_node_to_update = db.query(models.OrgChartNode).filter(
                 models.OrgChartNode.id == chart_node_db_id,
-                models.OrgChartNode.organization_id == organization.id,
-                models.OrgChartNode.admin_id.is_(None)
+                models.OrgChartNode.organization_id == organization.id
             ).first()
             if not chart_node_to_update:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chart-only node not found or not in your organization.")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chart node not found or not in your organization.")
         except (ValueError, IndexError):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid chart node ID format.")
 
     elif node_id.startswith("new_placeholder_"):
         is_newly_created_chart_node = True
         chart_node_to_update = models.OrgChartNode(organization_id=organization.id, admin_id=None)
-
+        if not update_data.position:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Position is required for new chart node creation.")
+    
     else:
         try:
             admin_id_for_node = int(node_id)
         except ValueError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid node ID format. Must be an integer admin ID or a chart node string.")
-
-        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_node).first()
-        if not admin:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found.")
-
+        
         is_org_admin_check = db.query(models.organization_admins).filter(
             models.organization_admins.c.organization_id == organization.id,
             models.organization_admins.c.admin_id == admin_id_for_node
         ).first()
         if not is_org_admin_check:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin does not belong to your organization or you are not authorized.")
-
+       
         chart_node_to_update = db.query(models.OrgChartNode).filter(
             models.OrgChartNode.organization_id == organization.id,
             models.OrgChartNode.admin_id == admin_id_for_node
@@ -705,14 +701,36 @@ async def update_org_chart_node_text(
 
         if not chart_node_to_update:
             is_newly_created_chart_node = True
+            
+            admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_node).first()
+            if not admin:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found to create chart node for.")
+
             chart_node_to_update = models.OrgChartNode(
                 organization_id=organization.id,
-                admin_id=admin_id_for_node,
+                admin_id=admin_id_for_node, 
                 first_name=admin.first_name,
                 last_name=admin.last_name,
                 position=admin.position,
-                chart_picture_url=admin.profile_picture
+                chart_picture_url=admin.profile_picture 
             )
+            db.add(chart_node_to_update) 
+            db.flush() 
+
+    if not chart_node_to_update:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organizational chart node to update not found.")
+
+    sever_link = False
+    if chart_node_to_update.admin_id is not None:
+        linked_admin_original = db.query(models.Admin).filter(models.Admin.admin_id == chart_node_to_update.admin_id).first()
+
+        if linked_admin_original:         
+            if (update_data.first_name is not None and update_data.first_name != linked_admin_original.first_name) or \
+               (update_data.last_name is not None and update_data.last_name != linked_admin_original.last_name) or \
+               (update_data.position is not None and update_data.position != linked_admin_original.position):
+                sever_link = True
+        else:
+            sever_link = True
 
     if update_data.first_name is not None:
         chart_node_to_update.first_name = update_data.first_name
@@ -721,15 +739,26 @@ async def update_org_chart_node_text(
     if update_data.position is not None:
         chart_node_to_update.position = update_data.position
 
+    if sever_link:
+        original_admin_id = chart_node_to_update.admin_id
+        original_admin_name = f"{linked_admin_original.first_name} {linked_admin_original.last_name}" if linked_admin_original else "Unknown Admin"
+
+        chart_node_to_update.admin_id = None       
+        chart_node_to_update.chart_picture_url = "/static/images/your_image_name.jpg"
+
+
     try:
-        if is_newly_created_chart_node:
-            db.add(chart_node_to_update)
+        # If it was a newly created chart node via the "new_placeholder_" or admin_id route, it's already added.
+        # Otherwise, it's an existing node just being updated.
         db.commit()
         db.refresh(chart_node_to_update)
 
-        response_id_for_return = str(admin_id_for_node) if admin_id_for_node else f"chart_node_{chart_node_to_update.id}"
+        response_id_for_return = str(chart_node_to_update.admin_id) if chart_node_to_update.admin_id else f"chart_node_{chart_node_to_update.id}"
 
         description = f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' updated org chart node text for ID '{node_id}'."
+        if sever_link:
+            description += f" (Link to Admin ID {original_admin_id} ({original_admin_name}) severed)."
+
         await crud.create_admin_log(
             db=db,
             admin_id=authenticated_entity.admin_id,
@@ -753,11 +782,10 @@ async def update_org_chart_node_text(
 
     except IntegrityError as e:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Database integrity error: {e}")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Database integrity error: {e.orig}")
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to update chart node text data: {e}")
-
 
 @router.put("/api/admin/org_chart_node/{node_id}/profile_picture", response_model=Dict[str, str])
 async def update_org_chart_node_profile_picture(
@@ -769,6 +797,12 @@ async def update_org_chart_node_profile_picture(
 ):
     authenticated_entity, organization = admin_org_data
 
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this organization."
+        )
+
     chart_node_to_update = None
     admin_id_for_node = None
     is_newly_created_chart_node = False
@@ -778,28 +812,25 @@ async def update_org_chart_node_profile_picture(
             chart_node_db_id = int(node_id.split("_")[2])
             chart_node_to_update = db.query(models.OrgChartNode).filter(
                 models.OrgChartNode.id == chart_node_db_id,
-                models.OrgChartNode.organization_id == organization.id,
-                models.OrgChartNode.admin_id.is_(None)
+                models.OrgChartNode.organization_id == organization.id
             ).first()
-            if not chart_node_to_update:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chart-only node not found or not in your organization.")
+            if not chart_node_to_update: 
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chart node not found or not in your organization.")
         except (ValueError, IndexError):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid chart node ID format.")
 
+    
     elif node_id.startswith("new_placeholder_"):
         is_newly_created_chart_node = True
         chart_node_to_update = models.OrgChartNode(organization_id=organization.id, admin_id=None)
-
+        
     else:
         try:
             admin_id_for_node = int(node_id)
         except ValueError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid node ID format. Must be an integer admin ID or a chart node string.")
 
-        admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_node).first()
-        if not admin:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found.")
-
+        # Verify admin belongs to the organization
         is_org_admin_check = db.query(models.organization_admins).filter(
             models.organization_admins.c.organization_id == organization.id,
             models.organization_admins.c.admin_id == admin_id_for_node
@@ -807,6 +838,7 @@ async def update_org_chart_node_profile_picture(
         if not is_org_admin_check:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin does not belong to your organization or you are not authorized.")
 
+        # Find or create the OrgChartNode for this admin
         chart_node_to_update = db.query(models.OrgChartNode).filter(
             models.OrgChartNode.organization_id == organization.id,
             models.OrgChartNode.admin_id == admin_id_for_node
@@ -814,13 +846,36 @@ async def update_org_chart_node_profile_picture(
 
         if not chart_node_to_update:
             is_newly_created_chart_node = True
+            # Fetch admin details to initialize the new OrgChartNode
+            admin = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_for_node).first()
+            if not admin:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found to create chart node for.")
+
             chart_node_to_update = models.OrgChartNode(
                 organization_id=organization.id,
-                admin_id=admin_id_for_node,
+                admin_id=admin_id_for_node, 
                 first_name=admin.first_name,
                 last_name=admin.last_name,
                 position=admin.position,
+                chart_picture_url=admin.profile_picture 
             )
+            db.add(chart_node_to_update) 
+            db.flush() 
+
+    if not chart_node_to_update:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organizational chart node to update not found.")
+
+    sever_link = False
+    original_admin_id = None
+    original_admin_name = None
+
+    if chart_node_to_update.admin_id is not None:
+        original_admin_id = chart_node_to_update.admin_id
+        linked_admin_original = db.query(models.Admin).filter(models.Admin.admin_id == original_admin_id).first()
+        if linked_admin_original:
+            original_admin_name = f"{linked_admin_original.first_name} {linked_admin_original.last_name}"
+        
+        sever_link = True 
 
     file_extension = Path(chart_picture.filename).suffix
     unique_filename = f"{uuid.uuid4()}{file_extension}"
@@ -831,15 +886,18 @@ async def update_org_chart_node_profile_picture(
         contents = await chart_picture.read()
         with open(file_path, "wb") as buffer:
             buffer.write(contents)
-
+        
         chart_node_to_update.chart_picture_url = relative_url
-
-        if is_newly_created_chart_node:
-            db.add(chart_node_to_update)
+        if sever_link:
+            chart_node_to_update.admin_id = None
+            
         db.commit()
         db.refresh(chart_node_to_update)
 
         description = f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' updated org chart node picture for ID '{node_id}'."
+        if sever_link:
+            description += f" (Link to Admin ID {original_admin_id} ({original_admin_name}) severed due to custom picture upload)."
+
         await crud.create_admin_log(
             db=db,
             admin_id=authenticated_entity.admin_id,
@@ -946,6 +1004,155 @@ async def get_taken_positions(organization_id: int, db: Session = Depends(get_db
 
     return taken_positions
 
+@router.put("/api/admin/org_chart_node/{node_id}/overwrite", response_model=schemas.OrgChartNodeUpdateResponse)
+async def overwrite_org_chart_node(
+    node_id: str,
+    payload: schemas.OrgChartNodeOverwriteRequest, 
+    request: Request,
+    db: Session = Depends(get_db),
+    admin_org_data: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org)
+):
+    authenticated_entity, organization = admin_org_data
+
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this organization."
+        )
+
+    if node_id.startswith("new_placeholder_"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot overwrite a temporary placeholder node. Please edit it directly to create a permanent entry first, then you can overwrite it."
+        )
+
+    # 1. Determine the actual OrgChartNode to be overwritten or created
+    chart_node_to_overwrite = None
+    original_admin_id_linked_to_node = None 
+
+    if node_id.startswith("chart_node_"):
+        try:
+            chart_node_db_id = int(node_id.split("_")[2])
+            chart_node_to_overwrite = db.query(models.OrgChartNode).filter(
+                models.OrgChartNode.id == chart_node_db_id,
+                models.OrgChartNode.organization_id == organization.id
+            ).first()
+            if chart_node_to_overwrite and chart_node_to_overwrite.admin_id:
+                original_admin_id_linked_to_node = chart_node_to_overwrite.admin_id
+
+        except (ValueError, IndexError):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid chart node ID format.")
+    else: 
+        try:
+            admin_id_from_node_id = int(node_id)
+            chart_node_to_overwrite = db.query(models.OrgChartNode).filter(
+                models.OrgChartNode.admin_id == admin_id_from_node_id,
+                models.OrgChartNode.organization_id == organization.id
+            ).first()
+            if chart_node_to_overwrite:
+                original_admin_id_linked_to_node = chart_node_to_overwrite.admin_id
+            else:
+                admin_to_link = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_from_node_id).first()
+                if admin_to_link:
+                    chart_node_to_overwrite = models.OrgChartNode(
+                        organization_id=organization.id,
+                        admin_id=admin_to_link.admin_id,
+                        first_name=admin_to_link.first_name,
+                        last_name=admin_to_link.last_name,
+                        position=admin_to_link.position,
+                        chart_picture_url=admin_to_link.profile_picture
+                    )
+                    db.add(chart_node_to_overwrite) 
+                    db.flush()
+                else:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin associated with node ID not found.")
+
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid node ID format. Must be an integer admin ID or a chart node string.")
+
+
+    if not chart_node_to_overwrite:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organizational chart node to overwrite not found.")
+
+    # 2. Find the existing Admin whose data will be used for overwrite
+    existing_admin_id_to_link = payload.existing_admin_id
+    existing_admin_to_link = db.query(models.Admin).filter(models.Admin.admin_id == existing_admin_id_to_link).first()
+
+    if not existing_admin_to_link:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Existing admin to link not found.")
+
+    # Ensure the existing admin belongs to the same organization
+    is_org_admin_check = db.query(models.organization_admins).filter(
+        models.organization_admins.c.organization_id == organization.id,
+        models.organization_admins.c.admin_id == existing_admin_id_to_link
+    ).first()
+    if not is_org_admin_check:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The selected existing admin does not belong to your organization.")
+
+    # Check if the target node is already linked to the admin we're trying to link it with
+    if original_admin_id_linked_to_node == existing_admin_id_to_link:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This chart node is already linked to the selected admin.")
+        
+    # Check if the existing admin is ALREADY linked to another existing chart node
+    # This prevents linking the same admin to multiple chart nodes.
+    existing_chart_node_linked_to_admin = db.query(models.OrgChartNode).filter(
+        models.OrgChartNode.organization_id == organization.id,
+        models.OrgChartNode.admin_id == existing_admin_id_to_link
+    ).first()
+
+    if existing_chart_node_linked_to_admin and \
+       (chart_node_to_overwrite.id != existing_chart_node_linked_to_admin.id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"The admin '{existing_admin_to_link.first_name} {existing_admin_to_link.last_name}' is already linked to another chart node (ID: {existing_chart_node_linked_to_admin.id}). Please unlink them first if you wish to reassign."
+        )
+
+    # 3. Perform the overwrite/link logic
+    # Update the target chart_node_to_overwrite with the existing_admin's data
+    chart_node_to_overwrite.admin_id = existing_admin_to_link.admin_id # Link to the admin
+    chart_node_to_overwrite.first_name = existing_admin_to_link.first_name
+    chart_node_to_overwrite.last_name = existing_admin_to_link.last_name
+    chart_node_to_overwrite.position = existing_admin_to_link.position # Update position to linked admin's position
+    chart_node_to_overwrite.chart_picture_url = existing_admin_to_link.profile_picture # Use admin's profile pic
+
+    try:
+        db.add(chart_node_to_overwrite) # Add if new, or simply update if existing
+        db.commit()
+        db.refresh(chart_node_to_overwrite)
+
+        # Determine the ID for the response
+        response_id_for_return = str(chart_node_to_overwrite.admin_id) if chart_node_to_overwrite.admin_id else f"chart_node_{chart_node_to_overwrite.id}"
+
+
+        description = f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' linked org chart node '{node_id}' with existing admin '{existing_admin_to_link.first_name} {existing_admin_to_link.last_name}' (ID: {existing_admin_id_to_link})."
+        await crud.create_admin_log(
+            db=db,
+            admin_id=authenticated_entity.admin_id,
+            organization_id=organization.id,
+            action_type="Org Chart Node Linked/Overwritten",
+            description=description,
+            request=request,
+            target_entity_type="OrgChartNode",
+            target_entity_id=chart_node_to_overwrite.id
+        )
+        db.commit() # Commit the log
+
+        return schemas.OrgChartNodeUpdateResponse(
+            message="Organizational chart node linked/overwritten successfully.",
+            id=response_id_for_return,
+            first_name=chart_node_to_overwrite.first_name,
+            last_name=chart_node_to_overwrite.last_name,
+            position=chart_node_to_overwrite.position,
+            chart_picture_url=chart_node_to_overwrite.chart_picture_url
+        )
+
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Database integrity error: {e.orig}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to link/overwrite chart node: {e}")
+    
 # Admin Bulletin Board Post Creation
 @router.post("/admin/bulletin_board/post", response_class=HTMLResponse, name="admin_post_bulletin")
 async def admin_post_bulletin(
