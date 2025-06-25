@@ -1479,6 +1479,7 @@ input[type="text"][name="position"] {
   color: var(--org-text-primary);
   text-decoration: none;
   font-size: 0.9rem;
+  font-style: italic;
   white-space: nowrap;
   cursor: pointer;
   background-color: var(--org-card-bg);
@@ -1490,12 +1491,12 @@ input[type="text"][name="position"] {
 .org-node-actions-menu .menu-item.loading-message,
 .org-node-actions-menu .menu-item.no-match-message,
 .org-node-actions-menu .menu-item.error-message {
-  color: #777;
+  color: var(--org-post-info-color);
   font-style: italic;
   padding: 10px 15px;
   text-align: center;
   cursor: default;
-  background-color: #fff;
+  background-color: var(--org-card-bg);
 }
 
 .org-node-actions-menu .menu-item.error-message {

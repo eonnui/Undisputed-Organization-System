@@ -672,7 +672,7 @@ document.addEventListener("DOMContentLoaded", () => {
           availableMatchingAdmins.forEach((matchingAdmin) => {
             const overwriteButton = document.createElement("button");
             overwriteButton.classList.add("menu-item", "overwrite-button");
-            overwriteButton.textContent = `Link Admin: ${matchingAdmin.first_name} ${matchingAdmin.last_name}`;
+            overwriteButton.textContent = `Link Admin: ${matchingAdmin.last_name}`;
             overwriteButton.title = `Click to link this node with ${matchingAdmin.first_name} ${matchingAdmin.last_name}`;
             overwriteButton.addEventListener("click", () => {
               overwriteNodeWithExistingAdmin(nodeId, matchingAdmin.admin_id);
