@@ -1007,7 +1007,7 @@ async def get_taken_positions(organization_id: int, db: Session = Depends(get_db
 @router.put("/api/admin/org_chart_node/{node_id}/overwrite", response_model=schemas.OrgChartNodeUpdateResponse)
 async def overwrite_org_chart_node(
     node_id: str,
-    payload: schemas.OrgChartNodeOverwriteRequest, 
+    payload: schemas.OrgChartNodeOverwriteRequest,
     request: Request,
     db: Session = Depends(get_db),
     admin_org_data: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org)
@@ -1026,9 +1026,8 @@ async def overwrite_org_chart_node(
             detail="Cannot overwrite a temporary placeholder node. Please edit it directly to create a permanent entry first, then you can overwrite it."
         )
 
-    # 1. Determine the actual OrgChartNode to be overwritten or created
     chart_node_to_overwrite = None
-    original_admin_id_linked_to_node = None 
+    original_admin_id_linked_to_node = None
 
     if node_id.startswith("chart_node_"):
         try:
@@ -1052,18 +1051,18 @@ async def overwrite_org_chart_node(
             if chart_node_to_overwrite:
                 original_admin_id_linked_to_node = chart_node_to_overwrite.admin_id
             else:
-                admin_to_link = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_from_node_id).first()
-                if admin_to_link:
+                admin_to_link_initial = db.query(models.Admin).filter(models.Admin.admin_id == admin_id_from_node_id).first()
+                if admin_to_link_initial:
                     chart_node_to_overwrite = models.OrgChartNode(
                         organization_id=organization.id,
-                        admin_id=admin_to_link.admin_id,
-                        first_name=admin_to_link.first_name,
-                        last_name=admin_to_link.last_name,
-                        position=admin_to_link.position,
-                        chart_picture_url=admin_to_link.profile_picture
+                        admin_id=admin_to_link_initial.admin_id,
+                        first_name=admin_to_link_initial.first_name,
+                        last_name=admin_to_link_initial.last_name,
+                        position=admin_to_link_initial.position,
+                        chart_picture_url=admin_to_link_initial.profile_picture
                     )
-                    db.add(chart_node_to_overwrite) 
-                    db.flush()
+                    db.add(chart_node_to_overwrite)
+                    db.flush() 
                 else:
                     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Admin associated with node ID not found.")
 
@@ -1074,14 +1073,12 @@ async def overwrite_org_chart_node(
     if not chart_node_to_overwrite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organizational chart node to overwrite not found.")
 
-    # 2. Find the existing Admin whose data will be used for overwrite
     existing_admin_id_to_link = payload.existing_admin_id
     existing_admin_to_link = db.query(models.Admin).filter(models.Admin.admin_id == existing_admin_id_to_link).first()
 
     if not existing_admin_to_link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Existing admin to link not found.")
 
-    # Ensure the existing admin belongs to the same organization
     is_org_admin_check = db.query(models.organization_admins).filter(
         models.organization_admins.c.organization_id == organization.id,
         models.organization_admins.c.admin_id == existing_admin_id_to_link
@@ -1089,53 +1086,89 @@ async def overwrite_org_chart_node(
     if not is_org_admin_check:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The selected existing admin does not belong to your organization.")
 
-    # Check if the target node is already linked to the admin we're trying to link it with
-    if original_admin_id_linked_to_node == existing_admin_id_to_link:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This chart node is already linked to the selected admin.")
-        
-    # Check if the existing admin is ALREADY linked to another existing chart node
-    # This prevents linking the same admin to multiple chart nodes.
-    existing_chart_node_linked_to_admin = db.query(models.OrgChartNode).filter(
-        models.OrgChartNode.organization_id == organization.id,
-        models.OrgChartNode.admin_id == existing_admin_id_to_link
-    ).first()
+    if chart_node_to_overwrite.admin_id == existing_admin_id_to_link:
+        pass
+    else:
+        existing_chart_node_linked_to_admin = db.query(models.OrgChartNode).filter(
+            models.OrgChartNode.organization_id == organization.id,
+            models.OrgChartNode.admin_id == existing_admin_id_to_link
+        ).first()
 
-    if existing_chart_node_linked_to_admin and \
-       (chart_node_to_overwrite.id != existing_chart_node_linked_to_admin.id):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"The admin '{existing_admin_to_link.first_name} {existing_admin_to_link.last_name}' is already linked to another chart node (ID: {existing_chart_node_linked_to_admin.id}). Please unlink them first if you wish to reassign."
-        )
+        if existing_chart_node_linked_to_admin:
+            if chart_node_to_overwrite.id != existing_chart_node_linked_to_admin.id:
+                previous_node_id = existing_chart_node_linked_to_admin.id
+                previous_node_admin_name = f"{existing_admin_to_link.first_name} {existing_admin_to_link.last_name}"
 
-    # 3. Perform the overwrite/link logic
-    # Update the target chart_node_to_overwrite with the existing_admin's data
-    chart_node_to_overwrite.admin_id = existing_admin_to_link.admin_id # Link to the admin
+                existing_chart_node_linked_to_admin.admin_id = None
+                existing_chart_node_linked_to_admin.first_name = "Vacant"
+                existing_chart_node_linked_to_admin.last_name = ""
+                existing_chart_node_linked_to_admin.position = "Empty Slot" 
+                existing_chart_node_linked_to_admin.chart_picture_url = "/static/images/your_image_name.jpg" 
+
+                db.add(existing_chart_node_linked_to_admin)
+                db.flush() 
+
+                description_previous = (
+                    f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' "
+                    f"unlinked existing admin '{previous_node_admin_name}' (ID: {existing_admin_id_to_link}) "
+                    f"from Org Chart Node ID {previous_node_id} (to reassign to node {chart_node_to_overwrite.id})."
+                )
+                await crud.create_admin_log(
+                    db=db,
+                    admin_id=authenticated_entity.admin_id,
+                    organization_id=organization.id,
+                    action_type="Org Chart Node Admin Unlinked (Reassignment)",
+                    description=description_previous,
+                    request=request,
+                    target_entity_type="OrgChartNode",
+                    target_entity_id=previous_node_id
+                )
+
+        if original_admin_id_linked_to_node is not None and original_admin_id_linked_to_node != existing_admin_id_to_link:
+            original_admin_on_target = db.query(models.Admin).filter(models.Admin.admin_id == original_admin_id_linked_to_node).first()
+            original_admin_on_target_name = f"{original_admin_on_target.first_name} {original_admin_on_target.last_name}" if original_admin_on_target else "Unknown Admin"
+
+            description_overwrite = (
+                f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' "
+                f"overwrote Org Chart Node ID {chart_node_to_overwrite.id}, "
+                f"displacing Admin '{original_admin_on_target_name}' (ID: {original_admin_id_linked_to_node})."
+            )
+            await crud.create_admin_log(
+                db=db,
+                admin_id=authenticated_entity.admin_id,
+                organization_id=organization.id,
+                action_type="Org Chart Node Overwritten (Displaced Admin)",
+                description=description_overwrite,
+                request=request,
+                target_entity_type="OrgChartNode",
+                target_entity_id=chart_node_to_overwrite.id
+            )
+
+    chart_node_to_overwrite.admin_id = existing_admin_to_link.admin_id 
     chart_node_to_overwrite.first_name = existing_admin_to_link.first_name
     chart_node_to_overwrite.last_name = existing_admin_to_link.last_name
-    chart_node_to_overwrite.position = existing_admin_to_link.position # Update position to linked admin's position
-    chart_node_to_overwrite.chart_picture_url = existing_admin_to_link.profile_picture # Use admin's profile pic
+    chart_node_to_overwrite.position = existing_admin_to_link.position 
+    chart_node_to_overwrite.chart_picture_url = existing_admin_to_link.profile_picture 
 
     try:
-        db.add(chart_node_to_overwrite) # Add if new, or simply update if existing
-        db.commit()
+        db.add(chart_node_to_overwrite) 
+        db.commit() 
         db.refresh(chart_node_to_overwrite)
 
-        # Determine the ID for the response
         response_id_for_return = str(chart_node_to_overwrite.admin_id) if chart_node_to_overwrite.admin_id else f"chart_node_{chart_node_to_overwrite.id}"
-
 
         description = f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' linked org chart node '{node_id}' with existing admin '{existing_admin_to_link.first_name} {existing_admin_to_link.last_name}' (ID: {existing_admin_id_to_link})."
         await crud.create_admin_log(
             db=db,
             admin_id=authenticated_entity.admin_id,
             organization_id=organization.id,
-            action_type="Org Chart Node Linked/Overwritten",
+            action_type="Org Chart Node Linked/Overwritten Success",
             description=description,
             request=request,
             target_entity_type="OrgChartNode",
             target_entity_id=chart_node_to_overwrite.id
         )
-        db.commit() # Commit the log
+        db.commit() 
 
         return schemas.OrgChartNodeUpdateResponse(
             message="Organizational chart node linked/overwritten successfully.",
@@ -1148,6 +1181,7 @@ async def overwrite_org_chart_node(
 
     except IntegrityError as e:
         db.rollback()
+
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Database integrity error: {e.orig}")
     except Exception as e:
         db.rollback()
