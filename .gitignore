@@ -11,3 +11,9 @@ backend/app/__pycache__/main.cpython-313.pyc
 backend/app/__pycache__/models.cpython-313.pyc
 backend/app/__pycache__/schemas.cpython-313.pyc
 frontend/static/videos
+frontend/static/images/profile_pictures
+frontend/static/images/bulletin_board
+frontend/static/images/campaigns
+frontend/static/images/event_classifications
+frontend/static/images/org_chart_pictures
+frontend/static/images/wiki_images

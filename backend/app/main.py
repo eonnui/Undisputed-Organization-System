@@ -4066,6 +4066,61 @@ async def heart_post(
     db.refresh(post)
     return {"heart_count": post.heart_count, "is_hearted_by_user": is_hearted_by_user}
 
+@app.get("/bulletin/heart/{post_id}/users", response_model=schemas.LikedUsersResponse)
+async def get_users_who_liked_post(
+    post_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    user = None
+    user_org = None
+    admin = None
+    admin_org = None
+
+    try:
+        user, user_org = get_current_user_with_org(request, db)
+    except HTTPException:
+        try:
+            admin, admin_org = get_current_admin_with_org(request, db)
+        except HTTPException:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required.")
+
+    post = db.query(models.BulletinBoard).options(
+        joinedload(models.BulletinBoard.admin).joinedload(models.Admin.organizations)
+    ).get(post_id)
+
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
+
+    org_id = None
+    if user_org:
+        org_id = user_org.id
+    elif admin_org:
+        org_id = admin_org.id
+
+    if not post.admin or not post.admin.organizations or post.admin.organizations[0].id != org_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied. You can only view likes for posts within your organization.")
+
+    likers_query = db.query(models.User).join(
+        models.UserLike, models.User.id == models.UserLike.user_id
+    ).filter(models.UserLike.post_id == post_id).all()
+
+    likers_list = [
+        schemas.UserLikedPost(
+            id=liker.id,
+            first_name=liker.first_name,
+            last_name=liker.last_name,
+            email=liker.email,
+            profile_picture=liker.profile_picture
+        ) for liker in likers_query
+    ]
+
+    return schemas.LikedUsersResponse(
+        post_id=post.post_id,
+        title=post.title,
+        likers=likers_list
+    )
+
 # Join Event
 @app.post("/Events/join/{event_id}")
 async def join_event(event_id: int, request: Request, db: Session = Depends(get_db)):

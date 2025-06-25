@@ -59,9 +59,99 @@ document.addEventListener("DOMContentLoaded", function () {
   const heartButtons = document.querySelectorAll(".heart-button");
 
   heartButtons.forEach((button) => {
+    const postId = button.dataset.postId;
+    const heartCountSpan = button.querySelector(".heart-count");
+
+    if (heartCountSpan) {
+      heartCountSpan.style.cursor = "pointer";
+      heartCountSpan.addEventListener("click", async function (event) {
+        event.stopPropagation();
+
+        openGlobalModal("Users Who Liked This Post");
+        modalBody.innerHTML =
+          '<p class="loading-message">Loading likers...</p>';
+
+        try {
+          const response = await fetch(`/bulletin/heart/${postId}/users`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+
+          modalBody.innerHTML = "";
+
+          if (data.likers && data.likers.length > 0) {
+            const likersList = document.createElement("ul");
+            likersList.classList.add("likers-list", "list-none", "p-0", "m-0");
+            data.likers.forEach((liker) => {
+              const listItem = document.createElement("li");
+              listItem.classList.add(
+                "liker-item",
+                "py-2",
+                "border-b",
+                "border-gray-200",
+                "last:border-b-0",
+                "flex",
+                "items-center"
+              );
+
+              const profilePicDiv = document.createElement("div");
+              profilePicDiv.classList.add(
+                "liker-profile-pic-container",
+                "mr-3"
+              );
+
+              const profilePic = document.createElement("img");
+
+              profilePic.src = liker.profile_picture.startsWith("/")
+                ? liker.profile_picture
+                : "/" + liker.profile_picture;
+              profilePic.alt = `${liker.first_name} ${liker.last_name}'s Profile Picture`;
+              profilePic.classList.add(
+                "w-10",
+                "h-10",
+                "rounded-full",
+                "object-cover",
+                "liker-profile-pic"
+              );
+
+              profilePic.onerror = function () {
+                this.onerror = null;
+                this.src = "/static/images/default_profile.png";
+              };
+
+              profilePicDiv.appendChild(profilePic);
+              listItem.appendChild(profilePicDiv);
+
+              const textContentDiv = document.createElement("div");
+              textContentDiv.innerHTML = `
+                <span class="font-semibold">${liker.first_name} ${
+                liker.last_name
+              }</span>
+                ${
+                  liker.email
+                    ? `<span class="text-gray-600 text-sm ml-1">(${liker.email})</span>`
+                    : ""
+                }
+              `;
+              listItem.appendChild(textContentDiv);
+
+              likersList.appendChild(listItem);
+            });
+            modalBody.appendChild(likersList);
+          } else {
+            modalBody.innerHTML =
+              "<p class='text-center text-gray-500'>No users have liked this post yet.</p>";
+          }
+        } catch (error) {
+          console.error("Error fetching likers:", error);
+          modalBody.innerHTML =
+            '<p class="error-message text-center text-red-600">Failed to load likers. Please try again later.</p>';
+        }
+      });
+    }
+
     button.addEventListener("click", function () {
-      const postId = this.dataset.postId;
-      const heartCountSpan = this.querySelector(".heart-count");
       const isHeartedInitially = this.classList.contains("hearted");
       const action = isHeartedInitially ? "unheart" : "heart";
 

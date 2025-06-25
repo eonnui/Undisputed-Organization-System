@@ -1,4 +1,80 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const globalModal = document.getElementById("global-modal");
+  const modalBody = globalModal
+    ? globalModal.querySelector("#modal-body")
+    : null;
+  const modalTitleElement = globalModal
+    ? globalModal.querySelector(".modal-content h3")
+    : null;
+  const modalCloseBtn = globalModal
+    ? globalModal.querySelector(".modal-close-btn")
+    : null;
+
+  /**
+   * Opens the global modal with a specified title.
+   * @param {string} title - The title to display in the modal header.
+   */
+  function openGlobalModal(title) {
+    if (!globalModal || !modalBody) {
+      console.error("Global modal elements not found.");
+      return;
+    }
+    if (modalTitleElement) {
+      modalTitleElement.innerText = title;
+    } else {
+      console.warn(
+        "No h3 element found in modal-content for title. Appending title."
+      );
+      const newTitle = document.createElement("h3");
+      newTitle.innerText = title;
+      modalBody.innerHTML = "";
+      modalBody.prepend(newTitle);
+    }
+
+    globalModal.style.display = "flex";
+    globalModal.classList.add("is-visible");
+    document.body.style.overflow = "hidden";
+  }
+
+  /**
+   * Closes the global modal and clears its content.
+   */
+  function closeGlobalModal() {
+    if (!globalModal || !modalBody) {
+      console.error("Global modal elements not found for closing.");
+      return;
+    }
+    globalModal.style.display = "none";
+    globalModal.classList.remove("is-visible");
+    document.body.style.overflow = "";
+    modalBody.innerHTML = "";
+    if (modalTitleElement) {
+      modalTitleElement.innerText = "";
+    }
+  }
+
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener("click", closeGlobalModal);
+  }
+
+  if (globalModal) {
+    globalModal.addEventListener("click", function (event) {
+      if (event.target === globalModal) {
+        closeGlobalModal();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", function (event) {
+    if (
+      event.key === "Escape" &&
+      globalModal &&
+      globalModal.classList.contains("is-visible")
+    ) {
+      closeGlobalModal();
+    }
+  });
+
   const createPostInput = document.querySelector(".create-post-input");
   const createPostForm = document.querySelector(".create-post-form-fields");
   const backToBulletinLink = document.querySelector(".back-to-bulletin");
@@ -20,6 +96,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /**
+   * Toggles the edit mode for a wiki post card.
+   * @param {string} postId - The ID of the post to toggle.
+   * @param {boolean} showEdit - True to show edit mode, false to show display mode.
+   */
   function toggleEditMode(postId, showEdit) {
     const postCard = document.getElementById(`wiki-post-${postId}`);
     if (postCard) {
@@ -29,7 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (showEdit) {
         if (displayMode) displayMode.style.display = "none";
         if (editMode) editMode.style.display = "block";
-        postCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        postCard.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       } else {
         if (displayMode) displayMode.style.display = "block";
         if (editMode) editMode.style.display = "none";
@@ -99,6 +183,155 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  const heartButtons = document.querySelectorAll(".heart-button");
+
+  heartButtons.forEach((button) => {
+    const postId = button.dataset.postId;
+    const heartCountSpan = button.querySelector(".heart-count");
+
+    if (heartCountSpan) {
+      heartCountSpan.style.cursor = "pointer";
+      heartCountSpan.addEventListener("click", async function (event) {
+        event.stopPropagation();
+
+        if (!globalModal || !modalBody) {
+          console.error("Global modal elements not available for likers view.");
+          return;
+        }
+
+        openGlobalModal("Users Who Liked This Post");
+        modalBody.innerHTML =
+          '<p class="loading-message">Loading likers...</p>';
+
+        try {
+          const response = await fetch(`/bulletin/heart/${postId}/users`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+
+          modalBody.innerHTML = "";
+
+          if (data.likers && data.likers.length > 0) {
+            const likersList = document.createElement("ul");
+            likersList.classList.add("likers-list", "list-none", "p-0", "m-0");
+            data.likers.forEach((liker) => {
+              const listItem = document.createElement("li");
+              listItem.classList.add(
+                "liker-item",
+                "py-2",
+                "border-b",
+                "border-gray-200",
+                "last:border-b-0",
+                "flex",
+                "items-center"
+              );
+
+              const profilePicDiv = document.createElement("div");
+              profilePicDiv.classList.add(
+                "liker-profile-pic-container",
+                "mr-3"
+              );
+
+              const profilePic = document.createElement("img");
+
+              profilePic.src = liker.profile_picture.startsWith("/")
+                ? liker.profile_picture
+                : "/" + liker.profile_picture;
+              profilePic.alt = `${liker.first_name} ${liker.last_name}'s Profile Picture`;
+              profilePic.classList.add(
+                "w-10",
+                "h-10",
+                "rounded-full",
+                "object-cover",
+                "liker-profile-pic"
+              );
+
+              profilePic.onerror = function () {
+                this.onerror = null;
+                this.src = "/static/images/default_profile.png";
+              };
+
+              profilePicDiv.appendChild(profilePic);
+              listItem.appendChild(profilePicDiv);
+
+              const textContentDiv = document.createElement("div");
+              textContentDiv.innerHTML = `
+                                <span class="font-semibold">${
+                                  liker.first_name
+                                } ${liker.last_name}</span>
+                                ${
+                                  liker.email
+                                    ? `<span class="text-gray-600 text-sm ml-1">(${liker.email})</span>`
+                                    : ""
+                                }
+                            `;
+              listItem.appendChild(textContentDiv);
+
+              likersList.appendChild(listItem);
+            });
+            modalBody.appendChild(likersList);
+          } else {
+            modalBody.innerHTML =
+              "<p class='text-center text-gray-500'>No users have liked this post yet.</p>";
+          }
+        } catch (error) {
+          console.error("Error fetching likers:", error);
+          modalBody.innerHTML =
+            '<p class="error-message text-center text-red-600">Failed to load likers. Please try again later.</p>';
+        }
+      });
+    }
+
+    button.addEventListener("click", function () {
+      const isHeartedInitially = this.classList.contains("hearted");
+      const action = isHeartedInitially ? "unheart" : "heart";
+
+      let currentCount = parseInt(heartCountSpan.textContent);
+      if (action === "heart") {
+        this.classList.add("hearted");
+        heartCountSpan.textContent = currentCount + 1;
+      } else {
+        this.classList.remove("hearted");
+        heartCountSpan.textContent = Math.max(0, currentCount - 1);
+      }
+
+      fetch(`/bulletin/heart/${postId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `action=${action}`,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          heartCountSpan.textContent = data.heart_count;
+
+          if (data.is_hearted_by_user) {
+            this.classList.add("hearted");
+          } else {
+            this.classList.remove("hearted");
+          }
+        })
+        .catch((error) => {
+          console.error("Error hearting post:", error);
+
+          if (action === "heart") {
+            this.classList.remove("hearted");
+            heartCountSpan.textContent = currentCount;
+          } else {
+            this.classList.add("hearted");
+            heartCountSpan.textContent = currentCount;
+          }
+        });
+    });
+  });
+
   const threeDotsButtons = document.querySelectorAll(".three-dots-button");
 
   threeDotsButtons.forEach((button) => {
@@ -158,14 +391,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const orgChartButton = document.getElementById("viewOrgChartButton");
 
-  const globalModal = document.getElementById("global-modal");
-  const globalModalBody = document.getElementById("modal-body");
-  const globalModalCloseButton = globalModal
-    ? globalModal.querySelector(".modal-close-btn")
-    : null;
-
+  /**
+   * Toggles the edit mode for an organizational chart node.
+   * @param {string} adminId - The ID of the admin node to toggle.
+   * @param {boolean} showEdit - True to show edit mode, false to show display mode.
+   */
   function toggleOrgChartEditMode(adminId, showEdit) {
-    const adminNodeWrapper = globalModalBody.querySelector(
+    const adminNodeWrapper = modalBody.querySelector(
       `.org-node-wrapper[data-admin-id="${adminId}"]`
     );
     if (adminNodeWrapper) {
@@ -184,14 +416,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Saves an organizational chart node via API.
+   * Handles both new node creation and existing node updates.
+   * @param {string} adminId - The ID of the admin node (can be a placeholder for new nodes).
+   * @param {HTMLFormElement} formElement - The form element containing the data to save.
+   */
   async function saveOrgChartNode(adminId, formElement) {
     const isNewOrgChartNode = adminId.startsWith("new_placeholder_");
-    const isExistingOrgChartNode = adminId.startsWith("chart_node_");
-
-    console.log(
-      `Saving node: ${adminId}, isExistingOrgChartNode: ${isExistingOrgChartNode}, isNewOrgChartNode: ${isNewOrgChartNode}`
-    );
-
     const formData = new FormData(formElement);
     const profilePictureFile = formData.get("chart_picture");
 
@@ -237,7 +469,6 @@ document.addEventListener("DOMContentLoaded", () => {
         actualNodeIdToSend = adminId;
       }
 
-      let pictureUpdateSuccess = true;
       if (profilePictureFile && profilePictureFile.size > 0) {
         const pictureUrl = `/api/admin/org_chart_node/${actualNodeIdToSend}/profile_picture`;
 
@@ -252,16 +483,23 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!pictureResponse.ok) {
           const errorText = await pictureResponse.text();
           console.error("Profile picture upload failed:", errorText);
-          pictureUpdateSuccess = false;
         }
       }
 
       await fetchAndRenderOrgChart();
 
       toggleOrgChartEditMode(actualNodeIdToSend, false);
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error saving org chart node:", error);
+    }
   }
 
+  /**
+   * Creates a DOM element for an individual admin node in the organizational chart.
+   * Includes both display and editable modes.
+   * @param {object} admin - The admin data object.
+   * @returns {HTMLElement} The created div element for the admin node.
+   */
   const createAdminNodeDiv = (admin) => {
     const adminId = admin.id;
 
@@ -281,6 +519,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const img = document.createElement("img");
     img.alt = `${admin.first_name}'s Profile`;
     img.src = admin.chart_picture_url || "/static/images/your_image_name.jpg";
+
+    img.onerror = function () {
+      this.onerror = null;
+      this.src = "/static/images/your_image_name.jpg";
+    };
     profileDiv.appendChild(img);
     displayMode.appendChild(profileDiv);
 
@@ -289,7 +532,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const positionSpan = document.createElement("span");
     positionSpan.className = "position-text";
-
     positionSpan.textContent = (admin.position || "POSITION").toUpperCase();
     textContainer.appendChild(positionSpan);
 
@@ -331,7 +573,6 @@ document.addEventListener("DOMContentLoaded", () => {
     editForm.appendChild(editProfileDiv);
 
     const fileInputId = `chart_picture_input_${adminId}`;
-
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.name = "chart_picture";
@@ -359,6 +600,14 @@ document.addEventListener("DOMContentLoaded", () => {
     editForm.appendChild(fileInputLabel);
     editForm.appendChild(fileInput);
 
+    /**
+     * Helper to create input fields for the edit form.
+     * @param {string} name - The name attribute for the input.
+     * @param {string} value - The initial value of the input.
+     * @param {string} placeholder - The placeholder text.
+     * @param {boolean} isEditable - Whether the input should be editable (default: true).
+     * @returns {HTMLElement} The created input element.
+     */
     const createInputField = (name, value, placeholder, isEditable = true) => {
       const input = document.createElement("input");
       input.type = "text";
@@ -425,6 +674,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return adminNodeWrapper;
   };
 
+  /**
+   * Creates and returns a document fragment containing the organizational chart display elements.
+   * @param {Array<Object>} admins - An array of admin data objects.
+   * @returns {DocumentFragment} The document fragment with the org chart.
+   */
   function createOrgChartDisplayElements(admins) {
     const fragment = document.createDocumentFragment();
 
@@ -438,10 +692,21 @@ document.addEventListener("DOMContentLoaded", () => {
     organizationNameNode.textContent = organizationName;
     fragment.appendChild(organizationNameNode);
 
+    /**
+     * Filters admins by a specific position key.
+     * @param {string} positionKey - The position to filter by.
+     * @returns {Array<Object>} An array of admin objects for the given position.
+     */
     const getDisplayAdminsForPosition = (positionKey) => {
       return admins.filter((admin) => admin.position === positionKey);
     };
 
+    /**
+     * Creates a branch structure for a group of admins.
+     * Handles both single nodes and horizontal branches for multiple nodes.
+     * @param {DocumentFragment} parentFragment - The fragment to append the branch to.
+     * @param {Array<Object>} adminsForBranch - The array of admin objects for this branch.
+     */
     const createBranchStructure = (parentFragment, adminsForBranch) => {
       if (adminsForBranch.length === 0) return;
 
@@ -452,7 +717,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const nodesContainer = document.createElement("div");
         nodesContainer.classList.add("org-branch-container");
 
-        adminsForBranch.forEach((admin, index) => {
+        adminsForBranch.forEach((admin) => {
           const nodeWrapper = document.createElement("div");
           nodeWrapper.classList.add("org-node-vertical-connection");
 
@@ -588,10 +853,14 @@ document.addEventListener("DOMContentLoaded", () => {
     return fragment;
   }
 
+  /**
+   * Fetches organizational chart data from the API and renders it in the modal.
+   */
   async function fetchAndRenderOrgChart() {
-    if (!globalModalBody) return;
+    if (!modalBody) return;
 
-    globalModalBody.innerHTML =
+    openGlobalModal("Organizational Chart");
+    modalBody.innerHTML =
       '<p class="loading-message">Loading organizational chart...</p>';
 
     try {
@@ -601,37 +870,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const admins = await response.json();
 
-      globalModalBody.innerHTML = "";
+      modalBody.innerHTML = "";
 
       const chartElements = createOrgChartDisplayElements(admins);
-      globalModalBody.appendChild(chartElements);
+      modalBody.appendChild(chartElements);
     } catch (error) {
       console.error("Error fetching or rendering organizational chart:", error);
-      globalModalBody.innerHTML =
+      modalBody.innerHTML =
         '<p class="error-message">Failed to load organizational chart. Please try again later.</p>';
     }
   }
 
   if (orgChartButton && globalModal) {
     orgChartButton.addEventListener("click", function () {
-      globalModal.style.display = "flex";
       fetchAndRenderOrgChart();
-    });
-  }
-
-  if (globalModalCloseButton && globalModal) {
-    globalModalCloseButton.addEventListener("click", function () {
-      globalModal.style.display = "none";
-      globalModalBody.innerHTML = "";
-    });
-  }
-
-  if (globalModal) {
-    window.addEventListener("click", function (event) {
-      if (event.target === globalModal) {
-        globalModal.style.display = "none";
-        globalModalBody.innerHTML = "";
-      }
     });
   }
 });

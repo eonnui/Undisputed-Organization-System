@@ -123,36 +123,36 @@
 }
 
 .custom-file-input {
-    display: none; 
+  display: none;
 }
 
 .create-post-form-fields label[for="image"],
 .create-post-form-fields label[for="video"],
 .create-wiki-post-form label[for="wiki_image"],
-.wiki-post-edit-mode label[for^="edit_wiki_image_"] { 
-    display: inline-block;
-    padding: 6px 10px;
-    background-color: transparent;
-    color: var(--org-dashboard-title-color);
-    border: 2px solid var(--org-dashboard-title-color);
-    border-radius: var(--org-radius-md);
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-    text-align: center;
-    margin-top: 10px;
-    width: fit-content;
-    box-sizing: border-box;
+.wiki-post-edit-mode label[for^="edit_wiki_image_"] {
+  display: inline-block;
+  padding: 6px 10px;
+  background-color: transparent;
+  color: var(--org-dashboard-title-color);
+  border: 2px solid var(--org-dashboard-title-color);
+  border-radius: var(--org-radius-md);
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  text-align: center;
+  margin-top: 10px;
+  width: fit-content;
+  box-sizing: border-box;
 }
 
 .create-post-form-fields label[for="image"]:hover,
 .create-post-form-fields label[for="video"]:hover,
 .create-wiki-post-form label[for="wiki_image"]:hover,
-.wiki-post-edit-mode label[for^="edit_wiki_image_"]:hover { 
-    background-color: transparent;
-    border: 2px solid var(--org-hover-effect);
-    color: var(--org-button-chart-text);
-    transform: translateY(-2px);
+.wiki-post-edit-mode label[for^="edit_wiki_image_"]:hover {
+  background-color: transparent;
+  border: 2px solid var(--org-hover-effect);
+  color: var(--org-button-chart-text);
+  transform: translateY(-2px);
 }
 
 .back-to-bulletin {
@@ -297,17 +297,71 @@
 .post-actions {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0.3rem;
   color: var(--org-post-actions-color);
   font-size: 1.2rem;
   width: fit-content;
   margin-top: 0.5rem;
 }
 
-.heart-count {
+.heart-button,
+.heart-icon-display {
+  border: none;
   color: var(--org-heart-button-color);
+  background: none;
   font-size: 1.2rem;
   animation: heartbeat 1s infinite;
+}
+
+.likers-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.liker-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 2px solid var(--org-border-medium);
+}
+
+.liker-item:last-child {
+  border-bottom: none;
+}
+
+.liker-profile-pic-container {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-right: 12px;
+  position: relative;
+}
+
+.liker-profile-pic {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #cbd5e0;
+}
+
+.liker-item div:nth-of-type(2) {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.liker-item .font-semibold {
+  font-weight: 600;
+  color: var(--org-text-primary);
+}
+
+.liker-item .text-gray-600 {
+  color: #718096;
+  font-size: 0.875rem;
 }
 
 .rules-wiki-container {
@@ -958,40 +1012,40 @@
 }
 
 .chart-picture-input {
-    display: none;
+  display: none;
 }
 
 .custom-file-upload {
-    display: inline-block;
-    padding: 6px 10px;
-    background-color: transparent;
-    font-weight: 200 ;
-    color: var(--org-dashboard-title-color); 
-    border: 2px solid var(--org-dashboard-title-color);
-    border-radius: var(--org-radius-md); 
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-    text-align: center;
-    margin-top: 10px;
-    width: fit-content;
-    box-sizing: border-box;
+  display: inline-block;
+  padding: 6px 10px;
+  background-color: transparent;
+  font-weight: 200;
+  color: var(--org-dashboard-title-color);
+  border: 2px solid var(--org-dashboard-title-color);
+  border-radius: var(--org-radius-md);
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  text-align: center;
+  margin-top: 10px;
+  width: fit-content;
+  box-sizing: border-box;
 }
 
 .custom-file-upload:hover {
-    background-color: transparent;
-    border: 2px solid var(--org-hover-effect); 
-    color: var(--org-button-chart-text); 
-    transform: translateY(-2px);
+  background-color: transparent;
+  border: 2px solid var(--org-hover-effect);
+  color: var(--org-button-chart-text);
+  transform: translateY(-2px);
 }
 
 .profile-image img {
-    width: 50px; 
-    height: 50px;
-    border-radius: 50%; 
-    object-fit: cover; 
-    margin-right: 10px;
-    border: 1px solid var(--org-border-medium); 
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+  border: 1px solid var(--org-border-medium);
 }
 
 .existing-wiki-post-container p {
@@ -1013,8 +1067,8 @@
 }
 
 .profile-info {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .org-node-input-field {

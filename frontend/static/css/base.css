@@ -851,6 +851,7 @@ body {
 
 #modal-body p {
   line-height: 1.6;
+  color: var(--org-text-primary);
   margin-bottom: 1em;
 }
 

@@ -100,8 +100,12 @@
             {% endif %}
             <div class="post-content">{{ post.content | safe }}</div>
             <div class="post-actions">
-                <span class="heart-count">❤️ {{ post.heart_count }}</span>
+                <span class="heart-icon-display">❤️</span> 
+                <button class="heart-button" data-post-id="{{ post.post_id }}">
+                    <span class="heart-count">{{ post.heart_count }}</span>
+                </button>
             </div>
+
         </div>
         {% endfor %}
         {% else %}
