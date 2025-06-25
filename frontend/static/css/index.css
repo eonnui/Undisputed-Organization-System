@@ -56,8 +56,6 @@ body {
 
 .wrapper {
     background-color: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     padding: 2rem 2.5rem;
@@ -370,29 +368,4 @@ button:hover {
     align-items: center;
     width: 100vw;
     height: 100vh;
-}
-
-/* --- Sound Toggle Button Styles --- */
-.sound-toggle-button {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2em;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.sound-toggle-button:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-    transform: scale(1.05);
 }
