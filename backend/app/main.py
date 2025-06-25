@@ -864,6 +864,77 @@ async def update_org_chart_node_profile_picture(
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to upload chart picture: {e}")
 
+@router.post("/api/admin/org_chart_node", response_model=schemas.OrgChartNodeUpdateResponse)
+async def create_org_chart_node(
+    update_data: schemas.UpdateOrgChartNodeTextRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin_org_data: Tuple[models.Admin, models.Organization] = Depends(get_current_admin_with_org)
+):
+    """
+    Creates a new organizational chart node.
+    """
+    authenticated_entity, organization = admin_org_data
+
+    if not organization:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this organization."
+        )
+
+    if not update_data.position:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Position is required to create a new organizational chart node."
+        )
+
+    existing_node = db.query(models.OrgChartNode).filter(
+        models.OrgChartNode.organization_id == organization.id,
+        models.OrgChartNode.position == update_data.position
+    ).first()
+
+    new_chart_node = models.OrgChartNode(
+        organization_id=organization.id,
+        admin_id=None,  
+        first_name=update_data.first_name,
+        last_name=update_data.last_name,
+        position=update_data.position,
+    )
+
+    try:
+        db.add(new_chart_node)
+        db.commit()
+        db.refresh(new_chart_node)
+
+        # Log the creation
+        description = f"Admin '{authenticated_entity.first_name} {authenticated_entity.last_name}' created new org chart node with position '{new_chart_node.position}' and ID '{new_chart_node.id}'."
+        await crud.create_admin_log(
+            db=db,
+            admin_id=authenticated_entity.admin_id,
+            organization_id=organization.id,
+            action_type="Org Chart Node Created",
+            description=description,
+            request=request,
+            target_entity_type="OrgChartNode",
+            target_entity_id=new_chart_node.id
+        )
+        db.commit() 
+        return schemas.OrgChartNodeUpdateResponse(
+            message="Organizational chart node created successfully.",
+            id=f"chart_node_{new_chart_node.id}", 
+            first_name=new_chart_node.first_name,
+            last_name=new_chart_node.last_name,
+            position=new_chart_node.position,
+            chart_picture_url=new_chart_node.chart_picture_url 
+        )
+
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Database integrity error: {e.orig}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create chart node: {e}")
+
 # Route for Organization Positions
 @router.get("/api/admin/organizations/{organization_id}/taken_positions", response_model=List[str])
 async def get_taken_positions(organization_id: int, db: Session = Depends(get_db)):
