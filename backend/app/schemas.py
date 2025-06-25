@@ -343,3 +343,18 @@ class AdminDisplay(BaseModel):
     class Config:
         orm_mode = True 
         populate_by_name = True 
+class UserLikedPost(BaseModel): 
+    id: int
+    first_name: str
+    last_name: str
+    profile_picture: Optional[str] = None 
+
+    class Config:
+        from_attributes = True 
+class LikedUsersResponse(BaseModel):
+    post_id: int
+    title: str
+    likers: List[UserLikedPost] 
+
+class OrgChartNodeOverwriteRequest(BaseModel):
+    existing_admin_id: int 

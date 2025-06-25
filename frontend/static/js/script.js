@@ -256,7 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
             "Vice President-External",
             "Secretary",
             "Treasurer",
-            "Adviser",
+            "Adviser 1",
+            "Adviser 2",
             "Auditor",
             "Public Relation Officer"
         ];
@@ -789,7 +790,8 @@ Please log in.`;
             "Vice President-External",
             "Secretary",
             "Treasurer",
-            "Adviser",
+            "Adviser 1",
+            "Adviser 2",
             "Auditor",
             "Public Relation Officer"
         ];
