@@ -23,7 +23,7 @@
             <p id="total-current-balance">₱0.00</p>
         </div>
         <div class="stat-card">
-            <h3>Total Revenue (YTD)</h3>
+            <h3>Turnover Funds (YTD)</h3> {# This will be current AY membership fees + previous turnover #}
             <p id="total-revenue-ytd">₱0.00</p>
         </div>
         <div class="stat-card">
@@ -31,14 +31,14 @@
             <p id="total-expenses-ytd">₱0.00</p>
         </div>
         <div class="stat-card">
-            <h3>Net Income (YTD)</h3>
+            <h3>Net Income (YTD)</h3> {# This will be current AY membership fees - current AY expenses #}
             <p id="net-income-ytd" class="positive">₱0.00</p>
         </div>
     </div>
 
     <div class="summary-info-container">
-        <p><strong>Overall Balance Turnover:</strong> <span id="balance-turnover">0.00</span></p>
-        <p><strong>Total Funds Available:</strong> <span id="total-funds-available">₱0.00</p>
+        {# Removed: <p><strong>Overall Balance Turnover:</strong> <span id="balance-turnover">0.00</span></p> #}
+        {# Removed: <p><strong>Total Funds Available:</strong> <span id="total-funds-available">₱0.00</p> #}
         <p><strong>Reporting Date:</strong> <span id="reporting-date">Loading...</span></p>
     </div>
 
@@ -50,7 +50,7 @@
             <button class="report-toggle-button" data-view-id="expenses" onclick="toggleView('expenses')">Expenses</button>
             <button class="report-toggle-button" data-view-id="monthly" onclick="toggleView('monthly')">Monthly</button>
             <button class="report-toggle-button" data-view-id="accounts" onclick="toggleView('accounts')">Accounts</button>
-            <button class="report-toggle-button" data-view-id="membership-tracker-view" onclick="toggleView('membership-tracker-view')">Membership</button>
+            {# REMOVE the old "Membership" button here #}
         </div>
     </div>
 
@@ -111,6 +111,53 @@
                     </tr>
                 </tfoot>
             </table>
+
+            {# INTEGRATED MEMBERSHIP FEE TRACKER HERE #}
+            <div class="membership-tracker-integrated">
+                <div class="report-header" style="margin-top: 40px;">
+                    <h3>Membership Fee Payments</h3>
+                    <p>Track member payment status by academic year and semester.</p>
+                </div>
+                <div class="filters-container">
+                    <select id="academicYearSelect">
+                        <option value="">Academic Year</option> 
+                    </select>
+                    <select id="semesterSelect">
+                        <option value="">Semester</option>
+                    </select>
+                </div>
+
+                <div class="membership-summary-cards">
+                    <div class="stat-card">
+                        <h3>Total Paid Members</h3>
+                        <p id="total-paid-members">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Unpaid Members</h3>
+                        <p id="total-unpaid-members">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Members</h3>
+                        <p id="total-members-count">0</p>
+                    </div>
+                </div>
+
+                <table class="data-table membership-table">
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>YR. & SEC</th>
+                            <th>AMOUNT PAID</th>
+                            <th>STATUS</th> 
+                        </tr>
+                    </thead>
+                    <tbody id="membershipTableBody">
+                        <tr><td colspan="4" style="text-align: center; padding: 20px;">Loading membership data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            {# END INTEGRATED MEMBERSHIP FEE TRACKER #}
+
         </div>
     </div>
 
@@ -201,50 +248,8 @@
         </div>
     </div>
 
-    <div id="membership-tracker-view" class="report-card">
-        <div class="report-header">
-            <h2>Membership Fee Tracker</h2>
-            <p>Track member payment status by academic year and semester.</p>
-        </div>
-        <div class="report-body">
-            <div class="filters-container">
-                <select id="academicYearSelect">
-                    <option value="">Academic Year</option> 
-                </select>
-                <select id="semesterSelect">
-                    <option value="">Semester</option>
-                </select>
-            </div>
+    {# REMOVE the old membership-tracker-view div if it was outside #}
 
-            <div class="membership-summary-cards">
-                <div class="stat-card">
-                    <h3>Total Paid Members</h3>
-                    <p id="total-paid-members">0</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Unpaid Members</h3>
-                    <p id="total-unpaid-members">0</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Members</h3>
-                    <p id="total-members-count">0</p>
-                </div>
-            </div>
-
-            <table class="data-table membership-table">
-                <thead>
-                    <tr>
-                        <th>NAME</th>
-                        <th>YR. & SEC</th>
-                        <th>AMOUNT PAID</th>
-                        <th>STATUS</th> </tr>
-                </thead>
-                <tbody id="membershipTableBody">
-                    <tr><td colspan="4" style="text-align: center; padding: 20px;">Loading membership data...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
