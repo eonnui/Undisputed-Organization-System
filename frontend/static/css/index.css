@@ -5,7 +5,6 @@ html {
     box-sizing: inherit;
 }
 
-/* ... existing @import rules ... */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap');
@@ -38,7 +37,7 @@ body {
     background-image: linear-gradient(to bottom, #f3f4f6, #d9dee7);
     background-size: 200% 200%;
     animation: gradientAnimation 3s ease infinite;
-    overflow: hidden; /* Prevents body scrolling if child elements overflow */
+    overflow: hidden; 
 }
 
 @keyframes gradientAnimation {
@@ -62,10 +61,7 @@ body {
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
-    /* --- NEW PROPERTIES FOR HEIGHT CONTROL --- */
-    max-height: calc(100vh - 40px); /* Max height is viewport height minus 40px (20px top, 20px bottom buffer) */
-    overflow-y: auto; /* Add vertical scrollbar if content exceeds max-height */
-    /* ----------------------------------------- */
+    max-height: calc(100vh - 40px); 
     overflow-y: auto; 
     &::-webkit-scrollbar {
         display: none;
