@@ -182,14 +182,14 @@
 }
 
 .file-name-display .file-link {
-  color: var(--org-button-bg);
+  color: var(--org-button-chart-text);
   text-decoration: none;
   font-weight: 500;
 }
 
 .file-name-display .file-link:hover {
   text-decoration: underline;
-  color: var(--org-hover-effect);
+  color: var(--org-button-chart-text);
 }
 
 .file-input {

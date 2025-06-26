@@ -1,9 +1,9 @@
 .view-history-button-header {
   padding: 0.6rem 1rem;
-  border: 2px solid var(--org-button-bg);
+  border: 2px solid var(--org-button-chart-text);
   border-radius: 8px;
   background-color: transparent;
-  color: var(--org-button-bg);
+  color: var(--org-button-chart-text);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
