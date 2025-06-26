@@ -1,336 +1,378 @@
+/* General Body and Container Styles */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+}
+
 .dashboard-container {
-  margin: 0 auto;
-  padding: 20px 20px;
-  background-color: var(--org-bg-color);
-  border-radius: var(--org-radius-lg);
-  width: 100%;
-  box-sizing: border-box;
+    margin: 0 auto;
+    padding: 20px 20px;
+    background-color: var(--org-bg-color);
+    border-radius: var(--org-radius-lg);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.dashboard-title {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 2.2em;
+    margin-bottom: 30px;
+    font-weight: 700;
 }
 
 .dashboard-header {
-  font-size: 1.8em;
-  color: var(--org-accent-dark);
-  margin-bottom: 25px;
-  text-align: center;
-  padding-bottom: 15px;
+    font-size: 1.8em;
+    color: var(--org-accent-dark);
+    margin-bottom: 25px;
+    text-align: center;
+    padding-bottom: 15px;
 }
 
 #current-year {
-  color: var(--org-dashboard-accent-primary);
-  font-weight: 600;
+    color: var(--org-dashboard-accent-primary);
+    font-weight: 600;
 }
 
+/* Quick Stats Container */
 .quick-stats-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
 .stat-card {
-  background-color: var(--org-card-bg);
-  padding: 20px;
-  border-radius: var(--org-radius-md);
-  box-shadow: var(--org-shadow-sm);
-  text-align: center;
-  transition: var(--org-transition);
-  border: 1px solid var(--org-border-medium);
+    background-color: var(--org-card-bg);
+    padding: 20px;
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-sm);
+    text-align: center;
+    transition: var(--org-transition);
+    border: 1px solid var(--org-border-medium);
 }
 
 .stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--org-shadow-md);
+    transform: translateY(-5px);
+    box-shadow: var(--org-shadow-md);
 }
 
 .stat-card h3 {
-  color: var(--org-text-secondary);
-  font-size: 1em;
-  margin-bottom: 10px;
-  font-weight: 500;
+    color: var(--org-text-secondary);
+    font-size: 1em;
+    margin-bottom: 10px;
+    font-weight: 500;
 }
 
 .stat-card p {
-  font-size: 1.8em;
-  font-weight: 700;
-  color: var(--org-accent-dark);
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--org-accent-dark);
 }
 
 .stat-card p.positive {
-  color: var(--org-success);
+    color: var(--org-success);
 }
 
 .stat-card p.negative {
-  color: var(--org-error);
+    color: var(--org-error);
 }
 
+/* Summary Info Container */
 .summary-info-container {
-  background-color: var(--org-highlight);
-  padding: 15px 25px;
-  border-radius: var(--org-radius-md);
-  margin-bottom: 30px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  gap: 15px;
-  box-shadow: var(--org-shadow-sm);
+    background-color: var(--org-highlight);
+    padding: 15px 25px;
+    border-radius: var(--org-radius-md);
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 15px;
+    box-shadow: var(--org-shadow-sm);
 }
 
 .summary-info-container p {
-  margin: 0;
-  font-size: 1.05em;
-  color: var(--org-text-primary);
+    margin: 0;
+    font-size: 1.05em;
+    color: var(--org-text-primary);
 }
 
 .summary-info-container strong {
-  color: var(--org-accent-dark);
-  font-weight: 600;
+    color: var(--org-accent-dark);
+    font-weight: 600;
 }
 
+/* Report Toggle Buttons */
 .report-toggle-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 30px;
-  background-color: var(--org-bg-secondary);
-  padding: 15px;
-  border-radius: var(--org-radius-md);
-  box-shadow: var(--org-shadow-sm);
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+    background-color: var(--org-bg-secondary);
+    padding: 15px;
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-sm);
+    flex-wrap: wrap;
 }
 
 .report-toggle-label {
-  font-size: 1.1em;
-  font-weight: 600;
-  color: var(--org-text-primary);
-  margin-right: 15px;
-  flex-shrink: 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--org-text-primary);
+    margin-right: 15px;
+    flex-shrink: 0;
 }
 
 .report-toggle-buttons {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .report-toggle-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: var(--org-radius-md);
-  background-color: var(--org-secondary-color);
-  color: var(--org-text-primary);
-  font-size: 0.95em;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--org-transition);
-  outline: none;
-  box-shadow: var(--org-shadow-sm);
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--org-radius-md);
+    background-color: var(--org-secondary-color);
+    color: var(--org-text-primary);
+    font-size: 0.95em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--org-transition);
+    outline: none;
+    box-shadow: var(--org-shadow-sm);
 }
 
 .report-toggle-button:hover {
-  border-color: var(--org-primary-light);
-  color: var(--org-text-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
+    border-color: var(--org-primary-light);
+    color: var(--org-text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(var(--org-shadow-base-rgb), 0.1);
 }
 
 .report-toggle-button.active {
-  background-color: var(--org-button-bg);
-  color: var(--org-button-text);
-  box-shadow: var(--org-shadow-md);
+    background-color: var(--org-button-bg);
+    color: var(--org-button-text);
+    box-shadow: var(--org-shadow-md);
 }
 
 .report-toggle-button.active:hover {
-  background-color: var(--org-hover-effect);
-  color: var(--org-button-text);
+    background-color: var(--org-hover-effect);
+    color: var(--org-button-text);
 }
 
 .report-card {
-  background-color: var(--org-card-bg);
-  border-radius: var(--org-radius-lg);
-  box-shadow: var(--org-shadow-md);
-  padding: 25px;
-  margin-bottom: 30px;
+    background-color: var(--org-card-bg);
+    border-radius: var(--org-radius-lg);
+    box-shadow: var(--org-shadow-md);
+    padding: 25px;
+    margin-bottom: 30px;
 
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-  display: none;
-  border: 1px solid var(--org-border-light);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    display: none;
+    border: 1px solid var(--org-border-light);
 }
 
 .report-card.active {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .report-header {
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--org-secondary-color);
-  padding-bottom: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--org-secondary-color);
+    padding-bottom: 15px;
 }
 
 .report-header h2 {
-  color: var(--org-accent-dark);
-  font-size: 1.6em;
-  margin: 0;
-  font-weight: 600;
+    color: var(--org-accent-dark);
+    font-size: 1.6em;
+    margin: 0;
+    font-weight: 600;
 }
 
 .report-header p {
-  color: var(--org-text-secondary);
-  font-size: 0.95em;
-  margin-top: 5px;
+    color: var(--org-text-secondary);
+    font-size: 0.95em;
+    margin-top: 5px;
 }
 
 .report-body {
-  padding-top: 10px;
+    padding-top: 10px;
 }
 
 .overview-charts-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 25px;
-  margin-bottom: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
 }
 
 .chart-container {
-  background-color: var(--org-bg-secondary);
-  padding: 20px;
-  border-radius: var(--org-radius-md);
-  box-shadow: var(--org-shadow-sm);
-  text-align: center;
-  border: 1px solid var(--org-border-medium);
-  max-height: 400px;
-  overflow-y: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  position: relative;
+    background-color: var(--org-bg-secondary);
+    padding: 20px;
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-sm);
+    text-align: center;
+    border: 1px solid var(--org-border-medium);
+    max-height: 400px;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    position: relative;
 }
 
 .chart-container::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 .chart-container h3 {
-  color: var(--org-text-primary);
-  font-size: 1.1em;
-  margin-bottom: 15px;
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  background-color: var(--org-bg-secondary);
-  padding-bottom: 10px;
-  z-index: 2;
+    color: var(--org-text-primary);
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    background-color: var(--org-bg-secondary);
+    padding-bottom: 10px;
+    z-index: 2;
 }
 
 .chart-canvas {
-  max-width: 100%;
-  height: 280px;
-  display: block;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
+    max-width: 100%;
+    height: 280px;
+    display: block;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
 }
 
 .key-metrics-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
 }
 
 .metric-card {
-  background-color: var(--org-highlight);
-  padding: 15px;
-  border-radius: var(--org-radius-md);
-  box-shadow: var(--org-shadow-sm);
-  text-align: center;
-  border: 1px solid var(--org-border-medium);
+    background-color: var(--org-highlight);
+    padding: 15px;
+    border-radius: var(--org-radius-md);
+    box-shadow: var(--org-shadow-sm);
+    text-align: center;
+    border: 1px solid var(--org-border-medium);
 }
 
 .metric-card h4 {
-  color: var(--org-text-secondary);
-  font-size: 0.9em;
-  margin-bottom: 8px;
-  font-weight: 500;
+    color: var(--org-text-secondary);
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    font-weight: 500;
 }
 
 .metric-card p {
-  font-size: 1.3em;
-  font-weight: 600;
-  color: var(--org-accent-dark);
+    font-size: 1.3em;
+    font-weight: 600;
+    color: var(--org-accent-dark);
 }
 
 .table-responsive-container {
-  max-height: 400px;
-  overflow-y: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  border-radius: var(--org-radius-md);
-  margin-top: 20px;
-  box-shadow: var(--org-shadow-sm);
-  border: 1px solid var(--org-primary-light);
+    max-height: 400px;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    border-radius: var(--org-radius-md);
+    margin-top: 20px;
+    box-shadow: var(--org-shadow-sm);
+    border: 1px solid var(--org-primary-light);
 }
 
 .table-responsive-container::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 .data-table {
-  width: 100%;
-
-  border-collapse: separate;
-
-  border-spacing: 0;
-  background-color: var(--org-bg-secondary);
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: var(--org-bg-secondary);
 }
 
-.data-table thead {
-  background-color: var(--org-table-header-bg-payments);
-  color: var(--org-button-text);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+/* Explicitly set header text alignment for better control */
+.data-table thead th {
+    padding: 12px 15px;
+    font-weight: 600;
+    font-size: 0.95em;
+    text-transform: uppercase;
+    background-clip: padding-box;
+    background-color: var(--org-table-header-bg-payments); /* Ensure header background */
+    color: var(--org-button-text); /* Ensure header text color */
 }
 
-.data-table th {
-  padding: 12px 15px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.95em;
-  text-transform: uppercase;
-
-  background-clip: padding-box;
-}
-
+/* Specific alignment for table headers (general for 3-col and 4-col tables) */
 .data-table thead th:first-child {
-  border-top-left-radius: var(--org-radius-md);
+    text-align: left;
+    border-top-left-radius: var(--org-radius-md);
+}
+.data-table thead th:nth-child(2),
+.data-table thead th:nth-child(3),
+.data-table thead th:nth-child(4) { /* For 4th column in monthly/accounts */
+    text-align: right;
+}
+.data-table thead th:last-child {
+    border-top-right-radius: var(--org-radius-md);
 }
 
-.data-table thead th:last-child {
-  border-top-right-radius: var(--org-radius-md);
-}
 
 .data-table tbody tr {
-  border-bottom: 1px solid var(--org-secondary-color);
+    border-bottom: 1px solid var(--org-secondary-color);
 }
 
 .data-table tbody tr:nth-child(even) {
-  background-color: var(--org-highlight);
+    background-color: var(--org-highlight);
 }
 
 .data-table tbody tr:hover {
-  background-color: var(--org-bg-color);
-  transition: background-color 0.2s ease;
+    background-color: var(--org-bg-color);
+    transition: background-color 0.2s ease;
 }
 
 .data-table td {
-  padding: 10px 15px;
-  text-align: left;
-  color: var(--org-text-primary);
-  font-size: 0.9em;
+    padding: 10px 15px;
+    color: var(--org-text-primary);
+    font-size: 0.9em;
+    text-align: left; /* Default for text columns */
 }
 
+/* Align values in any cell with class 'amount' to the right */
+.data-table td.amount {
+    text-align: right;
+    font-weight: 500;
+}
+/* Ensure percentage cells are also right-aligned */
+/* Targeting third column directly for percentage */
+.data-table tbody td:nth-child(3) {
+    text-align: right;
+}
+
+/* For 4th column in monthly/accounts if it's an amount/net income */
+.data-table tbody td:nth-child(4).amount {
+    text-align: right;
+}
+
+/* NEW: Specific alignment for the Status column in Account Balances table body */
+#accounts-balances-table tbody td:nth-child(4) {
+    text-align: right;
+}
+
+
+/* Table Footer Styles */
 .data-table tfoot {
     background-color: var(--org-table-header-bg-payments);
     font-weight: 600;
@@ -340,208 +382,444 @@
     z-index: 10;
 }
 
-.data-table tfoot th:first-child {
-    border-bottom-left-radius: var(--org-radius-md);
+.data-table tfoot th {
+    padding: 12px 15px;
+    /* Default text-align for tfoot th, overridden below */
+    text-align: left;
 }
 
-.data-table tfoot th:last-child {
+/* Specific text alignment for the footer cells */
+.data-table tfoot th:first-child {
+    text-align: left;
+    border-bottom-left-radius: var(--org-radius-md);
+}
+.data-table tfoot th:nth-child(2), /* For amount */
+.data-table tfoot th:nth-child(3), /* For percentage / last total in 3-col tables */
+.data-table tfoot th:nth-child(4) { /* For 4th column in monthly/accounts */
+    text-align: right;
+}
+.data-table tfoot th:last-child { /* General last child, for all footers */
     border-bottom-right-radius: var(--org-radius-md);
 }
 
-.data-table tfoot th {
-  padding: 12px 15px;
-  text-align: left;
+/* Explicit class for right alignment */
+.text-right {
+    text-align: right !important;
 }
 
-.data-table tfoot th.amount {
-  text-align: right;
+
+/* Membership Tracker specific styles */
+.membership-tracker-integrated {
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid var(--org-border-light);
 }
 
-.data-table .amount {
-  text-align: right;
-  font-weight: 500;
+.membership-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 30px;
 }
 
-@media (max-width: 768px) {
-  .dashboard-container {
-    margin: 20px auto;
-    padding: 15px;
-  }
+.membership-summary-cards .stat-card {
+    padding: 20px;
+}
 
-  .dashboard-title {
-    font-size: 1.8em;
-  }
-
-  .dashboard-header {
-    font-size: 1.5em;
-  }
-
-  .quick-stats-container,
-  .overview-charts-container,
-  .key-metrics-container {
-    grid-template-columns: 1fr;
-  }
-
-  .report-toggle-container {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .report-toggle-label {
-    margin-right: 0;
-    margin-bottom: 5px;
-  }
-
-  .report-toggle-buttons {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .report-toggle-button {
-    flex-grow: 1;
-  }
-
-  .table-responsive-container {
-    max-height: none;
-    overflow-y: visible;
-    -ms-overflow-style: auto;
-    scrollbar-width: auto;
-    box-shadow: none;
-    border-radius: 0;
-    border: none;
-  }
-
-  .data-table {
-    max-height: none;
-    overflow-y: visible;
-    -ms-overflow-style: auto;
-    scrollbar-width: auto;
-  }
-
-  .data-table thead {
-    position: static;
-  }
-
-  .data-table tfoot {
-    position: static;
-  }
-
-  .data-table,
-  .data-table thead,
-  .data-table tbody,
-  .data-table th,
-  .data-table td,
-  .data-table tr {
-    display: block;
-  }
-
-  .data-table thead tr {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-  }
-
-  .data-table tr {
-    border: 1px solid var(--org-secondary-color);
-    margin-bottom: 10px;
-    border-radius: var(--org-radius-md);
-    overflow: hidden;
-  }
-
-  .data-table td {
-    border: none;
-    border-bottom: 1px solid var(--org-secondary-color);
-    position: relative;
-    padding-left: 50%;
+.membership-table {
+    margin-top: 25px;
+}
+/* Membership table specific header/footer alignment - assuming it's a 4-column table */
+.membership-table thead th:nth-child(3),
+.membership-table thead th:nth-child(4) {
     text-align: right;
-  }
+}
+.membership-table tbody td:nth-child(3) {
+    text-align: right;
+}
 
-  .data-table td:before {
+
+/* Status styling for membership table */
+.membership-table .paid-status {
+    color: var(--org-success);
+    font-weight: 500;
+}
+
+.membership-table .unpaid-status {
+    color: var(--org-error);
+    font-weight: 500;
+}
+
+.membership-table .pending-status {
+    color: var(--org-warning);
+    font-weight: 500;
+}
+
+
+/* Custom Dropdown Styles */
+.filters-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.custom-filter-select {
+    position: relative;
+    width: 200px;
+    background-color: var(--org-card-bg);
+    border: 1px solid var(--org-border-medium);
+    border-radius: var(--org-radius-md);
+    cursor: pointer;
+    font-size: 0.95em;
+    color: var(--org-text-primary);
+    transition: var(--org-transition);
+    box-shadow: var(--org-shadow-sm);
+}
+
+.custom-filter-select:hover {
+    border-color: var(--org-dashboard-accent-primary);
+    box-shadow: 0 2px 8px rgba(var(--org-shadow-base-rgb, 0,0,0), 0.1);
+}
+
+.custom-filter-select.open {
+    border-color: var(--org-dashboard-accent-primary);
+    box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb, 0,0,0), 0.2);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.custom-filter-select select {
+    display: none;
+}
+
+.filter-select-value {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+}
+
+.filter-select-value::after {
+    content: '▼';
+    font-size: 0.7em;
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+
+.custom-filter-select.open .filter-select-value::after {
+    transform: rotate(180deg);
+}
+
+.filter-select-options {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     position: absolute;
-    left: 6px;
-    width: 45%;
-    padding-right: 10px;
-    white-space: nowrap;
-    text-align: left;
-    font-weight: 600;
-    color: var(--org-text-secondary);
-  }
-
-  #revenues-breakdown-body td:nth-of-type(1):before {
-    content: "Source:";
-  }
-
-  #revenues-breakdown-body td:nth-of-type(2):before {
-    content: "Amount (₱):";
-  }
-
-  #revenues-breakdown-body td:nth-of-type(3):before {
-    content: "% of Total:";
-  }
-
-  #expenses-breakdown-body td:nth-of-type(1):before {
-    content: "Category:";
-  }
-
-  #expenses-breakdown-body td:nth-of-type(2):before {
-    content: "Amount (₱):";
-  }
-
-  #expenses-breakdown-body td:nth-of-type(3):before {
-    content: "% of Total:";
-  }
-
-  #monthly-summary-body td:nth-of-type(1):before {
-    content: "Month:";
-  }
-
-  #monthly-summary-body td:nth-of-type(2):before {
-    content: "Revenue (₱):";
-  }
-
-  #monthly-summary-body td:nth-of-type(3):before {
-    content: "Expenses (₱):";
-  }
-
-  #monthly-summary-body td:nth-of-type(4):before {
-    content: "Net Income (₱):";
-  }
-
-  #accounts-balances-body td:nth-of-type(1):before {
-    content: "Account:";
-  }
-
-  #accounts-balances-body td:nth-of-type(2):before {
-    content: "Balance (₱):";
-  }
-
-  #accounts-balances-body td:nth-of-type(3):before {
-    content: "Last Transaction:";
-  }
-
-  #accounts-balances-body td:nth-of-type(4):before {
-    content: "Status:";
-  }
-
-  .data-table tfoot th {
-    display: block;
-    text-align: center !important;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--org-card-bg);
+    border: 1px solid var(--org-border-medium);
     border-top: none;
-  }
+    border-bottom-left-radius: var(--org-radius-md);
+    border-bottom-right-radius: var(--org-radius-md);
+    z-index: 10;
+    box-shadow: var(--org-shadow-md);
+    max-height: 0;
+    overflow-y: auto;
+    transition: max-height 0.3s ease-out;
+}
+
+.custom-filter-select.open .filter-select-options {
+    max-height: 200px;
+    border-top: 1px solid var(--org-border-light);
+}
+
+.filter-select-options li {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: var(--org-transition);
+}
+
+.filter-select-options li:hover {
+    background-color: var(--org-highlight);
+    color: var(--org-dashboard-accent-primary);
+}
+
+/* Collapsible Revenue Breakdown Styles */
+.academic-year-row {
+    background-color: var(--org-highlight);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--org-transition);
+}
+
+.academic-year-row:hover {
+    background-color: var(--org-bg-color);
+}
+
+/* Ensure academic year total cells align correctly */
+.academic-year-row td:first-child {
+    text-align: left;
+}
+.academic-year-row td:nth-child(2) {
+    text-align: right;
+}
+.academic-year-row td:nth-child(3) {
+    text-align: right;
+}
+
+/* Specific text alignment and indentation for semester detail cells */
+.semester-row td:first-child { /* Targets the "Source" column cell for semesters */
+    text-align: left;
+    /* Removed padding-left from here. Relying on .semester-source-text for indent. */
+}
+.semester-row td:nth-child(2) { /* Targets the "Amount (₱)" column cell for semesters */
+    text-align: right;
+}
+.semester-row td:nth-child(3) { /* Targets the "% of Total" column cell for semesters */
+    text-align: right;
+}
+
+/* Indent the content inside the first cell of semester rows */
+.semester-row td:first-child .semester-source-text {
+    margin-left: 40px;
+    display: inline-block; /* Essential for margin to apply */
+}
+
+/* Toggle icon styles */
+.academic-year-row .toggle-icon {
+    margin-right: 10px;
+    display: inline-block;
+    transition: none; /* No CSS transition, JS handles character change */
+}
+/* No CSS rotation here, JS changes the character itself */
+
+
+/* Semester row visibility and styling */
+.semester-row {
+    display: none; /* Hidden by default */
+    background-color: var(--org-card-bg) !important; /* Force consistent background, no alternating colors */
+}
+.semester-row.visible {
+    display: table-row; /* Show as a table row when visible */
+    animation: slideDown 0.3s ease-out; /* Optional: add a subtle animation */
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ensure semester row cells behave as table cells */
+.semester-row td {
+    font-size: 0.95em;
+    color: var(--org-text-primary);
+    display: table-cell;
+}
+
+/* Override alternating row colors for semester rows explicitly */
+.data-table tbody .semester-row:nth-child(even),
+.data-table tbody .semester-row:nth-child(odd) {
+    background-color: var(--org-card-bg) !important;
+}
+.data-table tbody .semester-row:hover {
+    background-color: var(--org-bg-color) !important;
+}
+
+
+/* Media Queries - Keep existing and add new overrides as needed */
+@media (max-width: 768px) {
+    .dashboard-container {
+        margin: 20px auto;
+        padding: 15px;
+    }
+
+    .dashboard-title {
+        font-size: 1.8em;
+    }
+
+    .dashboard-header {
+        font-size: 1.5em;
+    }
+
+    .quick-stats-container,
+    .overview-charts-container,
+    .key-metrics-container {
+        grid-template-columns: 1fr;
+    }
+
+    .report-toggle-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .report-toggle-label {
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+
+    .report-toggle-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .report-toggle-button {
+        flex-grow: 1;
+    }
+
+    .table-responsive-container {
+        max-height: none;
+        overflow-y: visible;
+        -ms-overflow-style: auto;
+        scrollbar-width: auto;
+        box-shadow: none;
+        border-radius: 0;
+        border: none;
+    }
+
+    .data-table {
+        max-height: none;
+        overflow-y: visible;
+        -ms-overflow-style: auto;
+        scrollbar-width: auto;
+    }
+
+    .data-table thead {
+        position: static;
+    }
+
+    .data-table tfoot {
+        position: static;
+    }
+
+    /* --- Mobile Specific Table Row/Cell Display --- */
+    .data-table,
+    .data-table thead,
+    .data-table tbody,
+    .data-table th,
+    .data-table td,
+    .data-table tr {
+        display: block;
+    }
+
+    .data-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .data-table tr {
+        border: 1px solid var(--org-secondary-color);
+        margin-bottom: 10px;
+        border-radius: var(--org-radius-md);
+        overflow: hidden;
+    }
+
+    .data-table td {
+        border: none;
+        border-bottom: 1px solid var(--org-secondary-color);
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+    }
+
+    .data-table td:before {
+        position: absolute;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 600;
+        color: var(--org-text-secondary);
+    }
+
+    /* Specific mobile adjustments for collapsible rows */
+    .academic-year-row {
+        display: block;
+        margin-bottom: 10px;
+    }
+    .academic-year-row .academic-year-toggler {
+        padding: 10px 15px;
+        text-align: left;
+        width: auto;
+        display: block;
+    }
+    .academic-year-row .academic-year-toggler:before {
+        content: none !important;
+    }
+
+    .semester-row {
+        display: none;
+    }
+    .semester-row.visible {
+        display: block;
+    }
+
+    .semester-row td {
+        padding-left: 50%;
+        text-align: right;
+        border: none;
+        border-bottom: 1px solid var(--org-secondary-color);
+    }
+    /* Add content labels for semester rows on mobile */
+    .semester-row td:nth-of-type(1):before {
+        content: "Source:";
+    }
+    .semester-row td:nth-of-type(2):before {
+        content: "Amount (₱):";
+    }
+    .semester-row td:nth-of-type(3):before {
+        content: "% of Total:";
+    }
+
+    /* Adjust specific mobile data-table td:before rules for relevant tables */
+    #revenues-breakdown-body td:nth-of-type(1):not(.academic-year-toggler):before {
+        content: "Source:";
+    }
+    #revenues-breakdown-body td:nth-of-type(2):not(.academic-year-toggler):before {
+        content: "Amount (₱):";
+    }
+    #revenues-breakdown-body td:nth-of-type(3):not(.academic-year-toggler):before {
+        content: "% of Total:";
+    }
+
+    #expenses-breakdown-body td:nth-of-type(1):before { content: "Category:"; }
+    #expenses-breakdown-body td:nth-of-type(2):before { content: "Amount (₱):"; }
+    #expenses-breakdown-body td:nth-of-type(3):before { content: "Total:"; } /* Changed content to just 'Total:' */
+
+    #monthly-summary-body td:nth-of-type(1):before { content: "Month:"; }
+    #monthly-summary-body td:nth-of-type(2):before { content: "Revenue (₱):"; }
+    #monthly-summary-body td:nth-of-type(3):before { content: "Expenses (₱):"; }
+    #monthly-summary-body td:nth-of-type(4):before { content: "Net Income (₱):"; }
+
+    #accounts-balances-body td:nth-of-type(1):before { content: "Account:"; }
+    #accounts-balances-body td:nth-of-type(2):before { content: "Balance (₱):"; }
+    #accounts-balances-body td:nth-of-type(3):before { content: "Last Transaction:"; }
+    #accounts-balances-body td:nth-of-type(4):before { content: "Status:"; }
+
+    .data-table tfoot th {
+        display: block;
+        text-align: center !important;
+        border-top: none;
+    }
 }
 
 @media (max-width: 480px) {
-  .stat-card h3 {
-    font-size: 0.9em;
-  }
-
-  .stat-card p {
-    font-size: 1.5em;
-  }
-
-  .report-toggle-button {
-    font-size: 0.85em;
-    padding: 8px 15px;
-  }
+    .stat-card h3 {
+        font-size: 0.9em;
+    }
+    .stat-card p {
+        font-size: 1.5em;
+    }
+    .report-toggle-button {
+        font-size: 0.85em;
+        padding: 8px 15px;
+    }
 }
