@@ -1,6 +1,14 @@
+html {
+    box-sizing: border-box;
+}
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap');
+
 
 :root {
     --bg-color: #f3f4f6;
@@ -29,7 +37,7 @@ body {
     background-image: linear-gradient(to bottom, #f3f4f6, #d9dee7);
     background-size: 200% 200%;
     animation: gradientAnimation 3s ease infinite;
-    overflow: hidden;
+    overflow: hidden; 
 }
 
 @keyframes gradientAnimation {
@@ -50,10 +58,11 @@ body {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     padding: 2rem 2.5rem;
     width: 100%;
-    max-width: 700px;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: calc(100vh - 40px); 
+    overflow-y: auto; 
     &::-webkit-scrollbar {
         display: none;
     }
@@ -85,7 +94,7 @@ h1 {
         transform: scale(1);
     }
     to {
-        transform: scale(1.04);
+        transform: scale(1.02);
     }
 }
 
@@ -155,7 +164,7 @@ input {
     font-size: 1rem;
     color: var(--text-primary);
     background-color: #ffffff;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, transform var(--animation-duration) ease;
     font-family: "DM Sans", sans-serif;
 }
 
@@ -163,6 +172,7 @@ input:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.125rem rgba(78, 93, 120, 0.25);
+    transform: scale(1.01);
 }
 
 .password-input-wrapper {
@@ -191,7 +201,7 @@ input:focus {
 
 .view-password-button:hover {
     color: var(--primary-color);
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 select {
@@ -239,7 +249,7 @@ button {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: box-shadow 0.2s ease;
+    transition: transform var(--animation-duration) ease, box-shadow 0.2s ease;
     font-family: "DM Sans", sans-serif;
     position: relative;
     overflow: hidden;
@@ -267,7 +277,7 @@ button:hover {
 .forgot-password:hover {
     color: var(--primary-color);
     text-decoration: none;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .link-button {
@@ -285,7 +295,7 @@ button:hover {
 .link-button:hover {
     color: var(--primary-color);
     text-decoration: none;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .error-message {
@@ -340,8 +350,12 @@ button:hover {
     transition: color var(--animation-duration) ease, opacity 0.3s ease;
 }
 
-.form-switch .link-button:hover {
-    color: var(--primary-color);
-    text-decoration: none;
-    opacity: 0.7;
+#app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
 }
