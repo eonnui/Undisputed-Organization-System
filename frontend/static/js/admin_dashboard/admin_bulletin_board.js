@@ -430,75 +430,56 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {HTMLFormElement} formElement - The form element containing the data to save.
    */
   async function saveOrgChartNode(adminId, formElement) {
-    const isNewOrgChartNode = adminId.startsWith("new_placeholder_");
-    const formData = new FormData(formElement);
-    const profilePictureFile = formData.get("chart_picture");
+      const isNewOrgChartNode = adminId.startsWith("new_placeholder_");
+      const formData = new FormData(formElement); 
 
-    const textData = {};
-    for (const [key, value] of formData.entries()) {
-      if (key !== "chart_picture") {
-        textData[key] = value;
-      }
-    }
-
-    let actualNodeIdToSend = adminId;
-
-    try {
       let apiUrl = "";
       let httpMethod = "PUT";
+      let actualNodeIdAfterCreation = adminId; 
 
-      if (isNewOrgChartNode) {
-        apiUrl = "/api/admin/org_chart_node";
-        httpMethod = "POST";
-        delete textData.id;
-      } else {
-        apiUrl = `/api/admin/org_chart_node/${adminId}`;
+      try {
+          if (isNewOrgChartNode) {
+              apiUrl = "/api/admin/org_chart_node";
+              httpMethod = "POST";
+              
+              formData.delete("id");
+          } else {
+              apiUrl = `/api/admin/org_chart_node/${adminId}`;
+          }
+
+          const response = await fetch(apiUrl, {
+              method: httpMethod,
+              body: formData,
+          });
+
+          if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Failed to save org chart node: ${errorText}`);
+          }
+
+          const responseData = await response.json(); 
+          if (isNewOrgChartNode && responseData.id) {
+              actualNodeIdAfterCreation = responseData.id;
+          }
+
+          const messageBox = document.createElement("div");
+          messageBox.className = "message-box success";
+          messageBox.textContent = "Org Chart Node updated successfully!";
+          document.body.appendChild(messageBox);
+          setTimeout(() => messageBox.remove(), 3000);
+          
+          await fetchAndRenderOrgChart();
+          
+          toggleOrgChartEditMode(actualNodeIdAfterCreation, false);
+
+      } catch (error) {
+          console.error("Error saving org chart node:", error);
+          const messageBox = document.createElement("div");
+          messageBox.className = "message-box error";
+          messageBox.textContent = `An error occurred during submission: ${error.message}`;
+          document.body.appendChild(messageBox);
+          setTimeout(() => messageBox.remove(), 3000);
       }
-
-      const textResponse = await fetch(apiUrl, {
-        method: httpMethod,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(textData),
-      });
-
-      if (!textResponse.ok) {
-        const errorText = await textResponse.text();
-        throw new Error(`Text data save failed: ${errorText}`);
-      }
-
-      const responseData = await textResponse.json();
-
-      if (isNewOrgChartNode) {
-        actualNodeIdToSend = responseData.id;
-      } else {
-        actualNodeIdToSend = adminId;
-      }
-
-      if (profilePictureFile && profilePictureFile.size > 0) {
-        const pictureUrl = `/api/admin/org_chart_node/${actualNodeIdToSend}/profile_picture`;
-
-        const pictureFormData = new FormData();
-        pictureFormData.append("chart_picture", profilePictureFile);
-
-        const pictureResponse = await fetch(pictureUrl, {
-          method: "PUT",
-          body: pictureFormData,
-        });
-
-        if (!pictureResponse.ok) {
-          const errorText = await pictureResponse.text();
-          console.error("Profile picture upload failed:", errorText);
-        }
-      }
-
-      await fetchAndRenderOrgChart();
-
-      toggleOrgChartEditMode(actualNodeIdToSend, false);
-    } catch (error) {
-      console.error("Error saving org chart node:", error);
-    }
   }
 
   /**
