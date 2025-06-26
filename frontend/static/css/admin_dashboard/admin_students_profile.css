@@ -143,7 +143,7 @@
   border-radius: 8px;
   box-shadow: var(--org-shadow-md);
   overflow-x: auto;
-  max-height: 600px;
+  max-height: 750px;
   overflow-y: scroll;
   border: 1px solid var(--org-border-medium);
   scrollbar-width: none;
@@ -157,9 +157,7 @@
 
 .students-table {
   width: 100%;
-
   border-collapse: separate;
-
   border-spacing: 0;
   margin-bottom: 20px;
 }
@@ -259,7 +257,8 @@
 }
 
 .modal-profile-details {
-  display: grid;
+  display: grid;  
+  grid-template-columns: 1fr 1fr;
   gap: 15px 30px;
   color: var(--org-text-primary);
   font-size: 1em;
@@ -283,10 +282,6 @@
 .profile-item span {
   flex-grow: 1;
   word-wrap: break-word;
-}
-
-.profile-item:last-of-type {
-  border-bottom: none;
 }
 
 .student-photo-container {

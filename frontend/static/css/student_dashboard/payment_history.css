@@ -59,7 +59,7 @@
   border: 1px solid var(--org-border-medium);
   box-shadow: var(--org-shadow-sm);
 
-  max-height: 600px;
+  max-height: 750px;
   overflow-y: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;

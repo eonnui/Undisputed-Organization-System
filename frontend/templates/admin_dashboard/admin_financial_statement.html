@@ -15,7 +15,7 @@
 
 {% block content %}
 <div class="dashboard-container">
-    <h2 class="dashboard-header">Financial Summary - Year <span id="current-year"></span></h2>
+    <h2 class="dashboard-header">Financial Summary - As of Year <span id="current-year"></span></h2>
 
     <div class="quick-stats-container">
         <div class="stat-card">
@@ -23,33 +23,38 @@
             <p id="total-current-balance">₱0.00</p>
         </div>
         <div class="stat-card">
-            <h3>Total Revenue (YTD)</h3>
+            <h3>Turnover Funds (YTD)</h3> {# This will be current AY membership fees + previous turnover #}
             <p id="total-revenue-ytd">₱0.00</p>
+        </div>
+        <div class="stat-card">
+            <h3>Upcoming Year Funds (Collected)</h3> {# New card for upcoming year fees #}
+            <p id="upcoming-funds-ytd">₱0.00</p>
         </div>
         <div class="stat-card">
             <h3>Total Expenses (YTD)</h3>
             <p id="total-expenses-ytd">₱0.00</p>
         </div>
         <div class="stat-card">
-            <h3>Net Income (YTD)</h3>
+            <h3>Net Income (YTD)</h3> {# This will be current AY membership fees - current AY expenses #}
             <p id="net-income-ytd" class="positive">₱0.00</p>
         </div>
     </div>
 
     <div class="summary-info-container">
-        <p><strong>Overall Balance Turnover:</strong> <span id="balance-turnover">0.00</span></p>
-        <p><strong>Total Funds Available:</strong> <span id="total-funds-available">₱0.00</p>
+        {# Removed: <p><strong>Overall Balance Turnover:</strong> <span id="balance-turnover">0.00</span></p> #}
+        {# Removed: <p><strong>Total Funds Available:</strong> <span id="total-funds-available">₱0.00</p> #}
         <p><strong>Reporting Date:</strong> <span id="reporting-date">Loading...</span></p>
     </div>
 
     <div class="report-toggle-container">
         <span class="report-toggle-label">Quick View:</span>
         <div class="report-toggle-buttons">
-            <button class="report-toggle-button active" onclick="toggleView('overview')">Overview</button>
-            <button class="report-toggle-button" onclick="toggleView('revenues')">Revenues</button>
-            <button class="report-toggle-button" onclick="toggleView('expenses')">Expenses</button>
-            <button class="report-toggle-button" onclick="toggleView('monthly')">Monthly</button>
-            <button class="report-toggle-button" onclick="toggleView('accounts')">Accounts</button>
+            <button class="report-toggle-button active" data-view-id="overview" onclick="toggleView('overview')">Overview</button>
+            <button class="report-toggle-button" data-view-id="revenues" onclick="toggleView('revenues')">Revenues</button>
+            <button class="report-toggle-button" data-view-id="expenses" onclick="toggleView('expenses')">Expenses</button>
+            <button class="report-toggle-button" data-view-id="monthly" onclick="toggleView('monthly')">Monthly</button>
+            <button class="report-toggle-button" data-view-id="accounts" onclick="toggleView('accounts')">Accounts</button>
+            {# REMOVE the old "Membership" button here #}
         </div>
     </div>
 
@@ -65,7 +70,7 @@
                     <canvas id="revenue-expense-chart" class="chart-canvas"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Net Income Trend (Last 12 Months)</h3>
+                    <h3>Net Income Trend </h3>
                     <canvas id="net-income-trend-chart" class="chart-canvas"></canvas>
                 </div>
             </div>
@@ -92,24 +97,75 @@
             <p>Detailed Income Sources</p>
         </div>
         <div class="report-body">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Source</th>
-                        <th>Amount (₱)</th>
-                        <th>% of Total</th>
-                    </tr>
-                </thead>
-                <tbody id="revenues-breakdown-body">
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th>Total Revenue:</th>
-                        <th class="amount" id="total-revenue-footer">₱0.00</th>
-                        <th>100%</th>
-                    </tr>
-                </tfoot>
-            </table>
+            {# Detailed Revenue Breakdown Table #}
+            <div class="table-responsive-container">
+                <table class="data-table" id="revenues-breakdown-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>AMOUNT (₱)</th>
+                            <th>% OF TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="revenues-breakdown-body">
+                        <!-- Revenue breakdown rows will be inserted here by JS -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>TOTAL REVENUES DISPLAYED:</th> {# This is the label #}
+                            <th id="total-revenue-footer" class="amount">₱0.00</th> {# The dynamic total amount #}
+                            <th class="text-right">100%</th> {# The fixed 100% #}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            {# INTEGRATED MEMBERSHIP FEE TRACKER HERE #}
+            <div class="membership-tracker-integrated">
+                <div class="report-header" style="margin-top: 40px;">
+                    <h3>Membership Fee Payments</h3>
+                    <p>Track member payment status by academic year and semester.</p>
+                </div>
+                <div class="filters-container">
+                    <select id="academicYearSelect">
+                        <option value="">Academic Year</option>
+                    </select>
+                    <select id="semesterSelect">
+                        <option value="">Semester</option>
+                    </select>
+                </div>
+
+                <div class="membership-summary-cards">
+                    <div class="stat-card">
+                        <h3>Total Paid Members</h3>
+                        <p id="total-paid-members">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Unpaid Members</h3>
+                        <p id="total-unpaid-members">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Members</h3>
+                        <p id="total-members-count">0</p>
+                    </div>
+                </div>
+
+                <table class="data-table membership-table" id="membership-tracker-table">
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>YR. & SEC</th>
+                            <th>AMOUNT PAID</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membershipTableBody">
+                        <tr><td colspan="4" style="text-align: center; padding: 20px;">Loading membership data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            {# END INTEGRATED MEMBERSHIP FEE TRACKER #}
+
         </div>
     </div>
 
@@ -119,24 +175,26 @@
             <p>Detailed Expenditures</p>
         </div>
         <div class="report-body">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th>Amount (₱)</th>
-                        <th>% of Total</th>
-                    </tr>
-                </thead>
-                <tbody id="expenses-breakdown-body">
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th>Total Expenses:</th>
-                        <th class="amount" id="total-expenses-footer">₱0.00</th>
-                        <th>100%</th>
-                    </tr>
-                </tfoot>
-            </table>
+            <div class="table-responsive-container">
+                <table class="data-table" id="expenses-breakdown-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount (₱)</th>
+                            <th>% of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenses-breakdown-body">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="1">TOTAL EXPENSES:</th> {# colspan="1" to align the text with the first column #}
+                            <th id="total-expenses-footer" class="amount">₱0.00</th>
+                            <th class="text-right">100%</th> {# Ensure this is in its own th for proper alignment #}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -147,7 +205,7 @@
         </div>
         <div class="report-body">
             <div class="monthly-summary-table">
-                <table class="data-table">
+                <table class="data-table" id="monthly-summary-table">
                     <thead>
                         <tr>
                             <th>Month</th>
@@ -177,28 +235,33 @@
             <p>Current Balances in All Accounts</p>
         </div>
         <div class="report-body">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Account</th>
-                        <th>Balance (₱)</th>
-                        <th>Last Transaction</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="accounts-balances-body">
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th>Total Balance:</th>
-                        <th class="amount" id="total-accounts-balance-footer">₱0.00</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </tfoot>
-            </table>
+            <div class="table-responsive-container">
+                <table class="data-table" id="accounts-balances-table">
+                    <thead>
+                        <tr>
+                            <th>Account</th>
+                            <th>Balance (₱)</th>
+                            <th>Last Transaction</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accounts-balances-body">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="1">TOTAL BALANCE:</th> {# colspan="1" to align text with first column #}
+                            <th id="total-accounts-balance-footer" class="amount">₱0.00</th>
+                            <th></th> {# Empty cell for Last Transaction column #}
+                            <th></th> {# Empty cell for Status column #}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     </div>
+
+    {# REMOVE the old membership-tracker-view div if it was outside #}
+
 </div>
 {% endblock %}
 

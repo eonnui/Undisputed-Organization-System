@@ -524,6 +524,7 @@ input[type="text"][name="position"] {
 
 .org-node.org-root,
 .org-root-wrapper {
+  font-size: xx-large;
   margin-bottom: 0;
   padding-bottom: 0;
 }
@@ -594,6 +595,7 @@ input[type="text"][name="position"] {
   gap: 2.5rem;
   flex-wrap: wrap;
   position: relative;
+  margin-bottom: 53px;
 }
 
 .org-sub-branch-connection-container > .org-branch-container {
@@ -614,12 +616,13 @@ input[type="text"][name="position"] {
   position: relative;
   z-index: 0;
   margin-top: -3px;
-  margin-left: 120px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .org-vertical-from-branch-top {
   width: 2px;
-  height: 2.5rem;
+  height: 15.65rem;
   background-color: var(--org-primary);
   position: absolute;
   top: 0;
@@ -643,7 +646,7 @@ input[type="text"][name="position"] {
   word-wrap: break-word;
   overflow-wrap: break-word;
   text-align: center;
-  max-width: 140px;
+  max-width: 200px;
   min-width: 130px;
   top: 20px;
 }
@@ -656,8 +659,8 @@ input[type="text"][name="position"] {
 }
 
 .profile-circle {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 5.5rem;
+  height: 5.5rem;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -973,6 +976,7 @@ input[type="text"][name="position"] {
 }
 
 .org-node-display-mode .text-container {
+  font-size: larger;
   text-align: center;
 }
 
@@ -1160,14 +1164,14 @@ input[type="text"][name="position"] {
 }
 
 .adviser-section-header {
-  margin-top: 2rem;
   color: var(--org-text-primary);
   font-weight: 600;
+  font-size: x-large;
   width: 100%;
   text-align: center;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--org-primary);
-  margin-bottom: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--org-primary);
+  margin-bottom: .5rem;
 }
 
 .adviser-group-container {
@@ -1476,7 +1480,7 @@ input[type="text"][name="position"] {
   padding: 10px 15px;
   color: var(--org-text-primary);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1.3rem;
   font-style: italic;
   white-space: nowrap;
   cursor: pointer;
