@@ -322,13 +322,7 @@ document.addEventListener("DOMContentLoaded", function () {
           dropLine.classList.add("org-line", "org-vertical-from-branch-top");
           nodeWrapper.appendChild(dropLine);
 
-          nodeWrapper.appendChild(createAdminNodeDiv(admin));
-          const verticalLineBelowNode = document.createElement("div");
-          verticalLineBelowNode.classList.add(
-            "org-line",
-            "org-vertical-to-sub-branch"
-          );
-          nodeWrapper.appendChild(verticalLineBelowNode);
+          nodeWrapper.appendChild(createAdminNodeDiv(admin));          
           nodesContainer.appendChild(nodeWrapper);
         });
 
@@ -422,11 +416,7 @@ document.addEventListener("DOMContentLoaded", function () {
       ...getDisplayAdminsForPosition("Adviser 2"),
     ];
     if (adviserData.length > 0) {
-      if (fragment.children.length > 1) {
-        const hr = document.createElement("hr");
-        hr.classList.add("section-divider");
-      }
-
+      
       const adviserSectionHeader = document.createElement("h4");
       adviserSectionHeader.textContent = "ADVISERS";
       adviserSectionHeader.classList.add("adviser-section-header");

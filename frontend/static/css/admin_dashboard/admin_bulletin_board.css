@@ -594,6 +594,7 @@ input[type="text"][name="position"] {
   gap: 2.5rem;
   flex-wrap: wrap;
   position: relative;
+  margin-bottom: 50px;
 }
 
 .org-sub-branch-connection-container > .org-branch-container {
@@ -619,7 +620,7 @@ input[type="text"][name="position"] {
 
 .org-vertical-from-branch-top {
   width: 2px;
-  height: 2.5rem;
+  height: 15.65rem;
   background-color: var(--org-primary);
   position: absolute;
   top: 0;
@@ -1160,14 +1161,14 @@ input[type="text"][name="position"] {
 }
 
 .adviser-section-header {
-  margin-top: 2rem;
+  margin-top: 4.9rem;
   color: var(--org-text-primary);
   font-weight: 600;
   width: 100%;
   text-align: center;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--org-primary);
-  margin-bottom: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--org-primary);
+  margin-bottom: .5rem;
 }
 
 .adviser-group-container {

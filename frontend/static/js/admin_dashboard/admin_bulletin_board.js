@@ -959,12 +959,6 @@ document.addEventListener("DOMContentLoaded", () => {
           nodeWrapper.appendChild(
             createAdminNodeDiv(admin, existingAdmins, currentChartAdmins)
           );
-          const verticalLineBelowNode = document.createElement("div");
-          verticalLineBelowNode.classList.add(
-            "org-line",
-            "org-vertical-to-sub-branch"
-          );
-          nodeWrapper.appendChild(verticalLineBelowNode);
           nodesContainer.appendChild(nodeWrapper);
         });
 
@@ -1070,12 +1064,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ...getDisplayAdminsForPosition("Adviser 2"),
     ];
 
-    if (adviserData.length > 0) {
-      if (fragment.children.length > 1) {
-        const hr = document.createElement("hr");
-        hr.classList.add("section-divider");
-        fragment.appendChild(hr);
-      }
+    if (adviserData.length > 0) {   
 
       const adviserSectionHeader = document.createElement("h4");
       adviserSectionHeader.textContent = "ADVISERS";
