@@ -50,7 +50,11 @@
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 20px;  
+}
+
+.payments-table-container::-webkit-scrollbar {
+  display: none;
 }
 
 .payments-container h2 {
@@ -70,6 +74,10 @@
   border-radius: var(--org-radius-md);
   border: 1px solid var(--org-border-medium);
   box-shadow: var(--org-shadow-sm);
+  max-height: 750px;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .payment-table {

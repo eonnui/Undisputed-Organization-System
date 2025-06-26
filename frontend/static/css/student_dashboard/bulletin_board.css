@@ -169,7 +169,7 @@
 }
 
 .post-card:last-child {
-  margin-bottom: 0;
+  margin-bottom: 1.5rem;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
 }
