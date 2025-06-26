@@ -278,8 +278,9 @@ function populateDashboard(data) {
                 formattedSource = '2nd Semester Fees';
             }
 
+            // Wrap formattedSource in a span with semester-source-text class for CSS indentation
             semesterRow.innerHTML = `
-                <td>&nbsp;&nbsp;&nbsp;&nbsp;${formattedSource}</td>
+                <td><span class="semester-source-text">${formattedSource}</span></td>
                 <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
             `;
@@ -301,7 +302,11 @@ function populateDashboard(data) {
             <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
         `;
     });
-    document.getElementById('total-expenses-footer').textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    // The total expenses footer needs to be handled carefully because it's a 3-column table now
+    const totalExpensesFooter = document.getElementById('total-expenses-footer');
+    if (totalExpensesFooter) { // Check if the element exists before manipulating
+        totalExpensesFooter.textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
 
 
     // Monthly Summary Table (Net Income here should reflect current AY membership fees - expenses per month)

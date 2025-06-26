@@ -97,24 +97,28 @@
             <p>Detailed Income Sources</p>
         </div>
         <div class="report-body">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Source</th>
-                        <th>Amount (₱)</th>
-                        <th>% of Total</th>
-                    </tr>
-                </thead>
-                <tbody id="revenues-breakdown-body">
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th>Total Revenues Displayed:</th> {# Updated label for clarity #}
-                        <th class="amount" id="total-revenue-footer">₱0.00</th> {# This will now reflect the sum of all rows in the table #}
-                        <th>100%</th>
-                    </tr>
-                </tfoot>
-            </table>
+            {# Detailed Revenue Breakdown Table #}
+            <div class="table-responsive-container">
+                <table class="data-table" id="revenues-breakdown-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>AMOUNT (₱)</th>
+                            <th>% OF TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="revenues-breakdown-body">
+                        <!-- Revenue breakdown rows will be inserted here by JS -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>TOTAL REVENUES DISPLAYED:</th> {# This is the label #}
+                            <th id="total-revenue-footer" class="amount">₱0.00</th> {# The dynamic total amount #}
+                            <th class="text-right">100%</th> {# The fixed 100% #}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
 
             {# INTEGRATED MEMBERSHIP FEE TRACKER HERE #}
             <div class="membership-tracker-integrated">
@@ -146,7 +150,7 @@
                     </div>
                 </div>
 
-                <table class="data-table membership-table">
+                <table class="data-table membership-table" id="membership-tracker-table">
                     <thead>
                         <tr>
                             <th>NAME</th>
@@ -171,24 +175,26 @@
             <p>Detailed Expenditures</p>
         </div>
         <div class="report-body">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th>Amount (₱)</th>
-                        <th>% of Total</th>
-                    </tr>
-                </thead>
-                <tbody id="expenses-breakdown-body">
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th>Total Expenses:</th>
-                        <th class="amount" id="total-expenses-footer">₱0.00</th>
-                        <th>100%</th>
-                    </tr>
-                </tfoot>
-            </table>
+            <div class="table-responsive-container">
+                <table class="data-table" id="expenses-breakdown-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount (₱)</th>
+                            <th>% of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenses-breakdown-body">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>TOTAL EXPENSES:</th>
+                            <th id="total-expenses-footer" class="amount">₱0.00</th>
+                            <th class="text-right">100%</th> {# Added for consistent alignment #}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -199,7 +205,7 @@
         </div>
         <div class="report-body">
             <div class="monthly-summary-table">
-                <table class="data-table">
+                <table class="data-table" id="monthly-summary-table">
                     <thead>
                         <tr>
                             <th>Month</th>
@@ -229,26 +235,28 @@
             <p>Current Balances in All Accounts</p>
         </div>
         <div class="report-body">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Account</th>
-                        <th>Balance (₱)</th>
-                        <th>Last Transaction</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="accounts-balances-body">
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th>Total Balance:</th>
-                        <th class="amount" id="total-accounts-balance-footer">₱0.00</th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                </tfoot>
-            </table>
+            <div class="table-responsive-container">
+                <table class="data-table" id="accounts-balances-table">
+                    <thead>
+                        <tr>
+                            <th>Account</th>
+                            <th>Balance (₱)</th>
+                            <th>Last Transaction</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accounts-balances-body">
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>TOTAL BALANCE:</th>
+                            <th id="total-accounts-balance-footer" class="amount">₱0.00</th>
+                            <th></th> {# Empty cell for Last Transaction column #}
+                            <th></th> {# Empty cell for Status column #}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     </div>
 

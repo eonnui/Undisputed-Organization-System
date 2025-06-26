@@ -1,6 +1,6 @@
 /* General Body and Container Styles */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f7f6;
@@ -304,30 +304,33 @@ body {
     background-color: var(--org-bg-secondary);
 }
 
-.data-table thead {
-    background-color: var(--org-table-header-bg-payments);
-    color: var(--org-button-text);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.data-table th {
+/* Explicitly set header text alignment for better control */
+.data-table thead th {
     padding: 12px 15px;
-    text-align: left;
     font-weight: 600;
     font-size: 0.95em;
     text-transform: uppercase;
     background-clip: padding-box;
+    background-color: var(--org-table-header-bg-payments); /* Ensure header background */
+    color: var(--org-button-text); /* Ensure header text color */
 }
 
+/* Specific alignment for table headers */
 .data-table thead th:first-child {
+    text-align: left;
     border-top-left-radius: var(--org-radius-md);
 }
-
-.data-table thead th:last-child {
+.data-table thead th:nth-child(2) {
+    text-align: right;
+}
+.data-table thead th:nth-child(3) {
+    text-align: right;
+}
+.data-table thead th:last-child { /* General last child, useful for 4-column tables */
+    text-align: right; /* Default, overridden if needed by specific nth-child */
     border-top-right-radius: var(--org-radius-md);
 }
+
 
 .data-table tbody tr {
     border-bottom: 1px solid var(--org-secondary-color);
@@ -344,11 +347,13 @@ body {
 
 .data-table td {
     padding: 10px 15px;
-    text-align: left;
     color: var(--org-text-primary);
     font-size: 0.9em;
+    /* Default text-align for tbody td, overridden below */
+    text-align: left;
 }
 
+/* Table Footer Styles */
 .data-table tfoot {
     background-color: var(--org-table-header-bg-payments);
     font-weight: 600;
@@ -358,33 +363,40 @@ body {
     z-index: 10;
 }
 
-.data-table tfoot th:first-child {
-    border-bottom-left-radius: var(--org-radius-md);
-}
-
-.data-table tfoot th:last-child {
-    border-bottom-right-radius: var(--org-radius-md);
-}
-
 .data-table tfoot th {
     padding: 12px 15px;
+    /* Default text-align for tfoot th, overridden below */
     text-align: left;
 }
 
-.data-table tfoot th.amount {
+/* Specific text alignment for the footer cells */
+.data-table tfoot th:first-child {
+    text-align: left;
+    border-bottom-left-radius: var(--org-radius-md);
+}
+.data-table tfoot th:nth-child(2) { /* For amount */
     text-align: right;
 }
+.data-table tfoot th:nth-child(3) { /* For percentage / last total in 3-col tables */
+    text-align: right;
+}
+.data-table tfoot th:last-child { /* General last child, for 4-col tables (e.g., Accounts, Monthly Summary) */
+    text-align: right; /* Default, overridden if needed for empty cells like in Accounts */
+    border-bottom-right-radius: var(--org-radius-md);
+}
 
+/* Align values in any cell with class 'amount' to the right */
 .data-table .amount {
     text-align: right;
     font-weight: 500;
 }
 
+
 /* Membership Tracker specific styles */
 .membership-tracker-integrated {
     margin-top: 50px;
     padding-top: 30px;
-    border-top: 1px solid var(--org-border-light); /* Using a variable */
+    border-top: 1px solid var(--org-border-light);
 }
 
 .membership-summary-cards {
@@ -405,17 +417,17 @@ body {
 
 /* Status styling for membership table */
 .membership-table .paid-status {
-    color: var(--org-success); /* Using a variable */
+    color: var(--org-success);
     font-weight: 500;
 }
 
 .membership-table .unpaid-status {
-    color: var(--org-error); /* Using a variable */
+    color: var(--org-error);
     font-weight: 500;
 }
 
 .membership-table .pending-status {
-    color: var(--org-warning); /* Assuming a warning variable exists or defaulting */
+    color: var(--org-warning);
     font-weight: 500;
 }
 
@@ -431,31 +443,31 @@ body {
 
 .custom-filter-select {
     position: relative;
-    width: 200px; /* Adjust width as needed */
-    background-color: var(--org-card-bg); /* Using a variable */
-    border: 1px solid var(--org-border-medium); /* Using a variable */
-    border-radius: var(--org-radius-md); /* Using a variable */
+    width: 200px;
+    background-color: var(--org-card-bg);
+    border: 1px solid var(--org-border-medium);
+    border-radius: var(--org-radius-md);
     cursor: pointer;
     font-size: 0.95em;
-    color: var(--org-text-primary); /* Using a variable */
-    transition: var(--org-transition); /* Using a variable */
-    box-shadow: var(--org-shadow-sm); /* Using a variable */
+    color: var(--org-text-primary);
+    transition: var(--org-transition);
+    box-shadow: var(--org-shadow-sm);
 }
 
 .custom-filter-select:hover {
-    border-color: var(--org-dashboard-accent-primary); /* Using a variable */
-    box-shadow: 0 2px 8px rgba(var(--org-shadow-base-rgb, 0,0,0), 0.1); /* Adjusted shadow with var */
+    border-color: var(--org-dashboard-accent-primary);
+    box-shadow: 0 2px 8px rgba(var(--org-shadow-base-rgb, 0,0,0), 0.1);
 }
 
 .custom-filter-select.open {
-    border-color: var(--org-dashboard-accent-primary); /* Using a variable */
-    box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb, 0,0,0), 0.2); /* Adjusted shadow with var */
+    border-color: var(--org-dashboard-accent-primary);
+    box-shadow: 0 4px 12px rgba(var(--org-shadow-base-rgb, 0,0,0), 0.2);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
 
 .custom-filter-select select {
-    display: none; /* Hide the original select */
+    display: none;
 }
 
 .filter-select-value {
@@ -485,63 +497,61 @@ body {
     top: 100%;
     left: 0;
     right: 0;
-    background-color: var(--org-card-bg); /* Using a variable */
-    border: 1px solid var(--org-border-medium); /* Using a variable */
+    background-color: var(--org-card-bg);
+    border: 1px solid var(--org-border-medium);
     border-top: none;
-    border-bottom-left-radius: var(--org-radius-md); /* Using a variable */
-    border-bottom-right-radius: var(--org-radius-md); /* Using a variable */
+    border-bottom-left-radius: var(--org-radius-md);
+    border-bottom-right-radius: var(--org-radius-md);
     z-index: 10;
-    box-shadow: var(--org-shadow-md); /* Using a variable */
-    max-height: 0; /* Initially hidden */
+    box-shadow: var(--org-shadow-md);
+    max-height: 0;
     overflow-y: auto;
     transition: max-height 0.3s ease-out;
 }
 
 .custom-filter-select.open .filter-select-options {
-    max-height: 200px; /* Max height when open */
-    border-top: 1px solid var(--org-border-light); /* Using a variable */
+    max-height: 200px;
+    border-top: 1px solid var(--org-border-light);
 }
 
 .filter-select-options li {
     padding: 10px 15px;
     cursor: pointer;
-    transition: var(--org-transition); /* Using a variable */
+    transition: var(--org-transition);
 }
 
 .filter-select-options li:hover {
-    background-color: var(--org-highlight); /* Using a variable */
-    color: var(--org-dashboard-accent-primary); /* Using a variable */
+    background-color: var(--org-highlight);
+    color: var(--org-dashboard-accent-primary);
 }
 
 /* Collapsible Revenue Breakdown Styles */
 .academic-year-row {
-    background-color: var(--org-highlight); /* Light background for year row */
+    background-color: var(--org-highlight);
     font-weight: 600;
     cursor: pointer;
-    transition: var(--org-transition); /* Use existing variable */
+    transition: var(--org-transition);
 }
 
 .academic-year-row:hover {
-    background-color: var(--org-bg-color); /* Slightly darker on hover, adjust to available vars */
+    background-color: var(--org-bg-color);
 }
 
-/* Specific text alignment for academic year total cells */
-.academic-year-row td:first-child { /* Targets the "Source" column cell */
-    text-align: left; /* Align icon and year text to the left */
+/* Ensure academic year total cells align correctly */
+.academic-year-row td:first-child {
+    text-align: left;
+}
+.academic-year-row td:nth-child(2) {
+    text-align: right;
+}
+.academic-year-row td:nth-child(3) {
+    text-align: right;
 }
 
-.academic-year-row td:nth-child(2) { /* Targets the "Amount (₱)" column cell */
-    text-align: right; /* Align amount to the right */
-}
-
-.academic-year-row td:nth-child(3) { /* Targets the "% of Total" column cell */
-    text-align: right; /* Align percentage to the right */
-}
-
-/* Specific text alignment for semester detail cells */
+/* Specific text alignment and indentation for semester detail cells */
 .semester-row td:first-child { /* Targets the "Source" column cell for semesters */
     text-align: left;
-    padding-left: 40px; /* Indent only the source text */
+    /* Removed padding-left from here. Relying on .semester-source-text for indent. */
 }
 .semester-row td:nth-child(2) { /* Targets the "Amount (₱)" column cell for semesters */
     text-align: right;
@@ -550,25 +560,26 @@ body {
     text-align: right;
 }
 
+/* Indent the content inside the first cell of semester rows */
+.semester-row td:first-child .semester-source-text {
+    margin-left: 40px;
+    display: inline-block; /* Essential for margin to apply */
+}
 
+/* Toggle icon styles */
 .academic-year-row .toggle-icon {
     margin-right: 10px;
     display: inline-block;
-    transition: transform 0.2s ease;
-    /* Default direction is right (for collapsed state) - managed by JS char now */
-    /* REMOVED: transform: rotate(0deg); */
+    transition: none; /* No CSS transition, JS handles character change */
 }
+/* No CSS rotation here, JS changes the character itself */
 
-/* When expanded, rotate the icon down - managed by JS char now */
-.academic-year-row.expanded .toggle-icon {
-    /* REMOVED: transform: rotate(90deg); */
-}
 
+/* Semester row visibility and styling */
 .semester-row {
     display: none; /* Hidden by default */
-    background-color: var(--org-card-bg) !important; /* Force consistent background for semester rows */
+    background-color: var(--org-card-bg) !important; /* Force consistent background, no alternating colors */
 }
-
 .semester-row.visible {
     display: table-row; /* Show as a table row when visible */
     animation: slideDown 0.3s ease-out; /* Optional: add a subtle animation */
@@ -582,19 +593,17 @@ body {
 /* Ensure semester row cells behave as table cells */
 .semester-row td {
     font-size: 0.95em;
-    color: var(--org-text-primary); /* Changed to primary text color */
-    display: table-cell; /* Ensure proper table cell behavior */
+    color: var(--org-text-primary);
+    display: table-cell;
 }
 
-/* Remove alternating row colors for semester rows explicitly */
-.data-table tbody .semester-row:nth-child(even) {
-    background-color: var(--org-card-bg) !important; /* Override even row background */
-}
+/* Override alternating row colors for semester rows explicitly */
+.data-table tbody .semester-row:nth-child(even),
 .data-table tbody .semester-row:nth-child(odd) {
-    background-color: var(--org-card-bg) !important; /* Override odd row background */
+    background-color: var(--org-card-bg) !important;
 }
 .data-table tbody .semester-row:hover {
-    background-color: var(--org-bg-color) !important; /* Ensure hover still works if desired, but matches general table hover */
+    background-color: var(--org-bg-color) !important;
 }
 
 
@@ -708,29 +717,28 @@ body {
 
     /* Specific mobile adjustments for collapsible rows */
     .academic-year-row {
-        display: block; /* Ensure year rows behave as blocks on mobile */
-        margin-bottom: 10px; /* Space between year blocks */
+        display: block;
+        margin-bottom: 10px;
     }
-    .academic-year-row .academic-year-toggler { /* Target the toggler td specifically */
-        padding: 10px 15px; /* Adjust padding for mobile */
-        text-align: left; /* Ensure alignment */
-        width: auto; /* Allow content to dictate width */
-        display: block; /* Make it block on mobile */
+    .academic-year-row .academic-year-toggler {
+        padding: 10px 15px;
+        text-align: left;
+        width: auto;
+        display: block;
     }
-    /* Remove the mobile pseudo-element content from the academic year toggler on mobile */
     .academic-year-row .academic-year-toggler:before {
         content: none !important;
     }
 
     .semester-row {
-        display: none; /* Still hidden by default */
+        display: none;
     }
     .semester-row.visible {
-        display: block; /* Show as block when visible */
+        display: block;
     }
 
     .semester-row td {
-        padding-left: 50%; /* Consistent with other mobile table cells */
+        padding-left: 50%;
         text-align: right;
         border: none;
         border-bottom: 1px solid var(--org-secondary-color);
@@ -746,60 +754,30 @@ body {
         content: "% of Total:";
     }
 
-    /* Keep existing mobile data-table td:before rules for non-collapsible cells */
-    #revenues-breakdown-body td:nth-of-type(1):not(.academic-year-toggler):before { /* Adjusted selector */
+    /* Adjust specific mobile data-table td:before rules for relevant tables */
+    #revenues-breakdown-body td:nth-of-type(1):not(.academic-year-toggler):before {
         content: "Source:";
     }
-    #revenues-breakdown-body td:nth-of-type(2):not(.academic-year-toggler):before { /* Adjusted selector */
+    #revenues-breakdown-body td:nth-of-type(2):not(.academic-year-toggler):before {
         content: "Amount (₱):";
     }
-    #revenues-breakdown-body td:nth-of-type(3):not(.academic-year-toggler):before { /* Adjusted selector */
-        content: "% of Total:";
-    }
-    
-    #expenses-breakdown-body td:nth-of-type(1):before {
-        content: "Category:";
-    }
-
-    #expenses-breakdown-body td:nth-of-type(2):before {
-        content: "Amount (₱):";
-    }
-
-    #expenses-breakdown-body td:nth-of-type(3):before {
+    #revenues-breakdown-body td:nth-of-type(3):not(.academic-year-toggler):before {
         content: "% of Total:";
     }
 
-    #monthly-summary-body td:nth-of-type(1):before {
-        content: "Month:";
-    }
+    #expenses-breakdown-body td:nth-of-type(1):before { content: "Category:"; }
+    #expenses-breakdown-body td:nth-of-type(2):before { content: "Amount (₱):"; }
+    #expenses-breakdown-body td:nth-of-type(3):before { content: "% of Total:"; }
 
-    #monthly-summary-body td:nth-of-type(2):before {
-        content: "Revenue (₱):";
-    }
+    #monthly-summary-body td:nth-of-type(1):before { content: "Month:"; }
+    #monthly-summary-body td:nth-of-type(2):before { content: "Revenue (₱):"; }
+    #monthly-summary-body td:nth-of-type(3):before { content: "Expenses (₱):"; }
+    #monthly-summary-body td:nth-of-type(4):before { content: "Net Income (₱):"; }
 
-    #monthly-summary-body td:nth-of-type(3):before {
-        content: "Expenses (₱):";
-    }
-
-    #monthly-summary-body td:nth-of-type(4):before {
-        content: "Net Income (₱):";
-    }
-
-    #accounts-balances-body td:nth-of-type(1):before {
-        content: "Account:";
-    }
-
-    #accounts-balances-body td:nth-of-type(2):before {
-        content: "Balance (₱):";
-    }
-
-    #accounts-balances-body td:nth-of-type(3):before {
-        content: "Last Transaction:";
-    }
-
-    #accounts-balances-body td:nth-of-type(4):before {
-        content: "Status:";
-    }
+    #accounts-balances-body td:nth-of-type(1):before { content: "Account:"; }
+    #accounts-balances-body td:nth-of-type(2):before { content: "Balance (₱):"; }
+    #accounts-balances-body td:nth-of-type(3):before { content: "Last Transaction:"; }
+    #accounts-balances-body td:nth-of-type(4):before { content: "Status:"; }
 
     .data-table tfoot th {
         display: block;
@@ -812,11 +790,9 @@ body {
     .stat-card h3 {
         font-size: 0.9em;
     }
-
     .stat-card p {
         font-size: 1.5em;
     }
-
     .report-toggle-button {
         font-size: 0.85em;
         padding: 8px 15px;
