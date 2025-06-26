@@ -614,7 +614,7 @@ input[type="text"][name="position"] {
   position: relative;
   z-index: 0;
   margin-top: -3px;
-  margin-left: 120px;
+  margin-left: 200px;
 }
 
 .org-vertical-from-branch-top {
