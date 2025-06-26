@@ -11,10 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
     : null;
 
   /**
-   * Opens the global modal with a specified title.
+   * Opens the global modal with a specified title and content.
    * @param {string} title - The title to display in the modal header.
+   * @param {string|HTMLElement} content - The content to display in the modal body. Can be HTML string or a DOM element.
    */
-  function openGlobalModal(title) {
+  function openGlobalModal(title, content = "") {
     if (!globalModal || !modalBody) {
       console.error("Global modal elements not found.");
       return;
@@ -27,8 +28,14 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       const newTitle = document.createElement("h3");
       newTitle.innerText = title;
-      modalBody.innerHTML = "";
       modalBody.prepend(newTitle);
+    }
+
+    modalBody.innerHTML = "";
+    if (typeof content === "string") {
+      modalBody.innerHTML = content;
+    } else if (content instanceof HTMLElement) {
+      modalBody.appendChild(content);
     }
 
     globalModal.style.display = "flex";
@@ -430,56 +437,56 @@ document.addEventListener("DOMContentLoaded", () => {
    * @param {HTMLFormElement} formElement - The form element containing the data to save.
    */
   async function saveOrgChartNode(adminId, formElement) {
-      const isNewOrgChartNode = adminId.startsWith("new_placeholder_");
-      const formData = new FormData(formElement); 
+    const isNewOrgChartNode = adminId.startsWith("new_placeholder_");
+    const formData = new FormData(formElement);
 
-      let apiUrl = "";
-      let httpMethod = "PUT";
-      let actualNodeIdAfterCreation = adminId; 
+    let apiUrl = "";
+    let httpMethod = "PUT";
+    let actualNodeIdAfterCreation = adminId;
 
-      try {
-          if (isNewOrgChartNode) {
-              apiUrl = "/api/admin/org_chart_node";
-              httpMethod = "POST";
-              
-              formData.delete("id");
-          } else {
-              apiUrl = `/api/admin/org_chart_node/${adminId}`;
-          }
+    try {
+      if (isNewOrgChartNode) {
+        apiUrl = "/api/admin/org_chart_node";
+        httpMethod = "POST";
 
-          const response = await fetch(apiUrl, {
-              method: httpMethod,
-              body: formData,
-          });
-
-          if (!response.ok) {
-              const errorText = await response.text();
-              throw new Error(`Failed to save org chart node: ${errorText}`);
-          }
-
-          const responseData = await response.json(); 
-          if (isNewOrgChartNode && responseData.id) {
-              actualNodeIdAfterCreation = responseData.id;
-          }
-
-          const messageBox = document.createElement("div");
-          messageBox.className = "message-box success";
-          messageBox.textContent = "Org Chart Node updated successfully!";
-          document.body.appendChild(messageBox);
-          setTimeout(() => messageBox.remove(), 3000);
-          
-          await fetchAndRenderOrgChart();
-          
-          toggleOrgChartEditMode(actualNodeIdAfterCreation, false);
-
-      } catch (error) {
-          console.error("Error saving org chart node:", error);
-          const messageBox = document.createElement("div");
-          messageBox.className = "message-box error";
-          messageBox.textContent = `An error occurred during submission: ${error.message}`;
-          document.body.appendChild(messageBox);
-          setTimeout(() => messageBox.remove(), 3000);
+        formData.delete("id");
+      } else {
+        apiUrl = `/api/admin/org_chart_node/${adminId}`;
       }
+
+      const response = await fetch(apiUrl, {
+        method: httpMethod,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to save org chart node: ${errorText}`);
+      }
+
+      const responseData = await response.json();
+      if (isNewOrgChartNode && responseData.id) {
+        actualNodeIdAfterCreation = responseData.id;
+      }
+
+      const messageBox = document.createElement("div");
+      messageBox.className = "message-box success";
+      messageBox.textContent = "Org Chart Node updated successfully!";
+      document.body.appendChild(messageBox);
+      setTimeout(() => messageBox.remove(), 3000);
+
+      await fetchAndRenderOrgChart();
+
+      toggleOrgChartEditMode(actualNodeIdAfterCreation, false);
+
+    } catch (error) {
+      console.error("Error saving org chart node:", error);
+      const messageBox = document.createElement("div");
+      messageBox.className = "message-box error";
+      messageBox.textContent = `An error occurred during submission: ${error.message}`;
+      document.body.appendChild(messageBox);
+      setTimeout(() => messageBox.remove(), 3000);
+    }
   }
 
   /**
@@ -1120,7 +1127,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const existingAdmins = await existingAdminsResponse.json();
 
       modalBody.innerHTML = "";
-
+      
       const chartElements = createOrgChartDisplayElements(
         currentChartAdmins,
         existingAdmins
@@ -1157,4 +1164,24 @@ document.addEventListener("DOMContentLoaded", () => {
       fetchAndRenderOrgChart();
     });
   }
+
+  document.body.addEventListener("click", function (event) {
+    const clickedImage = event.target.closest(".expandable-image");
+
+    if (clickedImage) {
+      const imageUrl = clickedImage.src;
+      const imageAlt = clickedImage.alt || "Expanded Image";
+
+      const expandedImageElement = document.createElement("img");
+      expandedImageElement.src = imageUrl;
+      expandedImageElement.alt = imageAlt;
+      expandedImageElement.style.maxWidth = "100%";
+      expandedImageElement.style.height = "auto";
+      expandedImageElement.style.display = "block";
+      expandedImageElement.style.margin = "0 auto";
+      expandedImageElement.style.borderRadius = "6px";
+
+      openGlobalModal(imageAlt, expandedImageElement);
+    }
+  });
 });

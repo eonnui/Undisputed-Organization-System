@@ -1502,3 +1502,7 @@ input[type="text"][name="position"] {
 .org-node-actions-menu .menu-item.error-message {
   color: #dc3545;
 }
+
+.expandable-image {
+  cursor: pointer;
+}
