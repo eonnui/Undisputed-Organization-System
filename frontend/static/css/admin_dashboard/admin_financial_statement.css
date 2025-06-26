@@ -525,7 +525,7 @@ body {
     background-color: var(--org-bg-color); /* Slightly darker on hover, adjust to available vars */
 }
 
-/* Ensure academic year totals are aligned in their cells */
+/* Specific text alignment for academic year total cells */
 .academic-year-row td:first-child { /* Targets the "Source" column cell */
     text-align: left; /* Align icon and year text to the left */
 }
@@ -538,14 +538,30 @@ body {
     text-align: right; /* Align percentage to the right */
 }
 
+/* Specific text alignment for semester detail cells */
+.semester-row td:first-child { /* Targets the "Source" column cell for semesters */
+    text-align: left;
+    padding-left: 40px; /* Indent only the source text */
+}
+.semester-row td:nth-child(2) { /* Targets the "Amount (₱)" column cell for semesters */
+    text-align: right;
+}
+.semester-row td:nth-child(3) { /* Targets the "% of Total" column cell for semesters */
+    text-align: right;
+}
+
+
 .academic-year-row .toggle-icon {
     margin-right: 10px;
     display: inline-block;
     transition: transform 0.2s ease;
+    /* Default direction is right (for collapsed state) - managed by JS char now */
+    /* REMOVED: transform: rotate(0deg); */
 }
 
+/* When expanded, rotate the icon down - managed by JS char now */
 .academic-year-row.expanded .toggle-icon {
-    transform: rotate(90deg); /* Rotate icon when expanded */
+    /* REMOVED: transform: rotate(90deg); */
 }
 
 .semester-row {
@@ -563,11 +579,10 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Adjust padding for semester rows to create a visual hierarchy */
+/* Ensure semester row cells behave as table cells */
 .semester-row td {
-    padding-left: 40px; /* Further indent for semester details */
     font-size: 0.95em;
-    color: var(--org-text-secondary); /* Use existing variable */
+    color: var(--org-text-primary); /* Changed to primary text color */
     display: table-cell; /* Ensure proper table cell behavior */
 }
 
@@ -702,6 +717,10 @@ body {
         width: auto; /* Allow content to dictate width */
         display: block; /* Make it block on mobile */
     }
+    /* Remove the mobile pseudo-element content from the academic year toggler on mobile */
+    .academic-year-row .academic-year-toggler:before {
+        content: none !important;
+    }
 
     .semester-row {
         display: none; /* Still hidden by default */
@@ -727,7 +746,7 @@ body {
         content: "% of Total:";
     }
 
-    /* Keep existing mobile data-table td:before rules */
+    /* Keep existing mobile data-table td:before rules for non-collapsible cells */
     #revenues-breakdown-body td:nth-of-type(1):not(.academic-year-toggler):before { /* Adjusted selector */
         content: "Source:";
     }
@@ -737,12 +756,7 @@ body {
     #revenues-breakdown-body td:nth-of-type(3):not(.academic-year-toggler):before { /* Adjusted selector */
         content: "% of Total:";
     }
-    /* Remove specific td:nth-of-type for the academic year header on mobile */
-    .academic-year-row .academic-year-toggler:before { /* Adjusted selector */
-        content: none !important;
-    }
-
-
+    
     #expenses-breakdown-body td:nth-of-type(1):before {
         content: "Category:";
     }
