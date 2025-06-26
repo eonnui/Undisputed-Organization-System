@@ -227,18 +227,66 @@ function populateDashboard(data) {
     // Revenues Breakdown Table
     const revenuesBreakdownBody = document.getElementById('revenues-breakdown-body');
     revenuesBreakdownBody.innerHTML = '';
-    // This will now primarily display 'Turnover from Previous Years' and potentially other current-year revenues
-    // that are *not* membership fees. You'll need your backend to structure this array accordingly.
-    data.revenues_breakdown.forEach(item => {
-        const row = revenuesBreakdownBody.insertRow();
-        row.innerHTML = `
-            <td>${item.source}</td>
-            <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
+
+    // Calculate total of all revenues to be displayed in the table (excluding the 'Turnover from Previous Years' summary line)
+    // This sum will include individual semester fees from all years and upcoming fees.
+    let totalRevenuesDisplayed = 0;
+
+    data.revenues_breakdown.forEach(yearData => {
+        // Create academic year row (collapsible)
+        const yearRow = revenuesBreakdownBody.insertRow();
+        yearRow.classList.add('academic-year-row');
+        yearRow.dataset.year = yearData.year;
+        yearRow.innerHTML = `
+            <td class="academic-year-toggler">
+                <span class="toggle-icon">▶</span> <span class="academic-year-text">${yearData.year} Total</span>
+            </td>
+            <td class="amount">₱${yearData.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td>${yearData.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
         `;
+        totalRevenuesDisplayed += yearData.total; // Add academic year total to grand total
+
+        // Event listener to toggle semester visibility
+        yearRow.querySelector('.academic-year-toggler').addEventListener('click', function() {
+            const currentYear = this.closest('.academic-year-row').dataset.year;
+            const semesterRows = document.querySelectorAll(`.semester-row[data-parent-year="${currentYear}"]`);
+            const toggleIcon = this.querySelector('.toggle-icon');
+
+            if (yearRow.classList.contains('expanded')) {
+                yearRow.classList.remove('expanded');
+                toggleIcon.textContent = '▶';
+                semesterRows.forEach(row => row.classList.remove('visible'));
+            } else {
+                yearRow.classList.add('expanded');
+                toggleIcon.textContent = '▼';
+                semesterRows.forEach(row => row.classList.add('visible'));
+            }
+        });
+
+
+        // Create semester rows (initially hidden)
+        yearData.semesters.forEach(item => {
+            const semesterRow = revenuesBreakdownBody.insertRow();
+            semesterRow.classList.add('semester-row');
+            semesterRow.dataset.parentYear = yearData.year; // Link to parent academic year
+            
+            // Format semester source for better readability
+            let formattedSource = item.source;
+            if (item.source.toLowerCase().includes('1st fees')) {
+                formattedSource = '1st Semester Fees';
+            } else if (item.source.toLowerCase().includes('2nd fees')) {
+                formattedSource = '2nd Semester Fees';
+            }
+
+            semesterRow.innerHTML = `
+                <td>&nbsp;&nbsp;&nbsp;&nbsp;${formattedSource}</td>
+                <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
+            `;
+            // Note: semester rows are initially hidden by CSS and revealed by JS
+        });
     });
-    // Calculate total of all revenues displayed in the table
-    const totalRevenuesDisplayed = data.revenues_breakdown.reduce((sum, item) => sum + item.amount, 0);
+
     document.getElementById('total-revenue-footer').textContent = `₱${totalRevenuesDisplayed.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
 
@@ -354,18 +402,44 @@ async function fetchFinancialData() {
             // Profit margin should only consider current academic year revenue vs. expenses
             profit_margin_ytd: currentAYRevenue > 0 ? (netIncomeCurrentAY / currentAYRevenue * 100).toFixed(2) : 0.00,
 
-            // Detailed breakdowns (mocked data to populate tables)
+            // Updated revenues_breakdown to support collapsible academic years
             revenues_breakdown: [
-                { source: "AV 2022-2023 - 1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
-                { source: "AV 2022-2023 - 2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
-                { source: "AV 2023-2024 - 1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
-                { source: "AV 2023-2024 - 2nd Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
-                { source: "AV 2024-2025 - 1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
-                { source: "AV 2024-2025 - 2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
-                // Separating upcoming academic year fees for clarity
-                { source: "AV 2025-2026 - 1st Fees (Upcoming AY)", amount: 300.00, percentage: (300/1300*100).toFixed(2) },
-                { source: "AV 2025-2026 - 2nd Fees (Upcoming AY)", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
-                { source: "Turnover from Previous Years", amount: turnoverFunds, percentage: (turnoverFunds/1300*100).toFixed(2) } // Explicitly adding turnover
+                {
+                    year: "AV 2022-2023",
+                    total: 300.00, // 100 + 200
+                    percentage: (300/1300*100).toFixed(2),
+                    semesters: [
+                        { source: "1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
+                        { source: "2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) }
+                    ]
+                },
+                {
+                    year: "AV 2023-2024",
+                    total: 200.00, // 100 + 100
+                    percentage: (200/1300*100).toFixed(2),
+                    semesters: [
+                        { source: "1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
+                        { source: "2nd Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) }
+                    ]
+                },
+                {
+                    year: "AV 2024-2025 (Current AY)",
+                    total: 300.00, // 100 + 200
+                    percentage: (300/1300*100).toFixed(2),
+                    semesters: [
+                        { source: "1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
+                        { source: "2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) }
+                    ]
+                },
+                {
+                    year: "AV 2025-2026 (Upcoming AY)",
+                    total: 500.00, // 300 + 200
+                    percentage: (500/1300*100).toFixed(2),
+                    semesters: [
+                        { source: "1st Fees", amount: 300.00, percentage: (300/1300*100).toFixed(2) },
+                        { source: "2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) }
+                    ]
+                }
             ],
             expenses_breakdown: [
                 { category: "Salaries", amount: 0.00, percentage: 0.00 },
