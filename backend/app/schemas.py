@@ -341,7 +341,7 @@ class AdminDisplay(BaseModel):
     profile_picture: Optional[str] = None 
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 
         populate_by_name = True 
 class UserLikedPost(BaseModel): 
     id: int
