@@ -2085,21 +2085,62 @@ async def admin_membership(
 ) -> List[Dict]:
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    users = db.query(models.User).options(
-        joinedload(models.User.payment_items)
-    ).filter(models.User.organization_id == admin_org.id).all()
+    # Start with a query for users in the organization
+    query = db.query(models.User).filter(models.User.organization_id == admin_org.id)
+
+    # Apply filters by joining PaymentItem and filtering on its columns
+    if academic_year or semester:
+        # We need to join PaymentItem to filter users based on their payment items
+        query = query.join(
+            models.PaymentItem,
+            models.User.id == models.PaymentItem.user_id
+        )
+        # Add payment item specific filters
+        payment_item_filters = [
+            models.PaymentItem.student_shirt_order_id.is_(None)
+        ]
+        if academic_year:
+            payment_item_filters.append(models.PaymentItem.academic_year == academic_year)
+        if semester:
+            payment_item_filters.append(models.PaymentItem.semester == semester)
+        
+        query = query.filter(*payment_item_filters)
+    
+    # Ensure unique users are returned, and load payment items for calculation
+    # We load all payment items now, but we'll still filter them in Python for robust sums
+    # if a user has other payment items not related to the current filters
+    users = query.options(joinedload(models.User.payment_items)).distinct(models.User.id).all()
     
     membership_data = []
     processed_sections = set()
 
     for user in users:
+        # This approach assumes 'users' now contains only users relevant to the filters.
+        # However, to maintain the section grouping and count, it's simpler to re-group
+        # if the goal is counts per section for filtered users.
+        
+        # A more direct approach to get overall counts for the stat card:
+        # Let's pivot this endpoint slightly. Since the frontend expects a sum
+        # for 'total_members_count' and 'total_collected', it might be better
+        # to return these aggregated values directly from this endpoint.
+        # The current structure returns an array of sections, which requires the frontend
+        # to sum them up. This is fine if section breakdown is still needed.
+
+        # If you still need the section breakdown AND accurate section_users_count:
+        # The 'users' list is now ALREADY filtered by academic_year and semester (if provided).
+        # So, the original len(section_users) will now be correct for the filtered set.
         if user.section not in processed_sections:
-            section_users = [u for u in users if u.section == user.section]
+            # section_users will now only contain users that have payment items matching filters
+            section_users_for_filtered_period = [u for u in users if u.section == user.section]
+            
             section_paid_count = 0
             overall_section_total_amount = 0.0
             overall_section_total_paid = 0.0
 
-            for other_user in section_users:
+            for other_user in section_users_for_filtered_period: # Iterate over the already filtered users
+                # user_relevant_payment_items will still filter by academic_year/semester for safety,
+                # in case a user has payment items outside the main query filter.
+                # But since the 'users' query is now pre-filtered, this loop will be more efficient.
                 user_relevant_payment_items = [
                     pi for pi in other_user.payment_items
                     if (academic_year is None or pi.academic_year == academic_year) and
@@ -2110,31 +2151,32 @@ async def admin_membership(
                 is_user_fully_paid_for_period = False
                 if user_relevant_payment_items:
                     is_user_fully_paid_for_period = all((pi.is_paid or pi.is_not_responsible) for pi in user_relevant_payment_items)
-                
+                    
                 if is_user_fully_paid_for_period:
                     section_paid_count += 1
-                
+                    
                 for pi in user_relevant_payment_items:
                     if not pi.is_not_responsible:
                         overall_section_total_amount += pi.fee
                         if pi.is_paid:
                             overall_section_total_paid += pi.fee
 
-            status_text = f"{section_paid_count}/{len(section_users)}" if academic_year and semester else str(len(section_users))
+            # Now, len(section_users_for_filtered_period) should be the correct filtered count
+            status_text = f"{section_paid_count}/{len(section_users_for_filtered_period)}" if academic_year and semester else str(len(section_users_for_filtered_period))
             
             membership_data.append({
-                'student_number': section_users[0].student_number, 
-                'email': section_users[0].email,
-                'first_name': section_users[0].first_name,
-                'last_name': section_users[0].last_name,
-                'year_level': section_users[0].year_level,
-                'section': section_users[0].section,
+                'student_number': section_users_for_filtered_period[0].student_number, # Assuming at least one user in section
+                'email': section_users_for_filtered_period[0].email,
+                'first_name': section_users_for_filtered_period[0].first_name,
+                'last_name': section_users_for_filtered_period[0].last_name,
+                'year_level': section_users_for_filtered_period[0].year_level,
+                'section': section_users_for_filtered_period[0].section,
                 'status': status_text,
                 'total_paid': overall_section_total_paid, 
                 'total_amount': overall_section_total_amount,
                 'academic_year': academic_year,
                 'semester': semester,
-                'section_users_count': len(section_users),
+                'section_users_count': len(section_users_for_filtered_period), # This will now be the filtered count
                 'section_paid_count': section_paid_count
             })
             processed_sections.add(user.section)
@@ -2283,31 +2325,38 @@ async def admin_outstanding_dues(
     request: Request,
     db: Session = Depends(get_db),
     academic_year: Optional[str] = None,
+    semester: Optional[str] = None, # <--- ADD THIS PARAMETER
 ) -> List[Dict[str, Any]]:
     admin, admin_org = get_current_admin_with_org(request, db)
 
     today = date.today()
 
+    # Resolve Academic Year (already works fine)
     if academic_year:
         resolved_academic_year = academic_year
     else:
         start_year = today.year - 1 if today.month < 9 else today.year
         resolved_academic_year = f"{start_year}-{start_year + 1}"
 
-    current_semester_name = None
-    if 9 <= today.month <= 12 or today.month == 1:
-        current_semester_name = "1st"
-    elif 2 <= today.month <= 6:
-        current_semester_name = "2nd"
-    elif 7 <= today.month <= 8:
-        current_semester_name = "Summer Break"
+    # Resolve Semester: Use provided 'semester' parameter first, then fallback to current_semester_name
+    resolved_semester_name = None
+    if semester: # <--- USE THE PROVIDED SEMESTER PARAMETER
+        resolved_semester_name = semester
+    else: # Fallback to calculating from today if no semester parameter is provided
+        if 9 <= today.month <= 12 or today.month == 1:
+            resolved_semester_name = "1st"
+        elif 2 <= today.month <= 6:
+            resolved_semester_name = "2nd"
+        elif 7 <= today.month <= 8:
+            resolved_semester_name = "Summer Break"
 
     total_outstanding_amount = 0.0
-    if current_semester_name in ["1st", "2nd"]:
+    # Only proceed if a valid semester (not Summer Break) is determined
+    if resolved_semester_name in ["1st", "2nd"]: # <--- Use resolved_semester_name here
         relevant_payment_items = db.query(models.PaymentItem).join(models.User).filter(
             and_(
                 func.lower(models.PaymentItem.academic_year) == resolved_academic_year.lower(),
-                models.PaymentItem.semester == current_semester_name,
+                models.PaymentItem.semester == resolved_semester_name, # <--- Use resolved_semester_name here
                 models.User.organization_id == admin_org.id,
                 models.PaymentItem.is_not_responsible == False,
                 models.PaymentItem.student_shirt_order_id == None 
@@ -2321,7 +2370,7 @@ async def admin_outstanding_dues(
 
     return [{
         "total_outstanding_amount": total_outstanding_amount,
-        "semester_status": current_semester_name,
+        "semester_status": resolved_semester_name, # <--- Return resolved semester
         "academic_year": resolved_academic_year
     }]
 
