@@ -57,7 +57,7 @@
         <img
           src="{{ post.image_path }}"
           alt="{{ post.title }}"
-          class="bulletin-post-image"
+          class="bulletin-post-image expandable-image" 
         />
         {%- endif -%}
         
@@ -130,7 +130,7 @@
             <img
               src="{{ post.image_path }}"
               alt="{{ post.title }}"
-              class="wiki-post-image"
+              class="wiki-post-image expandable-image" 
             />
             {%- endif -%}
             <div class="wiki-post-content">{{ post.content | safe }}</div>

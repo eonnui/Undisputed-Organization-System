@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const modalTitleElement = globalModal.querySelector(".modal-content h3");
   const modalCloseBtn = globalModal.querySelector(".modal-close-btn");
 
-  function openGlobalModal(title) {
+  function openGlobalModal(title, content = "") {
     if (modalTitleElement) {
       modalTitleElement.innerText = title;
     } else {
@@ -14,9 +14,14 @@ document.addEventListener("DOMContentLoaded", function () {
       );
       const newTitle = document.createElement("h3");
       newTitle.innerText = title;
-
-      modalBody.innerHTML = "";
       modalBody.prepend(newTitle);
+    }
+
+    modalBody.innerHTML = "";
+    if (typeof content === "string") {
+      modalBody.innerHTML = content;
+    } else if (content instanceof HTMLElement) {
+      modalBody.appendChild(content);
     }
 
     globalModal.style.display = "flex";
@@ -473,4 +478,23 @@ document.addEventListener("DOMContentLoaded", function () {
       fetchAndRenderOrgChart();
     });
   }
+
+  document.body.addEventListener("click", function (event) {
+    const clickedImage = event.target.closest(".expandable-image");
+
+    if (clickedImage) {
+      const imageUrl = clickedImage.src;
+      const imageAlt = clickedImage.alt || "Expanded Image";
+
+      const expandedImageElement = document.createElement("img");
+      expandedImageElement.src = imageUrl;
+      expandedImageElement.alt = imageAlt;
+      expandedImageElement.style.maxWidth = "100%";
+      expandedImageElement.style.height = "auto";
+      expandedImageElement.style.display = "block";
+      expandedImageElement.style.margin = "0 auto";
+
+      openGlobalModal(imageAlt, expandedImageElement);
+    }
+  });
 });
