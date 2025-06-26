@@ -579,11 +579,10 @@ input[type="text"][name="position"] {
 
 .org-line.org-vertical-to-sub-branch {
   width: 2px;
-  height: 2.5rem;
+  height: 3.5rem;
   background-color: var(--org-primary);
   position: relative;
-  z-index: 1;
-  top: 21.5px;
+  z-index: 0;
   margin-top: -2px;
 }
 
@@ -1140,7 +1139,6 @@ input[type="text"][name="position"] {
   gap: 2.5rem;
   flex-wrap: wrap;
   position: relative;
-  margin-bottom: 1.5rem;
   padding-top: 0;
 }
 
