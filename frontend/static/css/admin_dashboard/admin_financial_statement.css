@@ -1,6 +1,6 @@
 /* General Body and Container Styles */
 body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f7f6;
@@ -315,19 +315,17 @@ body {
     color: var(--org-button-text); /* Ensure header text color */
 }
 
-/* Specific alignment for table headers */
+/* Specific alignment for table headers (general for 3-col and 4-col tables) */
 .data-table thead th:first-child {
     text-align: left;
     border-top-left-radius: var(--org-radius-md);
 }
-.data-table thead th:nth-child(2) {
+.data-table thead th:nth-child(2),
+.data-table thead th:nth-child(3),
+.data-table thead th:nth-child(4) { /* For 4th column in monthly/accounts */
     text-align: right;
 }
-.data-table thead th:nth-child(3) {
-    text-align: right;
-}
-.data-table thead th:last-child { /* General last child, useful for 4-column tables */
-    text-align: right; /* Default, overridden if needed by specific nth-child */
+.data-table thead th:last-child {
     border-top-right-radius: var(--org-radius-md);
 }
 
@@ -349,9 +347,30 @@ body {
     padding: 10px 15px;
     color: var(--org-text-primary);
     font-size: 0.9em;
-    /* Default text-align for tbody td, overridden below */
-    text-align: left;
+    text-align: left; /* Default for text columns */
 }
+
+/* Align values in any cell with class 'amount' to the right */
+.data-table td.amount {
+    text-align: right;
+    font-weight: 500;
+}
+/* Ensure percentage cells are also right-aligned */
+/* Targeting third column directly for percentage */
+.data-table tbody td:nth-child(3) {
+    text-align: right;
+}
+
+/* For 4th column in monthly/accounts if it's an amount/net income */
+.data-table tbody td:nth-child(4).amount {
+    text-align: right;
+}
+
+/* NEW: Specific alignment for the Status column in Account Balances table body */
+#accounts-balances-table tbody td:nth-child(4) {
+    text-align: right;
+}
+
 
 /* Table Footer Styles */
 .data-table tfoot {
@@ -374,21 +393,18 @@ body {
     text-align: left;
     border-bottom-left-radius: var(--org-radius-md);
 }
-.data-table tfoot th:nth-child(2) { /* For amount */
+.data-table tfoot th:nth-child(2), /* For amount */
+.data-table tfoot th:nth-child(3), /* For percentage / last total in 3-col tables */
+.data-table tfoot th:nth-child(4) { /* For 4th column in monthly/accounts */
     text-align: right;
 }
-.data-table tfoot th:nth-child(3) { /* For percentage / last total in 3-col tables */
-    text-align: right;
-}
-.data-table tfoot th:last-child { /* General last child, for 4-col tables (e.g., Accounts, Monthly Summary) */
-    text-align: right; /* Default, overridden if needed for empty cells like in Accounts */
+.data-table tfoot th:last-child { /* General last child, for all footers */
     border-bottom-right-radius: var(--org-radius-md);
 }
 
-/* Align values in any cell with class 'amount' to the right */
-.data-table .amount {
-    text-align: right;
-    font-weight: 500;
+/* Explicit class for right alignment */
+.text-right {
+    text-align: right !important;
 }
 
 
@@ -414,6 +430,15 @@ body {
 .membership-table {
     margin-top: 25px;
 }
+/* Membership table specific header/footer alignment - assuming it's a 4-column table */
+.membership-table thead th:nth-child(3),
+.membership-table thead th:nth-child(4) {
+    text-align: right;
+}
+.membership-table tbody td:nth-child(3) {
+    text-align: right;
+}
+
 
 /* Status styling for membership table */
 .membership-table .paid-status {
@@ -767,7 +792,7 @@ body {
 
     #expenses-breakdown-body td:nth-of-type(1):before { content: "Category:"; }
     #expenses-breakdown-body td:nth-of-type(2):before { content: "Amount (₱):"; }
-    #expenses-breakdown-body td:nth-of-type(3):before { content: "% of Total:"; }
+    #expenses-breakdown-body td:nth-of-type(3):before { content: "Total:"; } /* Changed content to just 'Total:' */
 
     #monthly-summary-body td:nth-of-type(1):before { content: "Month:"; }
     #monthly-summary-body td:nth-of-type(2):before { content: "Revenue (₱):"; }

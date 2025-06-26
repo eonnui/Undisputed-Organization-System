@@ -188,9 +188,9 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL EXPENSES:</th>
+                            <th colspan="1">TOTAL EXPENSES:</th> {# colspan="1" to align the text with the first column #}
                             <th id="total-expenses-footer" class="amount">₱0.00</th>
-                            <th class="text-right">100%</th> {# Added for consistent alignment #}
+                            <th class="text-right">100%</th> {# Ensure this is in its own th for proper alignment #}
                         </tr>
                     </tfoot>
                 </table>
@@ -249,7 +249,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th>TOTAL BALANCE:</th>
+                            <th colspan="1">TOTAL BALANCE:</th> {# colspan="1" to align text with first column #}
                             <th id="total-accounts-balance-footer" class="amount">₱0.00</th>
                             <th></th> {# Empty cell for Last Transaction column #}
                             <th></th> {# Empty cell for Status column #}
