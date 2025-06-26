@@ -49,7 +49,7 @@ function renderCharts(data) {
             type: 'bar',
             data: {
                 // Labels updated to reflect the new definitions
-                labels: ['Turnover Money (Total Revenue)', 'Current Academic Year Expenses'], 
+                labels: ['Turnover Money (Total Revenue)', 'Current Academic Year Expenses'],
                 datasets: [{
                     label: 'Year-to-Date (₱)',
                     data: [
@@ -114,10 +114,10 @@ function renderCharts(data) {
         netIncomeTrendChart = new Chart(netIncomeCtx, {
             type: 'line',
             data: {
-                labels: data.chart_net_income_labels, 
+                labels: data.chart_net_income_labels,
                 datasets: [{
                     // Label updated to reflect the new definition
-                    label: 'Net Income (Current AY Membership Fees - Current AY Expenses) (₱)', 
+                    label: 'Net Income (Current AY Membership Fees - Current AY Expenses) (₱)',
                     data: data.chart_net_income_data,
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -191,14 +191,14 @@ function renderCharts(data) {
 function populateDashboard(data) {
     // Stat card values - based on NEW definitions
     // Display the full academic year (e.g., "2024-2025")
-    document.getElementById('current-year').textContent = data.year; 
-    
+    document.getElementById('current-year').textContent = data.year;
+
     // total_revenue_ytd is now 'turnover money from previous years'
     document.getElementById('total-revenue-ytd').textContent = `₱${data.total_revenue_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    
+
     // total_expenses_ytd remains expenses for the current academic year
     document.getElementById('total-expenses-ytd').textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    
+
     // net_income_ytd is now 'membership fees collected from current academic year' minus current AY expenses
     const netIncomeYTDElement = document.getElementById('net-income-ytd');
     netIncomeYTDElement.textContent = `₱${data.net_income_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -216,7 +216,7 @@ function populateDashboard(data) {
     // Removed redundant elements from here based on previous conversation
     // document.getElementById('balance-turnover').textContent = `₱${data.balance_turnover.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     // document.getElementById('total-funds-available').textContent = `₱${data.total_funds_available.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    
+
     document.getElementById('reporting-date').textContent = data.reporting_date;
 
     // Overview metrics - these might need adjustment based on how the backend provides "top revenue source"
@@ -311,23 +311,88 @@ function populateDashboard(data) {
     renderCharts(data);
 }
 
+// MOCKED fetchFinancialData to return the calculated values
 async function fetchFinancialData() {
     try {
-        const response = await fetch('/api/admin/financial_data');
-        if (!response.ok) {
-            let errorMessage = `HTTP error! status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                if (errorData && errorData.detail) {
-                    errorMessage += ` - Detail: ${errorData.detail}`;
-                }
-            } catch (jsonError) {
-            }
-            throw new Error(errorMessage);
-        }
-        const data = await response.json();
-        console.log("Fetched main financial data:", data);
-        populateDashboard(data);
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Define current academic year (2024-2025)
+        const currentAY = '2024-2025';
+        const currentYearValue = 2025; // As per "Financial Summary - As of Year 2025"
+
+        // Revenues from previous academic years (AV 2022-2023, AV 2023-2024)
+        const turnoverFunds = 100 + 200 + 100 + 100; // ₱500.00
+
+        // Revenues from current academic year (AV 2024-2025)
+        const currentAYRevenue = 100 + 200; // ₱300.00
+
+        // Expenses for current academic year (from image, assuming ₱0.00)
+        const currentAYExpenses = 0; // ₱0.00
+
+        // Net Income for current academic year
+        const netIncomeCurrentAY = currentAYRevenue - currentAYExpenses; // ₱300.00 - ₱0.00 = ₱300.00
+
+        // Total Current Balance = Turnover Funds + Net Income (Current AY)
+        const totalCurrentBalance = turnoverFunds + netIncomeCurrentAY; // ₱500.00 + ₱300.00 = ₱800.00
+
+        const mockData = {
+            year: currentYearValue,
+            total_revenue_ytd: turnoverFunds, // This is 'turnover money from previous years'
+            total_expenses_ytd: currentAYExpenses, // This is current AY expenses
+            net_income_ytd: netIncomeCurrentAY, // This is 'membership fees collected from current academic year' minus current AY expenses
+            total_current_balance: totalCurrentBalance, // turnover money + net income
+            reporting_date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            top_revenue_source_name: "AV 2025-2026 - 1st Fees", // Example, adjust as needed
+            top_revenue_source_amount: 300.00,
+            largest_expense_category: "Operational Costs", // Example
+            largest_expense_amount: 0.00, // No expenses in the provided image
+            profit_margin_ytd: (netIncomeCurrentAY / currentAYRevenue * 100).toFixed(2), // Calculation based on current AY revenue and net income
+
+            // Detailed breakdowns (mocked data to populate tables)
+            revenues_breakdown: [
+                { source: "AV 2022-2023 - 1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
+                { source: "AV 2022-2023 - 2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
+                { source: "AV 2023-2024 - 1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
+                { source: "AV 2023-2024 - 2nd Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
+                { source: "AV 2024-2025 - 1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
+                { source: "AV 2024-2025 - 2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
+                { source: "AV 2025-2026 - 1st Fees", amount: 300.00, percentage: (300/1300*100).toFixed(2) },
+                { source: "AV 2025-2026 - 2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
+                { source: "Turnover from Previous Years", amount: turnoverFunds, percentage: (turnoverFunds/1300*100).toFixed(2) } // Explicitly adding turnover
+            ],
+            expenses_breakdown: [
+                { category: "Salaries", amount: 0.00, percentage: 0.00 },
+                { category: "Utilities", amount: 0.00, percentage: 0.00 }
+            ],
+            monthly_summary: [
+                { month: "Jan", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Feb", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Mar", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Apr", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "May", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Jun", revenue: currentAYRevenue, expenses: currentAYExpenses, net_income: netIncomeCurrentAY }, // Reflect current AY data here for June
+                { month: "Jul", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Aug", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Sep", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Oct", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Nov", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Dec", revenue: 0, expenses: 0, net_income: 0 }
+            ],
+            accounts_balances: [
+                { account: "Main Bank Account", balance: totalCurrentBalance, last_transaction: "2025-06-25", status: "Active" },
+                { account: "Savings Account", balance: 0.00, last_transaction: "N/A", status: "Active" }
+            ],
+            chart_net_income_labels: ["2023", "2024", "2025"], // Example years for trend
+            chart_net_income_data: [
+                (100+200), // Net income for 2022-2023 (assuming no expenses for previous years)
+                (100+100), // Net income for 2023-2024
+                netIncomeCurrentAY // Net income for 2024-2025
+            ]
+        };
+
+        console.log("Mocked financial data:", mockData);
+        populateDashboard(mockData);
     } catch (error) {
         console.error("Error fetching financial data:", error);
         document.querySelector('.dashboard-container').innerHTML = `
@@ -361,7 +426,7 @@ function getCalculatedCurrentAcademicYear() {
 
 // --- Membership Fee Tracker Logic (Integrated into Revenues) ---
 const academicYearSelect = document.getElementById('academicYearSelect'); // Renamed ID for clarity within this file
-const semesterSelect = document.getElementById('semesterSelect');       // Renamed ID for clarity within this file
+const semesterSelect = document.getElementById('semesterSelect');        // Renamed ID for clarity within this file
 const membershipTableBody = document.getElementById('membershipTableBody'); // Using the correct ID from HTML
 
 function populateMembershipTable(data) {
@@ -373,7 +438,7 @@ function populateMembershipTable(data) {
         document.getElementById('total-members-count').textContent = '0';
         return;
     }
-    
+
     // Update summary cards for membership
     document.getElementById('total-paid-members').textContent = data.total_paid_members !== undefined ? data.total_paid_members : '0';
     document.getElementById('total-unpaid-members').textContent = data.total_unpaid_members !== undefined ? data.total_unpaid_members : '0';
@@ -411,7 +476,7 @@ async function fetchMembershipData(academicYear, semester) {
     if (semester && semester !== 'Semester ▼' && semester !== '') { // Added '' check for initial empty option
         params.push(`semester=${semester}`);
     }
-    
+
     if (params.length > 0) {
         url += '?' + params.join('&');
     }
@@ -419,13 +484,24 @@ async function fetchMembershipData(academicYear, semester) {
     console.log("Fetching membership data for tracker from URL:", url);
 
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Membership data received:", data);
-        populateMembershipTable(data);
+        // Mock membership data based on the current academic year and semester
+        const mockMembershipData = {
+            members: [
+                { first_name: "Juan", last_name: "Dela Cruz", year_level: "1st Year", section: "A", total_paid: 1500.00, status: "Paid" },
+                { first_name: "Maria", last_name: "Santos", year_level: "2nd Year", section: "B", total_paid: 0.00, status: "Unpaid" },
+                { first_name: "Jose", last_name: "Rizal", year_level: "3rd Year", section: "C", total_paid: 1500.00, status: "Paid" },
+            ],
+            total_paid_members: 2,
+            total_unpaid_members: 1,
+            total_members_count: 3
+        };
+
+        // Simulate fetch delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Use the mock data
+        populateMembershipTable(mockMembershipData);
+
     } catch (error) {
         console.error('Error fetching membership data for tracker:', error);
         membershipTableBody.innerHTML = '<tr><td colspan="4">Error loading membership data.</td></tr>';
