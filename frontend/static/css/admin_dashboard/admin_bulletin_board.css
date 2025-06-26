@@ -524,6 +524,7 @@ input[type="text"][name="position"] {
 
 .org-node.org-root,
 .org-root-wrapper {
+  font-size: xx-large;
   margin-bottom: 0;
   padding-bottom: 0;
 }
@@ -1165,6 +1166,7 @@ input[type="text"][name="position"] {
 .adviser-section-header {
   color: var(--org-text-primary);
   font-weight: 600;
+  font-size: x-large;
   width: 100%;
   text-align: center;
   padding-top: 1.5rem;
