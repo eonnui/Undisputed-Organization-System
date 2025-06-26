@@ -90,7 +90,7 @@
                 </form>
             </div>
             {% if post.image_path %}
-            <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
+            <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image expandable-image">
             {% endif %}
             {% if post.video_path %}
             <video controls class="bulletin-post-video">
@@ -171,7 +171,7 @@
                                 </div>
                             </div>
                             {% if post.image_path %}
-                            <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image">
+                            <img src="{{ post.image_path }}" alt="{{ post.title }}" class="wiki-post-image expandable-image">
                             {% endif %}
                             <div class="wiki-post-content">
                                 {{ post.content | safe }}
