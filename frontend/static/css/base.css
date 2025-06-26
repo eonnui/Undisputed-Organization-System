@@ -821,7 +821,7 @@ body {
 }
 
 .modal-close-btn {
-  color: var(--org-text-primary);
+  color: var(--org-form-group-label-color);
   position: absolute;
   top: 15px;
   right: 25px;
@@ -837,7 +837,7 @@ body {
 
 .modal-close-btn:hover,
 .modal-close-btn:focus {
-  color: var(--text-color);
+  color: var(--org-button-chart-text);
   text-decoration: none;
   outline: none;
 }
