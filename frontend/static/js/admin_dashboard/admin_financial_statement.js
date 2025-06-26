@@ -196,6 +196,9 @@ function populateDashboard(data) {
     // total_revenue_ytd is now 'turnover money from previous years'
     document.getElementById('total-revenue-ytd').textContent = `₱${data.total_revenue_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
+    // NEW: Populate the Upcoming Year Funds (Collected) card
+    document.getElementById('upcoming-funds-ytd').textContent = `₱${data.upcoming_funds_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
     // total_expenses_ytd remains expenses for the current academic year
     document.getElementById('total-expenses-ytd').textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
@@ -212,10 +215,6 @@ function populateDashboard(data) {
 
     // total_current_balance is now 'turnover money (total_revenue_ytd) + net income (current AY membership fees - expenses)'
     document.getElementById('total-current-balance').textContent = `₱${data.total_current_balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-    // Removed redundant elements from here based on previous conversation
-    // document.getElementById('balance-turnover').textContent = `₱${data.balance_turnover.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    // document.getElementById('total-funds-available').textContent = `₱${data.total_funds_available.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
     document.getElementById('reporting-date').textContent = data.reporting_date;
 
@@ -238,8 +237,9 @@ function populateDashboard(data) {
             <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
         `;
     });
-    // The footer for "Total Revenue" now represents the "turnover money"
-    document.getElementById('total-revenue-footer').textContent = `₱${data.total_revenue_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    // Calculate total of all revenues displayed in the table
+    const totalRevenuesDisplayed = data.revenues_breakdown.reduce((sum, item) => sum + item.amount, 0);
+    document.getElementById('total-revenue-footer').textContent = `₱${totalRevenuesDisplayed.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
 
     // Expenses Breakdown Table (remains the same)
@@ -333,21 +333,26 @@ async function fetchFinancialData() {
         // Net Income for current academic year
         const netIncomeCurrentAY = currentAYRevenue - currentAYExpenses; // ₱300.00 - ₱0.00 = ₱300.00
 
-        // Total Current Balance = Turnover Funds + Net Income (Current AY)
-        const totalCurrentBalance = turnoverFunds + netIncomeCurrentAY; // ₱500.00 + ₱300.00 = ₱800.00
+        // New: Collected fees for upcoming academic year (e.g., AV 2025-2026)
+        const upcomingAYCollectedFees = 300 + 200; // From your provided data for AV 2025-2026: ₱500.00
+
+        // Total Current Balance = Turnover Funds (previous AYs) + Net Income (current AY) + Upcoming AY Collected Fees
+        const totalCurrentBalance = turnoverFunds + netIncomeCurrentAY + upcomingAYCollectedFees; // ₱500.00 + ₱300.00 + ₱500.00 = ₱1300.00
 
         const mockData = {
             year: currentYearValue,
             total_revenue_ytd: turnoverFunds, // This is 'turnover money from previous years'
+            upcoming_funds_ytd: upcomingAYCollectedFees, // New data point for upcoming funds
             total_expenses_ytd: currentAYExpenses, // This is current AY expenses
             net_income_ytd: netIncomeCurrentAY, // This is 'membership fees collected from current academic year' minus current AY expenses
-            total_current_balance: totalCurrentBalance, // turnover money + net income
+            total_current_balance: totalCurrentBalance, // turnover money + net income + upcoming fees
             reporting_date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
             top_revenue_source_name: "AV 2025-2026 - 1st Fees", // Example, adjust as needed
             top_revenue_source_amount: 300.00,
             largest_expense_category: "Operational Costs", // Example
             largest_expense_amount: 0.00, // No expenses in the provided image
-            profit_margin_ytd: (netIncomeCurrentAY / currentAYRevenue * 100).toFixed(2), // Calculation based on current AY revenue and net income
+            // Profit margin should only consider current academic year revenue vs. expenses
+            profit_margin_ytd: currentAYRevenue > 0 ? (netIncomeCurrentAY / currentAYRevenue * 100).toFixed(2) : 0.00,
 
             // Detailed breakdowns (mocked data to populate tables)
             revenues_breakdown: [
@@ -357,8 +362,9 @@ async function fetchFinancialData() {
                 { source: "AV 2023-2024 - 2nd Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
                 { source: "AV 2024-2025 - 1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
                 { source: "AV 2024-2025 - 2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
-                { source: "AV 2025-2026 - 1st Fees", amount: 300.00, percentage: (300/1300*100).toFixed(2) },
-                { source: "AV 2025-2026 - 2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
+                // Separating upcoming academic year fees for clarity
+                { source: "AV 2025-2026 - 1st Fees (Upcoming AY)", amount: 300.00, percentage: (300/1300*100).toFixed(2) },
+                { source: "AV 2025-2026 - 2nd Fees (Upcoming AY)", amount: 200.00, percentage: (200/1300*100).toFixed(2) },
                 { source: "Turnover from Previous Years", amount: turnoverFunds, percentage: (turnoverFunds/1300*100).toFixed(2) } // Explicitly adding turnover
             ],
             expenses_breakdown: [
@@ -373,7 +379,7 @@ async function fetchFinancialData() {
                 { month: "May", revenue: 0, expenses: 0, net_income: 0 },
                 { month: "Jun", revenue: currentAYRevenue, expenses: currentAYExpenses, net_income: netIncomeCurrentAY }, // Reflect current AY data here for June
                 { month: "Jul", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Aug", revenue: 0, expenses: 0, net_income: 0 },
+                { month: "Aug", revenue: upcomingAYCollectedFees, expenses: 0, net_income: upcomingAYCollectedFees }, // Assuming upcoming fees could be collected in August for next AY
                 { month: "Sep", revenue: 0, expenses: 0, net_income: 0 },
                 { month: "Oct", revenue: 0, expenses: 0, net_income: 0 },
                 { month: "Nov", revenue: 0, expenses: 0, net_income: 0 },

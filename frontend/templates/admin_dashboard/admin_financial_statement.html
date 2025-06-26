@@ -27,6 +27,10 @@
             <p id="total-revenue-ytd">₱0.00</p>
         </div>
         <div class="stat-card">
+            <h3>Upcoming Year Funds (Collected)</h3> {# New card for upcoming year fees #}
+            <p id="upcoming-funds-ytd">₱0.00</p>
+        </div>
+        <div class="stat-card">
             <h3>Total Expenses (YTD)</h3>
             <p id="total-expenses-ytd">₱0.00</p>
         </div>
@@ -105,8 +109,8 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <th>Total Revenue:</th>
-                        <th class="amount" id="total-revenue-footer">₱0.00</th>
+                        <th>Total Revenues Displayed:</th> {# Updated label for clarity #}
+                        <th class="amount" id="total-revenue-footer">₱0.00</th> {# This will now reflect the sum of all rows in the table #}
                         <th>100%</th>
                     </tr>
                 </tfoot>
@@ -120,7 +124,7 @@
                 </div>
                 <div class="filters-container">
                     <select id="academicYearSelect">
-                        <option value="">Academic Year</option> 
+                        <option value="">Academic Year</option>
                     </select>
                     <select id="semesterSelect">
                         <option value="">Semester</option>
@@ -148,7 +152,7 @@
                             <th>NAME</th>
                             <th>YR. & SEC</th>
                             <th>AMOUNT PAID</th>
-                            <th>STATUS</th> 
+                            <th>STATUS</th>
                         </tr>
                     </thead>
                     <tbody id="membershipTableBody">
