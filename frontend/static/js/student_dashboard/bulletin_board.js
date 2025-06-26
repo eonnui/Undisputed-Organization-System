@@ -493,6 +493,7 @@ document.addEventListener("DOMContentLoaded", function () {
       expandedImageElement.style.height = "auto";
       expandedImageElement.style.display = "block";
       expandedImageElement.style.margin = "0 auto";
+      expandedImageElement.style.borderRadius = "8px";
 
       openGlobalModal(imageAlt, expandedImageElement);
     }
