@@ -792,11 +792,11 @@ body {
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   width: 100%;
-  max-width: 1500px;
+  max-width: 900px;
   position: relative;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
+  max-height: 880px;
   overflow-y: auto;
   animation: slideInFromTop 0.3s ease-out;
   margin: 20px;
