@@ -2439,22 +2439,22 @@ async def get_financial_trends(
         end_date_filter = today # Default end date is today
 
     query = db.query(
-        func.extract('year', models.Payment.created_at).label('year'),
-        func.extract('month', models.Payment.created_at).label('month'),
-        models.PaymentItem.academic_year.label('payment_academic_year'), # Get the academic year from the payment item
+        func.extract('year', models.Payment.updated_at).label('year'),  # Changed to updated_at
+        func.extract('month', models.Payment.updated_at).label('month'), # Changed to updated_at
+        models.PaymentItem.academic_year.label('payment_academic_year'),
         func.sum(models.Payment.amount).label('total'),
     ).join(models.Payment.payment_item).join(models.Payment.user).filter(
         and_(
             models.Payment.status == "success",
             models.User.organization_id == admin_org.id,
-            models.PaymentItem.student_shirt_order_id == None # Exclude shirt orders from general financial trends
+            models.PaymentItem.student_shirt_order_id == None
         )
     )
 
     if start_date_filter:
-        query = query.filter(models.Payment.created_at >= start_date_filter)
+        query = query.filter(models.Payment.updated_at >= start_date_filter) # Changed to updated_at
     if end_date_filter:
-        query = query.filter(models.Payment.created_at <= end_date_filter)
+        query = query.filter(models.Payment.updated_at <= end_date_filter) # Changed to updated_at
 
     # Filtering by models.PaymentItem.academic_year is REMOVED from the main query
     # because the goal is to visualize all payments within the time range,
