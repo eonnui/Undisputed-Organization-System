@@ -1509,3 +1509,8 @@ input[type="text"][name="position"] {
 .expandable-image {
   cursor: pointer;
 }
+
+#wiki_category option {
+  color: var(--org-text-primary); 
+  background-color: var(--org-card-bg); 
+}
