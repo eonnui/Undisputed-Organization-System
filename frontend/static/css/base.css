@@ -516,8 +516,8 @@ body {
   position: absolute;
   top: 5px;
   right: 10px;
-  min-width: 15px;
-  height: 15px;
+  min-width: 20px;
+  height: 20px;
   border-radius: 50%;
   background-color: #f44336;
   color: white;
