@@ -231,7 +231,6 @@ body {
 }
 
 .sidebar nav ul li a .nav-text {
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-grow: 1;
