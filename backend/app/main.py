@@ -3052,45 +3052,79 @@ async def create_expense(request: Request, expense: schemas.ExpenseCreate, db: S
 async def admin_financial_data_api(request: Request, db: Session = Depends(get_db)):
     admin, organization = get_current_admin_with_org(request, db)
     
-    current_year = datetime.now().year
+    current_year = datetime.now().year # This will be the current calendar year (e.g., 2025)
     today = datetime.now().date()
 
-    # Calculate total membership revenue YTD
-    total_revenue_ytd = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year,
+    # Determine the current academic year (e.g., if it's June 2025, current AY is 2024-2025)
+    # This logic assumes academic year starts in August (month 8)
+    academic_year_start_month = 8 # August
+    current_academic_year_start = current_year
+    if today.month < academic_year_start_month: # If before August, it's the previous academic year
+        current_academic_year_start -= 1
+    current_academic_year_str = f"{current_academic_year_start}-{current_academic_year_start + 1}"
+    
+    # Calculate Turnover Funds (Accumulated collected membership fees from previous academic years)
+    # This query will sum all paid membership fees *before* the current academic year
+    # We'll assume 'academic_year' in PaymentItem is stored as 'YYYY-YYYY' (e.g., '2023-2024')
+    turnover_funds = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
         models.PaymentItem.is_paid == True,
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
+        models.PaymentItem.student_shirt_order_id.is_(None), # Exclude shirt orders
+        models.PaymentItem.academic_year < current_academic_year_str # Academic years strictly less than current AY
     ).scalar() or 0.0
 
-    # Total expenses YTD remains the same
+    # Calculate Current Academic Year Revenue (Membership fees collected for the current academic year)
+    current_ay_membership_revenue = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
+        models.PaymentItem.is_paid == True,
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.is_(None), # Exclude shirt orders
+        models.PaymentItem.academic_year == current_academic_year_str # Only for the current academic year
+    ).scalar() or 0.0
+
+    # Calculate Upcoming Year Funds (Collected) (Advanced payments for next academic year's fees and beyond)
+    # This now includes ALL academic years greater than or equal to the immediate next one
+    next_academic_year_start = current_academic_year_start + 1
+    next_academic_year_str = f"{next_academic_year_start}-{next_academic_year_start + 1}"
+    
+    upcoming_funds_collected = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
+        models.PaymentItem.is_paid == True,
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.is_(None), # Exclude shirt orders
+        models.PaymentItem.academic_year >= next_academic_year_str # IMPORTANT CHANGE: >= to include all future AYs
+    ).scalar() or 0.0
+
+    # Total expenses for the current calendar year (This seems to be the current definition)
     total_expenses_ytd = db.query(func.sum(models.Expense.amount)).filter(
-        extract('year', models.Expense.incurred_at) == current_year,
+        extract('year', models.Expense.incurred_at) == current_year, # Assuming calendar year for expenses
         models.Expense.organization_id == organization.id
     ).scalar() or 0.0
 
-    net_income_ytd = total_revenue_ytd - total_expenses_ytd
-    profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
+    # Net Income YTD (Current AY Membership Fees - Current AY Expenses)
+    net_income_ytd = current_ay_membership_revenue - total_expenses_ytd
     
-    # Top revenue source will now only consider membership fees
-    top_revenue_source_membership_query = db.query(
+    # Total Current Balance = Turnover Funds + Net Income (Current AY) + Upcoming Year Funds
+    total_current_balance = turnover_funds + net_income_ytd + upcoming_funds_collected
+
+    profit_margin_ytd = round((net_income_ytd / current_ay_membership_revenue) * 100, 2) if current_ay_membership_revenue != 0 else 0.0
+    
+    # Top Revenue Source - Adjusted to prioritize membership fees from current AY or upcoming AY if higher
+    # Otherwise, consider previous AYs if they represent the highest single source
+    top_revenue_source_query = db.query(
         models.PaymentItem.academic_year, 
         models.PaymentItem.semester, 
         func.sum(models.PaymentItem.fee).label('total_fee')
     ).join(models.User).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
+        models.PaymentItem.student_shirt_order_id.is_(None) 
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).order_by(func.sum(models.PaymentItem.fee).desc()).first()
 
     top_revenue_source = {"name": "N/A", "amount": 0.0}
-    
-    if top_revenue_source_membership_query:
-        source_name = f"AY {top_revenue_source_membership_query.academic_year} - {top_revenue_source_membership_query.semester} Fees" if top_revenue_source_membership_query.academic_year and top_revenue_source_membership_query.semester else "Miscellaneous Membership Fees"
-        top_revenue_source = {"name": source_name, "amount": round(float(top_revenue_source_membership_query.total_fee), 2)}
+    if top_revenue_source_query:
+        source_name = f"AY {top_revenue_source_query.academic_year} - {top_revenue_source_query.semester} Fees" if top_revenue_source_query.academic_year and top_revenue_source_query.semester else "Miscellaneous Membership Fees"
+        top_revenue_source = {"name": source_name, "amount": round(float(top_revenue_source_query.total_fee), 2)}
 
-    # Largest expense remains the same
+    # Largest expense remains the same (based on calendar year)
     largest_expense_query = db.query(models.Expense.category, func.sum(models.Expense.amount).label('total_amount')).filter(
         extract('year', models.Expense.incurred_at) == current_year, models.Expense.organization_id == organization.id
     ).group_by(models.Expense.category).order_by(func.sum(models.Expense.amount).desc()).first()
@@ -3100,29 +3134,57 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         largest_expense_category = largest_expense_query.category if largest_expense_query.category else "Uncategorized"
         largest_expense_amount = round(float(largest_expense_query.total_amount), 2)
 
-    # Revenues breakdown will now only include membership fees
-    revenues_breakdown = []
+    # Revenues Breakdown - structured by academic year, including upcoming funds
+    revenues_breakdown_dict = {}
 
-    membership_revenues_query = db.query(
+    all_membership_revenues = db.query(
         models.PaymentItem.academic_year, 
         models.PaymentItem.semester, 
         func.sum(models.PaymentItem.fee).label('total_fee')
     ).join(models.User).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
-    ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
+        models.PaymentItem.student_shirt_order_id.is_(None) 
+    ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).order_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
 
-    for item in membership_revenues_query:
-        source_name = f"AY {item.academic_year} - {item.semester} Fees" if item.academic_year and item.semester else "Miscellaneous Membership Fees"
-        percentage = round((float(item.total_fee) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
-        revenues_breakdown.append({"source": source_name, "amount": round(float(item.total_fee), 2), "trend": "Stable", "percentage": percentage})
+    # Helper to calculate percentage based on total collected (turnover + current AY + all upcoming)
+    total_all_collected_membership_fees = turnover_funds + current_ay_membership_revenue + upcoming_funds_collected
+    
+    for item in all_membership_revenues:
+        year_str = item.academic_year
+        if year_str not in revenues_breakdown_dict:
+            revenues_breakdown_dict[year_str] = {
+                "year": year_str,
+                "total": 0.0,
+                "percentage": 0.0,
+                "semesters": []
+            }
+        
+        semester_source_name = f"{item.semester} Fees" if item.semester else "Miscellaneous Fees"
+        item_percentage = round((float(item.total_fee) / total_all_collected_membership_fees) * 100, 2) if total_all_collected_membership_fees != 0 else 0.0
+        
+        revenues_breakdown_dict[year_str]["semesters"].append({
+            "source": semester_source_name, 
+            "amount": round(float(item.total_fee), 2), 
+            "percentage": item_percentage
+        })
+        revenues_breakdown_dict[year_str]["total"] += round(float(item.total_fee), 2)
+    
+    revenues_breakdown = list(revenues_breakdown_dict.values())
+    # Recalculate year percentages after all semesters are added for that year
+    for year_data in revenues_breakdown:
+        year_data["percentage"] = round((year_data["total"] / total_all_collected_membership_fees) * 100, 2) if total_all_collected_membership_fees != 0 else 0.0
 
-    if not revenues_breakdown and total_revenue_ytd > 0:
-        revenues_breakdown.append({"source": "General Membership Fees", "amount": total_revenue_ytd, "trend": "Stable", "percentage": 100.0})
+    # Ensure all percentages sum to 100% or adjust if needed
+    if revenues_breakdown and total_all_collected_membership_fees > 0:
+        current_total_percentage = sum(item["percentage"] for item in revenues_breakdown)
+        if abs(current_total_percentage - 100) > 0.01: # Allow for minor floating point discrepancies
+            adjustment_factor = 100 / current_total_percentage
+            for item in revenues_breakdown:
+                item["percentage"] = round(item["percentage"] * adjustment_factor, 2)
 
-    # Expenses breakdown remains the same
+
+    # Expenses breakdown (based on calendar year)
     expenses_breakdown_query = db.query(models.Expense.category, func.sum(models.Expense.amount).label('total_amount')).filter(
         extract('year', models.Expense.incurred_at) == current_year, models.Expense.organization_id == organization.id
     ).group_by(models.Expense.category).all()
@@ -3134,88 +3196,98 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         adjustment_factor = 100 / sum(item['percentage'] for item in expenses_breakdown)
         for item in expenses_breakdown: item['percentage'] = round(item['percentage'] * adjustment_factor, 2)
 
-    # Monthly summary for membership revenue and expenses
+    # Monthly summary should reflect monthly collected fees (membership+upcoming) vs monthly expenses
     monthly_summary = []
     chart_net_income_trend_data = []
     chart_net_income_trend_labels = []
+    
+    # Iterate through months of the current calendar year
     for i in range(1, 13):
         dummy_date = date(current_year, i, 1)
         month_name_full = dummy_date.strftime('%B')
         month_name_abbr = dummy_date.strftime('%b')
         chart_net_income_trend_labels.append(month_name_abbr)
 
-        monthly_revenue = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
+        # Monthly collected fees (includes current AY and any upcoming AY fees collected in this month)
+        monthly_collected_fees = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
             extract('year', models.PaymentItem.updated_at) == current_year, 
             extract('month', models.PaymentItem.updated_at) == i,
             models.PaymentItem.is_paid == True, 
             models.User.organization_id == organization.id,
             models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
         ).scalar() or 0.0
+
         monthly_expenses = db.query(func.sum(models.Expense.amount)).filter(
-            extract('year', models.Expense.incurred_at) == current_year, 
-            extract('month', models.Expense.incurred_at) == i,
+            extract('year', models.Expense.incurred_at) == current_year, extract('month', models.Expense.incurred_at) == i,
             models.Expense.organization_id == organization.id
         ).scalar() or 0.0
 
-        monthly_net_income = monthly_revenue - monthly_expenses
+        monthly_net_income = monthly_collected_fees - monthly_expenses
         monthly_summary.append({
-            "month": month_name_full, "revenue": monthly_revenue, "expenses": monthly_expenses,
+            "month": month_name_full, "revenue": monthly_collected_fees, "expenses": monthly_expenses,
             "net_income": monthly_net_income, "net_income_class": "positive" if monthly_net_income >= 0 else "negative"
         })
+        # The chart_net_income_trend_data will now reflect the monthly net income based on all collected fees vs expenses for that month
         chart_net_income_trend_data.append(round(monthly_net_income, 2))
 
-    # Number of paid and unpaid members based on membership fees
+
+    # Num paid/unpaid members based on *current academic year* membership fees
     num_paid_members = db.query(func.count(models.User.id.distinct())).join(models.PaymentItem).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, 
+        models.PaymentItem.academic_year == current_academic_year_str,
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) # Count only members who paid membership fees
+        models.PaymentItem.student_shirt_order_id.is_(None) # Count only members who paid current AY membership fees
     ).scalar() or 0
     total_members = db.query(func.count(models.User.id)).filter(models.User.is_active == True, models.User.organization_id == organization.id).scalar() or 0
     num_unpaid_members = max(0, total_members - num_paid_members)
 
+
     financial_data = {
         "organization_id": organization.id, 
         "organization_name": organization.name, 
-        "year": str(current_year),
-        "total_current_balance": net_income_ytd, 
-        "total_revenue_ytd": total_revenue_ytd, # This now represents only membership revenue YTD
-        "total_expenses_ytd": total_expenses_ytd,
-        "net_income_ytd": net_income_ytd, 
-        "balance_turnover": round(total_revenue_ytd / net_income_ytd, 2) if net_income_ytd != 0 else 0.0,
-        "total_funds_available": net_income_ytd, 
+        "year": str(current_year), # Still calendar year for general summary
+        "total_current_balance": total_current_balance, # New definition
+        "total_revenue_ytd": turnover_funds, # Now 'Turnover Funds' (previous AYs only)
+        "upcoming_funds_ytd": upcoming_funds_collected, # Now 'Upcoming Year Funds' (all future AYs)
+        "total_expenses_ytd": total_expenses_ytd, # Still current calendar year expenses
+        "net_income_ytd": net_income_ytd, # New definition: Current AY membership revenue - Current AY expenses
+        "balance_turnover": round(total_current_balance / turnover_funds, 2) if turnover_funds != 0 else 0.0, # Adjusted ratio
+        "total_funds_available": total_current_balance, # This is the same as total_current_balance
         "reporting_date": today.strftime("%B %d, %Y"),
         "top_revenue_source_name": top_revenue_source["name"], 
         "top_revenue_source_amount": top_revenue_source['amount'],
         "largest_expense_category": largest_expense_category, 
         "largest_expense_amount": largest_expense_amount,
         "profit_margin_ytd": profit_margin_ytd, 
-        "revenues_breakdown": revenues_breakdown, # Now only membership revenues
+        "revenues_breakdown": revenues_breakdown, # Structured by academic year
         "expenses_breakdown": expenses_breakdown, 
-        "monthly_summary": monthly_summary,
+        "monthly_summary": monthly_summary, # Monthly data for current calendar year
         "accounts_balances": [], 
-        "chart_revenue_data": [total_revenue_ytd, total_expenses_ytd],
-        "chart_net_income_data": chart_net_income_trend_data, 
+        "chart_revenue_data": [current_ay_membership_revenue, total_expenses_ytd], # Reflects current AY revenue vs expenses
+        "chart_net_income_data": chart_net_income_trend_data, # Trend for monthly net income (calendar year)
         "chart_net_income_labels": chart_net_income_trend_labels,
         "num_paid_members": num_paid_members, 
         "num_unpaid_members": num_unpaid_members, 
         "total_members": total_members
     }
-    if net_income_ytd >= 0:
+    
+    # Account balances distribution based on total_current_balance
+    if total_current_balance >= 0:
         financial_data["accounts_balances"] = [
-            {"account": "Main Operating Account", "balance": round(net_income_ytd * 0.7, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Active"},
-            {"account": "Savings Account", "balance": round(net_income_ytd * 0.2, 2), "last_transaction": (today - timedelta(days=15)).strftime("%Y-%m-%d"), "status": "Active"},
-            {"account": "Petty Cash", "balance": round(net_income_ytd * 0.1, 2), "last_transaction": (today - timedelta(days=3)).strftime("%Y-%m-%d"), "status": "Active"}
+            {"account": "Main Operating Account", "balance": round(total_current_balance * 0.7, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Active"},
+            {"account": "Savings Account", "balance": round(total_current_balance * 0.2, 2), "last_transaction": (today - timedelta(days=15)).strftime("%Y-%m-%d"), "status": "Active"},
+            {"account": "Petty Cash", "balance": round(total_current_balance * 0.1, 2), "last_transaction": (today - timedelta(days=3)).strftime("%Y-%m-%d"), "status": "Active"}
         ]
         
         current_sum = sum(acc['balance'] for acc in financial_data["accounts_balances"])
-        if abs(current_sum - net_income_ytd) > 0.01:
-            financial_data["accounts_balances"][-1]['balance'] += (net_income_ytd - current_sum)
+        if abs(current_sum - total_current_balance) > 0.01:
+            financial_data["accounts_balances"][-1]['balance'] += (total_current_balance - current_sum)
             financial_data["accounts_balances"][-1]['balance'] = round(financial_data["accounts_balances"][-1]['balance'], 2)
     else:
-        financial_data["accounts_balances"] = [{"account": "Main Operating Account", "balance": net_income_ytd, "last_transaction": today.strftime("%Y-%m-%d"), "status": "Critical"}]
+        financial_data["accounts_balances"] = [{"account": "Main Operating Account", "balance": total_current_balance, "last_transaction": today.strftime("%Y-%m-%d"), "status": "Critical"}]
 
     return JSONResponse(content=financial_data)
+
 
 # Create Organization
 @router.post("/admin/organizations/", response_model=schemas.Organization, status_code=status.HTTP_201_CREATED)
