@@ -435,55 +435,55 @@ async def get_my_profile(
 DEFAULT_ORG_OFFICERS = [
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "President",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Vice President-Internal",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Vice President-External",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Secretary",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Treasurer",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Auditor",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Public Relation Officer",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Adviser 1",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
         "first_name": "Vacant",
-        "last_name": "Vacant",
+        "last_name": "",
         "position": "Adviser 2",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
