@@ -3993,22 +3993,31 @@ async def payment_history(request: Request, db: Session = Depends(get_db)):
 @app.get("/FinancialStatement", response_class=HTMLResponse, name="financial_statement")
 async def financial_statement(request: Request, db: Session = Depends(get_db)):
     """
-    Retrieves and categorizes financial data for a user and their organization.
+    Retrieves and categorizes financial data for a user and their organization,
+    excluding shirt payments from membership fee calculations.
     """
     user, user_org = get_current_user_with_org(request, db)
 
-    all_user_payment_items = db.query(models.PaymentItem).filter(models.PaymentItem.user_id == user.id).all()
+    # Filter out payment items related to student shirt orders for membership fee calculations
+    all_user_membership_payment_items = db.query(models.PaymentItem).filter(
+        models.PaymentItem.user_id == user.id,
+        models.PaymentItem.student_shirt_order_id.is_(None)  # Exclude shirt orders
+    ).all()
 
-    total_paid_by_user = sum(item.fee for item in all_user_payment_items if item.is_paid)
-    total_outstanding_fees_user = sum(item.fee for item in all_user_payment_items if not item.is_paid)
-    total_past_due_fees_user = sum(item.fee for item in all_user_payment_items if not item.is_paid and item.due_date and item.due_date < date.today())
+    total_paid_by_user = sum(item.fee for item in all_user_membership_payment_items if item.is_paid)
+    total_outstanding_fees_user = sum(item.fee for item in all_user_membership_payment_items if not item.is_paid)
+    total_past_due_fees_user = sum(item.fee for item in all_user_membership_payment_items if not item.is_paid and item.due_date and item.due_date < date.today())
 
     collected_fees_by_category_user = defaultdict(float)
     outstanding_fees_by_category_user = defaultdict(float)
 
-    for item in all_user_payment_items:
+    for item in all_user_membership_payment_items:
         category_name = ""
+        # The `student_shirt_order_id` check is no longer strictly necessary here for categorizing
+        # since we've already filtered them out from `all_user_membership_payment_items`.
+        # However, keeping it makes the categorization logic robust if the filtering changes.
         if item.student_shirt_order_id is not None:
+            # This branch won't be hit with the current filtering but is kept for logical completeness
             category_name = "Student Shirt Order Fees"
         elif item.academic_year and item.semester:
             category_name = f"AY {item.academic_year} - {item.semester} Fees (Membership)"
@@ -4021,11 +4030,13 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
             outstanding_fees_by_category_user[category_name] += item.fee
 
     organization_total_revenue = 0.0
-    all_org_paid_payment_items = db.query(models.PaymentItem).join(models.User).filter(
+    # Filter organization's paid payment items to exclude shirt orders
+    all_org_paid_membership_payment_items = db.query(models.PaymentItem).join(models.User).filter(
         models.PaymentItem.is_paid == True,
-        models.User.organization_id == (user_org.id if user_org else None)
+        models.User.organization_id == (user_org.id if user_org else None),
+        models.PaymentItem.student_shirt_order_id.is_(None)  # Exclude shirt orders
     ).all()
-    organization_total_revenue = sum(item.fee for item in all_org_paid_payment_items)
+    organization_total_revenue = sum(item.fee for item in all_org_paid_membership_payment_items)
 
     all_expenses_org = db.query(models.Expense).filter(models.Expense.organization_id == (user_org.id if user_org else None)).all()
     total_expenses_org = sum(expense.amount for expense in all_expenses_org)
@@ -4036,13 +4047,12 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
         expenses_by_category_org[expense.category if expense.category else "Uncategorized"] += expense.amount
 
     financial_summary_items_combined = []
-    for item in all_user_payment_items:
+    # Only include membership-related payments in the combined summary
+    for item in all_user_membership_payment_items:
         if item.is_paid and (item.updated_at or item.created_at):
             relevant_date = item.updated_at or item.created_at
             summary_category_name = ""
-            if item.student_shirt_order_id is not None:
-                summary_category_name = "Student Shirt Order (Your Payment)"
-            elif item.academic_year and item.semester:
+            if item.academic_year and item.semester:
                 summary_category_name = f"AY {item.academic_year} - {item.semester} Fees (Your Payment)"
             else:
                 summary_category_name = "Miscellaneous Fees (Your Payment)"
@@ -4058,7 +4068,8 @@ async def financial_statement(request: Request, db: Session = Depends(get_db)):
 
     months_full = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     org_inflows_by_month_current_year = defaultdict(float)
-    for item in all_org_paid_payment_items:
+    # Use the filtered list for organization inflows
+    for item in all_org_paid_membership_payment_items:
         relevant_date = item.updated_at or item.created_at
         if relevant_date and relevant_date.year == datetime.now().year:
             org_inflows_by_month_current_year[months_full[relevant_date.month - 1].lower()] += item.fee
