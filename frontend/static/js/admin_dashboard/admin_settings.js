@@ -603,7 +603,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     </td>
                     <td data-label="Name">${adminName || "N/A"}</td>
                     <td data-label="Position">${position}</td>
-                    <td data-label="Status">Active</td> 
+                    
                 `;
         existingAdminsTableBody.appendChild(row);
       });
