@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             nameCell.textContent = `${item.first_name} ${item.last_name}`;
             yearSecCell.textContent = `${item.year_level} - ${item.section}`;
-            amountPaidCell.textContent = item.total_paid;
+            amountPaidCell.textContent = `₱${item.total_paid}`;
         });
     }
 
