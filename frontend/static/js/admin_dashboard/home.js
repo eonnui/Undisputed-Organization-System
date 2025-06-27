@@ -11,6 +11,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let trendChart, expensesChart, distributionChart;
 
+    // Helper function to generate a color from a base and an index
+    function getColor(index) {
+        const colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+            '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#03A9F4',
+            '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B',
+            '#FFC107', '#FF9800', '#FF5722', '#795548', '#607D8B', '#F44336'
+        ];
+        return colors[index % colors.length];
+    }
+
     function initializeCharts() {
         // Destroy existing chart instances before creating new ones to prevent memory leaks and rendering issues
         if (trendChart) trendChart.destroy();
@@ -35,7 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             font: {
                                 size: 14 // Font size for legend labels
                             },
-                            boxWidth: 20, // Width of the color box in the legend
+                            usePointStyle: true, // Use the dataset's point style (e.g., circle) instead of a box
+                            boxWidth: 20, // Width of the color box (or point area) in the legend
                             padding: 15 // Padding between legend items
                         }
                     },
@@ -262,9 +274,68 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(distributionUrl).then(res => res.json())
         ])
             .then(([trendData, expensesData, distributionData]) => {
-                // Update trendChart with the new dataset structure (multiple lines)
+                // Determine the current academic year for styling purposes
+                const selectedAcademicYear = academicYearFilterDropdown.value;
+
+                // Process and update trendChart with dynamic styling
                 trendChart.data.labels = trendData.labels;
-                trendChart.data.datasets = trendData.datasets; // Assign the array of datasets
+                trendChart.data.datasets = trendData.datasets.map((dataset, index) => {
+                    const newDataset = { ...dataset }; // Create a mutable copy
+
+                    // Apply specific styling based on label
+                    if (newDataset.label === 'Total Collections') {
+                        newDataset.borderColor = '#4285F4'; // Primary blue
+                        newDataset.borderWidth = 4; // Thicker line
+                        newDataset.pointRadius = 6;
+                        newDataset.pointHoverRadius = 8;
+                        newDataset.fill = false;
+                        newDataset.order = 0; // Ensure it's drawn on top
+                        newDataset.pointStyle = 'circle'; // Explicit point style
+                    } else {
+                        // For academic year specific lines
+                        const ayLabel = newDataset.label.replace('AY ', ''); // Get just the year string
+                        let colorIndex = index; // Use index for a base color
+
+                        // Compare with the actively selected academic year
+                        if (ayLabel === selectedAcademicYear) {
+                            newDataset.borderColor = '#00C853'; // Bright green for current AY
+                            newDataset.borderWidth = 3;
+                            newDataset.borderDash = []; // Solid line
+                            newDataset.pointRadius = 5;
+                            newDataset.pointHoverRadius = 7;
+                            newDataset.order = 1; // Draw behind total, but above other AYS
+                            newDataset.pointStyle = 'circle';
+                            newDataset.hidden = false; // Ensure current AY is visible by default
+                        } else {
+                            // Differentiate between previous and upcoming AYs
+                            const selectedStartYear = parseInt(selectedAcademicYear.split('-')[0]);
+                            const ayStartYear = parseInt(ayLabel.split('-')[0]);
+
+                            if (ayStartYear < selectedStartYear) {
+                                // Previous Academic Years
+                                newDataset.borderColor = getColor(colorIndex + 5); // A slightly muted color
+                                newDataset.borderWidth = 2;
+                                newDataset.borderDash = [5, 5]; // Dashed line
+                                newDataset.pointRadius = 3;
+                                newDataset.pointHoverRadius = 5;
+                                newDataset.order = 2; // Draw behind current AY
+                                newDataset.pointStyle = 'triangle'; // Different point style
+                                newDataset.hidden = true; // Keep previous AYs hidden by default
+                            } else {
+                                // Upcoming Academic Years
+                                newDataset.borderColor = getColor(colorIndex + 10); // Another muted color
+                                newDataset.borderWidth = 2;
+                                newDataset.borderDash = [2, 2]; // Denser dashed line
+                                newDataset.pointRadius = 3;
+                                newDataset.pointHoverRadius = 5;
+                                newDataset.order = 2; // Draw behind current AY
+                                newDataset.pointStyle = 'rect'; // Different point style
+                                newDataset.hidden = true; // Keep upcoming AYs hidden by default
+                            }
+                        }
+                    }
+                    return newDataset;
+                });
                 trendChart.update();
 
                 // Update expensesChart
