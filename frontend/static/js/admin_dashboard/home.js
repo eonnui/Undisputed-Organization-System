@@ -83,50 +83,70 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
         expensesChart = new Chart(expensesCtx, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    backgroundColor: '#4285F4',
-                    borderRadius: 8,
-                }]
+    type: 'bar',
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            backgroundColor: '#4285F4',
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+            tooltip: { // Add tooltip configuration for expenses chart
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.raw !== null) {
+                            label += '₱' + context.raw.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function (value) {
+                        if (value === 0) {
+                            return '₱0';
+                        }
+                        return '₱' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    },
+                    font: {
+                        size: 12
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                size: 12
-                            }
-                        },
-                        grid: {
-                            color: '#e0e0e0',
-                            borderDash: [3, 3],
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                            ticks: {
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    BarThickness: 20,
+                grid: {
+                    color: '#e0e0e0',
+                    borderDash: [3, 3],
                 }
-            });
+            },
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: {
+                        size: 12
+                    }
+                }
+            }
+        },
+        BarThickness: 20,
+    }
+});
 
         distributionChart = new Chart(distributionCtx, {
     type: 'doughnut',
