@@ -408,10 +408,10 @@ label[for="classification_image"]:hover {
   margin-bottom: 20px;
 }
 
-.modal-left-column p {
+.modal-left-column p{
   color: var(--org-text-secondary);
   margin-bottom: 8px;
-  font-size: 1em;
+  font-size: larger;
 }
 
 .modal-left-column p strong {
@@ -458,7 +458,7 @@ label[for="classification_image"]:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.95em;
+  font-size: larger;
 }
 
 .participants-list li:last-child {
