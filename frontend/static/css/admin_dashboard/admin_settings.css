@@ -143,12 +143,19 @@ input[type="file"]:focus {
 button {
   padding: 10px 20px;
   border: none;
+  background-color: var(--org-secondary-color);
+  color: var(--org-text-primary);
   border-radius: var(--org-radius-sm, 5px);
   cursor: pointer;
   font-weight: bold;
   transition: background-color var(--org-transition), transform 0.2s ease,
     box-shadow var(--org-transition);
   white-space: nowrap;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--org-shadow-sm);
 }
 
 #saveThemeColorButton {

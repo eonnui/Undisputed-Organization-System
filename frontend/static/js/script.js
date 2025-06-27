@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
             "Adviser 1",
             "Adviser 2",
             "Auditor",
-            "Public Relation Officer"
+            "PRO"
         ];
 
         let positionOptions = '<option value="" disabled selected>Select your position</option>';
@@ -793,7 +793,7 @@ Please log in.`;
             "Adviser 1",
             "Adviser 2",
             "Auditor",
-            "Public Relation Officer"
+            "PRO"
         ];
 
         let positionOptionsHtml = '<option value="" disabled selected>Select your position</option>';

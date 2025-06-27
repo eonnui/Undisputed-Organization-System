@@ -472,7 +472,7 @@ DEFAULT_ORG_OFFICERS = [
     {
         "first_name": "Vacant",
         "last_name": "",
-        "position": "Public Relation Officer",
+        "position": "PRO",
         "profile_picture_url": "/static/images/your_image_name.jpg"
     },
     {
