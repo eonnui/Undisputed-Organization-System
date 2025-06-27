@@ -667,20 +667,23 @@ document.addEventListener('DOMContentLoaded', function() {
      * @param {Array<Object>} data - Array of member data.
      */
     function populateMembershipTable(data) {
-        membershipTableBody.innerHTML = ''; // Clear existing rows
+        membershipTableBody.innerHTML = '';// Clear existing rows [cite: 189]
         if (data.length === 0) {
             membershipTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No data available for the selected filters.</td></tr>';
             return;
         }
         data.forEach(item => {
-            const row = membershipTableBody.insertRow();
-            const nameCell = row.insertCell();
-            const yearSecCell = row.insertCell();
-            const amountPaidCell = row.insertCell();
+            // Only add the row if the total_paid is greater than 0
+            if (item.total_paid > 0) {
+                const row = membershipTableBody.insertRow();
+                const nameCell = row.insertCell();
+                const yearSecCell = row.insertCell();
+                const amountPaidCell = row.insertCell();
 
-            nameCell.textContent = `${item.first_name} ${item.last_name}`;
-            yearSecCell.textContent = `${item.year_level} - ${item.section}`;
-            amountPaidCell.textContent = `₱${item.total_paid}`;
+                nameCell.textContent = `${item.first_name} ${item.last_name}`;
+                yearSecCell.textContent = `${item.year_level} - ${item.section}`;
+                amountPaidCell.textContent = `₱${item.total_paid}`;
+            }
         });
     }
 
