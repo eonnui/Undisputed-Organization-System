@@ -59,11 +59,11 @@
   font-weight: 600;
 }
 
-#campaignSizeChart {
+#campaignSizeChart, #editCampaignSizeChart{
     display: none;
 }
 
-label[for="campaignSizeChart"] {
+label[for="campaignSizeChart"], [for="editCampaignSizeChart"] {
     display: inline-block;
     padding: 6px 10px;
     background-color: transparent;
@@ -79,7 +79,7 @@ label[for="campaignSizeChart"] {
     box-sizing: border-box;
 }
 
-label[for="campaignSizeChart"]:hover {
+label[for="campaignSizeChart"]:hover, [for="editCampaignSizeChart"]:hover {
     background-color: transparent;
     border: 2px solid var(--org-hover-effect);
     color: var(--org-button-chart-text); 
