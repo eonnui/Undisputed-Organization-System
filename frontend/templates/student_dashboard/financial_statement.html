@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content_header %}
-    <h1 class="dashboard-title">Financial Statement Dashboard</h1>
+    <h1 class="dashboard-title">Financial Statement Dashboard <span id="academic-year-display"></span></h1>
 {% endblock %}
 
 {% block content %}
 <div id="financial-data-container" class="financial-data-container"
-     data-current-year="{{ year | e }}">
+      data-current-year="{{ year | e }}" data-academic-year="{{ academic_year | e }}"> {# Added data-academic-year #}
 
     <script id="financial-data-json" type="application/json">
         {{ financial_data | tojson | safe }}
@@ -34,7 +34,7 @@
                 <p>₱{{ "%.2f"|format(financial_data.user_financials.total_past_due_fees) }}</p>
             </div>
             <div class="stat-card positive">
-                <h3>Organization Total Revenue</h3>
+                <h3>Total Funds Collected (Turnover & Membership Fees)</h3> {# Updated title #}
                 <p>₱{{ "%.2f"|format(financial_data.organization_financials.total_revenue_org) }}</p>
             </div>
             <div class="stat-card negative">
@@ -42,7 +42,7 @@
                 <p>₱{{ "%.2f"|format(financial_data.organization_financials.total_expenses_org) }}</p>
             </div>
             <div class="stat-card">
-                <h3>Organization Net Income</h3>
+                <h3>Current Funds</h3> {# Updated title #}
                 <p>₱{{ "%.2f"|format(financial_data.organization_financials.net_income_org) }}</p>
             </div>
         </div>

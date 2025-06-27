@@ -25,12 +25,13 @@ try {
     };
 }
 
-let currentYear = financialDataContainer.dataset.currentYear; 
+let currentYear = financialDataContainer.dataset.currentYear;
+let academicYear = financialDataContainer.dataset.academicYear; // Get academic year
 
 let today = new Date();
 let currentMonthName = new Date(today.getFullYear(), today.getMonth(), 1)
-                                 .toLocaleString('en-US', { month: 'long' }).toLowerCase();
-let lastActiveMonth = currentMonthName; 
+                                .toLocaleString('en-US', { month: 'long' }).toLowerCase();
+let lastActiveMonth = currentMonthName;
 
 function populateQuickStats() {
     if (financialData && financialData.current_date) {
@@ -48,11 +49,11 @@ function formatCurrency(amount) {
 function toggleDashboardView(viewId) {
     const reportCards = document.querySelectorAll('.report-card');
     const toggleButtons = document.querySelectorAll('.toggle-buttons .toggle-btn');
-    
+
     reportCards.forEach(card => {
         card.classList.remove('active');
     });
-    
+
     toggleButtons.forEach(button => {
         button.classList.remove('active');
     });
@@ -68,16 +69,16 @@ function toggleDashboardView(viewId) {
     }
 
     if (viewId === 'org-monthly') {
-        showMonthlyData(lastActiveMonth); 
+        showMonthlyData(lastActiveMonth);
     }
 }
 
 function showMonthlyData(month) {
-    lastActiveMonth = month; 
-    
+    lastActiveMonth = month;
+
     const monthlyDataTable = document.getElementById('monthly-data-table');
     const viewDetailedLink = document.getElementById('view-detailed-monthly-report-link');
-    
+
     if (!monthlyDataTable) {
         return;
     }
@@ -87,7 +88,7 @@ function showMonthlyData(month) {
         viewDetailedLink.href = `/student_dashboard/detailed_monthly_report_page?month=${month}&year=${currentYear}&type=organization`;
     }
 
-    const monthlyStats = financialData.organization_financials && financialData.organization_financials.monthly_data_org ? 
+    const monthlyStats = financialData.organization_financials && financialData.organization_financials.monthly_data_org ?
                          financialData.organization_financials.monthly_data_org[month] : null;
 
     if (monthlyStats) {
@@ -136,8 +137,15 @@ function showMonthlyData(month) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    populateQuickStats(); 
-    toggleDashboardView('user-collected'); 
+    populateQuickStats();
+    toggleDashboardView('user-collected');
+
+    // Display academic year in the title
+    const academicYearDisplay = document.getElementById('academic-year-display');
+    if (academicYearDisplay && academicYear) {
+        academicYearDisplay.textContent = `(${academicYear})`;
+    }
+
 
     document.getElementById('toggle-user-collected').addEventListener('click', () => toggleDashboardView('user-collected'));
     document.getElementById('toggle-user-outstanding').addEventListener('click', () => toggleDashboardView('user-outstanding'));
@@ -151,6 +159,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showMonthlyData(this.textContent.toLowerCase());
         });
     });
-    
-    showMonthlyData(lastActiveMonth); 
+
+    showMonthlyData(lastActiveMonth);
 });
