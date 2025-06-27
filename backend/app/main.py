@@ -2385,38 +2385,82 @@ async def admin_individual_members(
     return membership_data
 
 # Financial Trends (Monthly Revenue)
+# Financial Trends (Monthly Revenue)
 @router.get("/financial_trends")
-async def get_financial_trends(request: Request, db: Session = Depends(get_db)):
+async def get_financial_trends(
+    request: Request,
+    db: Session = Depends(get_db),
+    academic_year: str = Query(None, description="Filter by academic year (e.g., '2023-2024')"),
+    semester: str = Query(None, description="Filter by semester (e.g., '1st Semester', '2nd Semester')")
+):
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    num_months_to_display = 12
-    today = date.today()
+    start_date_filter = None
+    end_date_filter = None
     all_months_data = OrderedDict()
 
-    for i in range(num_months_to_display - 1, -1, -1):
-        target_date = today - relativedelta(months=i)
-        all_months_data[(target_date.year, target_date.month)] = 0.0
+    if academic_year and academic_year != 'Academic Year ▼':
+        try:
+            start_year_str, end_year_str = academic_year.split('-')
+            start_year = int(start_year_str)
+            end_year = int(end_year_str)
 
-    earliest_year, earliest_month = next(iter(all_months_data.keys()))
-    earliest_date_for_filter = datetime(earliest_year, earliest_month, 1).date() 
+            # Define academic year start and end months (e.g., August to July)
+            academic_start_month = 8  # August
+            academic_end_month = 7    # July of the next year
 
-    financial_data_raw = db.query(
+            start_date_filter = datetime(start_year, academic_start_month, 1).date()
+            # Calculate the last day of the academic end month
+            end_date_filter = datetime(end_year, academic_end_month, 1).date() + relativedelta(months=1) - relativedelta(days=1)
+
+            # Populate all_months_data for the entire selected academic year
+            current_date_in_ay = start_date_filter
+            while current_date_in_ay <= end_date_filter:
+                all_months_data[(current_date_in_ay.year, current_date_in_ay.month)] = 0.0
+                current_date_in_ay += relativedelta(months=1)
+
+        except ValueError:
+            print(f"Warning: Invalid academic_year format received: {academic_year}. Falling back to default.")
+            academic_year = None
+            
+    if not academic_year: # Default behavior if no valid academic_year is provided
+        num_months_to_display = 12
+        today = date.today()
+        for i in range(num_months_to_display - 1, -1, -1):
+            target_date = today - relativedelta(months=i)
+            all_months_data[(target_date.year, target_date.month)] = 0.0
+        earliest_year, earliest_month = next(iter(all_months_data.keys()))
+        start_date_filter = datetime(earliest_year, earliest_month, 1).date()
+        end_date_filter = today # Default end date is today
+
+    query = db.query(
         func.extract('year', models.Payment.created_at).label('year'),
         func.extract('month', models.Payment.created_at).label('month'),
         func.sum(models.Payment.amount).label('total'),
-    ).join(models.Payment.payment_item).join(models.Payment.user).filter( 
+    ).join(models.Payment.payment_item).join(models.Payment.user).filter(
         and_(
             models.Payment.status == "success",
             models.User.organization_id == admin_org.id,
-            models.Payment.created_at >= earliest_date_for_filter,
-            models.Payment.created_at <= today,
-            models.PaymentItem.student_shirt_order_id == None 
+            models.PaymentItem.student_shirt_order_id == None # Exclude shirt orders from general financial trends
         )
-    ).group_by('year', 'month').all()
+    )
+
+    if start_date_filter:
+        query = query.filter(models.Payment.created_at >= start_date_filter)
+    if end_date_filter:
+        query = query.filter(models.Payment.created_at <= end_date_filter)
+
+    if academic_year and academic_year != 'Academic Year ▼':
+        query = query.filter(models.PaymentItem.academic_year == academic_year)
+
+    if semester and semester != 'Semester ▼':
+        query = query.filter(models.PaymentItem.semester == semester)
+
+    financial_data_raw = query.group_by('year', 'month').order_by('year', 'month').all()
 
     for row in financial_data_raw:
         key = (int(row.year), int(row.month))
-        if key in all_months_data:
+        if key in all_months_data: # Only add if within the expected academic year range
             all_months_data[key] = float(row.total)
 
     labels = [f"{year}-{month:02d}" for year, month in all_months_data.keys()]
@@ -2437,25 +2481,72 @@ async def get_expenses_by_category(request: Request, db: Session = Depends(get_d
     data = [float(total) for category, total in expenses_data]
     return {"labels": labels, "data": data}
 
-# Fund Distribution by Academic Year
 @router.get("/fund_distribution")
-async def get_fund_distribution(request: Request, db: Session = Depends(get_db)):
+async def get_fund_distribution(
+    request: Request,
+    db: Session = Depends(get_db),
+    academic_year: str = Query(None, description="Filter by academic year (e.g., '2023-2024')"),
+    semester: str = Query(None, description="Filter by semester (e.g., '1st Semester', '2nd Semester')")
+):
     admin, admin_org = get_current_admin_with_org(request, db)
 
-    fund_allocation = db.query(models.PaymentItem.academic_year, func.sum(models.Payment.amount)).join(
+    query = db.query(
+        models.PaymentItem.academic_year,
+        models.PaymentItem.semester,
+        func.sum(models.Payment.amount)
+    ).join(
         models.Payment, models.PaymentItem.id == models.Payment.payment_item_id
     ).join(models.PaymentItem.user).filter(
         and_(
             models.Payment.status == "success",
             models.User.organization_id == admin_org.id,
-            models.PaymentItem.student_shirt_order_id == None 
+            models.PaymentItem.student_shirt_order_id == None # Exclude shirt orders
         )
-    ).group_by(models.PaymentItem.academic_year).all()
+    )
+
+    if academic_year and academic_year != 'Academic Year ▼':
+        query = query.filter(models.PaymentItem.academic_year == academic_year)
+
+    if semester and semester != 'Semester ▼':
+        query = query.filter(models.PaymentItem.semester == semester)
 
     distribution_data = {}
-    for academic_year, total_amount in fund_allocation:
-        category = academic_year if academic_year else "General Funds"
-        distribution_data[category] = distribution_data.get(category, 0.0) + float(total_amount)
+
+    # Logic to handle grouping and labeling based on selected filters
+    if academic_year and academic_year != 'Academic Year ▼' and semester and semester != 'Semester ▼':
+        # If both are specific, group by academic_year and semester (will likely result in one slice)
+        fund_allocation = query.group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
+        for ay, sem, total_amount in fund_allocation:
+            label = f"{ay} - {sem}"
+            distribution_data[label] = distribution_data.get(label, 0.0) + float(total_amount)
+    elif academic_year and academic_year != 'Academic Year ▼':
+        # If only academic_year is specific, group by semester within that AY
+        fund_allocation = query.group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
+        for ay, sem, total_amount in fund_allocation:
+            if ay == academic_year:
+                label = ""
+                if sem == "1st":
+                    label = "1st Semester"
+                elif sem == "2nd":
+                    label = "2nd Semester"
+                elif sem:
+                    label = f"{sem} Semester"
+                else:
+                    label = "Unspecified Semester"
+                distribution_data[label] = distribution_data.get(label, 0.0) + float(total_amount)
+    elif semester and semester != 'Semester ▼':
+        # If only semester is specific, group by academic_year for that semester
+        fund_allocation = query.group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
+        for ay, sem, total_amount in fund_allocation:
+            if sem == semester:
+                label = f"{ay if ay else 'Unspecified Academic Year'}"
+                distribution_data[label] = distribution_data.get(label, 0.0) + float(total_amount)
+    else:
+        # If neither is specific, group by academic_year for a general overview
+        fund_allocation = query.group_by(models.PaymentItem.academic_year).all()
+        for ay, _, total_amount in fund_allocation: #semester is also in query, but not used in group_by
+            label = f"{ay if ay else 'General Funds'}"
+            distribution_data[label] = distribution_data.get(label, 0.0) + float(total_amount)
 
     return {"labels": list(distribution_data.keys()), "data": list(distribution_data.values())}
 
