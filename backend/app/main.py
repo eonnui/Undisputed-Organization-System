@@ -2385,7 +2385,6 @@ async def admin_individual_members(
     return membership_data
 
 # Financial Trends (Monthly Revenue)
-# Financial Trends (Monthly Revenue)
 @router.get("/financial_trends")
 async def get_financial_trends(
     request: Request,
@@ -2397,7 +2396,11 @@ async def get_financial_trends(
 
     start_date_filter = None
     end_date_filter = None
-    all_months_data = OrderedDict()
+    
+    # Use a dictionary to store totals for each month-academic_year combination
+    # The structure will be: { (year, month): { 'AY1': total1, 'AY2': total2, 'Total': overall_total } }
+    # This will be transformed into Chart.js datasets later.
+    monthly_academic_year_data = OrderedDict()
 
     if academic_year and academic_year != 'Academic Year ▼':
         try:
@@ -2410,13 +2413,13 @@ async def get_financial_trends(
             academic_end_month = 7    # July of the next year
 
             start_date_filter = datetime(start_year, academic_start_month, 1).date()
-            # Calculate the last day of the academic end month
             end_date_filter = datetime(end_year, academic_end_month, 1).date() + relativedelta(months=1) - relativedelta(days=1)
 
-            # Populate all_months_data for the entire selected academic year
+            # Populate monthly_academic_year_data for the entire selected academic year
             current_date_in_ay = start_date_filter
             while current_date_in_ay <= end_date_filter:
-                all_months_data[(current_date_in_ay.year, current_date_in_ay.month)] = 0.0
+                month_key = (current_date_in_ay.year, current_date_in_ay.month)
+                monthly_academic_year_data[month_key] = {} # Initialize for this month
                 current_date_in_ay += relativedelta(months=1)
 
         except ValueError:
@@ -2428,14 +2431,17 @@ async def get_financial_trends(
         today = date.today()
         for i in range(num_months_to_display - 1, -1, -1):
             target_date = today - relativedelta(months=i)
-            all_months_data[(target_date.year, target_date.month)] = 0.0
-        earliest_year, earliest_month = next(iter(all_months_data.keys()))
+            month_key = (target_date.year, target_date.month)
+            monthly_academic_year_data[month_key] = {} # Initialize for this month
+        
+        earliest_year, earliest_month = next(iter(monthly_academic_year_data.keys()))
         start_date_filter = datetime(earliest_year, earliest_month, 1).date()
         end_date_filter = today # Default end date is today
 
     query = db.query(
         func.extract('year', models.Payment.created_at).label('year'),
         func.extract('month', models.Payment.created_at).label('month'),
+        models.PaymentItem.academic_year.label('payment_academic_year'), # Get the academic year from the payment item
         func.sum(models.Payment.amount).label('total'),
     ).join(models.Payment.payment_item).join(models.Payment.user).filter(
         and_(
@@ -2450,23 +2456,116 @@ async def get_financial_trends(
     if end_date_filter:
         query = query.filter(models.Payment.created_at <= end_date_filter)
 
-    if academic_year and academic_year != 'Academic Year ▼':
-        query = query.filter(models.PaymentItem.academic_year == academic_year)
+    # Filtering by models.PaymentItem.academic_year is REMOVED from the main query
+    # because the goal is to visualize all payments within the time range,
+    # distinguishing them by their associated academic year in the PaymentItem.
+    # If a specific academic_year filter is *still* desired for the total
+    # collection trend, it would be added here, but the current request implies
+    # showing all payments within the selected *display period*.
 
     if semester and semester != 'Semester ▼':
         query = query.filter(models.PaymentItem.semester == semester)
 
-    financial_data_raw = query.group_by('year', 'month').order_by('year', 'month').all()
+    # Group by year, month, AND academic_year of the payment item to get breakdowns
+    financial_data_raw = query.group_by('year', 'month', 'payment_academic_year').order_by('year', 'month', 'payment_academic_year').all()
 
+    # Consolidate data into the monthly_academic_year_data structure
+    # This ensures all months in the range are present, even if no payments occurred for them
     for row in financial_data_raw:
-        key = (int(row.year), int(row.month))
-        if key in all_months_data: # Only add if within the expected academic year range
-            all_months_data[key] = float(row.total)
+        month_key = (int(row.year), int(row.month))
+        payment_ay = row.payment_academic_year
+        total_amount = float(row.total)
 
-    labels = [f"{year}-{month:02d}" for year, month in all_months_data.keys()]
-    data = list(all_months_data.values())
+        if month_key in monthly_academic_year_data:
+            if payment_ay not in monthly_academic_year_data[month_key]:
+                monthly_academic_year_data[month_key][payment_ay] = 0.0
+            monthly_academic_year_data[month_key][payment_ay] += total_amount
+        else:
+            # This case should ideally not be hit if monthly_academic_year_data is correctly pre-populated
+            # for the entire period. It might occur if `start_date_filter` and `end_date_filter`
+            # logic doesn't perfectly match the data or if the academic_year filter was explicitly removed
+            # and it brings data outside the current academic_year selected for display labels.
+            # For this scenario, we will add it, but it won't have a corresponding label initially.
+            print(f"Warning: Data for {month_key} found outside pre-populated range.")
+            monthly_academic_year_data[month_key] = {payment_ay: total_amount}
 
-    return {"labels": labels, "data": data}
+    # Prepare data for Chart.js
+    labels = []
+    # Use a set to collect all unique academic years found in the data
+    all_academic_years = set()
+    
+    # First pass: collect all unique academic years and ensure month keys are sorted
+    sorted_month_keys = sorted(monthly_academic_year_data.keys())
+    for year, month in sorted_month_keys:
+        labels.append(f"{year}-{month:02d}")
+        # Add academic years from the data to the set, excluding None
+        for ay_key in monthly_academic_year_data[(year, month)].keys():
+            if ay_key is not None:
+                all_academic_years.add(ay_key)
+
+    # Sort academic years for consistent legend ordering
+    sorted_academic_years = sorted(list(all_academic_years))
+    
+    # Create datasets for each academic year
+    datasets = []
+    # Add a dataset for "Total Collections" across all academic years for that month
+    total_collections_data = []
+    for year, month in sorted_month_keys:
+        month_total = sum(monthly_academic_year_data[(year, month)].values())
+        total_collections_data.append(month_total)
+
+    datasets.append({
+        "label": "Total Collections",
+        "data": total_collections_data,
+        "borderColor": '#4285F4', # A default primary color
+        "backgroundColor": 'transparent',
+        "tension": 0.4,
+        "pointBackgroundColor": '#4285F4',
+        "borderWidth": 3,
+        "pointRadius": 5,
+        "pointHoverRadius": 7,
+        "fill": False,
+        "order": 0 # Ensure total is drawn first/on top
+    })
+
+    # Generate distinct colors for academic year lines
+    # More colors added for better distinction if many academic years appear
+    colors = [
+        '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#03A9F4', '#00BCD4', '#009688',
+        '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#795548',
+        '#607D8B', '#F44336'
+    ]
+    color_index = 0
+
+    for ay in sorted_academic_years:
+        # We ensure "Total Collections" is not considered an actual AY to avoid conflicts
+        if ay == 'Total Collections':
+            continue 
+        
+        current_color = colors[color_index % len(colors)]
+        color_index += 1
+
+        ay_data = []
+        for year, month in sorted_month_keys:
+            # Get the value for this academic year, or 0 if not present for the month
+            ay_data.append(monthly_academic_year_data[(year, month)].get(ay, 0.0))
+        
+        datasets.append({
+            "label": f"AY {ay}",
+            "data": ay_data,
+            "borderColor": current_color,
+            "backgroundColor": 'transparent',
+            "tension": 0.4,
+            "pointBackgroundColor": current_color,
+            "borderWidth": 2, # Slightly thinner for individual AY lines
+            "pointRadius": 3,
+            "pointHoverRadius": 5,
+            "fill": False,
+            "hidden": True, # Start with individual AY lines hidden, user can toggle
+            "order": 1 # Draw individual AY lines behind the total line
+        })
+
+    return {"labels": labels, "datasets": datasets}
 
 # Expenses by Category
 @router.get("/expenses_by_category")
