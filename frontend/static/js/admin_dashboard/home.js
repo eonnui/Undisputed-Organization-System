@@ -13,71 +13,74 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initializeCharts() {
         trendChart = new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Collections',
-                    data: [],
-                    borderColor: '#4285F4',
-                    backgroundColor: 'transparent',
-                    tension: 0.4,
-                    pointBackgroundColor: '#4285F4',
-                    borderWidth: 3,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    fill: false,
-                }]
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Collections',
+            data: [],
+            borderColor: '#4285F4',
+            backgroundColor: 'transparent',
+            tension: 0.4,
+            pointBackgroundColor: '#4285F4',
+            borderWidth: 3,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            fill: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function (value) {
+                        if (value === 0) {
+                            return '₱0';
+                        }
+                        return '₱' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Added options for no decimal places
+                    },
+                    font: {
+                        size: 14
+                    }
+                },
+                grid: {
+                    color: '#e0e0e0',
+                    borderDash: [5, 5],
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+            x: {
+                grid: {
+                    display: false,
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return value === 0 ? '0' : value / 1000 + 'k';
-                            },
-                            font: {
-                                size: 14
-                            }
-                        },
-                        grid: {
-                            color: '#e0e0e0',
-                            borderDash: [5, 5],
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false,
-                        },
-                        ticks: {
-                            font: {
-                                size: 14
-                            }
-                        }
-                    }
-                },
-                elements: {
-                    line: {
-                        shadowColor: 'rgba(0, 0, 0, 0.1)',
-                        shadowBlur: 10,
-                        shadowWidth: 3,
-                    },
-                    point: {
-                        shadowColor: 'rgba(0, 0, 0, 0.2)',
-                        shadowBlur: 7,
-                        shadowWidth: 2,
+                ticks: {
+                    font: {
+                        size: 14
                     }
                 }
             }
-        });
+        },
+        elements: {
+            line: {
+                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                shadowBlur: 10,
+                shadowWidth: 3,
+            },
+            point: {
+                shadowColor: 'rgba(0, 0, 0, 0.2)',
+                shadowBlur: 7,
+                shadowWidth: 2,
+            }
+        }
+    }
+});
 
         expensesChart = new Chart(expensesCtx, {
             type: 'bar',
@@ -126,42 +129,56 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
         distributionChart = new Chart(distributionCtx, {
-            type: 'doughnut',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    backgroundColor: [
-                        '#4285F4',
-                        '#A4C2F4',
-                        '#D2E3FC'
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 10,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '60%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            boxWidth: 12,
-                            font: {
-                                size: 12
-                            }
-                        }
+    type: 'doughnut',
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            backgroundColor: [
+                '#4285F4',
+                '#A4C2F4',
+                '#D2E3FC'
+            ],
+            borderWidth: 0,
+            hoverOffset: 10,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 15,
+                    boxWidth: 12,
+                    font: {
+                        size: 12
                     }
-                },
-                animation: {
-                    animateRotate: true,
-                    animateScale: true
+                }
+            },
+            tooltip: { // Add this tooltip configuration
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.raw !== null) {
+                            label += '₱' + context.raw.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                        }
+                        return label;
+                    }
                 }
             }
-        });
+        },
+        animation: {
+            animateRotate: true,
+            animateScale: true
+        }
+    }
+});
     }
 
     // Modified fetchFinancialData to accept academicYear and semester
