@@ -281,6 +281,7 @@
 
 .profile-item span {
   flex-grow: 1;
+  font-size: larger;
   word-wrap: break-word;
 }
 
