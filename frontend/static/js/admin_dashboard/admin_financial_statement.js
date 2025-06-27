@@ -197,7 +197,11 @@ function populateDashboard(data) {
     document.getElementById('total-revenue-ytd').textContent = `₱${data.total_revenue_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
     // NEW: Populate the Upcoming Year Funds (Collected) card
-    document.getElementById('upcoming-funds-ytd').textContent = `₱${data.upcoming_funds_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    // Note: The backend API you provided doesn't explicitly return 'upcoming_funds_ytd'.
+    // If you need this, you'll need to add it to your FastAPI response.
+    // For now, it will default to 0 if not present in the fetched data.
+    document.getElementById('upcoming-funds-ytd').textContent = `₱${(data.upcoming_funds_ytd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
 
     // total_expenses_ytd remains expenses for the current academic year
     document.getElementById('total-expenses-ytd').textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -218,8 +222,7 @@ function populateDashboard(data) {
 
     document.getElementById('reporting-date').textContent = data.reporting_date;
 
-    // Overview metrics - these might need adjustment based on how the backend provides "top revenue source"
-    // if 'revenue' now strictly means 'turnover'. Assuming it still refers to actual incoming money.
+    // Overview metrics
     document.getElementById('top-revenue-source').textContent = `${data.top_revenue_source_name} (₱${data.top_revenue_source_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
     document.getElementById('largest-expense').textContent = `${data.largest_expense_category} (₱${data.largest_expense_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
     document.getElementById('profit-margin-ytd').textContent = `${data.profit_margin_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
@@ -232,61 +235,21 @@ function populateDashboard(data) {
     // This sum will include individual semester fees from all years and upcoming fees.
     let totalRevenuesDisplayed = 0;
 
-    data.revenues_breakdown.forEach(yearData => {
-        // Create academic year row (collapsible)
-        const yearRow = revenuesBreakdownBody.insertRow();
-        yearRow.classList.add('academic-year-row');
-        yearRow.dataset.year = yearData.year;
-        yearRow.innerHTML = `
-            <td class="academic-year-toggler">
-                <span class="toggle-icon">▶</span> <span class="academic-year-text">${yearData.year} Total</span>
-            </td>
-            <td class="amount">₱${yearData.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td>${yearData.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
-        `;
-        totalRevenuesDisplayed += yearData.total; // Add academic year total to grand total
-
-        // Event listener to toggle semester visibility
-        yearRow.querySelector('.academic-year-toggler').addEventListener('click', function() {
-            const currentYear = this.closest('.academic-year-row').dataset.year;
-            const semesterRows = document.querySelectorAll(`.semester-row[data-parent-year="${currentYear}"]`);
-            const toggleIcon = this.querySelector('.toggle-icon');
-
-            if (yearRow.classList.contains('expanded')) {
-                yearRow.classList.remove('expanded');
-                toggleIcon.textContent = '▶';
-                semesterRows.forEach(row => row.classList.remove('visible'));
-            } else {
-                yearRow.classList.add('expanded');
-                toggleIcon.textContent = '▼';
-                semesterRows.forEach(row => row.classList.add('visible'));
-            }
-        });
-
-
-        // Create semester rows (initially hidden)
-        yearData.semesters.forEach(item => {
-            const semesterRow = revenuesBreakdownBody.insertRow();
-            semesterRow.classList.add('semester-row');
-            semesterRow.dataset.parentYear = yearData.year; // Link to parent academic year
-            
-            // Format semester source for better readability
-            let formattedSource = item.source;
-            if (item.source.toLowerCase().includes('1st fees')) {
-                formattedSource = '1st Semester Fees';
-            } else if (item.source.toLowerCase().includes('2nd fees')) {
-                formattedSource = '2nd Semester Fees';
-            }
-
-            // Wrap formattedSource in a span with semester-source-text class for CSS indentation
-            semesterRow.innerHTML = `
-                <td><span class="semester-source-text">${formattedSource}</span></td>
+    // Check if revenues_breakdown exists and is an array before iterating
+    if (Array.isArray(data.revenues_breakdown)) {
+        data.revenues_breakdown.forEach(item => { // Iterating directly over the breakdown items now
+            const row = revenuesBreakdownBody.insertRow();
+            // Assuming each item in revenues_breakdown has 'source', 'amount', 'percentage'
+            row.innerHTML = `
+                <td>${item.source}</td>
                 <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
             `;
-            // Note: semester rows are initially hidden by CSS and revealed by JS
+            totalRevenuesDisplayed += item.amount; // Summing individual amounts
         });
-    });
+    } else {
+         console.warn("data.revenues_breakdown is not an array or is missing.");
+    }
 
     document.getElementById('total-revenue-footer').textContent = `₱${totalRevenuesDisplayed.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
@@ -294,14 +257,19 @@ function populateDashboard(data) {
     // Expenses Breakdown Table (remains the same)
     const expensesBreakdownBody = document.getElementById('expenses-breakdown-body');
     expensesBreakdownBody.innerHTML = '';
-    data.expenses_breakdown.forEach(item => {
-        const row = expensesBreakdownBody.insertRow();
-        row.innerHTML = `
-            <td>${item.category}</td>
-            <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
-        `;
-    });
+    if (Array.isArray(data.expenses_breakdown)) {
+        data.expenses_breakdown.forEach(item => {
+            const row = expensesBreakdownBody.insertRow();
+            row.innerHTML = `
+                <td>${item.category}</td>
+                <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
+            `;
+        });
+    } else {
+        console.warn("data.expenses_breakdown is not an array or is missing.");
+    }
+
     // The total expenses footer needs to be handled carefully because it's a 3-column table now
     const totalExpensesFooter = document.getElementById('total-expenses-footer');
     if (totalExpensesFooter) { // Check if the element exists before manipulating
@@ -316,19 +284,23 @@ function populateDashboard(data) {
     let totalMonthlyExpenses = 0;
     let totalMonthlyNetIncome = 0;
 
-    data.monthly_summary.forEach(item => {
-        const row = monthlySummaryBody.insertRow();
-        const netIncomeClass = item.net_income >= 0 ? 'positive' : 'negative';
-        row.innerHTML = `
-            <td>${item.month}</td>
-            <td class="amount positive">₱${item.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td class="amount negative">₱${item.expenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td class="amount ${netIncomeClass}">₱${item.net_income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-        `;
-        totalMonthlyRevenue += item.revenue;
-        totalMonthlyExpenses += item.expenses;
-        totalMonthlyNetIncome += item.net_income;
-    });
+    if (Array.isArray(data.monthly_summary)) {
+        data.monthly_summary.forEach(item => {
+            const row = monthlySummaryBody.insertRow();
+            const netIncomeClass = item.net_income >= 0 ? 'positive' : 'negative';
+            row.innerHTML = `
+                <td>${item.month}</td>
+                <td class="amount positive">₱${item.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="amount negative">₱${item.expenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="amount ${netIncomeClass}">₱${item.net_income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            `;
+            totalMonthlyRevenue += item.revenue;
+            totalMonthlyExpenses += item.expenses;
+            totalMonthlyNetIncome += item.net_income;
+        });
+    } else {
+        console.warn("data.monthly_summary is not an array or is missing.");
+    }
 
     document.getElementById('monthly-total-revenue-footer').textContent = `₱${totalMonthlyRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     document.getElementById('monthly-total-expenses-footer').textContent = `₱${totalMonthlyExpenses.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -347,137 +319,39 @@ function populateDashboard(data) {
     const accountsBalancesBody = document.getElementById('accounts-balances-body');
     accountsBalancesBody.innerHTML = '';
     let totalAccountBalance = 0;
-    data.accounts_balances.forEach(item => {
-        const row = accountsBalancesBody.insertRow();
-        const statusClass = item.status.toLowerCase() + '-status';
-        row.innerHTML = `
-            <td>${item.account}</td>
-            <td class="amount">₱${item.balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td>${item.last_transaction}</td>
-            <td class="${statusClass}">${item.status}</td>
-        `;
-        totalAccountBalance += item.balance;
-    });
+    if (Array.isArray(data.accounts_balances)) {
+        data.accounts_balances.forEach(item => {
+            const row = accountsBalancesBody.insertRow();
+            const statusClass = item.status.toLowerCase() + '-status';
+            row.innerHTML = `
+                <td>${item.account}</td>
+                <td class="amount">₱${item.balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>${item.last_transaction}</td>
+                <td class="${statusClass}">${item.status}</td>
+            `;
+            totalAccountBalance += item.balance;
+        });
+    } else {
+        console.warn("data.accounts_balances is not an array or is missing.");
+    }
     document.getElementById('total-accounts-balance-footer').textContent = `₱${totalAccountBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
     window.financialData = data;
     renderCharts(data);
 }
 
-// MOCKED fetchFinancialData to return the calculated values
+// *** UPDATED fetchFinancialData function to call backend API ***
 async function fetchFinancialData() {
     try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const response = await fetch('/api/admin/financial_data'); // This is your actual backend API endpoint
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to fetch financial data from API.');
+        }
+        const data = await response.json(); // Parse the JSON data from the API response
 
-        // Define current academic year (2024-2025)
-        const currentAY = '2024-2025';
-        const currentYearValue = 2025; // As per "Financial Summary - As of Year 2025"
-
-        // Revenues from previous academic years (AV 2022-2023, AV 2023-2024)
-        const turnoverFunds = 100 + 200 + 100 + 100; // ₱500.00
-
-        // Revenues from current academic year (AV 2024-2025)
-        const currentAYRevenue = 100 + 200; // ₱300.00
-
-        // Expenses for current academic year (from image, assuming ₱0.00)
-        const currentAYExpenses = 0; // ₱0.00
-
-        // Net Income for current academic year
-        const netIncomeCurrentAY = currentAYRevenue - currentAYExpenses; // ₱300.00 - ₱0.00 = ₱300.00
-
-        // New: Collected fees for upcoming academic year (e.g., AV 2025-2026)
-        const upcomingAYCollectedFees = 300 + 200; // From your provided data for AV 2025-2026: ₱500.00
-
-        // Total Current Balance = Turnover Funds (previous AYs) + Net Income (current AY) + Upcoming AY Collected Fees
-        const totalCurrentBalance = turnoverFunds + netIncomeCurrentAY + upcomingAYCollectedFees; // ₱500.00 + ₱300.00 + ₱500.00 = ₱1300.00
-
-        const mockData = {
-            year: currentYearValue,
-            total_revenue_ytd: turnoverFunds, // This is 'turnover money from previous years'
-            upcoming_funds_ytd: upcomingAYCollectedFees, // New data point for upcoming funds
-            total_expenses_ytd: currentAYExpenses, // This is current AY expenses
-            net_income_ytd: netIncomeCurrentAY, // This is 'membership fees collected from current academic year' minus current AY expenses
-            total_current_balance: totalCurrentBalance, // turnover money + net income + upcoming fees
-            reporting_date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-            top_revenue_source_name: "AV 2025-2026 - 1st Fees", // Example, adjust as needed
-            top_revenue_source_amount: 300.00,
-            largest_expense_category: "Operational Costs", // Example
-            largest_expense_amount: 0.00, // No expenses in the provided image
-            // Profit margin should only consider current academic year revenue vs. expenses
-            profit_margin_ytd: currentAYRevenue > 0 ? (netIncomeCurrentAY / currentAYRevenue * 100).toFixed(2) : 0.00,
-
-            // Updated revenues_breakdown to support collapsible academic years
-            revenues_breakdown: [
-                {
-                    year: "AV 2022-2023",
-                    total: 300.00, // 100 + 200
-                    percentage: (300/1300*100).toFixed(2),
-                    semesters: [
-                        { source: "1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
-                        { source: "2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) }
-                    ]
-                },
-                {
-                    year: "AV 2023-2024",
-                    total: 200.00, // 100 + 100
-                    percentage: (200/1300*100).toFixed(2),
-                    semesters: [
-                        { source: "1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
-                        { source: "2nd Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) }
-                    ]
-                },
-                {
-                    year: "AV 2024-2025 (Current AY)",
-                    total: 300.00, // 100 + 200
-                    percentage: (300/1300*100).toFixed(2),
-                    semesters: [
-                        { source: "1st Fees", amount: 100.00, percentage: (100/1300*100).toFixed(2) },
-                        { source: "2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) }
-                    ]
-                },
-                {
-                    year: "AV 2025-2026 (Upcoming AY)",
-                    total: 500.00, // 300 + 200
-                    percentage: (500/1300*100).toFixed(2),
-                    semesters: [
-                        { source: "1st Fees", amount: 300.00, percentage: (300/1300*100).toFixed(2) },
-                        { source: "2nd Fees", amount: 200.00, percentage: (200/1300*100).toFixed(2) }
-                    ]
-                }
-            ],
-            expenses_breakdown: [
-                { category: "Salaries", amount: 0.00, percentage: 0.00 },
-                { category: "Utilities", amount: 0.00, percentage: 0.00 }
-            ],
-            monthly_summary: [
-                { month: "Jan", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Feb", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Mar", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Apr", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "May", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Jun", revenue: currentAYRevenue, expenses: currentAYExpenses, net_income: netIncomeCurrentAY }, // Reflect current AY data here for June
-                { month: "Jul", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Aug", revenue: upcomingAYCollectedFees, expenses: 0, net_income: upcomingAYCollectedFees }, // Assuming upcoming fees could be collected in August for next AY
-                { month: "Sep", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Oct", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Nov", revenue: 0, expenses: 0, net_income: 0 },
-                { month: "Dec", revenue: 0, expenses: 0, net_income: 0 }
-            ],
-            accounts_balances: [
-                { account: "Main Bank Account", balance: totalCurrentBalance, last_transaction: "2025-06-25", status: "Active" },
-                { account: "Savings Account", balance: 0.00, last_transaction: "N/A", status: "Active" }
-            ],
-            chart_net_income_labels: ["2023", "2024", "2025"], // Example years for trend
-            chart_net_income_data: [
-                (100+200), // Net income for 2022-2023 (assuming no expenses for previous years)
-                (100+100), // Net income for 2023-2024
-                netIncomeCurrentAY // Net income for 2024-2025
-            ]
-        };
-
-        console.log("Mocked financial data:", mockData);
-        populateDashboard(mockData);
+        console.log("Fetched financial data from API:", data);
+        populateDashboard(data);
     } catch (error) {
         console.error("Error fetching financial data:", error);
         document.querySelector('.dashboard-container').innerHTML = `
@@ -489,6 +363,7 @@ async function fetchFinancialData() {
         `;
     }
 }
+
 
 // Helper to get the currently displayed or calculated academic year
 function getCalculatedCurrentAcademicYear() {
@@ -544,6 +419,8 @@ function populateMembershipTable(data) {
     });
 }
 
+// This function still uses mock data. If you have a backend endpoint for this,
+// you should replace this with a fetch call as well.
 async function fetchMembershipData(academicYear, semester) {
     let url = '/api/admin/membership_tracker_data'; // New backend endpoint for detailed membership data
     const params = [];
@@ -570,6 +447,7 @@ async function fetchMembershipData(academicYear, semester) {
 
     try {
         // Mock membership data based on the current academic year and semester
+        // TODO: Replace this with an actual fetch to your backend membership API endpoint
         const mockMembershipData = {
             members: [
                 { first_name: "Juan", last_name: "Dela Cruz", year_level: "1st Year", section: "A", total_paid: 1500.00, status: "Paid" },

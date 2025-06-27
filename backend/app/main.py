@@ -3048,7 +3048,6 @@ async def create_expense(request: Request, expense: schemas.ExpenseCreate, db: S
 
     return db_expense
 
-# Admin Financial Data API
 @router.get("/api/admin/financial_data", response_class=JSONResponse, name="admin_financial_data_api")
 async def admin_financial_data_api(request: Request, db: Session = Depends(get_db)):
     admin, organization = get_current_admin_with_org(request, db)
@@ -3056,11 +3055,15 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     current_year = datetime.now().year
     today = datetime.now().date()
 
+    # Calculate total membership revenue YTD
     total_revenue_ytd = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
         extract('year', models.PaymentItem.updated_at) == current_year,
         models.PaymentItem.is_paid == True,
-        models.User.organization_id == organization.id
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
     ).scalar() or 0.0
+
+    # Total expenses YTD remains the same
     total_expenses_ytd = db.query(func.sum(models.Expense.amount)).filter(
         extract('year', models.Expense.incurred_at) == current_year,
         models.Expense.organization_id == organization.id
@@ -3069,6 +3072,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
     net_income_ytd = total_revenue_ytd - total_expenses_ytd
     profit_margin_ytd = round((net_income_ytd / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
     
+    # Top revenue source will now only consider membership fees
     top_revenue_source_membership_query = db.query(
         models.PaymentItem.academic_year, 
         models.PaymentItem.semester, 
@@ -3077,28 +3081,16 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) 
+        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).order_by(func.sum(models.PaymentItem.fee).desc()).first()
-
-    top_revenue_source_shirt_query = db.query(
-        func.sum(models.PaymentItem.fee).label('total_fee')
-    ).join(models.User).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, 
-        models.PaymentItem.is_paid == True, 
-        models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.isnot(None) 
-    ).group_by(models.PaymentItem.student_shirt_order_id).order_by(func.sum(models.PaymentItem.fee).desc()).first()
-
 
     top_revenue_source = {"name": "N/A", "amount": 0.0}
     
-    if top_revenue_source_membership_query and (not top_revenue_source_shirt_query or top_revenue_source_membership_query.total_fee >= top_revenue_source_shirt_query.total_fee):
-        source_name = f"AY {top_revenue_source_membership_query.academic_year} - {top_revenue_source_membership_query.semester} Fees" if top_revenue_source_membership_query.academic_year and top_revenue_source_membership_query.semester else "Miscellaneous Fees"
+    if top_revenue_source_membership_query:
+        source_name = f"AY {top_revenue_source_membership_query.academic_year} - {top_revenue_source_membership_query.semester} Fees" if top_revenue_source_membership_query.academic_year and top_revenue_source_membership_query.semester else "Miscellaneous Membership Fees"
         top_revenue_source = {"name": source_name, "amount": round(float(top_revenue_source_membership_query.total_fee), 2)}
-    elif top_revenue_source_shirt_query:
-        top_revenue_source = {"name": "Student Shirt Orders", "amount": round(float(top_revenue_source_shirt_query.total_fee), 2)}
 
-
+    # Largest expense remains the same
     largest_expense_query = db.query(models.Expense.category, func.sum(models.Expense.amount).label('total_amount')).filter(
         extract('year', models.Expense.incurred_at) == current_year, models.Expense.organization_id == organization.id
     ).group_by(models.Expense.category).order_by(func.sum(models.Expense.amount).desc()).first()
@@ -3108,6 +3100,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         largest_expense_category = largest_expense_query.category if largest_expense_query.category else "Uncategorized"
         largest_expense_amount = round(float(largest_expense_query.total_amount), 2)
 
+    # Revenues breakdown will now only include membership fees
     revenues_breakdown = []
 
     membership_revenues_query = db.query(
@@ -3118,31 +3111,18 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         extract('year', models.PaymentItem.updated_at) == current_year, 
         models.PaymentItem.is_paid == True, 
         models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.is_(None) 
+        models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
     ).group_by(models.PaymentItem.academic_year, models.PaymentItem.semester).all()
 
     for item in membership_revenues_query:
-        source_name = f"AY {item.academic_year} - {item.semester} Fees" if item.academic_year and item.semester else "Miscellaneous Fees"
+        source_name = f"AY {item.academic_year} - {item.semester} Fees" if item.academic_year and item.semester else "Miscellaneous Membership Fees"
         percentage = round((float(item.total_fee) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
         revenues_breakdown.append({"source": source_name, "amount": round(float(item.total_fee), 2), "trend": "Stable", "percentage": percentage})
 
-    shirt_order_revenues_query = db.query(
-        func.sum(models.PaymentItem.fee).label('total_fee')
-    ).join(models.User).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, 
-        models.PaymentItem.is_paid == True, 
-        models.User.organization_id == organization.id,
-        models.PaymentItem.student_shirt_order_id.isnot(None) 
-    ).scalar() or 0.0 
-
-    if shirt_order_revenues_query > 0:
-        percentage = round((float(shirt_order_revenues_query) / total_revenue_ytd) * 100, 2) if total_revenue_ytd != 0 else 0.0
-        revenues_breakdown.append({"source": "Student Shirt Orders", "amount": round(float(shirt_order_revenues_query), 2), "trend": "Stable", "percentage": percentage})
-
     if not revenues_breakdown and total_revenue_ytd > 0:
-        revenues_breakdown.append({"source": "General Collected Fees", "amount": total_revenue_ytd, "trend": "Stable", "percentage": 100.0})
+        revenues_breakdown.append({"source": "General Membership Fees", "amount": total_revenue_ytd, "trend": "Stable", "percentage": 100.0})
 
-
+    # Expenses breakdown remains the same
     expenses_breakdown_query = db.query(models.Expense.category, func.sum(models.Expense.amount).label('total_amount')).filter(
         extract('year', models.Expense.incurred_at) == current_year, models.Expense.organization_id == organization.id
     ).group_by(models.Expense.category).all()
@@ -3154,6 +3134,7 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         adjustment_factor = 100 / sum(item['percentage'] for item in expenses_breakdown)
         for item in expenses_breakdown: item['percentage'] = round(item['percentage'] * adjustment_factor, 2)
 
+    # Monthly summary for membership revenue and expenses
     monthly_summary = []
     chart_net_income_trend_data = []
     chart_net_income_trend_labels = []
@@ -3164,11 +3145,15 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         chart_net_income_trend_labels.append(month_name_abbr)
 
         monthly_revenue = db.query(func.sum(models.PaymentItem.fee)).join(models.User).filter(
-            extract('year', models.PaymentItem.updated_at) == current_year, extract('month', models.PaymentItem.updated_at) == i,
-            models.PaymentItem.is_paid == True, models.User.organization_id == organization.id
+            extract('year', models.PaymentItem.updated_at) == current_year, 
+            extract('month', models.PaymentItem.updated_at) == i,
+            models.PaymentItem.is_paid == True, 
+            models.User.organization_id == organization.id,
+            models.PaymentItem.student_shirt_order_id.is_(None) # Exclude shirt orders
         ).scalar() or 0.0
         monthly_expenses = db.query(func.sum(models.Expense.amount)).filter(
-            extract('year', models.Expense.incurred_at) == current_year, extract('month', models.Expense.incurred_at) == i,
+            extract('year', models.Expense.incurred_at) == current_year, 
+            extract('month', models.Expense.incurred_at) == i,
             models.Expense.organization_id == organization.id
         ).scalar() or 0.0
 
@@ -3179,25 +3164,42 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         })
         chart_net_income_trend_data.append(round(monthly_net_income, 2))
 
+    # Number of paid and unpaid members based on membership fees
     num_paid_members = db.query(func.count(models.User.id.distinct())).join(models.PaymentItem).filter(
-        extract('year', models.PaymentItem.updated_at) == current_year, models.PaymentItem.is_paid == True, models.User.organization_id == organization.id
+        extract('year', models.PaymentItem.updated_at) == current_year, 
+        models.PaymentItem.is_paid == True, 
+        models.User.organization_id == organization.id,
+        models.PaymentItem.student_shirt_order_id.is_(None) # Count only members who paid membership fees
     ).scalar() or 0
     total_members = db.query(func.count(models.User.id)).filter(models.User.is_active == True, models.User.organization_id == organization.id).scalar() or 0
     num_unpaid_members = max(0, total_members - num_paid_members)
 
     financial_data = {
-        "organization_id": organization.id, "organization_name": organization.name, "year": str(current_year),
-        "total_current_balance": net_income_ytd, "total_revenue_ytd": total_revenue_ytd, "total_expenses_ytd": total_expenses_ytd,
-        "net_income_ytd": net_income_ytd, "balance_turnover": round(total_revenue_ytd / net_income_ytd, 2) if net_income_ytd != 0 else 0.0,
-        "total_funds_available": net_income_ytd, "reporting_date": today.strftime("%B %d, %Y"),
-        "top_revenue_source_name": top_revenue_source["name"], "top_revenue_source_amount": top_revenue_source['amount'],
-        "largest_expense_category": largest_expense_category, "largest_expense_amount": largest_expense_amount,
-        "profit_margin_ytd": profit_margin_ytd, "revenues_breakdown": revenues_breakdown,
-        "expenses_breakdown": expenses_breakdown, "monthly_summary": monthly_summary,
+        "organization_id": organization.id, 
+        "organization_name": organization.name, 
+        "year": str(current_year),
+        "total_current_balance": net_income_ytd, 
+        "total_revenue_ytd": total_revenue_ytd, # This now represents only membership revenue YTD
+        "total_expenses_ytd": total_expenses_ytd,
+        "net_income_ytd": net_income_ytd, 
+        "balance_turnover": round(total_revenue_ytd / net_income_ytd, 2) if net_income_ytd != 0 else 0.0,
+        "total_funds_available": net_income_ytd, 
+        "reporting_date": today.strftime("%B %d, %Y"),
+        "top_revenue_source_name": top_revenue_source["name"], 
+        "top_revenue_source_amount": top_revenue_source['amount'],
+        "largest_expense_category": largest_expense_category, 
+        "largest_expense_amount": largest_expense_amount,
+        "profit_margin_ytd": profit_margin_ytd, 
+        "revenues_breakdown": revenues_breakdown, # Now only membership revenues
+        "expenses_breakdown": expenses_breakdown, 
+        "monthly_summary": monthly_summary,
         "accounts_balances": [], 
         "chart_revenue_data": [total_revenue_ytd, total_expenses_ytd],
-        "chart_net_income_data": chart_net_income_trend_data, "chart_net_income_labels": chart_net_income_trend_labels,
-        "num_paid_members": num_paid_members, "num_unpaid_members": num_unpaid_members, "total_members": total_members
+        "chart_net_income_data": chart_net_income_trend_data, 
+        "chart_net_income_labels": chart_net_income_trend_labels,
+        "num_paid_members": num_paid_members, 
+        "num_unpaid_members": num_unpaid_members, 
+        "total_members": total_members
     }
     if net_income_ytd >= 0:
         financial_data["accounts_balances"] = [
