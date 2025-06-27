@@ -26,12 +26,33 @@ try {
 }
 
 let currentYear = financialDataContainer.dataset.currentYear;
-let academicYear = financialDataContainer.dataset.academicYear; // Get academic year
+// Remove academicYear dataset as it will now be calculated in JS
+// let academicYear = financialDataContainer.dataset.academicYear;
 
 let today = new Date();
 let currentMonthName = new Date(today.getFullYear(), today.getMonth(), 1)
                                 .toLocaleString('en-US', { month: 'long' }).toLowerCase();
 let lastActiveMonth = currentMonthName;
+
+// Function to calculate the current academic year
+function getCalculatedCurrentAcademicYear() {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-indexed
+
+    const academicYearStartMonth = 7; // August (0-indexed, so 7 is August)
+
+    let startYear, endYear;
+    if (currentMonth >= academicYearStartMonth) {
+        startYear = currentYear;
+        endYear = currentYear + 1;
+    } else {
+        startYear = currentYear - 1;
+        endYear = currentYear;
+    }
+    return `${startYear}-${endYear}`;
+}
+
 
 function populateQuickStats() {
     if (financialData && financialData.current_date) {
@@ -142,8 +163,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Display academic year in the title
     const academicYearDisplay = document.getElementById('academic-year-display');
-    if (academicYearDisplay && academicYear) {
-        academicYearDisplay.textContent = `(${academicYear})`;
+    if (academicYearDisplay) {
+        academicYearDisplay.textContent = `(${getCalculatedCurrentAcademicYear()})`;
     }
 
 
