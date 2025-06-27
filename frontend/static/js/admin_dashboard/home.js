@@ -8,8 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const academicYearFilterDropdown = document.getElementById('academic-year-filter');
     const semesterFilterDropdown = document.getElementById('semester-filter');
     const outstandingDuesValue = document.querySelector('.stat-card:nth-child(4) .stat-value');
+    // Corrected selector for Fund Distribution chart title
+    const fundDistributionTitleElement = document.querySelector('.mini-chart:nth-child(2) .chart-subtitle'); 
 
     let trendChart, expensesChart, distributionChart;
+
+    // Helper function to convert hex to RGBA for consistent opacity control
+    function hexToRgba(hex, opacity = 1) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
 
     // Helper function to generate a color from a base and an index
     function getColor(index) {
@@ -19,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B',
             '#FFC107', '#FF9800', '#FF5722', '#795548', '#607D8B', '#F44336'
         ];
-        return colors[index % colors.length];
+        return colors[index % colors.length]; // Return hex for original storage
     }
 
     function initializeCharts() {
@@ -48,7 +58,35 @@ document.addEventListener('DOMContentLoaded', function() {
                             },
                             usePointStyle: true, // Use the dataset's point style (e.g., circle) instead of a box
                             boxWidth: 20, // Width of the color box (or point area) in the legend
-                            padding: 15 // Padding between legend items
+                            padding: 15, // Padding between legend items
+                            // Custom filter to control which labels appear in the legend.
+                            filter: function(item, chart) {
+                                return true; // Show all items in legend by default
+                            },
+                            // Custom onClick handler for legend items
+                            onClick: function(e, legendItem, legend) {
+                                const index = legendItem.datasetIndex;
+                                const ci = legend.chart;
+                                const dataset = ci.data.datasets[index];
+
+                                // Toggle visibility state
+                                dataset.hidden = !dataset.hidden;
+
+                                // Update colors based on visibility for a modern fade effect
+                                const originalHexColor = dataset.originalHexColor; // Use stored original hex color
+
+                                if (dataset.hidden) {
+                                    // Fade out: lower opacity for line and transparent points
+                                    dataset.borderColor = hexToRgba(originalHexColor, 0.4); // Increased opacity when hidden
+                                    dataset.pointBackgroundColor = 'transparent';
+                                } else {
+                                    // Fade in: restore full opacity
+                                    dataset.borderColor = hexToRgba(originalHexColor, 1.0);
+                                    dataset.pointBackgroundColor = hexToRgba(originalHexColor, 1.0);
+                                }
+
+                                ci.update(); // Update the chart to reflect changes
+                            }
                         }
                     },
                     tooltip: {
@@ -267,6 +305,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Fetching expenses by category from URL:", expensesUrl);
         console.log("Fetching fund distribution from URL:", distributionUrl);
 
+        // Update Fund Distribution chart title dynamically
+        const selectedAcademicYearDisplay = (academicYear && academicYear !== 'Academic Year ▼') ? academicYear : 'Overall';
+        if (fundDistributionTitleElement) { // Use the corrected variable name
+            fundDistributionTitleElement.textContent = `Fund Distribution (${selectedAcademicYearDisplay})`;
+        }
+
+
         // Fetch data from all three endpoints concurrently
         Promise.all([
             fetch(trendUrl).then(res => res.json()),
@@ -281,16 +326,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 trendChart.data.labels = trendData.labels;
                 trendChart.data.datasets = trendData.datasets.map((dataset, index) => {
                     const newDataset = { ...dataset }; // Create a mutable copy
+                    
+                    let baseColor;
 
                     // Apply specific styling based on label
                     if (newDataset.label === 'Total Collections') {
-                        newDataset.borderColor = '#4285F4'; // Primary blue
+                        baseColor = '#4285F4'; // Primary blue
+                        newDataset.borderColor = hexToRgba(baseColor, 1.0);
                         newDataset.borderWidth = 4; // Thicker line
                         newDataset.pointRadius = 6;
                         newDataset.pointHoverRadius = 8;
                         newDataset.fill = false;
                         newDataset.order = 0; // Ensure it's drawn on top
                         newDataset.pointStyle = 'circle'; // Explicit point style
+                        newDataset.hidden = false; // Always visible
                     } else {
                         // For academic year specific lines
                         const ayLabel = newDataset.label.replace('AY ', ''); // Get just the year string
@@ -298,12 +347,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         // Compare with the actively selected academic year
                         if (ayLabel === selectedAcademicYear) {
-                            newDataset.borderColor = '#00C853'; // Bright green for current AY
+                            // Darker shade of primary blue for current AY, solid line
+                            baseColor = '#2A5D8A'; // Use a darker blue for harmony
+                            newDataset.borderColor = hexToRgba(baseColor, 1.0); 
                             newDataset.borderWidth = 3;
                             newDataset.borderDash = []; // Solid line
                             newDataset.pointRadius = 5;
                             newDataset.pointHoverRadius = 7;
-                            newDataset.order = 1; // Draw behind total, but above other AYS
+                            newDataset.order = 1; // Draw behind total, but above other AYs
                             newDataset.pointStyle = 'circle';
                             newDataset.hidden = false; // Ensure current AY is visible by default
                         } else {
@@ -311,29 +362,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             const selectedStartYear = parseInt(selectedAcademicYear.split('-')[0]);
                             const ayStartYear = parseInt(ayLabel.split('-')[0]);
 
+                            newDataset.hidden = true; // Default to hidden for other AYs
+                            const initialOpacity = 0.4; // Increased opacity when hidden
+                            newDataset.pointStyle = 'circle'; // Default point style for all AY lines
+                            newDataset.borderWidth = 2;
+                            newDataset.pointRadius = 3;
+                            newDataset.pointHoverRadius = 5;
+                            newDataset.order = 2; // Draw behind current AY
+
                             if (ayStartYear < selectedStartYear) {
-                                // Previous Academic Years
-                                newDataset.borderColor = getColor(colorIndex + 5); // A slightly muted color
-                                newDataset.borderWidth = 2;
-                                newDataset.borderDash = [5, 5]; // Dashed line
-                                newDataset.pointRadius = 3;
-                                newDataset.pointHoverRadius = 5;
-                                newDataset.order = 2; // Draw behind current AY
-                                newDataset.pointStyle = 'triangle'; // Different point style
-                                newDataset.hidden = true; // Keep previous AYs hidden by default
+                                // Previous Academic Years - solid line, softer color, increased opacity when hidden
+                                baseColor = getColor(colorIndex + 5); // Get a color from palette
+                                newDataset.borderColor = hexToRgba(baseColor, initialOpacity);
+                                newDataset.borderDash = []; // Solid line
                             } else {
-                                // Upcoming Academic Years
-                                newDataset.borderColor = getColor(colorIndex + 10); // Another muted color
-                                newDataset.borderWidth = 2;
-                                newDataset.borderDash = [2, 2]; // Denser dashed line
-                                newDataset.pointRadius = 3;
-                                newDataset.pointHoverRadius = 5;
-                                newDataset.order = 2; // Draw behind current AY
-                                newDataset.pointStyle = 'rect'; // Different point style
-                                newDataset.hidden = true; // Keep upcoming AYs hidden by default
+                                // Upcoming Academic Years - dotted line, softer color, increased opacity when hidden
+                                baseColor = getColor(colorIndex + 10); // Get another color from palette
+                                newDataset.borderColor = hexToRgba(baseColor, initialOpacity);
+                                newDataset.borderDash = [5, 5]; // Dotted line (only for upcoming)
                             }
                         }
                     }
+                    // Set point background color based on hidden state and border color
+                    newDataset.pointBackgroundColor = newDataset.hidden ? 'transparent' : hexToRgba(baseColor, 1.0);
+                    // Store the original HEX color for toggling visibility in legend
+                    newDataset.originalHexColor = baseColor; 
+
                     return newDataset;
                 });
                 trendChart.update();
@@ -633,7 +687,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Fetches membership data for the tracker table.
      * @param {string} academicYear - The academic year filter.
-     * @param {string} semester - The semester filter.
+     * @param {string} semester - The selected semester filter.
      */
     function fetchMembershipData(academicYear = null, semester = null) {
         let url = '/admin/individual_members/';
