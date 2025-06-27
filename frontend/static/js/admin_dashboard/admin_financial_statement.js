@@ -48,13 +48,13 @@ function renderCharts(data) {
         revenueExpenseChart = new Chart(revenueExpenseCtx, {
             type: 'bar',
             data: {
-                // Labels updated to reflect the new definitions
-                labels: ['Turnover Money (Total Revenue)', 'Current Academic Year Expenses'],
+                // Labels updated to reflect the new definitions from backend
+                labels: ['Current AY Membership Revenue', 'Current AY Expenses'],
                 datasets: [{
                     label: 'Year-to-Date (₱)',
                     data: [
-                        data.total_revenue_ytd, // This is expected to be 'turnover money from previous years'
-                        data.total_expenses_ytd // This is expected to be current AY expenses
+                        data.chart_revenue_data[0], // Corresponds to current_ay_membership_revenue
+                        data.chart_revenue_data[1]  // Corresponds to total_expenses_ytd
                     ],
                     backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)'],
                     borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
@@ -117,7 +117,7 @@ function renderCharts(data) {
                 labels: data.chart_net_income_labels,
                 datasets: [{
                     // Label updated to reflect the new definition
-                    label: 'Net Income (Current AY Membership Fees - Current AY Expenses) (₱)',
+                    label: 'Monthly Net Income (₱)', // Now represents monthly net income
                     data: data.chart_net_income_data,
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -189,24 +189,19 @@ function renderCharts(data) {
 }
 
 function populateDashboard(data) {
-    // Stat card values - based on NEW definitions
-    // Display the full academic year (e.g., "2024-2025")
+    // Stat card values
     document.getElementById('current-year').textContent = data.year;
 
-    // total_revenue_ytd is now 'turnover money from previous years'
+    // total_revenue_ytd is now 'Turnover Funds' from previous academic years
     document.getElementById('total-revenue-ytd').textContent = `₱${data.total_revenue_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
     // NEW: Populate the Upcoming Year Funds (Collected) card
-    // Note: The backend API you provided doesn't explicitly return 'upcoming_funds_ytd'.
-    // If you need this, you'll need to add it to your FastAPI response.
-    // For now, it will default to 0 if not present in the fetched data.
-    document.getElementById('upcoming-funds-ytd').textContent = `₱${(data.upcoming_funds_ytd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
+    document.getElementById('upcoming-funds-ytd').textContent = `₱${data.upcoming_funds_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
     // total_expenses_ytd remains expenses for the current academic year
     document.getElementById('total-expenses-ytd').textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-    // net_income_ytd is now 'membership fees collected from current academic year' minus current AY expenses
+    // net_income_ytd is 'Current AY Membership Fees - Current AY Expenses'
     const netIncomeYTDElement = document.getElementById('net-income-ytd');
     netIncomeYTDElement.textContent = `₱${data.net_income_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     if (data.net_income_ytd >= 0) {
@@ -217,35 +212,77 @@ function populateDashboard(data) {
         netIncomeYTDElement.classList.remove('positive');
     }
 
-    // total_current_balance is now 'turnover money (total_revenue_ytd) + net income (current AY membership fees - expenses)'
+    // total_current_balance is 'Turnover Funds + Net Income (Current AY) + Upcoming Year Funds'
     document.getElementById('total-current-balance').textContent = `₱${data.total_current_balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
     document.getElementById('reporting-date').textContent = data.reporting_date;
 
-    // Overview metrics
     document.getElementById('top-revenue-source').textContent = `${data.top_revenue_source_name} (₱${data.top_revenue_source_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
     document.getElementById('largest-expense').textContent = `${data.largest_expense_category} (₱${data.largest_expense_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
     document.getElementById('profit-margin-ytd').textContent = `${data.profit_margin_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%`;
 
-    // Revenues Breakdown Table
+    // Revenues Breakdown Table - NOW CORRECTLY PARSES NESTED DATA
     const revenuesBreakdownBody = document.getElementById('revenues-breakdown-body');
     revenuesBreakdownBody.innerHTML = '';
 
-    // Calculate total of all revenues to be displayed in the table (excluding the 'Turnover from Previous Years' summary line)
-    // This sum will include individual semester fees from all years and upcoming fees.
-    let totalRevenuesDisplayed = 0;
+    let totalRevenuesDisplayed = 0; // Initialize total for the footer
 
-    // Check if revenues_breakdown exists and is an array before iterating
     if (Array.isArray(data.revenues_breakdown)) {
-        data.revenues_breakdown.forEach(item => { // Iterating directly over the breakdown items now
-            const row = revenuesBreakdownBody.insertRow();
-            // Assuming each item in revenues_breakdown has 'source', 'amount', 'percentage'
-            row.innerHTML = `
-                <td>${item.source}</td>
-                <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
+        data.revenues_breakdown.forEach(yearData => {
+            // Create academic year row (collapsible)
+            const yearRow = revenuesBreakdownBody.insertRow();
+            yearRow.classList.add('academic-year-row');
+            yearRow.dataset.year = yearData.year;
+            yearRow.innerHTML = `
+                <td class="academic-year-toggler">
+                    <span class="toggle-icon">▶</span> <span class="academic-year-text">${yearData.year} Total</span>
+                </td>
+                <td class="amount">₱${yearData.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td>${yearData.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
             `;
-            totalRevenuesDisplayed += item.amount; // Summing individual amounts
+            totalRevenuesDisplayed += yearData.total; // Add academic year total to grand total
+
+            // Event listener to toggle semester visibility
+            yearRow.querySelector('.academic-year-toggler').addEventListener('click', function() {
+                const currentYear = this.closest('.academic-year-row').dataset.year;
+                const semesterRows = document.querySelectorAll(`.semester-row[data-parent-year="${currentYear}"]`);
+                const toggleIcon = this.querySelector('.toggle-icon');
+
+                if (yearRow.classList.contains('expanded')) {
+                    yearRow.classList.remove('expanded');
+                    toggleIcon.textContent = '▶';
+                    semesterRows.forEach(row => row.classList.remove('visible'));
+                } else {
+                    yearRow.classList.add('expanded');
+                    toggleIcon.textContent = '▼';
+                    semesterRows.forEach(row => row.classList.add('visible'));
+                }
+            });
+
+            // Create semester rows (initially hidden)
+            if (Array.isArray(yearData.semesters)) {
+                yearData.semesters.forEach(item => {
+                    const semesterRow = revenuesBreakdownBody.insertRow();
+                    semesterRow.classList.add('semester-row');
+                    semesterRow.dataset.parentYear = yearData.year; // Link to parent academic year
+                    
+                    // Format semester source for better readability
+                    let formattedSource = item.source;
+                    if (item.source.toLowerCase().includes('1st fees')) {
+                        formattedSource = '1st Semester Fees';
+                    } else if (item.source.toLowerCase().includes('2nd fees')) {
+                        formattedSource = '2nd Semester Fees';
+                    }
+
+                    // Wrap formattedSource in a span with semester-source-text class for CSS indentation
+                    semesterRow.innerHTML = `
+                        <td><span class="semester-source-text">${formattedSource}</span></td>
+                        <td class="amount">₱${item.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td>${item.percentage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}%</td>
+                    `;
+                    // Note: semester rows are initially hidden by CSS and revealed by JS
+                });
+            }
         });
     } else {
          console.warn("data.revenues_breakdown is not an array or is missing.");
@@ -254,7 +291,7 @@ function populateDashboard(data) {
     document.getElementById('total-revenue-footer').textContent = `₱${totalRevenuesDisplayed.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
 
-    // Expenses Breakdown Table (remains the same)
+    // Expenses Breakdown Table
     const expensesBreakdownBody = document.getElementById('expenses-breakdown-body');
     expensesBreakdownBody.innerHTML = '';
     if (Array.isArray(data.expenses_breakdown)) {
@@ -270,17 +307,16 @@ function populateDashboard(data) {
         console.warn("data.expenses_breakdown is not an array or is missing.");
     }
 
-    // The total expenses footer needs to be handled carefully because it's a 3-column table now
     const totalExpensesFooter = document.getElementById('total-expenses-footer');
-    if (totalExpensesFooter) { // Check if the element exists before manipulating
+    if (totalExpensesFooter) {
         totalExpensesFooter.textContent = `₱${data.total_expenses_ytd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
 
 
-    // Monthly Summary Table (Net Income here should reflect current AY membership fees - expenses per month)
+    // Monthly Summary Table
     const monthlySummaryBody = document.getElementById('monthly-summary-body');
     monthlySummaryBody.innerHTML = '';
-    let totalMonthlyRevenue = 0; // This 'revenue' in monthly summary might still be overall income, not just turnover
+    let totalMonthlyRevenue = 0;
     let totalMonthlyExpenses = 0;
     let totalMonthlyNetIncome = 0;
 
@@ -315,7 +351,7 @@ function populateDashboard(data) {
     }
 
 
-    // Accounts Balances Table (remains the same)
+    // Accounts Balances Table
     const accountsBalancesBody = document.getElementById('accounts-balances-body');
     accountsBalancesBody.innerHTML = '';
     let totalAccountBalance = 0;
