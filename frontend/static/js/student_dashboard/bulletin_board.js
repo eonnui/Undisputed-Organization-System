@@ -376,7 +376,7 @@ document.addEventListener("DOMContentLoaded", function () {
       ...getDisplayAdminsForPosition("Secretary"),
       ...getDisplayAdminsForPosition("Treasurer"),
       ...getDisplayAdminsForPosition("Auditor"),
-      ...getDisplayAdminsForPosition("Public Relation Officer"),
+      ...getDisplayAdminsForPosition("PRO"),
     ];
 
     if (otherCorePositions.length > 0) {

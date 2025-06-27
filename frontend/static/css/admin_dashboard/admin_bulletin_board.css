@@ -645,10 +645,9 @@ input[type="text"][name="position"] {
   white-space: normal;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  text-align: center;
-  max-width: 200px;
-  min-width: 200px;
-  min-height: 187px;
+  text-align: center;  
+  width: 200px;
+  height: 187px;
   top: 20px;
 }
 
@@ -991,6 +990,7 @@ input[type="text"][name="position"] {
   border-radius: var(--org-radius-md);
   box-shadow: var(--org-shadow-md);
   width: 100%;
+  height: 500px !important;
   max-width: 250px;
   position: relative;
   z-index: 1;

@@ -640,9 +640,8 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   text-align: center;
-  max-width: 200px;
-  min-width: 200px;
-  min-height: 187px;
+  width: 200px;
+  height: 187px;  
   top: 20px;
 }
 
