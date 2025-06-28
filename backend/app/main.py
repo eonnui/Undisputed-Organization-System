@@ -28,7 +28,7 @@ import json
 import uuid
 import aiofiles
 
-# Import IntegrityError for database exception handling
+# Import IntegrityError for database exception handling 
 from sqlalchemy.exc import IntegrityError
 
 # Import run_in_threadpool for async threadpool execution
@@ -2439,22 +2439,22 @@ async def get_financial_trends(
         end_date_filter = today # Default end date is today
 
     query = db.query(
-        func.extract('year', models.Payment.updated_at).label('year'),  # Changed to updated_at
-        func.extract('month', models.Payment.updated_at).label('month'), # Changed to updated_at
+        func.extract('year', models.PaymentItem.updated_at).label('year'),  # Use PaymentItem.updated_at
+        func.extract('month', models.PaymentItem.updated_at).label('month'), # Use PaymentItem.updated_at
         models.PaymentItem.academic_year.label('payment_academic_year'),
-        func.sum(models.Payment.amount).label('total'),
-    ).join(models.Payment.payment_item).join(models.Payment.user).filter(
+        func.sum(models.PaymentItem.fee).label('total'), # Sum PaymentItem.fee
+    ).join(models.PaymentItem.user).filter( # Join PaymentItem directly with User
         and_(
-            models.Payment.status == "success",
+            models.PaymentItem.is_paid == True, # Use PaymentItem.is_paid to determine success
             models.User.organization_id == admin_org.id,
             models.PaymentItem.student_shirt_order_id == None
         )
     )
 
     if start_date_filter:
-        query = query.filter(models.Payment.updated_at >= start_date_filter) # Changed to updated_at
+        query = query.filter(models.PaymentItem.updated_at >= start_date_filter) # Filter by PaymentItem.updated_at
     if end_date_filter:
-        query = query.filter(models.Payment.updated_at <= end_date_filter) # Changed to updated_at   
+        query = query.filter(models.PaymentItem.updated_at <= end_date_filter) # Filter by PaymentItem.updated_at
 
     if semester and semester != 'Semester ▼':
         query = query.filter(models.PaymentItem.semester == semester)
