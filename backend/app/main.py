@@ -3262,11 +3262,13 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
             
         ]
 
-        event_expenses_percentage = 0.05   # 5% of total_current_balance
-        operations_maintenance_percentage = 0.03 # 3% of total_current_balance
-        food_refreshments_percentage = 0.02 # 2% of total_current_balance
-        transportation_logistics_percentage = 0.01 # 1% of total_current_balance
-        contingency_fund_percentage = 0.04  # 4% of total_current_balance (for emergency use)
+        event_expenses_percentage = 0.10          # 10% - Increased for more realistic event needs
+        operations_maintenance_percentage = 0.08   # 8% - Solid for ongoing operations and supplies
+        food_refreshments_percentage = 0.05      # 5% - Dedicated for meeting/guest meals
+        transportation_logistics_percentage = 0.03 # 3% - For travel and logistics
+
+        # Dedicated Emergency Contingency
+        contingency_fund_percentage = 0.15  
 
         financial_data["accounts_balances"].extend([
             {"account": "Event Expenses (Decoration, Tokens)", "balance": round(total_current_balance * event_expenses_percentage, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Budgeted"},
