@@ -2439,31 +2439,28 @@ async def get_financial_trends(
         end_date_filter = today # Default end date is today
 
     query = db.query(
-        func.extract('year', models.PaymentItem.updated_at).label('year'),  # Use PaymentItem.updated_at
-        func.extract('month', models.PaymentItem.updated_at).label('month'), # Use PaymentItem.updated_at
+        func.extract('year', models.Payment.updated_at).label('year'),  # Changed to updated_at
+        func.extract('month', models.Payment.updated_at).label('month'), # Changed to updated_at
         models.PaymentItem.academic_year.label('payment_academic_year'),
-        func.sum(models.PaymentItem.fee).label('total'), # Sum PaymentItem.fee
-    ).join(models.PaymentItem.user).filter( # Join PaymentItem directly with User
+        func.sum(models.Payment.amount).label('total'),
+    ).join(models.Payment.payment_item).join(models.Payment.user).filter(
         and_(
-            models.PaymentItem.is_paid == True, # Use PaymentItem.is_paid to determine success
+            models.Payment.status == "success",
             models.User.organization_id == admin_org.id,
             models.PaymentItem.student_shirt_order_id == None
         )
     )
 
     if start_date_filter:
-        query = query.filter(models.PaymentItem.updated_at >= start_date_filter) # Filter by PaymentItem.updated_at
+        query = query.filter(models.Payment.updated_at >= start_date_filter) # Changed to updated_at
     if end_date_filter:
-        query = query.filter(models.PaymentItem.updated_at <= end_date_filter) # Filter by PaymentItem.updated_at
+        query = query.filter(models.Payment.updated_at <= end_date_filter) # Changed to updated_at   
 
     if semester and semester != 'Semester ▼':
         query = query.filter(models.PaymentItem.semester == semester)
 
     # Group by year, month, AND academic_year of the payment item to get breakdowns
-    financial_data_raw = query.group_by('year', 'month', 'payment_academic_year').order_by('year', 'month', 'payment_academic_year').all()
-
-    # Consolidate data into the monthly_academic_year_data structure
-    # This ensures all months in the range are present, even if no payments occurred for them
+    financial_data_raw = query.group_by('year', 'month', 'payment_academic_year').order_by('year', 'month', 'payment_academic_year').all()    
     for row in financial_data_raw:
         month_key = (int(row.year), int(row.month))
         payment_ay = row.payment_academic_year
@@ -2479,18 +2476,24 @@ async def get_financial_trends(
 
     # Prepare data for Chart.js
     labels = []
+    # Use a set to collect all unique academic years found in the data
     all_academic_years = set()
     
+    # First pass: collect all unique academic years and ensure month keys are sorted
     sorted_month_keys = sorted(monthly_academic_year_data.keys())
     for year, month in sorted_month_keys:
         labels.append(f"{year}-{month:02d}")
+        # Add academic years from the data to the set, excluding None
         for ay_key in monthly_academic_year_data[(year, month)].keys():
             if ay_key is not None:
                 all_academic_years.add(ay_key)
 
+    # Sort academic years for consistent legend ordering
     sorted_academic_years = sorted(list(all_academic_years))
     
+    # Create datasets for each academic year
     datasets = []
+    # Add a dataset for "Total Collections" across all academic years for that month
     total_collections_data = []
     for year, month in sorted_month_keys:
         month_total = sum(monthly_academic_year_data[(year, month)].values())
@@ -2499,7 +2502,7 @@ async def get_financial_trends(
     datasets.append({
         "label": "Total Collections",
         "data": total_collections_data,
-        "borderColor": '#4285F4',
+        "borderColor": '#4285F4', # A default primary color
         "backgroundColor": 'transparent',
         "tension": 0.4,
         "pointBackgroundColor": '#4285F4',
@@ -2507,9 +2510,11 @@ async def get_financial_trends(
         "pointRadius": 5,
         "pointHoverRadius": 7,
         "fill": False,
-        "order": 0
+        "order": 0 # Ensure total is drawn first/on top
     })
 
+    # Generate distinct colors for academic year lines
+    # More colors added for better distinction if many academic years appear
     colors = [
         '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#03A9F4', '#00BCD4', '#009688',
         '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#795548',
@@ -2518,6 +2523,7 @@ async def get_financial_trends(
     color_index = 0
 
     for ay in sorted_academic_years:
+        # We ensure "Total Collections" is not considered an actual AY to avoid conflicts
         if ay == 'Total Collections':
             continue 
         
@@ -2526,6 +2532,7 @@ async def get_financial_trends(
 
         ay_data = []
         for year, month in sorted_month_keys:
+            # Get the value for this academic year, or 0 if not present for the month
             ay_data.append(monthly_academic_year_data[(year, month)].get(ay, 0.0))
         
         datasets.append({
@@ -2535,12 +2542,12 @@ async def get_financial_trends(
             "backgroundColor": 'transparent',
             "tension": 0.4,
             "pointBackgroundColor": current_color,
-            "borderWidth": 2,
+            "borderWidth": 2, # Slightly thinner for individual AY lines
             "pointRadius": 3,
             "pointHoverRadius": 5,
             "fill": False,
-            "hidden": True,
-            "order": 1
+            "hidden": True, # Start with individual AY lines hidden, user can toggle
+            "order": 1 # Draw individual AY lines behind the total line
         })
 
     return {"labels": labels, "datasets": datasets}
@@ -3247,18 +3254,31 @@ async def admin_financial_data_api(request: Request, db: Session = Depends(get_d
         "num_paid_members": num_paid_members, 
         "num_unpaid_members": num_unpaid_members, 
         "total_members": total_members
-    }
-    
-    # Account balances distribution based on total_current_balance
+    }    
+
     if total_current_balance >= 0:
-        financial_data["accounts_balances"] = [
-            {"account": "Main Operating Account", "balance": round(total_current_balance * 0.7, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Active"},
+        financial_data["accounts_balances"] = [            
             {"account": "Savings Account", "balance": round(total_current_balance * 0.2, 2), "last_transaction": (today - timedelta(days=15)).strftime("%Y-%m-%d"), "status": "Active"},
-            {"account": "Petty Cash", "balance": round(total_current_balance * 0.1, 2), "last_transaction": (today - timedelta(days=3)).strftime("%Y-%m-%d"), "status": "Active"}
+            
         ]
-        
+
+        event_expenses_percentage = 0.05   # 5% of total_current_balance
+        operations_maintenance_percentage = 0.03 # 3% of total_current_balance
+        food_refreshments_percentage = 0.02 # 2% of total_current_balance
+        transportation_logistics_percentage = 0.01 # 1% of total_current_balance
+        contingency_fund_percentage = 0.04  # 4% of total_current_balance (for emergency use)
+
+        financial_data["accounts_balances"].extend([
+            {"account": "Event Expenses (Decoration, Tokens)", "balance": round(total_current_balance * event_expenses_percentage, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Budgeted"},
+            {"account": "Operations & Maintenance (Supplies)", "balance": round(total_current_balance * operations_maintenance_percentage, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Budgeted"},
+            {"account": "Food & Refreshments (Meeting/Event Meals)", "balance": round(total_current_balance * food_refreshments_percentage, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Budgeted"},
+            {"account": "Transportation & Logistics (Fare/Allowance)", "balance": round(total_current_balance * transportation_logistics_percentage, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Budgeted"},
+            {"account": "Contingency Fund (Emergency Use)", "balance": round(total_current_balance * contingency_fund_percentage, 2), "last_transaction": today.strftime("%Y-%m-%d"), "status": "Budgeted"}
+        ])
+
         current_sum = sum(acc['balance'] for acc in financial_data["accounts_balances"])
         if abs(current_sum - total_current_balance) > 0.01:
+            # Distribute the remainder to the last account for accuracy
             financial_data["accounts_balances"][-1]['balance'] += (total_current_balance - current_sum)
             financial_data["accounts_balances"][-1]['balance'] = round(financial_data["accounts_balances"][-1]['balance'], 2)
     else:
