@@ -2439,29 +2439,22 @@ async def get_financial_trends(
         end_date_filter = today # Default end date is today
 
     query = db.query(
-        func.extract('year', models.Payment.updated_at).label('year'),  # Changed to updated_at
-        func.extract('month', models.Payment.updated_at).label('month'), # Changed to updated_at
+        func.extract('year', models.PaymentItem.updated_at).label('year'),  # Use PaymentItem.updated_at
+        func.extract('month', models.PaymentItem.updated_at).label('month'), # Use PaymentItem.updated_at
         models.PaymentItem.academic_year.label('payment_academic_year'),
-        func.sum(models.Payment.amount).label('total'),
-    ).join(models.Payment.payment_item).join(models.Payment.user).filter(
+        func.sum(models.PaymentItem.fee).label('total'), # Sum PaymentItem.fee
+    ).join(models.PaymentItem.user).filter( # Join PaymentItem directly with User
         and_(
-            models.Payment.status == "success",
+            models.PaymentItem.is_paid == True, # Use PaymentItem.is_paid to determine success
             models.User.organization_id == admin_org.id,
             models.PaymentItem.student_shirt_order_id == None
         )
     )
 
     if start_date_filter:
-        query = query.filter(models.Payment.updated_at >= start_date_filter) # Changed to updated_at
+        query = query.filter(models.PaymentItem.updated_at >= start_date_filter) # Filter by PaymentItem.updated_at
     if end_date_filter:
-        query = query.filter(models.Payment.updated_at <= end_date_filter) # Changed to updated_at
-
-    # Filtering by models.PaymentItem.academic_year is REMOVED from the main query
-    # because the goal is to visualize all payments within the time range,
-    # distinguishing them by their associated academic year in the PaymentItem.
-    # If a specific academic_year filter is *still* desired for the total
-    # collection trend, it would be added here, but the current request implies
-    # showing all payments within the selected *display period*.
+        query = query.filter(models.PaymentItem.updated_at <= end_date_filter) # Filter by PaymentItem.updated_at
 
     if semester and semester != 'Semester ▼':
         query = query.filter(models.PaymentItem.semester == semester)
@@ -2481,34 +2474,23 @@ async def get_financial_trends(
                 monthly_academic_year_data[month_key][payment_ay] = 0.0
             monthly_academic_year_data[month_key][payment_ay] += total_amount
         else:
-            # This case should ideally not be hit if monthly_academic_year_data is correctly pre-populated
-            # for the entire period. It might occur if `start_date_filter` and `end_date_filter`
-            # logic doesn't perfectly match the data or if the academic_year filter was explicitly removed
-            # and it brings data outside the current academic_year selected for display labels.
-            # For this scenario, we will add it, but it won't have a corresponding label initially.
             print(f"Warning: Data for {month_key} found outside pre-populated range.")
             monthly_academic_year_data[month_key] = {payment_ay: total_amount}
 
     # Prepare data for Chart.js
     labels = []
-    # Use a set to collect all unique academic years found in the data
     all_academic_years = set()
     
-    # First pass: collect all unique academic years and ensure month keys are sorted
     sorted_month_keys = sorted(monthly_academic_year_data.keys())
     for year, month in sorted_month_keys:
         labels.append(f"{year}-{month:02d}")
-        # Add academic years from the data to the set, excluding None
         for ay_key in monthly_academic_year_data[(year, month)].keys():
             if ay_key is not None:
                 all_academic_years.add(ay_key)
 
-    # Sort academic years for consistent legend ordering
     sorted_academic_years = sorted(list(all_academic_years))
     
-    # Create datasets for each academic year
     datasets = []
-    # Add a dataset for "Total Collections" across all academic years for that month
     total_collections_data = []
     for year, month in sorted_month_keys:
         month_total = sum(monthly_academic_year_data[(year, month)].values())
@@ -2517,7 +2499,7 @@ async def get_financial_trends(
     datasets.append({
         "label": "Total Collections",
         "data": total_collections_data,
-        "borderColor": '#4285F4', # A default primary color
+        "borderColor": '#4285F4',
         "backgroundColor": 'transparent',
         "tension": 0.4,
         "pointBackgroundColor": '#4285F4',
@@ -2525,11 +2507,9 @@ async def get_financial_trends(
         "pointRadius": 5,
         "pointHoverRadius": 7,
         "fill": False,
-        "order": 0 # Ensure total is drawn first/on top
+        "order": 0
     })
 
-    # Generate distinct colors for academic year lines
-    # More colors added for better distinction if many academic years appear
     colors = [
         '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#03A9F4', '#00BCD4', '#009688',
         '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#795548',
@@ -2538,7 +2518,6 @@ async def get_financial_trends(
     color_index = 0
 
     for ay in sorted_academic_years:
-        # We ensure "Total Collections" is not considered an actual AY to avoid conflicts
         if ay == 'Total Collections':
             continue 
         
@@ -2547,7 +2526,6 @@ async def get_financial_trends(
 
         ay_data = []
         for year, month in sorted_month_keys:
-            # Get the value for this academic year, or 0 if not present for the month
             ay_data.append(monthly_academic_year_data[(year, month)].get(ay, 0.0))
         
         datasets.append({
@@ -2557,12 +2535,12 @@ async def get_financial_trends(
             "backgroundColor": 'transparent',
             "tension": 0.4,
             "pointBackgroundColor": current_color,
-            "borderWidth": 2, # Slightly thinner for individual AY lines
+            "borderWidth": 2,
             "pointRadius": 3,
             "pointHoverRadius": 5,
             "fill": False,
-            "hidden": True, # Start with individual AY lines hidden, user can toggle
-            "order": 1 # Draw individual AY lines behind the total line
+            "hidden": True,
+            "order": 1
         })
 
     return {"labels": labels, "datasets": datasets}
