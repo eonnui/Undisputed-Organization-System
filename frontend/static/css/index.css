@@ -53,7 +53,7 @@ body {
 }
 
 .wrapper {
-    background-color: var(--card-bg);
+    background-color: rgba(255, 255, 255, 0.6);
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     padding: 2rem 2.5rem;
@@ -256,6 +256,7 @@ button {
 }
 
 button:hover {
+    transform: translateY(-2px) scale(1.02);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -348,6 +349,16 @@ button:hover {
     font-weight: 500;
     padding: 0;
     transition: color var(--animation-duration) ease, opacity 0.3s ease;
+}
+
+#background-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1;
 }
 
 #app {
