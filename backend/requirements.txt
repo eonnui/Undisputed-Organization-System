@@ -1,10 +1,9 @@
 fastapi
 uvicorn
-sqlalchemy
-psycopg2-binary
-pydantic
+SQLAlchemy
 python-dotenv
+psycopg2-binary
 passlib[bcrypt]
 python-jose[cryptography]
-requests
-google-generativeai
+Pillow
+ollama

@@ -1,0 +1,380 @@
+INFO:     Started server process [15292]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+Conversation history store cleared on startup.
+INFO:     127.0.0.1:56326 - "GET /FinancialStatement HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56326 - "GET /static/js/chat.js HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56326 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56327 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56330 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:app.ai:Generating content with Ollama, prompt: The user is currently on the page with the URL path: /FinancialStatement. Here is the full HTML cont...
+INFO:httpx:HTTP Request: POST http://127.0.0.1:11434/api/generate "HTTP/1.1 200 OK"
+INFO:app.ai:Generated content from Ollama: The main purpose of this page is to provide a financial statement dashboard for students, allowing t...
+INFO:app.ai:Returning specific query response: The main purpose of this page is to provide a financial statement dashboard for students, allowing them to view their financial transactions and balances, as well as perform various actions such as viewing detailed reports and sending chat messages.
+INFO:     127.0.0.1:56331 - "POST /chat HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56337 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56338 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56339 - "GET /Settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56339 - "GET /static/js/chat.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56339 - "GET /static/js/script.js HTTP/1.1" 304 Not Modified
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56339 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56340 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56341 - "GET /get_user_data HTTP/1.1" 200 OK
+INFO:app.ai:Generating content with Ollama, prompt: The user is currently on the page with the URL path: /Settings. Here is the full HTML content of the...
+INFO:httpx:HTTP Request: POST http://127.0.0.1:11434/api/generate "HTTP/1.1 200 OK"
+INFO:app.ai:Generated content from Ollama: The main purpose of this page is to allow users to view and manage their account settings, including...
+INFO:app.ai:Returning specific query response: The main purpose of this page is to allow users to view and manage their account settings, including updating personal information, uploading registration forms, changing profile pictures, and modifying security settings.
+INFO:     127.0.0.1:56341 - "POST /chat HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56340 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56347 - "GET /Events HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56347 - "GET /static/js/chat.js HTTP/1.1" 304 Not Modified
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56348 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56348 - "GET /BulletinBoard HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56348 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56347 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56351 - "GET /BulletinBoard HTTP/1.1" 200 OK
+INFO:app.ai:Generating content with Ollama, prompt: The user is currently on the page with the URL path: /BulletinBoard. Here is the full HTML content o...
+INFO:httpx:HTTP Request: POST http://127.0.0.1:11434/api/generate "HTTP/1.1 200 OK"
+INFO:app.ai:Generated content from Ollama: The main purpose of this page is to serve as a Bulletin Board for users to view and interact with va...
+INFO:app.ai:Returning specific query response: The main purpose of this page is to serve as a Bulletin Board for users to view and interact with various posts, rules, and wiki entries related to the organization.
+INFO:     127.0.0.1:56351 - "POST /chat HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56347 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56347 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56353 - "GET /api/admin/org_chart_data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56353 - "GET /static/images/org_chart_pictures/4416e4dc-904b-4536-9402-f1ea2a56317f.png HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56353 - "GET /home HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56353 - "GET /static/js/chat.js HTTP/1.1" 304 Not Modified
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56353 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56354 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56356 - "GET /api/events/upcoming_summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56356 - "GET /BulletinBoard HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56356 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56354 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56356 - "GET /BulletinBoard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56356 - "GET /Events HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56356 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56356 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+DEBUG: Current User ID: 5
+DEBUG: Initial DB query found 8 payment items with NO student_shirt_order_id.
+DEBUG: Found 0 payment items WITH student_shirt_order_id in past_due_items (should be 0).
+DEBUG: Found 0 payment items WITH student_shirt_order_id in unpaid_upcoming_items (should be 0).
+INFO:     127.0.0.1:56356 - "GET /Payments HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56356 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56356 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+WARNING:root:Skipping payment ID 409 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 408 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 407 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 406 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 405 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 401 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 400 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 399 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 398 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 397 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 396 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 395 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 394 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 373 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 370 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 369 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 367 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 365 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 362 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 360 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 358 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 356 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 354 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 345 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 344 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 342 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 339 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 337 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 364 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 363 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 361 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 359 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 357 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 355 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 353 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 352 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 351 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 350 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 349 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 347 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 346 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 343 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 341 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 340 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 338 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 336 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 335 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 334 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 333 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 332 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 331 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 330 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 329 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 328 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 327 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 326 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 325 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 324 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 323 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 322 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 321 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 320 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 319 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 318 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 317 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 316 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 315 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 314 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 313 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 312 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 311 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 310 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 309 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 308 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 307 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 306 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 305 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 304 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 303 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 302 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 301 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 300 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 299 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 298 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 297 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 296 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 295 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 294 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 293 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 292 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 291 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 290 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 289 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 288 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 287 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 286 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 285 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 284 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 283 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 282 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 281 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 280 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 279 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 278 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 277 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 276 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 275 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 274 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 273 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 272 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 271 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 270 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 269 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 268 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 267 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 266 due to missing PaymentItem or incomplete data.
+WARNING:root:Skipping payment ID 265 due to missing PaymentItem or incomplete data.
+INFO:     127.0.0.1:56356 - "GET /Payments/History HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56356 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56354 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:app.ai:Generating content with Ollama, prompt: The user is currently on the page with the URL path: /Payments/History. Here is the full HTML conten...
+INFO:httpx:HTTP Request: POST http://127.0.0.1:11434/api/generate "HTTP/1.1 200 OK"
+INFO:app.ai:Generated content from Ollama: The main purpose of this page is to display a payment history table for a user to view and manage th...
+INFO:app.ai:Returning specific query response: The main purpose of this page is to display a payment history table for a user to view and manage their past transactions, and a user can typically navigate through their payment records, filter or sort them by various criteria, and potentially initiate new payments or inquiries.
+INFO:     127.0.0.1:56354 - "POST /chat HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56356 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56370 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+DEBUG: Current User ID: 5
+DEBUG: Initial DB query found 8 payment items with NO student_shirt_order_id.
+DEBUG: Found 0 payment items WITH student_shirt_order_id in past_due_items (should be 0).
+DEBUG: Found 0 payment items WITH student_shirt_order_id in unpaid_upcoming_items (should be 0).
+INFO:     127.0.0.1:56373 - "GET /Payments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56373 - "GET /static/js/chat.js HTTP/1.1" 304 Not Modified
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56373 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56374 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56374 - "GET /FinancialStatement HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56374 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56373 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56377 - "GET /student_dashboard/detailed_monthly_report_page?month=june&year=2025&type=organization HTTP/1.1" 200 OK
+INFO:     Attempting to fetch user data for navbar.
+INFO:     Session user_id: 5, admin_id: None
+INFO:     Fetching data for user_id: 5
+INFO:     Successfully fetched data for user: Johnbert Isaac
+INFO:     Generating custom palette for organization theme color: #3d6eae
+INFO:     Returning user data response.
+INFO:     127.0.0.1:56377 - "GET /get_user_data?dark_mode=true HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56378 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56379 - "GET /api/detailed_monthly_report?month=june&year=2025 HTTP/1.1" 200 OK
+INFO:app.ai:Generating content with Ollama, prompt: The user is currently on the page with the URL path: /student_dashboard/detailed_monthly_report_page...
+INFO:httpx:HTTP Request: POST http://127.0.0.1:11434/api/generate "HTTP/1.1 200 OK"
+INFO:app.ai:Generated content from Ollama: The main purpose of this page is to provide a detailed monthly cash flow report for a student, allow...
+INFO:app.ai:Returning specific query response: The main purpose of this page is to provide a detailed monthly cash flow report for a student, allowing them to view their financial transactions, track their expenses and income, and make decisions based on their current financial situation.
+INFO:     127.0.0.1:56379 - "POST /chat HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:56378 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK

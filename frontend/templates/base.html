@@ -149,6 +149,23 @@
         </footer>
     </div>
 
+    <!-- Chatbot Pop-up -->
+    <div class="chat-popup" id="chat-popup">
+        <div class="chat-header">
+            <h3>Chatbot</h3>
+            <button id="close-chat" class="close-chat-btn">&times;</button>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <!-- Chat messages will be appended here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input-field" placeholder="Type your message...">
+            <button id="send-chat-btn">Send</button>
+        </div>
+    </div>
+
+    <button class="open-chat-button" id="open-chat-button"><i class="ph ph-chat-circle-dots"></i></button>
+
     {# Global Modal Structure #}
     <div id="global-modal" class="modal-overlay">
         <div class="modal-content">
@@ -161,6 +178,7 @@
 
     {# Existing base.js script link #}
     <script src="{{ url_for('static', path='js/base.js') }}"></script>
+    <script src="{{ url_for('static', path='js/chat.js') }}"></script>
     {% block scripts %}
     {% endblock %}
 </body>

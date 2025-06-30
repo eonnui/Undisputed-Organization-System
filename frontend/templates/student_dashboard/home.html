@@ -5,7 +5,6 @@
 {% block head %}
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/static/css/student_dashboard/home.css">
-<link rel="stylesheet" href="/static/css/student_dashboard/chat.css">
 {% endblock %}
 
 {% block content_header %}
@@ -51,15 +50,7 @@
             </div>
         </div>
     </div>
-    <div id="chat-popup" class="chat-popup">
-        <div id="chat-header">Chat with us! <button class="close-chat">&times;</button></div>
-        <div id="chat-messages"></div>
-        <div class="chat-input-container">
-    <input type="text" id="chat-input" placeholder="Ask a question...">
-    <button id="chat-send">Send</button>
-</div>
-    </div>
-    <button id="chat-bubble"><i class="ph ph-chat-circle-text"></i></button>
+    
 {% endblock %}
 
 {% block scripts %}

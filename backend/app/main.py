@@ -50,6 +50,15 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
+# Global in-memory store for conversation histories
+conversation_stores: Dict[int, List[Dict[str, str]]] = {}
+
+@app.on_event("startup")
+async def startup_event():
+    global conversation_stores
+    conversation_stores = {}
+    print("Conversation history store cleared on startup.")
+
 # File Directories
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STATIC_DIR = BASE_DIR / "frontend" / "static" 
@@ -907,8 +916,36 @@ async def get_taken_positions(organization_id: int, db: Session = Depends(get_db
 @router.post("/chat")
 async def chat(chat_request: schemas.ChatRequest, db: Session = Depends(get_db), request: Request = None):
     user_id = request.session.get("user_id")
-    chatbot = Chatbot(db, user_id)
+    
+    # Retrieve conversation history from in-memory store, or initialize if not present
+    # If user_id is None, no history is retrieved/stored in conversation_stores
+    conversation_history = conversation_stores.get(user_id, []) if user_id is not None else []
+
+    # Check for commands to clear history
+    message_lower = chat_request.message.lower()
+    if message_lower in ["new conversation", "reset chat", "clear chat"]:
+        if user_id is not None:
+            conversation_stores[user_id] = [] # Clear history for this user
+        return {"response": "Conversation history cleared. How can I help you start fresh?"}
+
+    # Get the actual page path from the Referer header
+    current_page_path = None
+    if "referer" in request.headers:
+        try:
+            from urllib.parse import urlparse
+            referer_url = urlparse(request.headers["referer"])
+            current_page_path = referer_url.path
+        except Exception as e:
+            print(f"Error parsing referer URL: {e}")
+            current_page_path = None
+
+    chatbot = Chatbot(db, user_id, initial_history=conversation_history, current_page_path=current_page_path, page_content=chat_request.page_content)
     response = chatbot.get_response(chat_request.message)
+    
+    # Save updated conversation history back to in-memory store
+    if user_id is not None:
+        conversation_stores[user_id] = chatbot.conversation_history
+    
     return {"response": response}
 
 @router.put("/api/admin/org_chart_node/{node_id}/overwrite", response_model=schemas.OrgChartNodeUpdateResponse)

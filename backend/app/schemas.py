@@ -360,4 +360,5 @@ class OrgChartNodeOverwriteRequest(BaseModel):
     existing_admin_id: int 
 
 class ChatRequest(BaseModel):
-    message: str 
+    message: str
+    page_content: Optional[str] = None 
