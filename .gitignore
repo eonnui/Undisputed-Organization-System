@@ -18,3 +18,4 @@ frontend/static/images/event_classifications
 frontend/static/images/org_chart_pictures
 frontend/static/images/wiki_images
 backend/app/__pycache__
+.env

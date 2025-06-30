@@ -1515,3 +1515,36 @@ def delete_student_shirt_order(db: Session, order_id: int) -> bool:
     else:
         logging.warning(f"Student shirt order with id: {order_id} not found for deletion.")
         return False
+
+def get_all_events(db: Session) -> List[models.Event]:
+    return db.query(models.Event).all()
+
+def get_event_by_title(db: Session, title: str) -> Optional[models.Event]:
+    return db.query(models.Event).filter(models.Event.title.ilike(f"%{title}%")).first()
+
+def get_admin_by_position(db: Session, position: str) -> Optional[models.Admin]:
+    return db.query(models.Admin).filter(models.Admin.position.ilike(f"%{position}%")).first()
+
+def get_user_payments(db: Session, user_id: int) -> List[models.Payment]:
+    return db.query(models.Payment).filter(models.Payment.user_id == user_id).all()
+
+def get_all_bulletin_posts(db: Session, limit: int = 10, pinned_only: bool = False) -> List[models.BulletinBoard]:
+    query = db.query(models.BulletinBoard)
+    if pinned_only:
+        query = query.filter(models.BulletinBoard.is_pinned == True)
+    return query.order_by(models.BulletinBoard.created_at.desc()).limit(limit).all()
+
+def get_bulletin_post_by_title(db: Session, title: str) -> Optional[models.BulletinBoard]:
+    return db.query(models.BulletinBoard).filter(models.BulletinBoard.title.ilike(f"%{title}%")).first()
+
+# Rule Wiki Entry CRUD Operations
+def get_all_rule_wiki_entries(db: Session) -> List[models.RuleWikiEntry]:
+    return db.query(models.RuleWikiEntry).all()
+
+def get_rule_wiki_entry_by_title(db: Session, title: str) -> Optional[models.RuleWikiEntry]:
+    return db.query(models.RuleWikiEntry).filter(models.RuleWikiEntry.title.ilike(f"%{title}%")).first()
+
+def get_rule_wiki_entries_by_category(db: Session, category: str) -> List[models.RuleWikiEntry]:
+    return db.query(models.RuleWikiEntry).filter(models.RuleWikiEntry.category.ilike(f"%{category}%")).all()
+
+

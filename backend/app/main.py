@@ -42,6 +42,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 # Import text extraction functions
 from .text import extract_text_from_pdf, extract_student_info
+from .ai import Chatbot
 
 
 # Initialize database and FastAPI app
@@ -902,6 +903,13 @@ async def get_taken_positions(organization_id: int, db: Session = Depends(get_db
     taken_positions = [position[0] for position in taken_positions_query if position[0]]
 
     return taken_positions
+
+@router.post("/chat")
+async def chat(chat_request: schemas.ChatRequest, db: Session = Depends(get_db), request: Request = None):
+    user_id = request.session.get("user_id")
+    chatbot = Chatbot(db, user_id)
+    response = chatbot.get_response(chat_request.message)
+    return {"response": response}
 
 @router.put("/api/admin/org_chart_node/{node_id}/overwrite", response_model=schemas.OrgChartNodeUpdateResponse)
 async def overwrite_org_chart_node(

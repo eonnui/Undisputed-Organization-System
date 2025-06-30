@@ -30,6 +30,101 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = upcomingEventsTitle.dataset.eventsUrl;
         });
     }
+
+    const chatBubble = document.getElementById('chat-bubble');
+    const chatPopup = document.getElementById('chat-popup');
+    const chatSend = document.getElementById('chat-send');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatHeader = document.getElementById('chat-header');
+    const closeChatButton = chatHeader ? chatHeader.querySelector('.close-chat') : null;
+
+    let isDragging = false;
+    let offset = { x: 0, y: 0 };
+
+    if (chatBubble) {
+        chatBubble.addEventListener('click', () => {
+            chatPopup.style.display = 'block';
+            chatBubble.style.display = 'none';
+        });
+    }
+
+    if (closeChatButton) {
+        closeChatButton.addEventListener('click', () => {
+            chatPopup.style.display = 'none';
+            chatBubble.style.display = 'flex'; // Use flex to center content
+        });
+    }
+
+    if (chatSend) {
+        chatSend.addEventListener('click', async () => {
+            const message = chatInput.value;
+            if (message.trim() === '') return;
+
+            appendMessage('user', message);
+            chatInput.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                appendMessage('bot', data.response);
+            } catch (error) {
+                console.error('There has been a problem with your fetch operation:', error);
+                appendMessage('bot', 'Sorry, something went wrong.');
+            }
+        });
+    }
+
+    if (chatHeader) {
+        chatHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offset = {
+                x: chatPopup.offsetLeft - e.clientX,
+                y: chatPopup.offsetTop - e.clientY
+            };
+        });
+    }
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        chatPopup.style.left = (e.clientX + offset.x) + 'px';
+        chatPopup.style.top = (e.clientY + offset.y) + 'px';
+    });
+
+    if (chatInput) {
+        chatInput.addEventListener('keydown', async (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default behavior (e.g., new line in input)
+                chatSend.click(); // Simulate a click on the send button
+            }
+        });
+    }
+
+    function appendMessage(sender, text) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message', `${sender}-message`);
+        messageElement.innerText = text;
+        if (chatMessages) {
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
 });
 
 async function fetchUpcomingEvents() {
