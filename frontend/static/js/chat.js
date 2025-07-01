@@ -55,7 +55,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function appendMessage(sender, text) {
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-message', `${sender}-message`);
-        messageElement.innerHTML = text.replace(/\n/g, '<br>');
+        const imagePathRegex = /(\/static\/images\/[^\s]+(?:\.jpg|\.jpeg|\.png|\.gif|\.webp|\.svg|\.bmp))/g;
+        let match;
+        let lastIndex = 0;
+        let processedText = '';
+
+        while ((match = imagePathRegex.exec(text)) !== null) {
+            // Add text before the image path
+            processedText += text.substring(lastIndex, match.index).replace(/\n/g, '<br>');
+            
+            // Add the image tag
+            processedText += `<img src="${match[1]}" alt="Image from AI" style="max-width: 100%; height: auto; display: block; margin-top: 5px; margin-bottom: 5px;">`;
+            lastIndex = imagePathRegex.lastIndex;
+        }
+
+        // Add any remaining text after the last image path
+        processedText += text.substring(lastIndex).replace(/\n/g, '<br>');
+
+        messageElement.innerHTML = processedText;
         chatBody.appendChild(messageElement);
         chatBody.scrollTop = chatBody.scrollHeight; // Scroll to bottom
         return messageElement; // Return the created element
