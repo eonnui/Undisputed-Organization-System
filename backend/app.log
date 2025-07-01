@@ -1606,3 +1606,7 @@ INFO:root:Finished processing notifications. Total formatted: 0
 INFO:     127.0.0.1:54379 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
 INFO:root:Finished processing notifications. Total formatted: 0
 INFO:     127.0.0.1:54381 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:54389 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
+INFO:root:Finished processing notifications. Total formatted: 0
+INFO:     127.0.0.1:54398 - "GET /get_user_notifications?include_read=false HTTP/1.1" 200 OK
