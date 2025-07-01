@@ -7,3 +7,5 @@ passlib[bcrypt]
 python-jose[cryptography]
 Pillow
 ollama
+beautifulsoup4
+lxml

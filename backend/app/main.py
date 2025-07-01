@@ -939,7 +939,7 @@ async def chat(chat_request: schemas.ChatRequest, db: Session = Depends(get_db),
             print(f"Error parsing referer URL: {e}")
             current_page_path = None
 
-    chatbot = Chatbot(db, user_id, initial_history=conversation_history, current_page_path=current_page_path, page_content=chat_request.page_content)
+    chatbot = Chatbot(db, user_id, initial_history=conversation_history, current_page_path=current_page_path, page_content=chat_request.page_content, page_data=chat_request.page_data)
     response = chatbot.get_response(chat_request.message)
     
     # Save updated conversation history back to in-memory store
@@ -3558,7 +3558,7 @@ async def paymaya_create_payment(
             db.add(db_payment)
         logging.info(f"Reusing existing payment (ID: {db_payment.id}, Current Status: {db_payment.status}) for payment_item_id: {payment_item_id}. PayMaya ID: {db_payment.paymaya_payment_id}")
     else:
-        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item.id)
         db.add(db_payment)
         db.flush() 
         db_payment.status = "pending" 
@@ -3656,7 +3656,7 @@ async def paymaya_create_payment(
             db.add(db_payment)
         logging.info(f"Reusing existing payment (ID: {db_payment.id}, Current Status: {db_payment.status}) for payment_item_id: {payment_item_id}. PayMaya ID: {db_payment.paymaya_payment_id}")
     else:
-        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item_id)
+        db_payment = crud.create_payment(db, amount=payment_item.fee, user_id=user.id, payment_item_id=payment_item.id)
         db.add(db_payment)
         db.flush() 
         db_payment.status = "pending" 

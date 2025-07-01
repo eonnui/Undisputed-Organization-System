@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const typingIndicator = appendMessage('ai', 'AI is thinking...'); // Add typing indicator
 
         const pageContent = document.body.outerHTML; // Capture the full HTML content of the body
+        const pageData = window.lastFetchedJsonData || null; // Get the last fetched JSON data
+        window.lastFetchedJsonData = null; // Clear the data after sending
 
         // Send message to backend
         fetch('/chat', {
@@ -35,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ message: message, page_content: pageContent }),
+            body: JSON.stringify({ message: message, page_content: pageContent, page_data: pageData }),
         })
         .then(response => response.json())
         .then(data => {

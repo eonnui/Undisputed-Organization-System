@@ -958,7 +958,7 @@ body {
     box-shadow: var(--org-shadow-lg);
     border-radius: var(--org-radius-md);
     overflow: hidden;
-    z-index: 1000;
+    z-index: 1001;
     font-family: "DM Sans", sans-serif;
     transition: all 0.3s ease-in-out;
 }
@@ -1075,7 +1075,7 @@ body {
     font-size: 1.8em; /* Larger icon/text */
     cursor: pointer;
     box-shadow: var(--org-shadow-lg); /* More prominent shadow */
-    z-index: 1000;
+    z-index: 1001;
     transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 

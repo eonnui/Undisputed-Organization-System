@@ -5,27 +5,36 @@ import os
 from dotenv import load_dotenv
 import ollama
 import logging
+import json
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 class Chatbot:
-    def __init__(self, db: Session, user_id: int = None, initial_history: list = None, current_page_path: str = None, page_content: str = None):
+    def __init__(self, db: Session, user_id: int = None, initial_history: list = None, current_page_path: str = None, page_content: str = None, page_data: dict = None):
         self.db = db
         self.user_id = user_id
         self.model_name = "llama3" # Or "phi3" or another model you've downloaded with Ollama
         self.conversation_history = initial_history if initial_history is not None else []
         self.page_content = page_content # Store the current page content
         self.current_page_path = current_page_path # Store the current page path
+        self.page_data = page_data # Store the current page data (JSON)
         # Add a system message to inform the LLM about the page_content format and general conversational tone
-        if not any(msg.get('role') == 'system' and 'You are a helpful and conversational assistant.' in msg.get('content', '') for msg in self.conversation_history):
-            self.conversation_history.insert(0, {'role': 'system', 'content': 'You are a highly intelligent, accurate, and conversational assistant. Provide concise and precise answers. When asked about the current page, analyze the provided HTML content deeply to give smart, context-aware, and specific explanations. For general questions, respond as a knowledgeable AI.'})
+        if not any(msg.get('role') == 'system' and 'You are a helpful, accurate, and reliable student assistant.' in msg.get('content', '') for msg in self.conversation_history):
+            self.conversation_history.insert(0, {'role': 'system', 'content': '''You are a friendly and super helpful student assistant! My job is to give you clear, easy-to-understand answers about what you see and can do on this website. I'll always use simple words, no techy stuff! If you ask about something on the page, I'll talk about it like it's right there in front of you (like 'the big button' or 'the list of events'). My main goal is to help you quickly find what you need. If I'm not sure, I'll ask a quick question to get it right. Let's make things simple!'''})
 
 
     def _send_message_to_ollama(self, message: str):
-        self.conversation_history.append({'role': 'user', 'content': message})
-        logger.info(f"Sending message to Ollama: {message}")
+        full_message = message
+        if self.current_page_path and self.page_content:
+            full_message = f"The user is currently on the page with the URL path: {self.current_page_path}. Here is the full HTML content of the page:\n\n{self.page_content}\n\n"
+        if self.page_data:
+            full_message += f"Additional JSON data from the page: {json.dumps(self.page_data, indent=2)}\n\n"
+        full_message += f"User's question: {message}"
+        self.conversation_history.append({'role': 'user', 'content': full_message})
+        logger.info(f"Sending message to Ollama: {full_message}")
         response = ollama.chat(model=self.model_name, messages=self.conversation_history)
         llm_response = response['message']['content']
         logger.info(f"Received response from Ollama: {llm_response}")
@@ -59,69 +68,13 @@ class Chatbot:
             return "I'm sorry, I'm having trouble connecting to my knowledge base right now. Please ensure Ollama is running and the model is available."
 
     def _handle_specific_queries(self, message: str) -> str | None:
-        message_lower = message.lower()
-
-        if "upcoming event" in message_lower or "next event" in message_lower:
-            return self._get_upcoming_events_response()
-        elif "event details" in message_lower or "info about event" in message_lower:
-            # LLM will extract event name, then we retrieve details
-            event_title = self._extract_entity_with_llm(message, "event title")
-            if event_title:
-                return self._get_event_details_response(event_title)
-            return "Please specify the name of the event you'd like to know more about."
-        elif "membership fee" in message_lower or "semester fee" in message_lower:
-            return self._get_membership_fee_response()
-        elif "contact information" in message_lower or "who to contact" in message_lower:
-            return self._get_contact_information_response()
-        elif "payment history" in message_lower:
-            return self._get_payment_history_response()
-        elif "bulletin post details" in message_lower or "info about bulletin" in message_lower:
-            # LLM will extract post title, then we retrieve details
-            post_title = self._extract_entity_with_llm(message, "bulletin post title")
-            if post_title:
-                return self._get_bulletin_post_details_response(post_title)
-            return "Please specify the title of the bulletin board post you'd like to know more about."
-        elif "bulletin board" in message_lower or "bulletin post" in message_lower:
-            return self._get_bulletin_posts_response()
-        elif "rule details" in message_lower or "policy details" in message_lower:
-            # LLM will extract rule title, then we retrieve details
-            rule_title = self._extract_entity_with_llm(message, "rule or policy title")
-            if rule_title:
-                return self._get_rule_wiki_entry_details_response(rule_title)
-            return "Please specify the title of the rule or policy you'd like to know more about."
-        elif "rules in category" in message_lower or "policy in category" in message_lower:
-            # LLM will extract category, then we retrieve rules
-            category = self._extract_entity_with_llm(message, "category of rules")
-            if category:
-                return self._get_rule_wiki_entries_by_category_response(category)
-            return "Please specify the category of rules you'd like to know more about."
-        elif "rule" in message_lower or "policy" in message_lower or "handbook" in message_lower:
-            return self._get_rule_wiki_entries_response()
-        elif "what can you do" in message_lower or "capabilities" in message_lower:
-            return self._get_chatbot_capabilities_response()
-        elif "where am i" in message_lower or "what is this page" in message_lower or "what do i do here" in message_lower or "guide me" in message_lower:
-            return self._get_page_guidance_response()
-        elif "what is" in message_lower or "explain" in message_lower or "tell me about" in message_lower:
-            element_name = self._extract_entity_with_llm(message, "page element")
-            if element_name:
-                return self._explain_page_element(element_name)
-            return "Please specify which element you'd like me to explain."
-        elif "explain the data" in message_lower or "what does this say" in message_lower or "interpret this" in message_lower or "what is that" in message_lower:
-            return self._explain_current_page_data(message)
-        elif "thank you" in message_lower or "thanks" in message_lower:
-            return self._get_thank_you_response()
-        elif "hello" in message_lower or "hi" in message_lower or "hey" in message_lower:
-            return self._get_greeting_response()
-        elif "bye" in message_lower or "goodbye" in message_lower or "farewell" in message_lower:
-            return self._get_farewell_response()
-        
         return None
 
     def _get_page_guidance_response(self) -> str:
         if not self.current_page_path:
             return "I'm not sure which page you are on. Please try navigating to a specific page first."
 
-        prompt = f"The user is currently on the page with the URL path: {self.current_page_path}. Here is the full HTML content of the page:\n\n{self.page_content}\n\nIn one concise sentence, what is the main purpose of this page and what can a user typically do here?"
+        prompt = f"Based on the following HTML content of the page:\n\n{self.page_content}\n\nIn one concise sentence, what is the main purpose of this page and what can a user typically do here?"
         try:
             response = self._generate_content_with_ollama(prompt)
             return response.strip()
@@ -145,26 +98,34 @@ class Chatbot:
         if not self.user_id:
             return "I cannot retrieve user-specific data without a user ID."
 
-        data_output = ""
+        data_output = {}
         if data_type == "payments":
             payments = crud.get_user_payments(self.db, self.user_id)
-            if payments:
-                data_output += "User Payment History:\n"
-                for payment in payments:
-                    status = "Paid" if payment.status == "completed" else "Pending"
-                    data_output += f"- Amount: ₱{payment.amount:.2f}, Status: {status}, Date: {payment.created_at.strftime('%Y-%m-%d')}\n"
-            else:
-                data_output += "No payment history found for this user.\n"
+            payment_history = []
+            for payment in payments:
+                if payment.payment_item: # Only include payments that have a linked PaymentItem
+                    payment_item_status = "Paid" if payment.payment_item.is_paid else "Unpaid"
+                    due_date = None
+                    if payment.payment_item.due_date:
+                        due_date = payment.payment_item.due_date.strftime('%Y-%m-%d')
+                    
+                    payment_history.append({
+                        "amount": payment.amount,
+                        "status": payment_item_status,
+                        "date": payment.created_at.strftime('%Y-%m-%d'),
+                        "due_date": due_date
+                    })
+            data_output["payments"] = payment_history
         elif data_type == "events":
-            # Assuming a crud function like get_user_registered_events or similar
-            # For now, let's just get all events and let LLM filter if needed
             events = crud.get_all_events(self.db) 
-            if events:
-                data_output += "All Events (user's organization):\n"
-                for event in events:
-                    data_output += f"- {event.title} on {event.date.strftime('%Y-%m-%d')}, Location: {event.location}\n"
-            else:
-                data_output += "No events found.\n"
+            event_list = []
+            for event in events:
+                event_list.append({
+                    "title": event.title,
+                    "date": event.date.strftime('%Y-%m-%d'),
+                    "location": event.location
+                })
+            data_output["events"] = event_list
         # Add more data types as needed (e.g., "profile", "bulletin_posts_liked")
         
         return data_output
@@ -174,15 +135,74 @@ class Chatbot:
             return "I don't have the content of this page to explain. Please ensure the page content is being sent."
 
         # Determine if the query is asking for user-specific data
-        user_data_context = ""
+        user_data_context = {}
         query_lower = user_query.lower()
+        
+        # Existing user-specific data retrieval
         if "my payment" in query_lower or "my fee" in query_lower or "my balance" in query_lower or "2000 pesos" in query_lower or "amount" in query_lower:
-            user_data_context = self._get_user_specific_data("payments")
+            user_data_context["payments"] = self._get_user_specific_data("payments")["payments"]
         elif "my event" in query_lower or "my schedule" in query_lower:
-            user_data_context = self._get_user_specific_data("events")
-        # Add more conditions for other user-specific data types
+            user_data_context["events"] = self._get_user_specific_data("events")["events"]
+        
+        # Comprehensive HTML parsing and data extraction for payment history
+        if self.page_content and "/Payments/History" in self.current_page_path:
+            soup = BeautifulSoup(self.page_content, 'html.parser')
+            payment_records = []
+            payment_status_counts = {}
 
-        prompt = f"The user's specific question is: '{user_query}'.\n\n"                 f"Please analyze the following full HTML page content and any provided user-specific data. Then, in a very brief, accurate, and conversational way, explain the context and meaning of the data point mentioned in the user's question. If the question is about a number, explain what that number is for. If it's about an image, explain what the image is for. Be extremely specific and to the point.\n\n"                 f"Full HTML Page Content:\n{self.page_content}\n\n"                 f"User-Specific Data (if relevant):\n{user_data_context}"
+            table_body = soup.find('table', class_='payment-history-table')
+            if table_body:
+                rows = table_body.find('tbody').find_all('tr')
+                for row in rows:
+                    cols = row.find_all('td')
+                    if len(cols) >= 7: # Ensure all expected columns are present
+                        academic_year = cols[0].get_text(strip=True)
+                        semester = cols[1].get_text(strip=True)
+                        fee = cols[2].get_text(strip=True)
+                        transaction = cols[3].get_text(strip=True)
+                        status_span = cols[4].find('span', class_='status')
+                        status = status_span.get_text(strip=True).lower() if status_span else "unknown"
+                        due_date = cols[5].get_text(strip=True)
+                        payment_date = cols[6].get_text(strip=True)
+
+                        payment_records.append({
+                            "academic_year": academic_year,
+                            "semester": semester,
+                            "fee": fee,
+                            "transaction": transaction,
+                            "status": status,
+                            "due_date": due_date,
+                            "payment_date": payment_date
+                        })
+                        payment_status_counts[status] = payment_status_counts.get(status, 0) + 1
+            
+            if payment_records:
+                user_data_context['payment_history_data'] = payment_records
+                logger.debug(f"Extracted payment history data from HTML: {payment_records}")
+            if payment_status_counts:
+                user_data_context['payment_status_counts'] = payment_status_counts
+                logger.debug(f"Counted payment statuses from HTML: {payment_status_counts}")
+
+        # Add more conditions for other user-specific data types and their HTML parsing
+        # Example: if "/Events" in self.current_page_path: parse event details from HTML
+
+        logger.debug(f"User data context for Ollama: {json.dumps(user_data_context, indent=2)}")
+
+        prompt = f"""The user's specific question is: '{user_query}'.
+
+You have access to the following information:
+1.  **Full HTML Page Content:** The raw HTML of the current page.
+2.  **User-Specific Data:** Structured data extracted from the page or user profile (if relevant). This is the most reliable source for factual and numerical answers.
+
+When answering, prioritize information from 'User-Specific Data' for factual questions (e.g., counts, specific details). Use 'Full HTML Page Content' for visual descriptions or general context if the specific data is not in 'User-Specific Data'.
+
+Concisely and accurately explain the data point from the user's question. Answer in one sentence, or a very very short phrase if possible. If it's a number, explain its purpose. If an image, its function. Be extremely direct and to the point. DO NOT provide code or instructions on how to get the answer. Just provide the answer.
+
+Full HTML Page Content:
+{self.page_content}
+
+User-Specific Data (if relevant):
+{json.dumps(user_data_context, indent=2)}"""
         try:
             response = self._generate_content_with_ollama(prompt)
             return response.strip()

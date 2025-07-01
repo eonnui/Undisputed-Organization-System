@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict 
+from typing import Optional, List, Dict, Any 
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, date
 
@@ -361,4 +361,5 @@ class OrgChartNodeOverwriteRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
-    page_content: Optional[str] = None 
+    page_content: Optional[str] = None
+    page_data: Optional[Dict[str, Any]] = None 

@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 const data = await response.json(); 
+                window.lastFetchedJsonData = data; // Store the fetched JSON data globally
 
                 if (response.ok && data.redirectUrl) {
                     // Redirect the user to PayMaya

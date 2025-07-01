@@ -99,7 +99,7 @@ def authenticate_admin_by_email(db: Session, email: str, password: str) -> Optio
     return admin
 
 # Payment CRUD Operations
-def create_payment(db: Session, user_id: int, amount: float, payment_item_id: Optional[int] = None) -> models.Payment:
+def create_payment(db: Session, user_id: int, amount: float, payment_item_id: int) -> models.Payment:
     db_payment = models.Payment(
         user_id=user_id,
         amount=amount,
@@ -133,6 +133,11 @@ def update_payment(
             db_payment.paymaya_payment_id = paymaya_payment_id
         if status is not None:
             db_payment.status = status
+            if status == "completed" and db_payment.payment_item:
+                db_payment.payment_item.is_paid = True
+                db_payment.payment_item.updated_at = datetime.now(timezone.utc)
+                db.add(db_payment.payment_item)
+                logging.info(f"PaymentItem {db_payment.payment_item.id} marked as paid for payment {payment_id}.")
         if payment_item_id is not None:
             db_payment.payment_item_id = payment_item_id
         db_payment.updated_at = datetime.now(timezone.utc)
@@ -1526,7 +1531,7 @@ def get_admin_by_position(db: Session, position: str) -> Optional[models.Admin]:
     return db.query(models.Admin).filter(models.Admin.position.ilike(f"%{position}%")).first()
 
 def get_user_payments(db: Session, user_id: int) -> List[models.Payment]:
-    return db.query(models.Payment).filter(models.Payment.user_id == user_id).all()
+    return db.query(models.Payment).filter(models.Payment.user_id == user_id).options(joinedload(models.Payment.payment_item)).all()
 
 def get_all_bulletin_posts(db: Session, limit: int = 10, pinned_only: bool = False) -> List[models.BulletinBoard]:
     query = db.query(models.BulletinBoard)
