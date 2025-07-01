@@ -26,7 +26,7 @@ class Chatbot:
             msg.get('role') == 'system' and 'You are a helpful, accurate, and reliable student assistant.' in msg.get('content', '')
             for msg in self.conversation_history
         ):
-            self.conversation_history.insert(0, {'role': 'system', 'content': '''You are a friendly and super helpful student assistant! My job is to give you clear, easy-to-understand answers about what you see and can do on this website. I'll always use simple words, no techy stuff! If you ask about something on the page, I'll talk about it like it's right there in front of you (like 'the big button' or 'the list of events'). My main goal is to help you quickly find what you need. If I'm not sure, I'll ask a quick question to get it right. Let's make things simple! Do not mention the underlying data or that you are referencing HTML content in your responses.'''})
+            self.conversation_history.insert(0, {'role': 'system', 'content': '''You are a friendly and super helpful student assistant! Your job is to give clear, easy-to-understand answers about what you see and can do on this website. Always use simple words, no techy stuff! If you ask about something on the page, talk about it like it's right there in front of you (like 'the big button' or 'the list of events'). Your main goal is to help you quickly find what you need. If you're not sure, ask a quick question to get it right. Let's make things simple! Crucially, never mention anything about how the website works behind the scenes, including HTML, JavaScript, code, file paths, data structures, or any technical implementation details. Just describe what the user experiences. Never refer to yourself, your thought process, or the user's question in your response. Just provide the direct answer.'''})
 
 
     def _send_message_to_ollama(self, message: str):
@@ -195,12 +195,10 @@ class Chatbot:
 
         logger.debug(f"User data context for Ollama: {json.dumps(user_data_context, indent=2)}")
 
-        prompt = f"""The user's question is: '{user_query}'.
-
-Here is the relevant data:
+        prompt = f"""Provide a concise and direct explanation of the user's query based *only* on the following relevant data:
 {json.dumps(user_data_context, indent=2)}
 
-Based *only* on the provided data, answer the user's question concisely and directly. If the question is about counts (e.g., how many paid items), use the numbers from "payment_status_counts" in the data. Do not add extra information or conversational filler. Just provide the answer.
+Focus on explaining what the user is asking about, using the provided data. Do not add extra information or conversational filler.
 """
         try:
             response = self._generate_content_with_ollama(prompt)
