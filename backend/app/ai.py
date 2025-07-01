@@ -27,12 +27,16 @@ class Chatbot:
 
 
     def _send_message_to_ollama(self, message: str):
-        full_message = message
+        context_message = ""
         if self.current_page_path and self.page_content:
-            full_message = f"The user is currently on the page with the URL path: {self.current_page_path}. Here is the full HTML content of the page:\n\n{self.page_content}\n\n"
+            context_message += f"Current page HTML content:\n\n{self.page_content}\n\n"
         if self.page_data:
-            full_message += f"Additional JSON data from the page: {json.dumps(self.page_data, indent=2)}\n\n"
-        full_message += f"User's question: {message}"
+            context_message += f"Additional page data: {json.dumps(self.page_data, indent=2)}\n\n"
+
+        if context_message:
+            full_message = f"{context_message}User's question: {message}"
+        else:
+            full_message = message
         self.conversation_history.append({'role': 'user', 'content': full_message})
         logger.info(f"Sending message to Ollama: {full_message}")
         response = ollama.chat(model=self.model_name, messages=self.conversation_history)
@@ -188,21 +192,13 @@ class Chatbot:
 
         logger.debug(f"User data context for Ollama: {json.dumps(user_data_context, indent=2)}")
 
-        prompt = f"""The user's specific question is: '{user_query}'.
+        prompt = f"""The user's question is: '{user_query}'.
 
-You have access to the following information:
-1.  **Full HTML Page Content:** The raw HTML of the current page.
-2.  **User-Specific Data:** Structured data extracted from the page or user profile (if relevant). This is the most reliable source for factual and numerical answers.
+Here is the relevant data:
+{json.dumps(user_data_context, indent=2)}
 
-When answering, prioritize information from 'User-Specific Data' for factual questions (e.g., counts, specific details). Use 'Full HTML Page Content' for visual descriptions or general context if the specific data is not in 'User-Specific Data'.
-
-Concisely and accurately explain the data point from the user's question. Answer in one sentence, or a very very short phrase if possible. If it's a number, explain its purpose. If an image, its function. Be extremely direct and to the point. DO NOT provide code or instructions on how to get the answer. Just provide the answer.
-
-Full HTML Page Content:
-{self.page_content}
-
-User-Specific Data (if relevant):
-{json.dumps(user_data_context, indent=2)}"""
+Based *only* on the provided data, answer the user's question concisely and directly. If the question is about counts (e.g., how many paid items), use the numbers from "payment_status_counts" in the data. Do not add extra information or conversational filler. Just provide the answer.
+"""
         try:
             response = self._generate_content_with_ollama(prompt)
             return response.strip()
