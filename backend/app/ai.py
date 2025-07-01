@@ -22,8 +22,11 @@ class Chatbot:
         self.current_page_path = current_page_path # Store the current page path
         self.page_data = page_data # Store the current page data (JSON)
         # Add a system message to inform the LLM about the page_content format and general conversational tone
-        if not any(msg.get('role') == 'system' and 'You are a helpful, accurate, and reliable student assistant.' in msg.get('content', '') for msg in self.conversation_history):
-            self.conversation_history.insert(0, {'role': 'system', 'content': '''You are a friendly and super helpful student assistant! My job is to give you clear, easy-to-understand answers about what you see and can do on this website. I'll always use simple words, no techy stuff! If you ask about something on the page, I'll talk about it like it's right there in front of you (like 'the big button' or 'the list of events'). My main goal is to help you quickly find what you need. If I'm not sure, I'll ask a quick question to get it right. Let's make things simple!'''})
+        if not any(
+            msg.get('role') == 'system' and 'You are a helpful, accurate, and reliable student assistant.' in msg.get('content', '')
+            for msg in self.conversation_history
+        ):
+            self.conversation_history.insert(0, {'role': 'system', 'content': '''You are a friendly and super helpful student assistant! My job is to give you clear, easy-to-understand answers about what you see and can do on this website. I'll always use simple words, no techy stuff! If you ask about something on the page, I'll talk about it like it's right there in front of you (like 'the big button' or 'the list of events'). My main goal is to help you quickly find what you need. If I'm not sure, I'll ask a quick question to get it right. Let's make things simple! Do not mention the underlying data or that you are referencing HTML content in your responses.'''})
 
 
     def _send_message_to_ollama(self, message: str):
