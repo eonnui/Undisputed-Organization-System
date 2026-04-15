@@ -1,4 +1,6 @@
 {% if request.headers.get('x-spa') %}
+    <span id="spa-title-hint" style="display:none;">{% block title %}{% endblock %}</span>
+    <div id="spa-head-hint" style="display:none;">{% block head %}{% endblock %}</div>
     <div class="content-header">
         {% block content_header %}{% endblock %}
     </div>

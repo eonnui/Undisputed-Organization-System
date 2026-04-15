@@ -477,7 +477,11 @@ function initializeSidebarToggle() {
   });
 }
 
+let isBaseInitialized = false;
 document.addEventListener("DOMContentLoaded", function () {
+  if (isBaseInitialized) return;
+  isBaseInitialized = true;
+
   const savedTheme = localStorage.getItem("theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
@@ -547,13 +551,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const link = e.target.closest("a");
     if (!link) return;
     const href = link.getAttribute("href");
-    if (!href || href.startsWith("http") || href.startsWith("#") || href.includes("logout") || link.getAttribute("target") === "_blank") return;
-    e.preventDefault();
-    loadPage(href);
+    const target = link.getAttribute("target");
+    if (!href || href.startsWith("#") || href.includes("logout") || target === "_blank") return;
+
+    try {
+      const urlObj = new URL(href, window.location.origin);
+      if (urlObj.origin !== window.location.origin) return;
+      e.preventDefault();
+      loadPage(urlObj.pathname + urlObj.search + urlObj.hash);
+    } catch (err) {
+      return;
+    }
   });
 
   window.addEventListener("popstate", function () {
-    loadPage(window.location.pathname, false);
+    loadPage(window.location.pathname + window.location.search, false);
   });
 });
 
@@ -572,13 +584,51 @@ async function loadPage(url, pushToHistory = true) {
     const html = await response.text();
     if (response.ok) {
       spaContainer.innerHTML = html;
+      
+      const titleHint = spaContainer.querySelector("#spa-title-hint");
+      if (titleHint) {
+        document.title = titleHint.textContent;
+        titleHint.remove();
+      }
+
+      const headHint = spaContainer.querySelector("#spa-head-hint");
+      if (headHint) {
+        document.head.querySelectorAll(".spa-injected").forEach(el => el.remove());
+        const headElements = headHint.querySelectorAll("link[rel='stylesheet'], style");
+        headElements.forEach(el => {
+          if (el.tagName.toLowerCase() === "link") {
+            if (!document.head.querySelector(`link[href="${el.getAttribute('href')}"]:not(.spa-injected)`)) {
+              const newLink = document.createElement("link");
+              Array.from(el.attributes).forEach(attr => newLink.setAttribute(attr.name, attr.value));
+              newLink.classList.add("spa-injected");
+              document.head.appendChild(newLink);
+            }
+          } else if (el.tagName.toLowerCase() === "style") {
+            const newStyle = document.createElement("style");
+            newStyle.textContent = el.textContent;
+            newStyle.classList.add("spa-injected");
+            document.head.appendChild(newStyle);
+          }
+        });
+        headHint.remove();
+      }
+
       if (pushToHistory) history.pushState(null, "", url);
       const cleanUrl = url.split('?')[0].split('#')[0];
+      
       document.querySelectorAll(".sidebar nav ul li").forEach(li => {
         const a = li.querySelector("a");
-        if (a && a.getAttribute("href").split('?')[0].split('#')[0] === cleanUrl) li.classList.add("selected");
-        else li.classList.remove("selected");
+        if (a) {
+          try {
+            const linkUrl = new URL(a.getAttribute("href"), window.location.origin);
+            if (linkUrl.pathname === cleanUrl) li.classList.add("selected");
+            else li.classList.remove("selected");
+          } catch(e) {
+            li.classList.remove("selected");
+          }
+        }
       });
+
       const scripts = spaContainer.querySelectorAll("script");
       scripts.forEach(oldScript => {
         const newScript = document.createElement("script");
@@ -588,8 +638,12 @@ async function loadPage(url, pushToHistory = true) {
         document.body.appendChild(newScript);
         newScript.remove();
       });
-      window.dispatchEvent(new Event("load"));
-      document.dispatchEvent(new Event("DOMContentLoaded"));
+
+      setTimeout(() => {
+        window.dispatchEvent(new Event("load"));
+        document.dispatchEvent(new Event("DOMContentLoaded"));
+      }, 10);
+
     } else {
       window.location.href = url;
     }
