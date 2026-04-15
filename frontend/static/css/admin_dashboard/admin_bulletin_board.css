@@ -1181,119 +1181,96 @@ input[type="text"][name="position"] {
   align-items: flex-start;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .main-content-flex-container {
     flex-direction: column;
-    padding: 15px;
-  }
-
-  .bulletin-board-container,
-  .rules-wiki-container {
-    min-width: unset;
-    width: 100%;
-    padding: 0;
-  }
-
-  .post-card,
-  .org-chart-section,
-  .create-wiki-post-container,
-  .existing-wiki-post-container {
-    padding: 1.2rem;
+    padding: 10px;
+    gap: 15px;
   }
 
   .rules-wiki-container {
-    border-radius: 8px;
     position: static;
+    order: -1; /* Moves Wiki/Chart above the feed on mobile for quick access */
     max-height: none;
-    overflow-y: visible;
-  }
-
-  .org-chart-section {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-  }
-
-  .existing-wiki-post-container {
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
+    width: 100%;
   }
 }
 
 @media (max-width: 768px) {
+  .bulletin-board-container, 
+  .rules-wiki-container {
+    min-width: unset;
+    width: 100%;
+  }
+
   .post-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: row; /* Keep profile and delete on same line */
+    align-items: center;
   }
 
-  .post-header form {
-    width: 100%;
-    text-align: right;
-  }
-
-  .wiki-post-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .wiki-post-actions-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 10px;
-  }
-
-  .wiki-post-actions {
-    right: 0;
-    top: 30px;
-  }
-
-  .organization-chart-display {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-title {
-    font-size: 1.8em;
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-
-  .create-post-container,
-  .org-chart-section,
-  .create-wiki-post-container,
-  .existing-wiki-post-container,
-  .post-card,
-  .wiki-post-card {
-    padding: 1rem;
+  .post-meta {
+    max-width: calc(100% - 100px);
   }
 
   .post-title {
     font-size: 1.1rem;
   }
 
-  .profile-image,
+  .post-details {
+    font-size: 0.8rem;
+  }
+
+  .organization-chart-display {
+    padding: 1rem;
+    overflow-x: auto; /* Allows swiping the chart left/right */
+    -webkit-overflow-scrolling: touch;
+    display: block; /* Better for horizontal scroll */
+  }
+
+  .org-branch-container {
+    min-width: 800px; /* Prevents the chart from collapsing into a mess */
+    margin-bottom: 20px;
+  }
+
+  .post-card, .wiki-post-card {
+    padding: 15px;
+    border-radius: 0; /* Full width looks cleaner on mobile */
+    border-left: none;
+    border-right: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content-flex-container {
+    padding: 0; /* Maximize screen real estate */
+  }
+
+  .create-post-container {
+    margin: 10px;
+    padding: 1rem;
+  }
+
   .initial-circle {
-    width: 2.5rem;
-    height: 2.5rem;
-    font-size: 1rem;
-    margin-right: 0.75rem;
+    width: 2.8rem;
+    height: 2.8rem;
+    font-size: 1.1rem;
   }
 
-  .delete-button,
-  .edit-button,
-  .create-wiki-submit-button,
-  .cancel-create-wiki-button,
-  .save-edit-button,
-  .cancel-edit-button {
-    padding: 8px 10px;
-    font-size: 0.85rem;
+  .bulletin-post-video {
+    border-radius: 0;
   }
 
-  .view-org-chart-button {
-    font-size: 0.9rem;
-    padding: 0.5rem 0.8rem;
+  .post-content {
+    font-size: 0.95rem;
+  }
+
+  .wiki-post-title {
+    font-size: 1.1rem;
+  }
+
+  /* Adjust for bottom nav bar padding */
+  .main-content-flex-container:last-child {
+    padding-bottom: 90px;
   }
 }
 

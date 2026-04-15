@@ -751,17 +751,212 @@ body {
     
 }
 
-@media (max-width: 768px) {
-  .content-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 20px;
-    margin-bottom: 20px;
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 0px; /* Kill the width variable on mobile */
   }
 
-  .content-header h1,
-  .content-header h2 {
-    font-size: 1.8em;
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    width: 250px !important;
+    z-index: 1000;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden;
+  }
+
+  .top-bar {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding: 0 15px;
+  }
+
+  .today-date {
+    display: none;
+  }
+
+  .content-wrapper {
+    padding: 0 10px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100% !important;
+    height: 55px !important;
+    min-height: auto;
+    flex-direction: row;
+    padding: 0;
+    border-right: none;
+    border-top: 1px solid var(--org-sidebar-border-color);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+  }
+
+  .sidebar .logo, .sidebar-divider, .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar nav {
+    width: 100%;
+    height: 100%;
+  }
+
+  .sidebar nav ul {
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100%;
+    width: 100%;
+    display: flex;
+  }
+
+  .sidebar nav ul li {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .sidebar nav ul li a {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 55px;
+  }
+
+  .sidebar nav ul li a i, 
+  .sidebar nav ul li a .material-symbols-outlined {
+    margin: 0 !important;
+    font-size: 1.6rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .sidebar nav ul li a .nav-text {
+    display: none !important;
+  }
+
+  .sidebar nav ul li.selected {
+    background-color: transparent;
+    border-top: 3px solid var(--org-nav-selected-border-color);
+    border-radius: 0;
+    height: 100%;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    margin-bottom: 55px;
+    padding-top: 60px;
+  }
+
+  .top-bar {
+    left: 0 !important;
+    width: 100% !important;
+    height: 55px !important;
+    padding: 0 15px !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    background-color: var(--org-sidebar-bg-color) !important;
+    border-bottom: 1px solid var(--org-border-light) !important;
+  }
+
+  .top-bar #menu-toggle,
+  .top-bar .today-date {
+    display: none !important;
+  }
+
+  .top-bar .user-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .top-bar .user-actions > div {
+    margin: 0 !important;
+  }
+
+  .top-bar .user-actions button {
+    padding: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    justify-content: center !important;
+  }
+
+  .top-bar .user-actions .profile-btn img {
+    width: 32px !important;
+    height: 32px !important;
+    border: 1px solid var(--org-profile-pic-border-color) !important;
+  }
+
+  .top-bar .user-actions .profile-btn span {
+    display: none !important;
+  }
+
+  .top-bar .user-actions .ph,
+  .top-bar .user-actions .material-symbols-outlined {
+    font-size: 1.4rem !important;
+  }
+
+  #unread-notifications-badge {
+    top: 2px !important;
+    right: 2px !important;
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 0.6rem !important;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 20px 10px;
+    margin: 10px auto;
+  }
+
+  footer {
+    margin-bottom: 55px;
+    padding: 20px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-actions {
+    gap: 5px;
+  }
+
+  .top-bar .user-actions > div {
+    margin-left: 5px;
+  }
+
+  .notification-btn i, .profile-btn i {
+    font-size: 1.2rem;
   }
 }
 
