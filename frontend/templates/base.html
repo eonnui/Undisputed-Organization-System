@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        (function() {
+            const cached = localStorage.getItem("org_palette");
+            if (cached) {
+                try {
+                    const palette = JSON.parse(cached);
+                    for (const varName in palette) {
+                        document.documentElement.style.setProperty(varName, palette[varName]);
+                    }
+                } catch (e) {}
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %} Organization System - Home {% endblock %}</title>

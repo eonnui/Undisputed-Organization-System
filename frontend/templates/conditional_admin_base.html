@@ -1,0 +1,13 @@
+{% if request.headers.get('x-spa') %}
+    <div class="content-header">
+        {% block content_header %}{% endblock %}
+    </div>
+    <div class="content">
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+            {% block scripts %}{% endblock %}
+        </div>
+    </div>
+{% else %}
+    {% extends "admin_base.html" %}
+{% endif %}

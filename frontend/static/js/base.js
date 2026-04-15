@@ -31,7 +31,21 @@ function toggleTheme() {
   applyTheme(!isCurrentlyDarkMode);
 }
 
+function applyCachedPalette() {
+    const cached = localStorage.getItem("org_palette");
+    if (cached) {
+        try {
+            const palette = JSON.parse(cached);
+            const root = document.documentElement;
+            for (const varName in palette) {
+                root.style.setProperty(varName, palette[varName]);
+            }
+        } catch (e) {}
+    }
+}
+
 function applyUserTheme() {
+  applyCachedPalette();
   const isDarkMode = localStorage.getItem("theme") === "dark";
   const themeQueryParam = isDarkMode ? "?dark_mode=true" : "";
 
@@ -45,31 +59,17 @@ function applyUserTheme() {
     })
     .then((data) => {
       const root = document.documentElement;
-      let organizationName = "Organization System";
-
-      if (data?.organization) {
-        organizationName = data.organization.name || organizationName;
-        if (data.organization.custom_palette) {
-          try {
-            const palette = JSON.parse(data.organization.custom_palette);
-            for (const varName in palette) {
-              if (Object.prototype.hasOwnProperty.call(palette, varName)) {
-                root.style.setProperty(varName, palette[varName]);
-              }
-            }
-          } catch (e) {
-            if (data.organization.theme_color) {
-              root.style.setProperty(
-                "--organization-theme-color",
-                data.organization.theme_color
-              );
-            }
+      if (data?.organization?.custom_palette) {
+        localStorage.setItem("org_palette", data.organization.custom_palette);
+        try {
+          const palette = JSON.parse(data.organization.custom_palette);
+          for (const varName in palette) {
+            root.style.setProperty(varName, palette[varName]);
           }
-        } else if (data.organization.theme_color) {
-          root.style.setProperty(
-            "--organization-theme-color",
-            data.organization.theme_color
-          );
+        } catch (e) {
+          if (data.organization.theme_color) {
+            root.style.setProperty("--organization-theme-color", data.organization.theme_color);
+          }
         }
       }
 
@@ -566,17 +566,13 @@ async function loadPage(url, pushToHistory = true) {
   spaContainer.classList.add("loading");
   await new Promise(resolve => setTimeout(resolve, 150));
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { 'X-SPA': 'True' }
+    });
     const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const newSpaContent = doc.getElementById("spa-container");
-    const newTitle = doc.querySelector("title");
-    if (newSpaContent) {
-      spaContainer.innerHTML = newSpaContent.innerHTML;
-      if (newTitle) document.title = newTitle.textContent;
+    if (response.ok) {
+      spaContainer.innerHTML = html;
       if (pushToHistory) history.pushState(null, "", url);
-      const navItems = document.querySelectorAll(".sidebar nav ul li, .sidebar nav ul li a");
       const cleanUrl = url.split('?')[0].split('#')[0];
       document.querySelectorAll(".sidebar nav ul li").forEach(li => {
         const a = li.querySelector("a");
