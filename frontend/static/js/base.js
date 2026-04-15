@@ -542,4 +542,67 @@ document.addEventListener("DOMContentLoaded", function () {
   if (themeToggleButton) {
     themeToggleButton.addEventListener("click", toggleTheme);
   }
+
+  document.addEventListener("click", function (e) {
+    const link = e.target.closest("a");
+    if (!link) return;
+    const href = link.getAttribute("href");
+    if (!href || href.startsWith("http") || href.startsWith("#") || href.includes("logout") || link.getAttribute("target") === "_blank") return;
+    e.preventDefault();
+    loadPage(href);
+  });
+
+  window.addEventListener("popstate", function () {
+    loadPage(window.location.pathname, false);
+  });
 });
+
+async function loadPage(url, pushToHistory = true) {
+  const spaContainer = document.getElementById("spa-container");
+  if (!spaContainer) {
+    window.location.href = url;
+    return;
+  }
+  spaContainer.classList.add("loading");
+  await new Promise(resolve => setTimeout(resolve, 150));
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const newSpaContent = doc.getElementById("spa-container");
+    const newTitle = doc.querySelector("title");
+    if (newSpaContent) {
+      spaContainer.innerHTML = newSpaContent.innerHTML;
+      if (newTitle) document.title = newTitle.textContent;
+      if (pushToHistory) history.pushState(null, "", url);
+      const navItems = document.querySelectorAll(".sidebar nav ul li, .sidebar nav ul li a");
+      const cleanUrl = url.split('?')[0].split('#')[0];
+      document.querySelectorAll(".sidebar nav ul li").forEach(li => {
+        const a = li.querySelector("a");
+        if (a && a.getAttribute("href").split('?')[0].split('#')[0] === cleanUrl) li.classList.add("selected");
+        else li.classList.remove("selected");
+      });
+      const scripts = spaContainer.querySelectorAll("script");
+      scripts.forEach(oldScript => {
+        const newScript = document.createElement("script");
+        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        if (oldScript.src) newScript.src = oldScript.src + "?t=" + Date.now();
+        else newScript.textContent = oldScript.textContent;
+        document.body.appendChild(newScript);
+        newScript.remove();
+      });
+      window.dispatchEvent(new Event("load"));
+      document.dispatchEvent(new Event("DOMContentLoaded"));
+    } else {
+      window.location.href = url;
+    }
+  } catch (error) {
+    window.location.href = url;
+  } finally {
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+      spaContainer.classList.remove("loading");
+    }, 50);
+  }
+}

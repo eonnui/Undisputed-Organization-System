@@ -1082,6 +1082,15 @@ html, body {
     height: 12px;
 }
 
+#spa-container {
+  transition: opacity 0.15s ease-in-out;
+  opacity: 1;
+  width: 100%;
+}
+
+#spa-container.loading {
+  opacity: 0;
+}
 
 @keyframes fadeIn {
   from {
