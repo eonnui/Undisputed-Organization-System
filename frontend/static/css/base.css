@@ -578,6 +578,8 @@ body {
   color: var(--org-text-secondary);
   border-top: 0.069vw solid var(--org-border-light);
   font-size: clamp(0.7rem, 0.9vw, 1rem);
+  margin-top: auto;
+  width: 100%;
 }
 
 .form-group input {
@@ -941,8 +943,10 @@ html, body {
   }
 
   footer {
-    margin-bottom: 55px;
-    padding: 20px 0;
+    margin-bottom: 0;
+    padding: 15px 0;
+    width: 100%;
+    background-color: var(--org-bg-secondary);
   }
 }
 
